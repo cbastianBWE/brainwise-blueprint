@@ -28,6 +28,7 @@ import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
 import BulkSeatLinkModal from "@/components/coach/BulkSeatLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
+import CouplesTab from "@/components/coach/relationship/CouplesTab";
 import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
 import { escHtml } from "@/lib/escHtml";
 
@@ -130,7 +131,20 @@ export default function CoachClients() {
   const [shareableModalOpen, setShareableModalOpen] = useState(false);
   const [seatLinkModalOpen, setSeatLinkModalOpen] = useState(false);
   const [seatLinks, setSeatLinks] = useState<Array<{ id: string; token: string; instrument_id: string; seats_total: number; seats_claimed: number; status: string; coach_note: string | null; created_at: string }>>([]);
-  const [activeTab, setActiveTab] = useState<"clients" | "pending">("clients");
+  const [activeTab, setActiveTab] = useState<"clients" | "pending" | "couples">("clients");
+  // Single seam for My Relationship coach access. Today the function returns
+  // true for every practitioner coach; a future purchase/entitlement rule
+  // changes only that function, never this component.
+  const [canAccessCouples, setCanAccessCouples] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc("bw_coach_can_access_my_relationship");
+      if (!cancelled) setCanAccessCouples(data === true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
   const [perAssessmentPriceId, setPerAssessmentPriceId] = useState<string | null>(null);
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
@@ -1269,10 +1283,11 @@ export default function CoachClients() {
 
 
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending")}>
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending" | "couples")}>
+        <TabsList className={`grid w-full max-w-2xl ${canAccessCouples ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="pending">Pending Invitations</TabsTrigger>
+          {canAccessCouples && <TabsTrigger value="couples">Couples</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="clients" className="mt-4">
@@ -1521,6 +1536,12 @@ export default function CoachClients() {
             onChanged={fetchClients}
           />
         </TabsContent>
+
+        {canAccessCouples && (
+          <TabsContent value="couples" className="mt-4">
+            <CouplesTab />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

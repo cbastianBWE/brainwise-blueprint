@@ -12248,6 +12248,10 @@ export type Database = {
           recipient_role: string
           recipient_user_id: string
           relationship_id: string
+          routed_at: string | null
+          safeguarding: boolean
+          severity: string
+          status: string
           subject_user_id: string
         }
         Insert: {
@@ -12259,6 +12263,10 @@ export type Database = {
           recipient_role: string
           recipient_user_id: string
           relationship_id: string
+          routed_at?: string | null
+          safeguarding?: boolean
+          severity?: string
+          status?: string
           subject_user_id: string
         }
         Update: {
@@ -12270,6 +12278,10 @@ export type Database = {
           recipient_role?: string
           recipient_user_id?: string
           relationship_id?: string
+          routed_at?: string | null
+          safeguarding?: boolean
+          severity?: string
+          status?: string
           subject_user_id?: string
         }
         Relationships: [
@@ -17049,6 +17061,7 @@ export type Database = {
         Args: { p_kind: string; p_profile: string }
         Returns: boolean
       }
+      bw_coach_can_access_my_relationship: { Args: never; Returns: boolean }
       bw_coach_winback_unsubscribe: {
         Args: { p_token: string }
         Returns: boolean
@@ -20069,6 +20082,73 @@ export type Database = {
       }
       relationship_choose_focus_area: {
         Args: { p_area_code: string; p_relationship: string }
+        Returns: {
+          ok: boolean
+          reason: string
+        }[]
+      }
+      relationship_coach_ack_alert: {
+        Args: { p_alert: string; p_status: string }
+        Returns: {
+          ok: boolean
+          reason: string
+        }[]
+      }
+      relationship_coach_open_area: {
+        Args: { p_area_code: string; p_relationship: string }
+        Returns: {
+          ok: boolean
+          reason: string
+        }[]
+      }
+      relationship_coach_overview: {
+        Args: { p_relationship: string }
+        Returns: {
+          activity_id: string
+          area_code: string
+          barrier_cleared: boolean
+          code: string
+          module_number: number
+          one_status: string
+          sequence: number
+          title: string
+          two_status: string
+          visibility_mode: string
+        }[]
+      }
+      relationship_coach_roster: {
+        Args: never
+        Returns: {
+          core_total: number
+          has_safeguarding: boolean
+          last_activity: string
+          max_open_severity: string
+          one_done: number
+          open_alerts: number
+          pacing_ceiling_module: number
+          partner_one: string
+          partner_two: string
+          relationship_id: string
+          run_number: number
+          two_done: number
+        }[]
+      }
+      relationship_coach_safety_inbox: {
+        Args: { p_include_resolved?: boolean }
+        Returns: {
+          acknowledged_at: string
+          alert_id: string
+          categories: string[]
+          created_at: string
+          relationship_id: string
+          safeguarding: boolean
+          severity: string
+          status: string
+          subject_label: string
+        }[]
+      }
+      relationship_coach_set_pacing: {
+        Args: { p_module: number; p_relationship: string }
         Returns: {
           ok: boolean
           reason: string
