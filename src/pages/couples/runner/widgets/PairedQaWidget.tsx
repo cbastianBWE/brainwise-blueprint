@@ -129,6 +129,74 @@ export function PairedQaWidget({
 
   const setField = (key: string, next: MMValue) => onChange({ ...v, [key]: next });
 
+  // ---- prefill from the person's OWN earlier answer (never a partner's) ----
+  const [prefilledFields, setPrefilledFields] = useState<Record<string, boolean>>({});
+  const prefillRan = useRef(false);
+  const vRef = useRef(v);
+  vRef.current = v;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  useEffect(() => {
+    const map = step.prefilledFrom;
+    if (!map || Object.keys(map).length === 0) return;
+    if (readOnly || prefillRan.current || !relationshipId) return;
+    prefillRan.current = true;
+
+    const specs = Object.entries(map)
+      .map(([target, spec]) =>
+        spec && typeof spec === "object" && spec.from && spec.key ? { target, ...spec } : null,
+      )
+      .filter((s): s is { target: string; from: string; key: string } => !!s)
+      .filter((s) => isEmptyValue(vRef.current[s.target]));
+    if (specs.length === 0) return;
+
+    let cancelled = false;
+    (async () => {
+      const [{ data: auth }, { data: ids }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.rpc("relationship_activity_ids", { p_codes: [...new Set(specs.map((s) => s.from))] }),
+      ]);
+      const selfId = auth?.user?.id;
+      if (!selfId || cancelled) return;
+      const idByCode = new Map((ids || []).map((r: { code: string; id: string }) => [r.code, r.id]));
+
+      const seeds: Record<string, string> = {};
+      for (const s of specs) {
+        const activityId = idByCode.get(s.from);
+        if (!activityId) continue;
+        const { data, error } = await supabase.rpc("relationship_cross_read_own", {
+          p_relationship: relationshipId,
+          p_activity: activityId,
+          p_run: step.runNumber ?? 1,
+          p_user: selfId,
+        });
+        if (error || cancelled) continue;
+        const text = seedText((data as Rec | null)?.[s.key]);
+        if (text) seeds[s.target] = text;
+      }
+      if (cancelled || Object.keys(seeds).length === 0) return;
+
+      const current = vRef.current;
+      const patch: Rec = { ...current };
+      const marked: Record<string, boolean> = {};
+      for (const [target, text] of Object.entries(seeds)) {
+        if (!isEmptyValue(current[target])) continue;
+        patch[target] = text;
+        marked[target] = true;
+      }
+      if (Object.keys(marked).length === 0) return;
+      onChangeRef.current(patch);
+      setPrefilledFields(marked);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, relationshipId, readOnly]);
+
+
   /** Turn a flattened answer key into the question's own wording. Falls back to the raw key. */
   const labelFor = (key: string): string => {
     const dot = key.indexOf(".");
