@@ -196,22 +196,15 @@ export function PairedQaWidget({
             <p className="text-sm text-muted-foreground">{substituteNames(step.selfIntro, couple)}</p>
           )}
           {qs.map((q) =>
-            q.type === "image_select" ? (
-              <Card key={`self-${q.key}`} className="border-dashed">
-                <CardContent className="p-4">
-                  <p className="text-sm font-medium">{substituteNames(q.self, couple)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Image picker, wired later</p>
-                </CardContent>
-              </Card>
-            ) : (
-              renderField({
-                id: `self-${q.key}`,
-                label: substituteNames(q.self, couple),
-                questionKey: `${stepKey}.self.${q.key}`,
-                val: ((v.self as Rec) || {})[q.key],
-                onSet: (s) => setGroup("self", q.key, s),
-              })
-            ),
+            q.type === "image_select"
+              ? renderImageQuestion(q, "self")
+              : renderField({
+                  id: `self-${q.key}`,
+                  label: substituteNames(q.self, couple),
+                  questionKey: `${stepKey}.self.${q.key}`,
+                  val: ((v.self as Rec) || {})[q.key],
+                  onSet: (s) => setGroup("self", q.key, s),
+                }),
           )}
         </section>
 
@@ -222,22 +215,15 @@ export function PairedQaWidget({
               : `Now your read on ${couple.otherFirstName}.`}
           </p>
           {qs.map((q) =>
-            q.type === "image_select" ? (
-              <Card key={`read-${q.key}`} className="border-dashed">
-                <CardContent className="p-4">
-                  <p className="text-sm font-medium">{substituteNames(q.read, couple)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Image picker, wired later</p>
-                </CardContent>
-              </Card>
-            ) : (
-              renderField({
-                id: `read-${q.key}`,
-                label: substituteNames(q.read, couple),
-                questionKey: `${stepKey}.read.${q.key}`,
-                val: ((v.read as Rec) || {})[q.key],
-                onSet: (s) => setGroup("read", q.key, s),
-              })
-            ),
+            q.type === "image_select"
+              ? renderImageQuestion(q, "read")
+              : renderField({
+                  id: `read-${q.key}`,
+                  label: substituteNames(q.read, couple),
+                  questionKey: `${stepKey}.read.${q.key}`,
+                  val: ((v.read as Rec) || {})[q.key],
+                  onSet: (s) => setGroup("read", q.key, s),
+                }),
           )}
         </section>
       </div>
