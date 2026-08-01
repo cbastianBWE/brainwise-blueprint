@@ -9,6 +9,7 @@ import { ChatWidget } from "@/pages/coaching/runner/widgets/ChatWidget";
 import type { ChatMsg } from "@/pages/coaching/runner/shared";
 import { widgetRegistry, UnknownWidget } from "./runner/widgetRegistry";
 import { type CoupleContext, type CoupleStep, conditionMet, substituteNames, substituteStep } from "./runner/coupleShared";
+import CatchUpNotice, { nextCatchUpHref } from "./journey/CatchUpNotice";
 
 interface JourneyRow {
   activity_id: string;
@@ -37,9 +38,13 @@ export default function RelationshipActivityRunner() {
   const { relationshipId, activityCode } = useParams<{ relationshipId: string; activityCode: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Where the person was actually headed when a catch-up gate diverted them.
+  const intendedNext = searchParams.get("next");
 
   const [loading, setLoading] = useState(true);
   const [blocked, setBlocked] = useState<string | null>(null);
+  /** Reason code for the block, so the catch-up gate can offer a way forward. */
+  const [blockedCode, setBlockedCode] = useState<string | null>(null);
   const [activity, setActivity] = useState<{ id: string; title: string; definition: any } | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -162,17 +167,26 @@ export default function RelationshipActivityRunner() {
         p_run: null,
       });
       if (cancelled) return;
-      if (startErr) {
-        setBlocked(startErr.message);
-        setLoading(false);
+      if (startErr || !(start as any[])?.[0]) {
+        setBlocked(startErr ? startErr.message : "This activity isn't open yet.");
+        // Resolve why, so a catch-up block can name the waiting reveal instead
+        // of leaving the person on a dead-end screen.
+        const { data: js } = await supabase.rpc("relationship_journey_state", {
+          p_relationship: relationshipId,
+        });
+        const row = ((js as any[]) || []).find((r) => r.code === activityCode);
+        if (!cancelled) {
+          setBlockedCode(
+            (row?.reason_code as string | null) ??
+              (String(startErr?.message || "").includes("catch_up_required")
+                ? "catch_up_required"
+                : null),
+          );
+          setLoading(false);
+        }
         return;
       }
-      const s = (start as any[])?.[0];
-      if (!s) {
-        setBlocked("This activity isn't open yet.");
-        setLoading(false);
-        return;
-      }
+      const s = (start as any[])[0];
       setSessionId(s.session_id);
       setStepIndex(s.current_step || 0);
       const r = (s.responses as Responses) || {};
@@ -300,6 +314,13 @@ export default function RelationshipActivityRunner() {
       const ok = await submit();
       if (!ok) return;
     }
+    // Catch-up walk: if they came here to clear a waiting reveal, hand them the
+    // next one still waiting, and only then their original destination.
+    if (relationshipId && intendedNext) {
+      const href = await nextCatchUpHref(relationshipId, intendedNext, activityCode || null);
+      navigate(href);
+      return;
+    }
     navigate(`/couples/${relationshipId}`);
   };
 
@@ -313,14 +334,24 @@ export default function RelationshipActivityRunner() {
   }
 
   if (blocked) {
+    const catchUp = blockedCode === "catch_up_required";
     return (
       <div className="mx-auto max-w-2xl p-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Not open yet</CardTitle>
+            <CardTitle className="text-lg">
+              {catchUp ? "One thing first" : "Not open yet"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{blocked}</p>
+            {catchUp && relationshipId ? (
+              <CatchUpNotice
+                relationshipId={relationshipId}
+                intendedCode={activityCode || null}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{blocked}</p>
+            )}
             <Button variant="outline" asChild>
               <Link to={`/couples/${relationshipId}`}>Back to your journey</Link>
             </Button>
@@ -329,6 +360,7 @@ export default function RelationshipActivityRunner() {
       </div>
     );
   }
+
 
   if (!step || !couple || !sessionId || !activity) return null;
 

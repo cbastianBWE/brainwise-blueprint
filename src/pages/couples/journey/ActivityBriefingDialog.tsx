@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import {
   type CatalogueActivity,
 } from "./journeyShared";
 import LockNotice from "./LockNotice";
+import CatchUpNotice from "./CatchUpNotice";
 
 export interface ActivityStateRow {
   code: string;
@@ -53,6 +55,7 @@ export default function ActivityBriefingDialog({
   siblingTitles,
   lookupByTitle,
   onOpenActivity,
+  relationshipId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -65,7 +68,10 @@ export default function ActivityBriefingDialog({
   siblingTitles?: string[];
   lookupByTitle?: (title: string) => { code: string; allowed: boolean } | null;
   onOpenActivity?: (code: string) => void;
+  /** Enables the catch-up signpost, which needs to read the pending reveals. */
+  relationshipId?: string;
 }) {
+  const navigate = useNavigate();
   if (!state) return null;
 
   const briefing = getBriefing(catalogue);
@@ -81,6 +87,7 @@ export default function ActivityBriefingDialog({
   const time = briefing?.time_estimate || fallbackTime;
 
   const status = state.own_status || "not_started";
+  const catchUp = !state.allowed && state.reason_code === "catch_up_required";
   const actionLabel =
     status === "in_progress" ? "Resume" : status === "not_started" ? "Begin" : "Open";
 
@@ -165,7 +172,17 @@ export default function ActivityBriefingDialog({
           )}
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-col sm:items-stretch">
-            {!state.allowed && (
+            {!state.allowed && catchUp && relationshipId ? (
+              <CatchUpNotice
+                relationshipId={relationshipId}
+                intendedCode={state.code}
+                onNavigate={(href) => {
+                  onOpenChange(false);
+                  navigate(href);
+                }}
+              />
+            ) : null}
+            {!state.allowed && !catchUp && (
               <LockNotice
                 reasonCode={state.reason_code}
                 reasonDetail={state.reason_detail}
@@ -177,7 +194,7 @@ export default function ActivityBriefingDialog({
             )}
             {state.allowed ? (
               <Button onClick={() => onGo(state.code)}>{actionLabel}</Button>
-            ) : (
+            ) : catchUp && relationshipId ? null : (
               <Button disabled>Not open yet</Button>
             )}
           </DialogFooter>
