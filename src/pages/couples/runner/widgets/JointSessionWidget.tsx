@@ -17,6 +17,7 @@ export function JointSessionWidget({
   sessionId,
   activityCode,
   consented,
+  practitionerRequired,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
@@ -30,7 +31,14 @@ export function JointSessionWidget({
    * owner shared nothing, and the session runs with nothing from that material.
    */
   consented?: string[];
+  /**
+   * Straight from the server `practitioner_required` signal. When the step
+   * carries a `practitionerRule.required_if` and this is true, the session is
+   * held until a practitioner is present — the client never decides this.
+   */
+  practitionerRequired?: boolean;
 }) {
+
   const v = (value || {}) as JointValue;
   const turns = step.turns || [];
   const [index, setIndex] = useState(0);
