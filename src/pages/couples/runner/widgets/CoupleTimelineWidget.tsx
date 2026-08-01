@@ -191,6 +191,67 @@ function Overlay({ step, couple, mine }: { step: CoupleStep; couple: CoupleConte
   );
 }
 
+/**
+ * Double-consent gate (C19.1).
+ *
+ * Stricter than the ordinary both-complete barrier: after both partners finish,
+ * each is asked separately whether they want the two timelines laid over each
+ * other. The overlay renders only if BOTH say yes. Declining is one tap, with
+ * no follow-up and no second ask, and nothing is shown to either partner.
+ */
+function DoubleConsentGate({
+  couple,
+  ownChoice,
+  partnerChoice,
+  onChoose,
+  readOnly,
+  children,
+}: {
+  couple: CoupleContext;
+  ownChoice: boolean | null;
+  partnerChoice: boolean | null;
+  onChoose: (yes: boolean) => void;
+  readOnly?: boolean;
+  children: React.ReactNode;
+}) {
+  if (ownChoice === false || partnerChoice === false) {
+    return (
+      <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+        These stay private. Nothing has been shared, and that's a complete answer.
+      </div>
+    );
+  }
+
+  if (ownChoice === null) {
+    return (
+      <div className="space-y-3 rounded-md border p-4">
+        <p className="text-sm">Do you want to see each other's, side by side?</p>
+        <p className="text-xs text-muted-foreground">
+          Only if you both choose to. Either of you can keep yours private, and that's the end of it.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" disabled={readOnly} onClick={() => onChoose(true)}>
+            Yes, reveal
+          </Button>
+          <Button size="sm" variant="outline" disabled={readOnly} onClick={() => onChoose(false)}>
+            Keep mine private
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (partnerChoice !== true) {
+    return (
+      <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+        You've said yes. Nothing appears unless {couple.otherFirstName} says yes too.
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 export function CoupleTimelineWidget({
   step,
   couple,
@@ -199,6 +260,8 @@ export function CoupleTimelineWidget({
   sessionId,
   activityCode,
   readOnly,
+  responses,
+  setResponse,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
@@ -207,6 +270,8 @@ export function CoupleTimelineWidget({
   sessionId: string;
   activityCode: string;
   readOnly?: boolean;
+  responses?: Record<string, unknown>;
+  setResponse?: (key: string, value: unknown) => void;
 }) {
   const events = Array.isArray(value) ? value : [];
   const trajectory = step.mode === "trajectory";
@@ -219,6 +284,20 @@ export function CoupleTimelineWidget({
 
   if (trajectory || isReveal) {
     const gated = !couple.barrierCleared;
+    const doubleConsent = (step as any).revealRequiresDoubleConsent === true;
+    const consentKey = `${step.key || step.id || "timeline"}__reveal_consent`;
+    const asChoice = (v: unknown): boolean | null =>
+      v === true || v === false ? (v as boolean) : null;
+    const ownChoice = asChoice((responses as any)?.[consentKey]);
+    const partnerChoice = asChoice((couple.partnerView?.responses as any)?.[consentKey]);
+
+    const overlay = (
+      <>
+        {step.revealIntro && <p className="text-sm text-muted-foreground">{step.revealIntro}</p>}
+        <Overlay step={step} couple={couple} mine={events} />
+      </>
+    );
+
     return (
       <div className="space-y-4">
         {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
@@ -226,15 +305,23 @@ export function CoupleTimelineWidget({
           step.waitingCopy ? (
             <div className="rounded-md border bg-muted/30 p-4 text-sm">{step.waitingCopy}</div>
           ) : null
+        ) : doubleConsent ? (
+          <DoubleConsentGate
+            couple={couple}
+            ownChoice={ownChoice}
+            partnerChoice={partnerChoice}
+            readOnly={readOnly}
+            onChoose={(yes) => setResponse?.(consentKey, yes)}
+          >
+            {overlay}
+          </DoubleConsentGate>
         ) : (
-          <>
-            {step.revealIntro && <p className="text-sm text-muted-foreground">{step.revealIntro}</p>}
-            <Overlay step={step} couple={couple} mine={events} />
-          </>
+          overlay
         )}
       </div>
     );
   }
+
 
   return (
     <div className="space-y-4">

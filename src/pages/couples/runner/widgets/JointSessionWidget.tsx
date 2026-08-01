@@ -16,6 +16,7 @@ export function JointSessionWidget({
   onChange,
   sessionId,
   activityCode,
+  consented,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
@@ -23,6 +24,12 @@ export function JointSessionWidget({
   onChange: (next: Record<string, unknown>) => void;
   sessionId: string;
   activityCode: string;
+  /**
+   * `privateYearByConsentOnly`: the item keys the owner explicitly opted in.
+   * Undefined means the step carries no consent gate. An empty array means the
+   * owner shared nothing, and the session runs with nothing from that material.
+   */
+  consented?: string[];
 }) {
   const v = (value || {}) as JointValue;
   const turns = step.turns || [];
@@ -56,6 +63,19 @@ export function JointSessionWidget({
       </div>
     ) : null;
 
+  const gated = !!(step as any).consentGate;
+  const ConsentNote = () =>
+    gated ? (
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <p className="text-xs font-medium text-muted-foreground">What's in this conversation</p>
+        <p className="mt-1 text-sm">
+          {(consented?.length ?? 0) === 0
+            ? "Nothing from the private year is in this conversation. Only what's said here, now."
+            : `Only what was chosen to bring in (${consented!.length}) is in this conversation. Everything else stays private.`}
+        </p>
+      </div>
+    ) : null;
+
   const Rules = () => (
     <div className="space-y-2">
       {step.listenerRule && (
@@ -78,6 +98,8 @@ export function JointSessionWidget({
 
 
       <Rules />
+
+      <ConsentNote />
 
       <Intro />
 

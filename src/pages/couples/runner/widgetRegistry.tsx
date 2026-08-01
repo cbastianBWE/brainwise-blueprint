@@ -30,6 +30,9 @@ import { OwnReadbackWidget } from "./widgets/OwnReadbackWidget";
 import { ReusedStepsWidget } from "./widgets/ReusedStepsWidget";
 import { DesireGridWidget } from "./widgets/DesireGridWidget";
 import { CoupleMoleculeWidget, type MoleculeNode } from "./widgets/CoupleMoleculeWidget";
+import { ConsentGateWidget, consentedItems } from "./widgets/ConsentGateWidget";
+import { FeelingImageSelectWidget } from "./widgets/FeelingImageSelectWidget";
+import { EvidenceCallout } from "./widgets/EvidenceCallout";
 
 
 import { allowedModes, type CoupleContext, type CoupleStep } from "./coupleShared";
@@ -48,6 +51,10 @@ export interface WidgetCtx {
   readOnly?: boolean;
   relationshipId?: string;
   activityId?: string;
+  /** Writes a sibling response key (consent choices, gates) alongside the step value. */
+  setResponse?: (key: string, value: unknown) => void;
+  /** Curated evidence framing for this step, resolved by the runner. */
+  evidence?: { label: string; footnote?: string } | null;
 }
 
 
@@ -60,7 +67,36 @@ export type WidgetRenderer = (ctx: WidgetCtx) => JSX.Element | null;
 const asStep = (s: CoupleStep): Step => s as unknown as Step;
 
 export const widgetRegistry: Record<string, WidgetRenderer> = {
-  content: ({ step, value, onChange, sessionId, activityCode }) => (
+  content: (ctx) => {
+    const { step, value, onChange, sessionId, activityCode, relationshipId, readOnly, evidence } = ctx;
+    // A curated, clinically-checked statement renders verbatim in its own panel.
+    if (evidence && (step.body || step.intro)) {
+      return (
+        <div className="space-y-4">
+          <EvidenceCallout
+            label={evidence.label}
+            text={String(step.body || step.intro || "")}
+            footnote={evidence.footnote}
+          />
+        </div>
+      );
+    }
+    // A content step carrying a consentGate is the per-item consent selector.
+    if ((step as any).consentGate) {
+      return (
+        <div className="space-y-4">
+          {step.body && <p className="whitespace-pre-wrap text-sm leading-relaxed">{step.body}</p>}
+          <ConsentGateWidget
+            step={step}
+            value={value}
+            onChange={(v) => onChange(v)}
+            relationshipId={relationshipId}
+            readOnly={readOnly}
+          />
+        </div>
+      );
+    }
+    return (
     <ContentWidget
       step={asStep(step)}
       value={value as MMValue | undefined}
@@ -69,7 +105,8 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       activityCode={activityCode}
           sessionKind="relationship"
     />
-  ),
+    );
+  },
   list_builder: ({ step, value, onChange, sessionId, activityCode, relationshipId, responses }) => (
     <ListBuilderWidget
       step={asStep(step)}
@@ -121,9 +158,20 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
           sessionKind="relationship"
     />
   ),
-  image_select: ({ step, value, onChange }) => (
-    <ImageSelectWidget step={asStep(step)} value={(value as any[]) || []} onChange={(v) => onChange(v)} />
-  ),
+  image_select: ({ step, value, onChange, readOnly }) => {
+    // Feeling mode is the body-image safeguard: no numeric affordance, ever.
+    if ((step as any).mode === "feeling" || (step as any).numeric === false) {
+      return (
+        <FeelingImageSelectWidget
+          step={step}
+          value={(value as any[]) || []}
+          onChange={(v) => onChange(v)}
+          readOnly={readOnly}
+        />
+      );
+    }
+    return <ImageSelectWidget step={asStep(step)} value={(value as any[]) || []} onChange={(v) => onChange(v)} />;
+  },
   recap: ({ sessionId, value, onChange }) => (
     <RecapWidget
       sessionId={sessionId}
@@ -153,7 +201,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
     />
   ),
-  joint_session: ({ step, couple, value, onChange, sessionId, activityCode }) => (
+  joint_session: ({ step, couple, value, onChange, sessionId, activityCode, responses }) => (
     <JointSessionWidget
       step={step}
       couple={couple}
@@ -161,6 +209,12 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       activityCode={activityCode}
       value={(value as Record<string, unknown>) || {}}
       onChange={(v) => onChange(v)}
+      // Private-year material reaches the session by explicit consent only.
+      consented={
+        (step as any).consentGate
+          ? consentedItems((responses || {})["consent_selection"])
+          : undefined
+      }
     />
   ),
   statement_select: ({ step, value, onChange, sessionId, activityCode }) => (
@@ -236,7 +290,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
           sessionKind="relationship"
     />
   ),
-  couple_timeline: ({ step, couple, value, onChange, sessionId, activityCode, readOnly }) => (
+  couple_timeline: ({ step, couple, value, onChange, sessionId, activityCode, readOnly, responses, setResponse }) => (
     <CoupleTimelineWidget
       step={step}
       couple={couple}
@@ -245,6 +299,8 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       sessionId={sessionId}
       activityCode={activityCode}
       readOnly={readOnly}
+      responses={responses}
+      setResponse={setResponse}
     />
   ),
   synthesis: ({ step, couple, responses, analysisHtml }) => (
