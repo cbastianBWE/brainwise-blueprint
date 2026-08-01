@@ -32,7 +32,7 @@ import { DesireGridWidget } from "./widgets/DesireGridWidget";
 import { CoupleMoleculeWidget, type MoleculeNode } from "./widgets/CoupleMoleculeWidget";
 
 
-import type { CoupleContext, CoupleStep } from "./coupleShared";
+import { allowedModes, type CoupleContext, type CoupleStep } from "./coupleShared";
 
 export interface WidgetCtx {
   step: CoupleStep;
@@ -92,7 +92,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
   ),
   qa_multimodal: ({ step, value, onChange, sessionId, activityCode }) => (
     <QaMultimodalWidget
-      step={asStep(step)}
+      step={asStep({ ...step, modes: allowedModes(step) })}
       sessionId={sessionId}
       activityCode={activityCode}
       value={(value as any) || {}}
