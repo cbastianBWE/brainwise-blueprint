@@ -18,6 +18,10 @@ export function JourneyMapWidget({ step }: { step: CoupleStep; value?: string[];
         <p className="whitespace-pre-line text-sm text-muted-foreground">{step.intro}</p>
       )}
       {relationshipId && <JourneyMap relationshipId={relationshipId} />}
+      {/* Selection lives only on the 0.1 step. Selectability is catalog-driven. */}
+      {relationshipId && step.selectionKey === "chosen_focus_areas" && (
+        <FocusAreaPicker relationshipId={relationshipId} />
+      )}
     </div>
   );
 }
