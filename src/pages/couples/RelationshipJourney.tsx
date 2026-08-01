@@ -534,6 +534,7 @@ export default function RelationshipJourney() {
 
 
       <ActivityBriefingDialog
+        relationshipId={relationshipId}
         open={openActivity != null}
         onOpenChange={(v) => !v && setOpenActivity(null)}
         state={openActivityRow}

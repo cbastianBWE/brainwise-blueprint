@@ -816,6 +816,7 @@ export function JourneyMap({
       />
 
       <ActivityBriefingDialog
+        relationshipId={relationshipId}
         open={openActivity != null}
         onOpenChange={(v) => !v && setOpenActivity(null)}
         state={
