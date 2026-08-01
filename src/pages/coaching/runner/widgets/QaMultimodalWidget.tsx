@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, ArrowLeft, ArrowRight, Check, Video as VideoIcon, Upload as UploadIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   uploadCoachingRecording,
 } from "@/components/coaching/MultimodalField";
 import { type Step, type QaAnswer } from "../shared";
+import { usePrefill, type PrefillSpec } from "@/pages/couples/runner/usePrefill";
 
 export function QaMultimodalWidget({
   step,
@@ -18,6 +19,8 @@ export function QaMultimodalWidget({
   value,
   onChange,
   sessionKind = "coaching",
+  relationshipId,
+  responses,
 }: {
   step: Step;
   sessionId: string;
@@ -25,6 +28,9 @@ export function QaMultimodalWidget({
   value: Record<string, QaAnswer>;
   onChange: (next: Record<string, QaAnswer>) => void;
   sessionKind?: "coaching" | "relationship";
+  /** Couples-only: enables `step.prefilledFrom`. Coaching steps declare none, so nothing runs. */
+  relationshipId?: string;
+  responses?: Record<string, unknown>;
 }) {
   const questions = (step.questions as Array<{ key: string; prompt: string }>) || [];
   const modes = (step.modes && step.modes.length > 0 ? step.modes : ["text"]) as Array<
@@ -49,6 +55,37 @@ export function QaMultimodalWidget({
   const [text, setText] = useState<string>(
     existing?.mode === "text" || existing?.mode === "dictate" ? existing.text || "" : "",
   );
+  // ---- prefill a question from the person's OWN earlier answer (couples only) ----
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const idxRef = useRef(idx);
+  idxRef.current = idx;
+  const prefilled = usePrefill({
+    prefilledFrom: (step as { prefilledFrom?: Record<string, PrefillSpec> }).prefilledFrom,
+    relationshipId,
+    activityCode,
+    runNumber: (step as { runNumber?: number }).runNumber,
+    responses,
+    isEmptyTarget: (target) => {
+      const a = valueRef.current[target];
+      return !a || (!a.skipped && !a.text?.trim() && !a.media_id);
+    },
+    apply: (seeds) => {
+      const next = { ...valueRef.current };
+      for (const [target, seed] of Object.entries(seeds)) {
+        next[target] = { mode: "text", text: seed.text } as QaAnswer;
+      }
+      onChangeRef.current(next);
+      const currentKey = questions[idxRef.current]?.key;
+      if (currentKey && seeds[currentKey]) {
+        setMode("text");
+        setText(seeds[currentKey].text);
+      }
+    },
+  });
+
   const [videoSource, setVideoSource] = useState<"record" | "upload">("record");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -177,6 +214,11 @@ export function QaMultimodalWidget({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
+              {prefilled[q.key] && (
+                <p className="text-xs text-muted-foreground">
+                  Prefilled from what you said earlier, edit if you like.
+                </p>
+              )}
               {mode === "dictate" && (
                 <DictateButton onFinal={(t) => setText((cur) => (cur ? cur + " " : "") + t)} />
               )}
