@@ -144,10 +144,17 @@ export default function ActivityBriefingDialog({
                 the footer answers instead, and never both. */}
             {briefing?.prerequisites && state.allowed && (
               <div className="flex gap-2">
-                <span className="font-medium text-foreground">Builds on</span>
-                <span className="text-muted-foreground">{briefing.prerequisites}</span>
+                {/^\s*none\b/i.test(briefing.prerequisites) ? (
+                  <span className="font-medium text-foreground">Entry point</span>
+                ) : (
+                  <>
+                    <span className="font-medium text-foreground">Comes after</span>
+                    <span className="text-muted-foreground">{briefing.prerequisites}</span>
+                  </>
+                )}
               </div>
             )}
+
             <div className="flex gap-2">
               <span className="font-medium text-foreground">Where your partner is</span>
               <span className="text-muted-foreground">
