@@ -570,12 +570,7 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">{couple.ownFirstName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {flatten(v).map(({ key, value: entry }) => (
-                    <div key={key}>
-                      <p className="text-xs text-muted-foreground">{key}</p>
-                      <ValueBlock val={entry} empty="—" />
-                    </div>
-                  ))}
+                  <RevealColumn entries={flatten(v)} />
                 </CardContent>
               </Card>
               <Card>
@@ -583,12 +578,7 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {flatten((couple.partnerView?.responses || {}) as Rec).map(({ key, value: entry }) => (
-                    <div key={key}>
-                      <p className="text-xs text-muted-foreground">{key}</p>
-                      <ValueBlock val={entry} partner otherFirstName={couple.otherFirstName} empty="—" />
-                    </div>
-                  ))}
+                  <RevealColumn entries={flatten((couple.partnerView?.responses || {}) as Rec)} partner />
                 </CardContent>
               </Card>
             </div>
