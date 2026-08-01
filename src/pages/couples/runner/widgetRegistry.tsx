@@ -138,6 +138,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       sessionId={sessionId}
       activityCode={activityCode}
       relationshipId={relationshipId}
+      responses={responses}
       value={(value as Record<string, unknown>) || {}}
       onChange={(v) => onChange(v)}
     />
