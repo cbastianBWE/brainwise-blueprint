@@ -512,6 +512,9 @@ export default function RelationshipActivityRunner() {
           {/* "This needs a person" comes before the analysis, and crisis leads. */}
           {fired.length > 0 && <SupportResourcePanel fired={fired} />}
 
+          {/* Curated, clinically-approved statement. Verbatim, read-only. */}
+          {curated && <EvidenceCallout label={curated.label} text={curated.text} />}
+
           {showRevealBanner && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
               <p className="text-sm">There's something here for you now.</p>
@@ -543,7 +546,7 @@ export default function RelationshipActivityRunner() {
                   analysisHtml,
                   analyzing,
                   pendingReason,
-                  responses,
+                  responses: signalResponses,
                   readOnly,
                   relationshipId,
                   activityId: activity.id,
