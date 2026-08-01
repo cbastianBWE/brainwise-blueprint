@@ -13,7 +13,7 @@ import CatchUpNotice, { nextCatchUpHref } from "./journey/CatchUpNotice";
 import { isSinglePartner, privacyCopy, type ActivityRow } from "./runner/privacy";
 import { PrivacyBanner } from "./runner/widgets/PrivacyBanner";
 import { SupportResourcePanel } from "./runner/widgets/SupportResourcePanel";
-import { firedSignals, hasStandingFooter } from "./runner/supportResources";
+import { firedSignals, hasStandingFooter, panelsForSignalKeys } from "./runner/supportResources";
 import { evidenceGateFor, curatedEvidenceFor } from "./runner/evidenceGates";
 import { EvidenceCallout } from "./runner/widgets/EvidenceCallout";
 
