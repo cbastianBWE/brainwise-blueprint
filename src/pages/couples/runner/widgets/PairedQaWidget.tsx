@@ -8,6 +8,7 @@ import { MultimodalField, isMMRec, mmIsFilled, type MMValue } from "@/components
 import { CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
 import { CoupleImagePicker, PickedImageStrip, asPickedImages } from "./CoupleImagePicker";
+import { usePrefill } from "../usePrefill";
 
 type Rec = Record<string, unknown>;
 
@@ -18,27 +19,6 @@ function isEmptyValue(val: unknown): boolean {
   if (isMMRec(val)) return !mmIsFilled(val as MMValue);
   if (Array.isArray(val)) return val.length === 0;
   return false;
-}
-
-/** Turn an earlier answer (statement_select selection, list, text, media) into a short editable seed. */
-function seedText(val: unknown): string {
-  if (val == null) return "";
-  if (typeof val === "string") return val.trim();
-  if (Array.isArray(val)) {
-    const parts = val
-      .map((x) => (typeof x === "string" ? x : (x as Rec)?.label ?? (x as Rec)?.text ?? ""))
-      .map((x) => String(x).trim())
-      .filter(Boolean);
-    return parts.join("\n");
-  }
-  if (typeof val === "object") {
-    const o = val as Rec;
-    if (Array.isArray(o.selected)) return seedText(o.selected);
-    if (Array.isArray(o.items)) return seedText(o.items);
-    if (typeof o.transcript === "string") return o.transcript.trim();
-    if (typeof o.text === "string") return o.text.trim();
-  }
-  return "";
 }
 
 type MediaAnswer = { mode: "audio" | "video"; media_id: string; transcript?: string };
@@ -383,6 +363,9 @@ export function PairedQaWidget({
                   questionKey: `${stepKey}.self.${q.key}`,
                   val: ((v.self as Rec) || {})[q.key],
                   onSet: (s) => setGroup("self", q.key, s),
+                  helper: prefilledFields[q.key]
+                    ? "Prefilled from what you said earlier, edit if you like."
+                    : undefined,
                 }),
           )}
         </section>
