@@ -454,9 +454,32 @@ export default function RelationshipActivityRunner() {
   const single = isSinglePartner(activity);
   const privacy = privacyCopy(activity);
   // The server decides whether a support signal fired; the UI only reads it.
-  const fired = firedSignals(activity.definition, responses);
+  // `relationship_signals` rows (and the analyze echo) are merged with anything
+  // the session responses already carry.
+  const signalResponses: Responses = {
+    ...responses,
+    signals: Array.from(
+      new Set([
+        ...(Array.isArray((responses as any).signals)
+          ? ((responses as any).signals as unknown[]).filter((s) => typeof s === "string")
+          : []),
+        ...serverSignals,
+      ]),
+    ) as string[],
+  };
+  const firedFromDefinition = firedSignals(activity.definition, signalResponses);
+  const fired = [
+    ...panelsForSignalKeys(serverSignals),
+    ...firedFromDefinition.filter(
+      (f) => !panelsForSignalKeys(serverSignals).some((p) => p.signal === f.signal),
+    ),
+  ].sort((a, b) => (a.signal === "crisis_signal" ? -1 : b.signal === "crisis_signal" ? 1 : 0));
   const standingFooter = hasStandingFooter(activity.code);
   const evidence = evidenceGateFor(activity.code, localizedStep as any);
+  // Verbatim, clinically-approved copy carried on the step itself. Taken from
+  // the RAW step so nothing substitutes, trims, or rewrites it.
+  const curated = curatedEvidenceFor(step as any);
+
 
   // Fail closed: no journey row (or a failed state call) means no banner.
   const showRevealBanner =
