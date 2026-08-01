@@ -67,6 +67,13 @@ export default function RelationshipActivityRunner() {
   const [pendingReason, setPendingReason] = useState<string | undefined>(undefined);
   const [analysisError, setAnalysisError] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  /**
+   * Deterministic safety signals for THIS activity, written server-side into
+   * `relationship_signals` (and echoed by relationship-activity-analyze). The
+   * UI only reads them — it never computes a signal.
+   */
+  const [serverSignals, setServerSignals] = useState<string[]>([]);
+
 
   const allSteps: CoupleStep[] = useMemo(
     () => (activity?.definition?.steps as CoupleStep[]) || [],
