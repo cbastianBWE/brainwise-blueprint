@@ -64,6 +64,8 @@ function ValueBlock({
     return <p className="text-sm text-muted-foreground">{empty}</p>;
   }
   if (Array.isArray(val)) {
+    const picks = asPickedImages(val);
+    if (picks.length > 0) return <PickedImageStrip picks={picks} empty={empty} />;
     return (
       <ul className="list-disc space-y-1 pl-5">
         {val.map((item, i) => (
@@ -124,6 +126,67 @@ export function PairedQaWidget({
   };
 
   const setField = (key: string, next: MMValue) => onChange({ ...v, [key]: next });
+
+  /** Turn a flattened answer key into the question's own wording. Falls back to the raw key. */
+  const labelFor = (key: string): string => {
+    const dot = key.indexOf(".");
+    const pass = dot === -1 ? key : key.slice(0, dot);
+    const rest = dot === -1 ? "" : key.slice(dot + 1);
+
+    if ((pass === "self" || pass === "read") && rest) {
+      const q = (step.questions || []).find((x) => x.key === rest);
+      if (q) return substituteNames(pass === "self" ? q.self : q.read, couple);
+    }
+    if (!rest) {
+      if (key === "ownRating") return "How you'd rate this";
+      if (key === "readRating") return `How you think ${couple.otherFirstName} would rate it`;
+      if (step.guessOf && key === (step.key || "guess"))
+        return substituteNames(step.label || step.title || "Your guess", couple);
+      if (step.subfields?.includes(key))
+        return substituteNames(step.subfieldLabels?.[key] || key, couple);
+    }
+    return key;
+  };
+
+  const RevealColumn = ({ entries, partner }: { entries: ReturnType<typeof flatten>; partner?: boolean }) => {
+    const groups: Array<{ heading: string | null; items: typeof entries }> = [
+      {
+        heading: partner ? `What ${couple.otherFirstName} said about themselves` : "What you said about yourself",
+        items: entries.filter((e) => e.key.startsWith("self.")),
+      },
+      {
+        heading: partner
+          ? `What ${couple.otherFirstName} guessed about you`
+          : `What you guessed about ${couple.otherFirstName}`,
+        items: entries.filter((e) => e.key.startsWith("read.")),
+      },
+      {
+        heading: null,
+        items: entries.filter((e) => !e.key.startsWith("self.") && !e.key.startsWith("read.")),
+      },
+    ].filter((g) => g.items.length > 0);
+
+    return (
+      <div className="space-y-4">
+        {groups.map((g, gi) => (
+          <div key={gi} className="space-y-2">
+            {g.heading && <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{g.heading}</p>}
+            {g.items.map(({ key, value: entry }) => (
+              <div key={key}>
+                <p className="text-xs text-muted-foreground">{labelFor(key)}</p>
+                <ValueBlock
+                  val={entry}
+                  empty="—"
+                  partner={partner}
+                  otherFirstName={partner ? couple.otherFirstName : undefined}
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   /**
    * Rendered as a function, not a nested component: a nested component would be a new type on
@@ -507,12 +570,7 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">{couple.ownFirstName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {flatten(v).map(({ key, value: entry }) => (
-                    <div key={key}>
-                      <p className="text-xs text-muted-foreground">{key}</p>
-                      <ValueBlock val={entry} empty="—" />
-                    </div>
-                  ))}
+                  <RevealColumn entries={flatten(v)} />
                 </CardContent>
               </Card>
               <Card>
@@ -520,12 +578,7 @@ export function PairedQaWidget({
                   <CardTitle className="text-base">{couple.otherFirstName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {flatten((couple.partnerView?.responses || {}) as Rec).map(({ key, value: entry }) => (
-                    <div key={key}>
-                      <p className="text-xs text-muted-foreground">{key}</p>
-                      <ValueBlock val={entry} partner otherFirstName={couple.otherFirstName} empty="—" />
-                    </div>
-                  ))}
+                  <RevealColumn entries={flatten((couple.partnerView?.responses || {}) as Rec)} partner />
                 </CardContent>
               </Card>
             </div>
@@ -546,8 +599,11 @@ function flatten(obj: Rec, prefix = ""): Array<{ key: string; value: unknown }> 
       out.push({ key, value: val });
     } else if (val && typeof val === "object" && !Array.isArray(val)) {
       out.push(...flatten(val as Rec, key));
+    } else if (Array.isArray(val)) {
+      if (asPickedImages(val).length > 0) out.push({ key, value: val });
+      else if (val.length > 0) out.push({ key, value: val.join(", ") });
     } else if (val !== undefined && val !== null && val !== "") {
-      out.push({ key, value: Array.isArray(val) ? val.join(", ") : String(val) });
+      out.push({ key, value: String(val) });
     }
   }
   return out;
