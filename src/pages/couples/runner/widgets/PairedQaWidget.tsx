@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +7,7 @@ import { MultimodalField, isMMRec, mmIsFilled, type MMValue } from "@/components
 import { CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
 import { CoupleImagePicker, PickedImageStrip, asPickedImages } from "./CoupleImagePicker";
+import { usePrefill } from "../usePrefill";
 
 type Rec = Record<string, unknown>;
 
@@ -18,27 +18,6 @@ function isEmptyValue(val: unknown): boolean {
   if (isMMRec(val)) return !mmIsFilled(val as MMValue);
   if (Array.isArray(val)) return val.length === 0;
   return false;
-}
-
-/** Turn an earlier answer (statement_select selection, list, text, media) into a short editable seed. */
-function seedText(val: unknown): string {
-  if (val == null) return "";
-  if (typeof val === "string") return val.trim();
-  if (Array.isArray(val)) {
-    const parts = val
-      .map((x) => (typeof x === "string" ? x : (x as Rec)?.label ?? (x as Rec)?.text ?? ""))
-      .map((x) => String(x).trim())
-      .filter(Boolean);
-    return parts.join("\n");
-  }
-  if (typeof val === "object") {
-    const o = val as Rec;
-    if (Array.isArray(o.selected)) return seedText(o.selected);
-    if (Array.isArray(o.items)) return seedText(o.items);
-    if (typeof o.transcript === "string") return o.transcript.trim();
-    if (typeof o.text === "string") return o.text.trim();
-  }
-  return "";
 }
 
 type MediaAnswer = { mode: "audio" | "video"; media_id: string; transcript?: string };
@@ -135,6 +114,7 @@ export function PairedQaWidget({
   sessionId,
   activityCode,
   relationshipId,
+  responses,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
@@ -143,6 +123,7 @@ export function PairedQaWidget({
   sessionId: string;
   activityCode: string;
   relationshipId?: string;
+  responses?: Record<string, unknown>;
 }) {
   const v = (value || {}) as Rec;
   const revealed = couple.barrierCleared && !!couple.partnerView;
@@ -162,71 +143,42 @@ export function PairedQaWidget({
   const setField = (key: string, next: MMValue) => onChange({ ...v, [key]: next });
 
   // ---- prefill from the person's OWN earlier answer (never a partner's) ----
-  const [prefilledFields, setPrefilledFields] = useState<Record<string, boolean>>({});
-  const prefillRan = useRef(false);
+  // A target that names a question goes on the SELF pass only; the read pass is about the partner.
+  const questionKeys = new Set((step.questions || []).map((q) => q.key));
   const vRef = useRef(v);
   vRef.current = v;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
-  useEffect(() => {
-    const map = step.prefilledFrom;
-    if (!map || Object.keys(map).length === 0) return;
-    if (readOnly || prefillRan.current || !relationshipId) return;
-    prefillRan.current = true;
-
-    const specs = Object.entries(map)
-      .map(([target, spec]) =>
-        spec && typeof spec === "object" && spec.from && spec.key ? { target, ...spec } : null,
-      )
-      .filter((s): s is { target: string; from: string; key: string } => !!s)
-      .filter((s) => isEmptyValue(vRef.current[s.target]));
-    if (specs.length === 0) return;
-
-    let cancelled = false;
-    (async () => {
-      const [{ data: auth }, { data: ids }] = await Promise.all([
-        supabase.auth.getUser(),
-        supabase.rpc("relationship_activity_ids", { p_codes: [...new Set(specs.map((s) => s.from))] }),
-      ]);
-      const selfId = auth?.user?.id;
-      if (!selfId || cancelled) return;
-      const idByCode = new Map((ids || []).map((r: { code: string; id: string }) => [r.code, r.id]));
-
-      const seeds: Record<string, string> = {};
-      for (const s of specs) {
-        const activityId = idByCode.get(s.from);
-        if (!activityId) continue;
-        const { data, error } = await supabase.rpc("relationship_cross_read_own", {
-          p_relationship: relationshipId,
-          p_activity: activityId,
-          p_run: step.runNumber ?? 1,
-          p_user: selfId,
-        });
-        if (error || cancelled) continue;
-        const text = seedText((data as Rec | null)?.[s.key]);
-        if (text) seeds[s.target] = text;
+  const prefilledFields = usePrefill({
+    prefilledFrom: step.prefilledFrom,
+    relationshipId,
+    activityCode,
+    runNumber: step.runNumber,
+    responses,
+    disabled: readOnly,
+    isEmptyTarget: (target) =>
+      questionKeys.has(target)
+        ? isEmptyValue(((vRef.current.self as Rec) || {})[target])
+        : isEmptyValue(vRef.current[target]),
+    apply: (seeds) => {
+      const patch: Rec = { ...vRef.current };
+      const self: Rec = { ...((vRef.current.self as Rec) || {}) };
+      let touchedSelf = false;
+      for (const [target, seed] of Object.entries(seeds)) {
+        if (questionKeys.has(target)) {
+          self[target] = seed.text;
+          touchedSelf = true;
+        } else {
+          patch[target] = seed.text;
+        }
       }
-      if (cancelled || Object.keys(seeds).length === 0) return;
-
-      const current = vRef.current;
-      const patch: Rec = { ...current };
-      const marked: Record<string, boolean> = {};
-      for (const [target, text] of Object.entries(seeds)) {
-        if (!isEmptyValue(current[target])) continue;
-        patch[target] = text;
-        marked[target] = true;
-      }
-      if (Object.keys(marked).length === 0) return;
+      if (touchedSelf) patch.self = self;
       onChangeRef.current(patch);
-      setPrefilledFields(marked);
-    })();
+    },
+  });
 
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, relationshipId, readOnly]);
+
 
 
   /** Turn a flattened answer key into the question's own wording. Falls back to the raw key. */
@@ -410,6 +362,9 @@ export function PairedQaWidget({
                   questionKey: `${stepKey}.self.${q.key}`,
                   val: ((v.self as Rec) || {})[q.key],
                   onSet: (s) => setGroup("self", q.key, s),
+                  helper: prefilledFields[q.key]
+                    ? "Prefilled from what you said earlier, edit if you like."
+                    : undefined,
                 }),
           )}
         </section>
