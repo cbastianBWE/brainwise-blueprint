@@ -10,6 +10,11 @@ import type { ChatMsg } from "@/pages/coaching/runner/shared";
 import { widgetRegistry, UnknownWidget } from "./runner/widgetRegistry";
 import { type CoupleContext, type CoupleStep, conditionMet, substituteNames, substituteStep } from "./runner/coupleShared";
 import CatchUpNotice, { nextCatchUpHref } from "./journey/CatchUpNotice";
+import { isSinglePartner, privacyCopy, type ActivityRow } from "./runner/privacy";
+import { PrivacyBanner } from "./runner/widgets/PrivacyBanner";
+import { SupportResourcePanel } from "./runner/widgets/SupportResourcePanel";
+import { firedSignals, hasStandingFooter } from "./runner/supportResources";
+import { evidenceGateFor } from "./runner/evidenceGates";
 
 interface JourneyRow {
   activity_id: string;
@@ -45,7 +50,9 @@ export default function RelationshipActivityRunner() {
   const [blocked, setBlocked] = useState<string | null>(null);
   /** Reason code for the block, so the catch-up gate can offer a way forward. */
   const [blockedCode, setBlockedCode] = useState<string | null>(null);
-  const [activity, setActivity] = useState<{ id: string; title: string; definition: any } | null>(null);
+  const [activity, setActivity] = useState<
+    ({ id: string; title: string; definition: any } & ActivityRow) | null
+  >(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [responses, setResponses] = useState<Responses>({});
@@ -107,16 +114,19 @@ export default function RelationshipActivityRunner() {
 
   // ---- Context assembly (partnerView comes only from the RPC) ----
   const buildContext = useCallback(
-    async (activityId: string) => {
+    async (activityId: string, single = false) => {
       if (!relationshipId) return;
       const [names, state, pv] = await Promise.all([
         supabase.rpc("relationship_first_names", { p_relationship: relationshipId }),
         supabase.rpc("relationship_journey_state", { p_relationship: relationshipId }),
-        supabase.rpc("relationship_partner_view", {
-          p_relationship: relationshipId,
-          p_activity: activityId,
-          p_run: null,
-        }),
+        // Single-partner activities have no partner side: never ask for one.
+        single
+          ? Promise.resolve({ data: null } as any)
+          : supabase.rpc("relationship_partner_view", {
+              p_relationship: relationshipId,
+              p_activity: activityId,
+              p_run: null,
+            }),
       ]);
       const n = (names.data as any[])?.[0] || {};
       // Fail closed: if the state call errors we hold no partner signal at all.
@@ -128,8 +138,9 @@ export default function RelationshipActivityRunner() {
       setCouple({
         ownFirstName: n.active_first_name || "You",
         otherFirstName: n.other_first_name || "Your partner",
-        partnerSubmitted: row?.partner_status === "done",
-        barrierCleared: !!row?.barrier_cleared,
+        // One participant: there is nothing to wait for and nothing to reveal.
+        partnerSubmitted: single ? false : row?.partner_status === "done",
+        barrierCleared: single ? false : !!row?.barrier_cleared,
         partnerUserId: (view?.partner_user_id as string | undefined) ?? null,
         partnerView:
 
@@ -159,7 +170,15 @@ export default function RelationshipActivityRunner() {
         setLoading(false);
         return;
       }
-      setActivity({ id: (act as any).id, title: (act as any).title, definition: (act as any).definition });
+      setActivity({
+        id: (act as any).id,
+        code: (act as any).code,
+        title: (act as any).title,
+        definition: (act as any).definition,
+        partner_mode: (act as any).partner_mode,
+        visibility_mode: (act as any).visibility_mode,
+        practitioner_visibility: (act as any).practitioner_visibility,
+      });
 
       const { data: start, error: startErr } = await supabase.rpc("relationship_session_start", {
         p_relationship: relationshipId,
@@ -192,7 +211,7 @@ export default function RelationshipActivityRunner() {
       const r = (s.responses as Responses) || {};
       setResponses(r);
       if ((r.analysis as any)?.html) setAnalysisHtml((r.analysis as any).html);
-      await buildContext((act as any).id);
+      await buildContext((act as any).id, (act as any).partner_mode === "single");
       if (!cancelled) setLoading(false);
     })();
     return () => {
@@ -279,7 +298,7 @@ export default function RelationshipActivityRunner() {
       setSubmitting(false);
       return false;
     }
-    await buildContext(activity.id);
+    await buildContext(activity.id, isSinglePartner(activity));
     setReadOnly(true);
     setSubmitting(false);
     return true;
@@ -294,7 +313,7 @@ export default function RelationshipActivityRunner() {
       p_activity: activity.id,
       p_run: null,
     });
-    await buildContext(activity.id);
+    await buildContext(activity.id, isSinglePartner(activity));
   }, [relationshipId, activity, buildContext]);
 
   const goNext = async () => {
@@ -391,8 +410,16 @@ export default function RelationshipActivityRunner() {
   const anyRevealStep = steps.some(
     (s) => REVEAL_WIDGETS.includes(s.widget) || !!(s as any).reveal || !!s.comparesKey,
   );
+  const single = isSinglePartner(activity);
+  const privacy = privacyCopy(activity);
+  // The server decides whether a support signal fired; the UI only reads it.
+  const fired = firedSignals(activity.definition, responses);
+  const standingFooter = hasStandingFooter(activity.code);
+  const evidence = evidenceGateFor(activity.code, localizedStep as any);
+
   // Fail closed: no journey row (or a failed state call) means no banner.
   const showRevealBanner =
+    !single &&
     journeyRow?.reveal_pending === true &&
     (isRevealStep || (!anyRevealStep && barrierIndex >= 0 && stepIndex >= barrierIndex));
 
@@ -416,6 +443,11 @@ export default function RelationshipActivityRunner() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {privacy && <PrivacyBanner badge={privacy.badge} detail={privacy.detail} />}
+
+          {/* "This needs a person" comes before the analysis, and crisis leads. */}
+          {fired.length > 0 && <SupportResourcePanel fired={fired} />}
+
           {showRevealBanner && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
               <p className="text-sm">There's something here for you now.</p>
@@ -451,6 +483,8 @@ export default function RelationshipActivityRunner() {
                   readOnly,
                   relationshipId,
                   activityId: activity.id,
+                  setResponse: (key, val) => setResponses((r) => ({ ...r, [key]: val })),
+                  evidence,
                 })
               : <UnknownWidget name={step.widget} />}
           </div>
@@ -479,6 +513,10 @@ export default function RelationshipActivityRunner() {
           )}
 
 
+
+          {standingFooter && fired.length === 0 && (
+            <SupportResourcePanel fired={[]} standingFooter />
+          )}
 
           {(step as any).chat === true && (
             <ChatWidget
