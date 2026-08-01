@@ -118,7 +118,8 @@ export interface CoupleStep {
   subfields?: string[];
   subfieldLabels?: Record<string, string>;
   innerWidget?: string;
-  prefilledFrom?: Record<string, string>;
+  /** targetSubfield -> { from: <activityCode>, key: <responseKey> } (legacy: a plain string, ignored) */
+  prefilledFrom?: Record<string, string | { from: string; key: string }>;
   modes?: string[];
   dualRater?: boolean;
   reveal?: { mode?: string; order?: string; toneRule?: string; generateReads?: boolean; drawCycle?: boolean; highlight?: string[] };
