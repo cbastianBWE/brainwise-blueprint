@@ -70,9 +70,8 @@ export function CoupleAgreementWidget({
 
   return (
     <div className="space-y-6">
-      {(step.title || step.label) && (
-        <h3 className="text-lg font-semibold">{substituteNames(step.title || step.label || "", couple)}</h3>
-      )}
+      {/* The runner owns the step heading — never render step.title/label here. */}
+
 
       {!(step.starters && step.starters.length > 0) && (step.label || step.title) && (
         <p className="text-base">{substituteNames(step.label || step.title || "", couple)}</p>
