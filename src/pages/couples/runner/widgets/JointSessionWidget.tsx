@@ -42,6 +42,20 @@ export function JointSessionWidget({
   const speakerName = (s: "a" | "b" | "both") =>
     s === "a" ? couple.ownFirstName : s === "b" ? couple.otherFirstName : "Both of you";
 
+  const introText = typeof step.intro === "string" ? step.intro.trim() : "";
+  const Intro = () =>
+    introText ? (
+      <div className="space-y-2">
+        {substituteNames(introText, couple)
+          .split(/\n\s*\n/)
+          .map((p, i) => (
+            <p key={i} className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              {p}
+            </p>
+          ))}
+      </div>
+    ) : null;
+
   const Rules = () => (
     <div className="space-y-2">
       {step.listenerRule && (
