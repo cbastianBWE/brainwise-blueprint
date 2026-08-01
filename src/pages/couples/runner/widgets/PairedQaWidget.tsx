@@ -11,6 +11,36 @@ import { CoupleImagePicker, PickedImageStrip, asPickedImages } from "./CoupleIma
 
 type Rec = Record<string, unknown>;
 
+/** True when a field holds nothing the person has written or recorded. */
+function isEmptyValue(val: unknown): boolean {
+  if (val == null) return true;
+  if (typeof val === "string") return val.trim() === "";
+  if (isMMRec(val)) return !mmIsFilled(val as MMValue);
+  if (Array.isArray(val)) return val.length === 0;
+  return false;
+}
+
+/** Turn an earlier answer (statement_select selection, list, text, media) into a short editable seed. */
+function seedText(val: unknown): string {
+  if (val == null) return "";
+  if (typeof val === "string") return val.trim();
+  if (Array.isArray(val)) {
+    const parts = val
+      .map((x) => (typeof x === "string" ? x : (x as Rec)?.label ?? (x as Rec)?.text ?? ""))
+      .map((x) => String(x).trim())
+      .filter(Boolean);
+    return parts.join("\n");
+  }
+  if (typeof val === "object") {
+    const o = val as Rec;
+    if (Array.isArray(o.selected)) return seedText(o.selected);
+    if (Array.isArray(o.items)) return seedText(o.items);
+    if (typeof o.transcript === "string") return o.transcript.trim();
+    if (typeof o.text === "string") return o.text.trim();
+  }
+  return "";
+}
+
 type MediaAnswer = { mode: "audio" | "video"; media_id: string; transcript?: string };
 
 function asMedia(v: unknown): MediaAnswer | null {
