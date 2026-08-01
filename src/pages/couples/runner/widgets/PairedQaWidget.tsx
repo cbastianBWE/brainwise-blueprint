@@ -539,13 +539,10 @@ export function PairedQaWidget({
 
   return (
     <div className="space-y-6">
-      {(step.title || step.label) && (
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold">{substituteNames(step.title || step.label || "", couple)}</h3>
-        </div>
-      )}
+      {/* The runner owns the step heading — never render step.title/label here. */}
 
       {body}
+
 
       {/* State 2: submitted, waiting */}
       {!isRevealsNothing && !couple.partnerSubmitted && !revealed && (
