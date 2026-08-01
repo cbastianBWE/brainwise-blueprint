@@ -127,12 +127,13 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onRecap={(html) => onChange({ html })}
     />
   ),
-  paired_qa: ({ step, couple, value, onChange, sessionId, activityCode }) => (
+  paired_qa: ({ step, couple, value, onChange, sessionId, activityCode, relationshipId }) => (
     <PairedQaWidget
       step={step}
       couple={couple}
       sessionId={sessionId}
       activityCode={activityCode}
+      relationshipId={relationshipId}
       value={(value as Record<string, unknown>) || {}}
       onChange={(v) => onChange(v)}
     />

@@ -74,9 +74,8 @@ export function JointSessionWidget({
 
   return (
     <div className="space-y-4">
-      {(step.title || step.label) && (
-        <h3 className="text-lg font-semibold">{substituteNames(step.title || step.label || "", couple)}</h3>
-      )}
+      {/* The runner owns the step heading — never render step.title/label here. */}
+
 
       <Rules />
 
