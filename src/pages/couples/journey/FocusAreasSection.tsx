@@ -40,8 +40,9 @@ export function FocusAreasSection({
     let cancelled = false;
     (async () => {
       const all = await fetchFocusAreas(relationshipId);
-      if (!cancelled) setAreas(all.filter((a) => a.selected));
-    })();
+      // Selected *and* live: an area whose content isn't ready is never enterable.
+      if (!cancelled) setAreas(all.filter((a) => a.selected && a.content_ready));
+
     return () => {
       cancelled = true;
     };
