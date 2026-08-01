@@ -130,7 +130,20 @@ export default function CoachClients() {
   const [shareableModalOpen, setShareableModalOpen] = useState(false);
   const [seatLinkModalOpen, setSeatLinkModalOpen] = useState(false);
   const [seatLinks, setSeatLinks] = useState<Array<{ id: string; token: string; instrument_id: string; seats_total: number; seats_claimed: number; status: string; coach_note: string | null; created_at: string }>>([]);
-  const [activeTab, setActiveTab] = useState<"clients" | "pending">("clients");
+  const [activeTab, setActiveTab] = useState<"clients" | "pending" | "couples">("clients");
+  // Single seam for My Relationship coach access. Today the function returns
+  // true for every practitioner coach; a future purchase/entitlement rule
+  // changes only that function, never this component.
+  const [canAccessCouples, setCanAccessCouples] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.rpc("bw_coach_can_access_my_relationship");
+      if (!cancelled) setCanAccessCouples(data === true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
   const [perAssessmentPriceId, setPerAssessmentPriceId] = useState<string | null>(null);
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
