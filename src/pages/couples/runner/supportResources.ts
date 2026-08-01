@@ -159,6 +159,26 @@ export function firedSignals(
   return out.sort((a, b) => (a.signal === "crisis_signal" ? -1 : b.signal === "crisis_signal" ? 1 : 0));
 }
 
+/**
+ * Panels for signal keys the SERVER wrote into `relationship_signals` (or
+ * echoed on the analyze response). These are authoritative on their own — no
+ * client arming check, and no client inference.
+ */
+export function panelsForSignalKeys(
+  keys: string[],
+): Array<{ signal: SupportSignal; kind: ResourceKind }> {
+  const seen = new Set<string>();
+  const out: Array<{ signal: SupportSignal; kind: ResourceKind }> = [];
+  for (const k of keys) {
+    if (!SIGNAL_KEYS.includes(k as SupportSignal)) continue;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const sig = k as SupportSignal;
+    out.push({ signal: sig, kind: resourceKindFor(sig) });
+  }
+  return out.sort((a, b) => (a.signal === "crisis_signal" ? -1 : b.signal === "crisis_signal" ? 1 : 0));
+}
+
 /** Activities that carry the standing sensitive-topic footer. */
 const STANDING_FOOTER_CODES = new Set([
   "mr-c19-4-after-a-suicide",
