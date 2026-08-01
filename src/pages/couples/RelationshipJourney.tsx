@@ -482,6 +482,14 @@ export default function RelationshipJourney() {
         );
       })}
 
+      {relationshipId && (
+        <FocusAreasSection
+          relationshipId={relationshipId}
+          otherName={otherName}
+          onOpen={go}
+        />
+      )}
+
       <ModuleBriefingDialog
         open={openModule != null}
         onOpenChange={(v) => !v && setOpenModule(null)}
