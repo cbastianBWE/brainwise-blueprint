@@ -168,6 +168,46 @@ export function PairedQaWidget({
     );
   };
 
+  /** image_select questions: picker on the self/read pass, both sides once revealed. */
+  const renderImageQuestion = (
+    q: NonNullable<CoupleStep["questions"]>[number],
+    group: "self" | "read",
+  ) => {
+    const own = asPickedImages(((v[group] as Rec) || {})[q.key]);
+    const partnerGroup = (couple.partnerView?.responses as Rec | undefined)?.[group] as Rec | undefined;
+    const partnerPicks = asPickedImages(partnerGroup?.[q.key]);
+    const label = substituteNames(group === "self" ? q.self : q.read, couple);
+    return (
+      <div key={`${group}-${q.key}`} className="space-y-2">
+        <Label className="text-sm font-medium">{label}</Label>
+        {readOnly ? (
+          revealed && !summaryMode ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">{couple.ownFirstName}</p>
+                <PickedImageStrip picks={own} empty="Nothing picked." />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">{couple.otherFirstName}</p>
+                <PickedImageStrip picks={partnerPicks} empty="Nothing picked." />
+              </div>
+            </div>
+          ) : (
+            <PickedImageStrip picks={own} empty="Nothing picked." />
+          )
+        ) : (
+          <CoupleImagePicker
+            library={q.source?.library}
+            value={own}
+            onChange={(next) => setGroup(group, q.key, next as unknown as MMValue)}
+            pageSize={q.pageSize}
+            selectMin={q.selectMin}
+          />
+        )}
+      </div>
+    );
+  };
+
   const SummaryCard = () => (
     <Card>
       <CardHeader className="pb-3">
