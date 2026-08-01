@@ -292,6 +292,12 @@ export default function RelationshipActivityRunner() {
       return;
     }
     const d = data as any;
+    // The analyze response echoes the signals the server holds for this activity.
+    if (Array.isArray(d?.signals)) {
+      const keys = d.signals.filter((s: unknown) => typeof s === "string") as string[];
+      setServerSignals((prev) => Array.from(new Set([...prev, ...keys])));
+    }
+
     if (d?.pending) {
       setPendingReason(d.reason || "waiting_for_partner");
       return;
