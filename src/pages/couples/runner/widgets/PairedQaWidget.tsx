@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { MultimodalField, isMMRec, mmIsFilled, type MMValue } from "@/components/coaching/MultimodalField";
 import { CoachingRecordingPlayer } from "@/components/coaching/CoachingViews";
 import { allowedModes, type CoupleContext, type CoupleStep, substituteNames } from "../coupleShared";
+import { CoupleImagePicker, PickedImageStrip, asPickedImages } from "./CoupleImagePicker";
 
 type Rec = Record<string, unknown>;
 
@@ -168,6 +169,46 @@ export function PairedQaWidget({
     );
   };
 
+  /** image_select questions: picker on the self/read pass, both sides once revealed. */
+  const renderImageQuestion = (
+    q: NonNullable<CoupleStep["questions"]>[number],
+    group: "self" | "read",
+  ) => {
+    const own = asPickedImages(((v[group] as Rec) || {})[q.key]);
+    const partnerGroup = (couple.partnerView?.responses as Rec | undefined)?.[group] as Rec | undefined;
+    const partnerPicks = asPickedImages(partnerGroup?.[q.key]);
+    const label = substituteNames(group === "self" ? q.self : q.read, couple);
+    return (
+      <div key={`${group}-${q.key}`} className="space-y-2">
+        <Label className="text-sm font-medium">{label}</Label>
+        {readOnly ? (
+          revealed && !summaryMode ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">{couple.ownFirstName}</p>
+                <PickedImageStrip picks={own} empty="Nothing picked." />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground">{couple.otherFirstName}</p>
+                <PickedImageStrip picks={partnerPicks} empty="Nothing picked." />
+              </div>
+            </div>
+          ) : (
+            <PickedImageStrip picks={own} empty="Nothing picked." />
+          )
+        ) : (
+          <CoupleImagePicker
+            library={q.source?.library}
+            value={own}
+            onChange={(next) => setGroup(group, q.key, next as unknown as MMValue)}
+            pageSize={q.pageSize}
+            selectMin={q.selectMin}
+          />
+        )}
+      </div>
+    );
+  };
+
   const SummaryCard = () => (
     <Card>
       <CardHeader className="pb-3">
@@ -196,22 +237,15 @@ export function PairedQaWidget({
             <p className="text-sm text-muted-foreground">{substituteNames(step.selfIntro, couple)}</p>
           )}
           {qs.map((q) =>
-            q.type === "image_select" ? (
-              <Card key={`self-${q.key}`} className="border-dashed">
-                <CardContent className="p-4">
-                  <p className="text-sm font-medium">{substituteNames(q.self, couple)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Image picker, wired later</p>
-                </CardContent>
-              </Card>
-            ) : (
-              renderField({
-                id: `self-${q.key}`,
-                label: substituteNames(q.self, couple),
-                questionKey: `${stepKey}.self.${q.key}`,
-                val: ((v.self as Rec) || {})[q.key],
-                onSet: (s) => setGroup("self", q.key, s),
-              })
-            ),
+            q.type === "image_select"
+              ? renderImageQuestion(q, "self")
+              : renderField({
+                  id: `self-${q.key}`,
+                  label: substituteNames(q.self, couple),
+                  questionKey: `${stepKey}.self.${q.key}`,
+                  val: ((v.self as Rec) || {})[q.key],
+                  onSet: (s) => setGroup("self", q.key, s),
+                }),
           )}
         </section>
 
@@ -222,22 +256,15 @@ export function PairedQaWidget({
               : `Now your read on ${couple.otherFirstName}.`}
           </p>
           {qs.map((q) =>
-            q.type === "image_select" ? (
-              <Card key={`read-${q.key}`} className="border-dashed">
-                <CardContent className="p-4">
-                  <p className="text-sm font-medium">{substituteNames(q.read, couple)}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Image picker, wired later</p>
-                </CardContent>
-              </Card>
-            ) : (
-              renderField({
-                id: `read-${q.key}`,
-                label: substituteNames(q.read, couple),
-                questionKey: `${stepKey}.read.${q.key}`,
-                val: ((v.read as Rec) || {})[q.key],
-                onSet: (s) => setGroup("read", q.key, s),
-              })
-            ),
+            q.type === "image_select"
+              ? renderImageQuestion(q, "read")
+              : renderField({
+                  id: `read-${q.key}`,
+                  label: substituteNames(q.read, couple),
+                  questionKey: `${stepKey}.read.${q.key}`,
+                  val: ((v.read as Rec) || {})[q.key],
+                  onSet: (s) => setGroup("read", q.key, s),
+                }),
           )}
         </section>
       </div>
