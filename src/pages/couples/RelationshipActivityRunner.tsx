@@ -334,14 +334,24 @@ export default function RelationshipActivityRunner() {
   }
 
   if (blocked) {
+    const catchUp = blockedCode === "catch_up_required";
     return (
       <div className="mx-auto max-w-2xl p-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Not open yet</CardTitle>
+            <CardTitle className="text-lg">
+              {catchUp ? "One thing first" : "Not open yet"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">{blocked}</p>
+            {catchUp && relationshipId ? (
+              <CatchUpNotice
+                relationshipId={relationshipId}
+                intendedCode={activityCode || null}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{blocked}</p>
+            )}
             <Button variant="outline" asChild>
               <Link to={`/couples/${relationshipId}`}>Back to your journey</Link>
             </Button>
@@ -350,6 +360,7 @@ export default function RelationshipActivityRunner() {
       </div>
     );
   }
+
 
   if (!step || !couple || !sessionId || !activity) return null;
 
