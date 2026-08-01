@@ -439,8 +439,8 @@ export function PairedQaWidget({
   // ---- shape b: subfield grid ----
   const renderSubfields = () => (
     <div className="space-y-4">
-      {step.prefilledFrom && Object.keys(step.prefilledFrom).length > 0 && (
-        <p className="text-xs text-muted-foreground">we can prefill this from your earlier work</p>
+      {step.selfIntro && (
+        <p className="text-sm text-muted-foreground">{substituteNames(step.selfIntro, couple)}</p>
       )}
       <div className="grid gap-4 md:grid-cols-2">
         {(step.subfields || []).map((sf) =>
@@ -450,9 +450,13 @@ export function PairedQaWidget({
             questionKey: `${stepKey}.${sf}`,
             val: v[sf],
             onSet: (s) => setField(sf, s),
+            helper: prefilledFields[sf]
+              ? "Prefilled from what you said earlier, edit if you like."
+              : undefined,
           }),
         )}
       </div>
+
     </div>
   );
 
