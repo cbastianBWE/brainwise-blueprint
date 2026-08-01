@@ -1535,6 +1535,12 @@ export default function CoachClients() {
             onChanged={fetchClients}
           />
         </TabsContent>
+
+        {canAccessCouples && (
+          <TabsContent value="couples" className="mt-4">
+            <CouplesTab />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
