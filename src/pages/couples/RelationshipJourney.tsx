@@ -16,6 +16,7 @@ import {
 import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
 import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
 import LockNotice from "./journey/LockNotice";
+import { FocusAreasSection } from "./journey/FocusAreasSection";
 import { JourneyMap } from "./JourneyMap";
 
 
