@@ -14,12 +14,14 @@ export function RiskBlocksWidget({
   onChange,
   sessionId,
   activityCode,
+  sessionKind = "coaching",
 }: {
   step: Step;
   items: Negative[];
   onChange: (next: Negative[]) => void;
   sessionId: string;
   activityCode: string;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const subfields = step.subfields || [];
   const editingSub = subfields.length > 0;
@@ -80,6 +82,7 @@ export function RiskBlocksWidget({
             }}
             sessionId={sessionId}
             activityCode={activityCode}
+                  sessionKind={sessionKind}
             questionKey={`${step.key || "negatives"}:${(items || []).length}:text:${nonce}`}
             placeholder={step.placeholder || "Add a risk or concern…"}
             minRows={2}
@@ -166,6 +169,7 @@ export function RiskBlocksWidget({
                       }}
                       sessionId={sessionId}
                       activityCode={activityCode}
+                  sessionKind={sessionKind}
                       questionKey={`${step.key || "negatives"}:${i}:${sf}`}
                       minRows={2}
                     />

@@ -8,12 +8,14 @@ export function ImageDescribeWidget({
   onChange,
   sessionId,
   activityCode,
+  sessionKind = "coaching",
 }: {
   step: Step;
   value: SelectedImage[];
   onChange: (next: SelectedImage[]) => void;
   sessionId: string;
   activityCode: string;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const describedCount = value.filter((it) => mmIsFilled(it.description)).length;
 
@@ -56,6 +58,7 @@ export function ImageDescribeWidget({
                         onChange={(v) => updateDescription(idx, v)}
                         sessionId={sessionId}
                         activityCode={activityCode}
+                  sessionKind={sessionKind}
                         questionKey={`${step.fromKey || "images"}:${item.library_id}:desc`}
                         placeholder={step.descriptionPrompt}
                         minRows={3}

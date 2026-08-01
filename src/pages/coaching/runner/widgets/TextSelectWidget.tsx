@@ -13,12 +13,14 @@ export function TextSelectWidget({
   onChange,
   sessionId,
   activityCode,
+  sessionKind = "coaching",
 }: {
   step: Step;
   value: SelectedSaying[];
   onChange: (next: SelectedSaying[]) => void;
   sessionId: string;
   activityCode: string;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const [rows, setRows] = useState<SayingRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -214,6 +216,7 @@ export function TextSelectWidget({
                   onChange={setReasonDraft}
                   sessionId={sessionId}
                   activityCode={activityCode}
+                  sessionKind={sessionKind}
                   questionKey={`${step.key || "sayings"}:${dialogRow.id}:reason`}
                   placeholder={promptText}
                   minRows={4}

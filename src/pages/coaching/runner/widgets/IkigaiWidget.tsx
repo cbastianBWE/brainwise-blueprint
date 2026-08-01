@@ -20,6 +20,7 @@ export function IkigaiWidget({
   setResponses,
   activityCode,
   setCoachingRemaining,
+  sessionKind = "coaching",
 }: {
   step: Step;
   session: Session;
@@ -27,6 +28,7 @@ export function IkigaiWidget({
   setResponses: (u: (prev: Responses) => Responses) => void;
   activityCode: string;
   setCoachingRemaining: (n: number) => void;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const [mapping, setMapping] = useState(false);
   const lenses = step.lenses || [];
@@ -165,6 +167,7 @@ export function IkigaiWidget({
                   onChange={(v) => setResponses((r) => ({ ...r, [l.storeKey]: v }))}
                   sessionId={session.id}
                   activityCode={activityCode}
+                  sessionKind={sessionKind}
                 />
               </div>
             </div>

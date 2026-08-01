@@ -9,12 +9,14 @@ export function ContentWidget({
   onChange,
   sessionId,
   activityCode,
+  sessionKind = "coaching",
 }: {
   step: Step;
   value: MMValue | undefined;
   onChange: (v: MMValue) => void;
   sessionId: string;
   activityCode: string;
+  sessionKind?: "coaching" | "relationship";
 }) {
   return (
     <div className="space-y-4">
@@ -57,6 +59,7 @@ export function ContentWidget({
             onChange={onChange}
             sessionId={sessionId}
             activityCode={activityCode}
+                  sessionKind={sessionKind}
             questionKey={step.key}
             placeholder={step.reflection.placeholder}
             minRows={step.reflection.minRows ?? 4}

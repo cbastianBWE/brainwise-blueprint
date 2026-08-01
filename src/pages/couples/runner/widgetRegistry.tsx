@@ -67,6 +67,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
       sessionId={sessionId}
       activityCode={activityCode}
+          sessionKind="relationship"
     />
   ),
   list_builder: ({ step, value, onChange, sessionId, activityCode }) => (
@@ -76,6 +77,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
       sessionId={sessionId}
       activityCode={activityCode}
+          sessionKind="relationship"
     />
   ),
   risk_blocks: ({ step, value, onChange, sessionId, activityCode }) => (
@@ -85,6 +87,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
       sessionId={sessionId}
       activityCode={activityCode}
+          sessionKind="relationship"
     />
   ),
   qa_multimodal: ({ step, value, onChange, sessionId, activityCode }) => (
@@ -94,6 +97,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       activityCode={activityCode}
       value={(value as any) || {}}
       onChange={(v) => onChange(v)}
+          sessionKind="relationship"
     />
   ),
   scored_factors: ({ step, value, onChange }) => (
@@ -110,6 +114,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
       sessionId={sessionId}
       activityCode={activityCode}
+          sessionKind="relationship"
     />
   ),
   image_select: ({ step, value, onChange }) => (
@@ -210,7 +215,8 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
         setResponses={(u) => onChange(u(((value as any) || {}) as any))}
         activityCode={activityCode}
         setCoachingRemaining={() => {}}
-      />
+            sessionKind="relationship"
+    />
     );
   },
 
@@ -221,6 +227,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       onChange={(v) => onChange(v)}
       sessionId={sessionId}
       activityCode={activityCode}
+          sessionKind="relationship"
     />
   ),
   couple_timeline: ({ step, couple, value, onChange, sessionId, activityCode, readOnly }) => (
