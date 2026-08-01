@@ -228,6 +228,32 @@ export default function RelationshipActivityRunner() {
     };
   }, [relationshipId, activityCode, buildContext]);
 
+  // ---- Server-side safety signals ----
+  // One row per (relationship, run, activity, signal_key). A row existing means
+  // the signal is SET for this activity. Latest run wins.
+  useEffect(() => {
+    if (!relationshipId || !activity?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("relationship_signals")
+        .select("signal_key, run_number")
+        .eq("relationship_id", relationshipId)
+        .eq("activity_id", activity.id)
+        .order("run_number", { ascending: false });
+      if (cancelled || error || !data) return;
+      const latestRun = (data as any[])[0]?.run_number ?? null;
+      const keys = (data as any[])
+        .filter((r) => r.run_number === latestRun)
+        .map((r) => String(r.signal_key));
+      setServerSignals((prev) => Array.from(new Set([...prev, ...keys])));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [relationshipId, activity?.id]);
+
+
   // ---- Debounced save ----
   const timer = useRef<number | null>(null);
   const roRef = useRef(readOnly);
