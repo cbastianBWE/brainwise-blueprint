@@ -9,6 +9,7 @@ import { ChatWidget } from "@/pages/coaching/runner/widgets/ChatWidget";
 import type { ChatMsg } from "@/pages/coaching/runner/shared";
 import { widgetRegistry, UnknownWidget } from "./runner/widgetRegistry";
 import { type CoupleContext, type CoupleStep, conditionMet, substituteNames, substituteStep } from "./runner/coupleShared";
+import CatchUpNotice, { nextCatchUpHref } from "./journey/CatchUpNotice";
 
 interface JourneyRow {
   activity_id: string;
