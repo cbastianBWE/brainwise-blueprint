@@ -167,17 +167,26 @@ export default function RelationshipActivityRunner() {
         p_run: null,
       });
       if (cancelled) return;
-      if (startErr) {
-        setBlocked(startErr.message);
-        setLoading(false);
+      if (startErr || !(start as any[])?.[0]) {
+        setBlocked(startErr ? startErr.message : "This activity isn't open yet.");
+        // Resolve why, so a catch-up block can name the waiting reveal instead
+        // of leaving the person on a dead-end screen.
+        const { data: js } = await supabase.rpc("relationship_journey_state", {
+          p_relationship: relationshipId,
+        });
+        const row = ((js as any[]) || []).find((r) => r.code === activityCode);
+        if (!cancelled) {
+          setBlockedCode(
+            (row?.reason_code as string | null) ??
+              (String(startErr?.message || "").includes("catch_up_required")
+                ? "catch_up_required"
+                : null),
+          );
+          setLoading(false);
+        }
         return;
       }
-      const s = (start as any[])?.[0];
-      if (!s) {
-        setBlocked("This activity isn't open yet.");
-        setLoading(false);
-        return;
-      }
+      const s = (start as any[])[0];
       setSessionId(s.session_id);
       setStepIndex(s.current_step || 0);
       const r = (s.responses as Responses) || {};
