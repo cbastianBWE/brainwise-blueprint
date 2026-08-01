@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Lock } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Loader2, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchFocusAreas, type FocusAreaRow } from "./focusShared";
+import { BrandedPlaceholder, renderImg } from "./journeyShared";
+import { fetchFocusAreas, GATE_LABEL, type FocusAreaRow } from "./focusShared";
 
 /**
  * Self-serve focus-area selection, shown under the 0.1 journey map.
  *
- * Nothing here is required to move on, so it stays quiet: no areas ready means
- * a single line, not an empty grid of shells.
+ * Three catalog flags govern exposure and are all enforced here:
+ *  - `content_ready = false` → "Coming soon", never selectable, never enterable.
+ *  - `self_selectable = false` (or `practitioner_gated`) → no choose control,
+ *    a "your practitioner opens this" state instead.
+ *  - `gate` → a small badge so the review/practitioner gate is visible.
  */
 export function FocusAreaPicker({ relationshipId }: { relationshipId: string }) {
   const [areas, setAreas] = useState<FocusAreaRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setAreas(await fetchFocusAreas(relationshipId));
@@ -33,7 +39,7 @@ export function FocusAreaPicker({ relationshipId }: { relationshipId: string }) 
   }, [areas]);
 
   const toggle = async (area: FocusAreaRow) => {
-    if (!area.self_selectable || area.practitioner_gated) return;
+    if (!area.content_ready || !area.self_selectable || area.practitioner_gated) return;
     setBusy(area.area_code);
     setNotes((n) => ({ ...n, [area.area_code]: "" }));
     const fn = area.selected
@@ -67,9 +73,7 @@ export function FocusAreaPicker({ relationshipId }: { relationshipId: string }) 
   }
 
   if (areas.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">More areas are coming.</p>
-    );
+    return <p className="text-sm text-muted-foreground">More areas are coming.</p>;
   }
 
   return (
@@ -87,54 +91,119 @@ export function FocusAreaPicker({ relationshipId }: { relationshipId: string }) 
               {cluster}
             </p>
           )}
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {rows.map((a) => {
-              const locked = !a.self_selectable || a.practitioner_gated;
+              const practitionerOnly = !a.self_selectable || a.practitioner_gated;
+              const comingSoon = !a.content_ready;
+              const choosable = !practitionerOnly && !comingSoon;
               const note = notes[a.area_code];
+              const outcomes = a.learning_outcomes || [];
+              const open = !!expanded[a.area_code];
+              const gateLabel = a.gate ? GATE_LABEL[a.gate] || a.gate : null;
               return (
                 <div
                   key={a.area_code}
                   className={
-                    "rounded-lg border p-3 text-left " +
-                    (locked
-                      ? "opacity-70"
+                    "overflow-hidden rounded-lg border text-left " +
+                    (comingSoon || practitionerOnly
+                      ? "opacity-75"
                       : a.selected
                         ? "border-primary bg-primary/5"
                         : "")
                   }
                 >
-                  <button
-                    type="button"
-                    disabled={locked || busy === a.area_code}
-                    onClick={() => toggle(a)}
-                    className="block w-full text-left disabled:cursor-default"
-                  >
-                    <div className="flex items-start gap-2">
-                      {locked ? (
-                        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                      ) : a.selected ? (
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      ) : null}
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-sm font-medium">{a.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {locked
-                            ? "Your practitioner opens this one."
-                            : [
-                                a.core_prereq_label,
-                                a.planned_activity_count
-                                  ? `${a.planned_activity_count} ${a.planned_activity_count === 1 ? "activity" : "activities"}`
-                                  : null,
-                              ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                        </p>
+                  <div className="h-24 w-full overflow-hidden bg-muted">
+                    {a.hero_image_url ? (
+                      <img
+                        src={renderImg(a.hero_image_url, 480, 192)}
+                        alt=""
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <BrandedPlaceholder />
+                    )}
+                  </div>
+
+                  <div className="space-y-2 p-3">
+                    <button
+                      type="button"
+                      disabled={!choosable || busy === a.area_code}
+                      onClick={() => toggle(a)}
+                      className="block w-full text-left disabled:cursor-default"
+                    >
+                      <div className="flex items-start gap-2">
+                        {comingSoon ? null : practitionerOnly ? (
+                          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : a.selected ? (
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                        ) : null}
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-sm font-medium">{a.title}</p>
+                          {a.description && (
+                            <p className="text-xs text-muted-foreground">{a.description}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {comingSoon
+                              ? "Coming soon"
+                              : practitionerOnly
+                                ? "Your practitioner opens this one."
+                                : [
+                                    a.core_prereq_label,
+                                    a.planned_activity_count
+                                      ? `${a.planned_activity_count} ${a.planned_activity_count === 1 ? "activity" : "activities"}`
+                                      : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                          </p>
+                        </div>
                       </div>
+                    </button>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {comingSoon && <Badge variant="secondary">Coming soon</Badge>}
+                      {gateLabel && (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {gateLabel}
+                        </Badge>
+                      )}
+                      {(a.tags || []).map((t) => (
+                        <Badge key={t} variant="outline" className="text-xs font-normal">
+                          {t}
+                        </Badge>
+                      ))}
                     </div>
-                  </button>
-                  {note && (
-                    <p className="mt-2 text-xs text-muted-foreground">{note}</p>
-                  )}
+
+                    {outcomes.length > 0 && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpanded((e) => ({ ...e, [a.area_code]: !e[a.area_code] }))
+                          }
+                          className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          {open ? (
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          )}
+                          What you'll work on
+                        </button>
+                        {open && (
+                          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                            {outcomes.map((o, i) => (
+                              <li key={i}>{o}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    {note && <p className="text-xs text-muted-foreground">{note}</p>}
+                  </div>
                 </div>
               );
             })}

@@ -145,6 +145,13 @@ export interface CoupleStep {
   sessionScaffold?: string[];
   structure?: string;
   listenerRule?: string;
+  /**
+   * Practitioner expectation for a keystone session. `required_if` names a
+   * server-side condition (e.g. "c19_4_in_path") — the client NEVER evaluates
+   * it, it only reads the `practitioner_required` signal the server fires.
+   */
+  practitionerRule?: { recommended?: boolean; required_if?: string };
+
   pacing?: string;
   mode?: string;
   drawsFrom?: string[] | string;

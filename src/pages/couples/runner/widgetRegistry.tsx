@@ -15,6 +15,8 @@ import { InnerTeamWidget } from "@/pages/coaching/runner/widgets/InnerTeamWidget
 import { PairedQaWidget } from "./widgets/PairedQaWidget";
 import { CoupleAgreementWidget } from "./widgets/CoupleAgreementWidget";
 import { JointSessionWidget } from "./widgets/JointSessionWidget";
+import { serverSignal } from "./supportResources";
+
 import { StatementSelectWidget } from "./widgets/StatementSelectWidget";
 import { JourneyMapWidget } from "./widgets/JourneyMapWidget";
 import { VisibilityExplainerWidget } from "./widgets/VisibilityExplainerWidget";
@@ -215,6 +217,10 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
           ? consentedItems((responses || {})["consent_selection"])
           : undefined
       }
+      // Server-fired signal only — the client never works out whether the
+      // required_if condition (e.g. C19.4 on the path) held.
+      practitionerRequired={serverSignal(responses, "practitioner_required")}
+
     />
   ),
   statement_select: ({ step, value, onChange, sessionId, activityCode }) => (

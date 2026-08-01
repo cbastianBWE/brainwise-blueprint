@@ -17,6 +17,7 @@ export function JointSessionWidget({
   sessionId,
   activityCode,
   consented,
+  practitionerRequired,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
@@ -30,7 +31,14 @@ export function JointSessionWidget({
    * owner shared nothing, and the session runs with nothing from that material.
    */
   consented?: string[];
+  /**
+   * Straight from the server `practitioner_required` signal. When the step
+   * carries a `practitionerRule.required_if` and this is true, the session is
+   * held until a practitioner is present — the client never decides this.
+   */
+  practitionerRequired?: boolean;
 }) {
+
   const v = (value || {}) as JointValue;
   const turns = step.turns || [];
   const [index, setIndex] = useState(0);
@@ -92,16 +100,49 @@ export function JointSessionWidget({
     </div>
   );
 
+  const rule = step.practitionerRule;
+  // Required only when the catalogue arms it AND the server says the condition
+  // held for this couple. Otherwise it is a recommendation, nothing more.
+  const held = !!rule?.required_if && !!practitionerRequired;
+  const PractitionerNotice = () =>
+    rule ? (
+      <div
+        className={
+          "rounded-lg border p-3 " + (held ? "border-primary/30 bg-primary/5" : "bg-muted/30")
+        }
+      >
+        <p className="text-xs font-medium text-muted-foreground">
+          {held ? "Your practitioner needs to be here" : "Better with your practitioner"}
+        </p>
+        <p className="mt-1 text-sm">
+          {held
+            ? "This conversation needs your practitioner present. Arrange a session with them and open this together."
+            : "This one is usually easier with your practitioner in the room, though you can do it on your own."}
+        </p>
+      </div>
+    ) : null;
+
+  if (held) {
+    return (
+      <div className="space-y-4">
+        <PractitionerNotice />
+        <Intro />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* The runner owns the step heading — never render step.title/label here. */}
 
+      <PractitionerNotice />
 
       <Rules />
 
       <ConsentNote />
 
       <Intro />
+
 
       {/* a. Turn list */}
       {turns.length > 0 && turn && (
