@@ -548,6 +548,17 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           {/* Who pays — non super-admins only */}
           {!isSuperAdmin && (
             <div className="space-y-3 border-t pt-4">
+              {canUseCredit && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <Switch id="use-credit" checked={useCredit} onCheckedChange={setUseCredit} />
+                    <Label htmlFor="use-credit" className="cursor-pointer">Use a free credit</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    You have {creditsForKind} free {kind} report credit{creditsForKind === 1 ? "" : "s"}.
+                  </p>
+                </div>
+              )}
               <Label>Who pays</Label>
               <RadioGroup
                 value={payer}
