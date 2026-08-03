@@ -270,6 +270,8 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         order_type?: "team" | "paired";
         payer?: "practitioner" | "client";
         client_name?: string;
+        billing_mode?: string;
+        pool_remaining?: number;
       };
 
       const blockedResult = orderResult as { blocked?: boolean; order_type?: "team" | "paired"; included?: number; used?: number; billing_mode?: string; included_remaining?: number | null };
