@@ -545,6 +545,125 @@ export default function MemberDrawerCoach({
           }}
         />
       </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold">Free report grants</h3>
+        <div className="rounded-md border p-3 space-y-3">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Current balance: </span>
+            <span className="font-medium">{renderFreeReportSummary()}</span>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Report type</Label>
+            <Select value={freeReportType} onValueChange={setFreeReportType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select report type" />
+              </SelectTrigger>
+              <SelectContent>
+                {REPORT_TYPES.map((r) => (
+                  <SelectItem key={r.code} value={r.code}>
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Count</Label>
+            <Input
+              type="number"
+              min={1}
+              value={freeReportCount}
+              onChange={(e) => setFreeReportCount(e.target.value)}
+            />
+          </div>
+
+          <Button
+            onClick={() => setFreeReportGrantOpen(true)}
+            disabled={!canOpenFreeReportDialog}
+            className="w-full"
+          >
+            Grant report credits
+          </Button>
+
+          <p className="text-xs text-muted-foreground">
+            This action is audit-logged.
+          </p>
+        </div>
+
+        {freeReportLedger.length > 0 && (
+          <div className="rounded-md border divide-y">
+            {freeReportLedger.slice(0, 10).map((entry: any, idx: number) => {
+              const delta = Number(entry?.delta) || 0;
+              return (
+                <div
+                  key={entry?.id ?? `${entry?.created_at}-${idx}`}
+                  className="px-3 py-2 text-xs flex items-center gap-2"
+                >
+                  <span
+                    className={
+                      delta > 0 ? "text-green-700 font-medium" : "text-muted-foreground font-medium"
+                    }
+                  >
+                    {delta > 0 ? `+${delta}` : `${delta}`}
+                  </span>
+                  <span>{reportTypeLabel(entry?.report_type)}</span>
+                  <span className="text-muted-foreground">{titleCase(entry?.entry_type)}</span>
+                  <span className="text-muted-foreground">
+                    {entry?.created_at ? new Date(entry.created_at).toLocaleDateString() : "—"}
+                  </span>
+                  <span className="text-muted-foreground truncate">{entry?.reason ?? ""}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <JustifiedActionDialog
+          open={freeReportGrantOpen}
+          onOpenChange={setFreeReportGrantOpen}
+          title="Grant free report credits"
+          description={
+            <span>
+              You are about to grant <strong>{freeReportCount}</strong> free{" "}
+              <strong>{reportTypeLabel(freeReportType)}</strong> credit(s) to{" "}
+              <strong>{fullName ?? "this practitioner"}</strong>.
+            </span>
+          }
+          successTitle={`Granted ${freeReportCount} report credit(s)`}
+          onSubmit={async (reason) => {
+            const { error } = await supabase.rpc(
+              "grant_free_reports" as any,
+              {
+                p_coach_user_id: userId,
+                p_report_type: freeReportType,
+                p_count: Number(freeReportCount),
+                p_reason: reason,
+              } as any,
+            );
+            if (error) throw error;
+            await loadFreeReportPool();
+            setFreeReportCount("1");
+            setFreeReportType("");
+            return { changed: true };
+          }}
+          mapError={(raw) => {
+            if (raw.includes("count_must_be_positive"))
+              return "Count must be a positive number.";
+            if (raw.includes("invalid_report_type"))
+              return "Please select a valid report type.";
+            if (raw.includes("coach_not_found"))
+              return "That practitioner could not be found.";
+            if (raw.includes("target_is_not_a_coach"))
+              return "Report credits can only be granted to practitioner accounts.";
+            if (raw.includes("reason_required_min_chars"))
+              return "Please provide a longer reason for this action.";
+            return null;
+          }}
+        />
+      </section>
     </div>
   );
 }
