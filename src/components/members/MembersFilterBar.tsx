@@ -44,7 +44,7 @@ const ACCOUNT_TYPES = [
   "brainwise_super_admin",
   "org_admin",
   "company_admin",
-  "coach",
+  "practitioner",
   "corporate_employee",
   "individual",
 ];
@@ -113,8 +113,8 @@ export default function MembersFilterBar({
         ? "Has assignments"
         : "No assignments";
 
-  const actorLabel = filters.is_coach_actor === null ? "Coach actor: All" : filters.is_coach_actor ? "Coach actor: Yes" : "Coach actor: No";
-  const clientLabel = filters.is_coach_client === null ? "Coach client: All" : filters.is_coach_client ? "Coach client: Yes" : "Coach client: No";
+  const actorLabel = filters.is_coach_actor === null ? "Practitioner actor: All" : filters.is_coach_actor ? "Practitioner actor: Yes" : "Practitioner actor: No";
+  const clientLabel = filters.is_coach_client === null ? "Practitioner client: All" : filters.is_coach_client ? "Practitioner client: Yes" : "Practitioner client: No";
 
   const accountTypesSelected = filters.account_types ?? [];
   const accountTypeLabel =
@@ -232,7 +232,7 @@ export default function MembersFilterBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Coach actor */}
+        {/* Practitioner actor */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">{actorLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
@@ -244,15 +244,15 @@ export default function MembersFilterBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Coach client */}
+        {/* Practitioner client */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">{clientLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onClick={() => update({ is_coach_client: null })}>All</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => update({ is_coach_client: true })}>Coach client</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => update({ is_coach_client: false })}>Not coach client</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: true })}>Practitioner client</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ is_coach_client: false })}>Not practitioner client</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

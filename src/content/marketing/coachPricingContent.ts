@@ -11,7 +11,7 @@ export type CoachPricingItem = {
 
 export const coachPricing: CoachPricingItem[] = [
   {
-    id: "ptp-coach-cert",
+    id: "ptp-practitioner-cert",
     title: "PTP Practitioner Certification",
     priceLabel: "Contact for pricing",
     status: "available",
@@ -25,7 +25,7 @@ export const coachPricing: CoachPricingItem[] = [
   },
   {
     id: "ai-transformation-cert",
-    title: "AI Transformation Coach Certification",
+    title: "AI Transformation Practitioner Certification",
     priceLabel: "Coming Soon",
     status: "coming_soon",
     highlights: [],
@@ -38,8 +38,8 @@ export const coachPricing: CoachPricingItem[] = [
     highlights: [],
   },
   {
-    id: "my-brainwise-coach-cert",
-    title: "My BrainWise Coach Certification",
+    id: "my-brainwise-practitioner-cert",
+    title: "My BrainWise Practitioner Certification",
     priceLabel: "Coming Soon",
     status: "coming_soon",
     highlights: [],

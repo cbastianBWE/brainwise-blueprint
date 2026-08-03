@@ -1158,10 +1158,10 @@ export default function PairedReport() {
           </>
         )}
 
-        {/* coach (privileged) */}
+        {/* practitioner (privileged) */}
         {canSeePrivileged && coach && (
           <>
-            <h2 style={sectionLabel}>For the coach or admin only</h2>
+            <h2 style={sectionLabel}>For the practitioner or admin only</h2>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="Why these were flagged" defaultOpen>
                 {coach.why.map((w, i) => {

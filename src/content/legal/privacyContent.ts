@@ -50,7 +50,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "BrainWise Enterprises is a technology company that provides neuroscience-based psychometric assessments, coaching frameworks, and organizational change tools to individuals, certified coaches, and corporate organizations. We are headquartered in the United States."
+    "text": "BrainWise Enterprises is a technology company that provides neuroscience-based psychometric assessments, coaching frameworks, and organizational change tools to individuals, certified practitioners, and corporate organizations. We are headquartered in the United States."
   },
   {
     "type": "p",
@@ -79,7 +79,7 @@ export const content: LegalBlock[] = [
     "body": [
       [
         "Account information",
-        "Name, email address, password, account type (individual, coach, corporate employee, corporate administrator, super administrator)."
+        "Name, email address, password, account type (individual, practitioner, corporate employee, corporate administrator, super administrator)."
       ],
       [
         "Profile information",
@@ -150,8 +150,8 @@ export const content: LegalBlock[] = [
         "If you access the Service through a corporate account, your employer may provide your name, work email, department, supervisor identity, and organizational level. Your employer is the controller of this information; we are the processor."
       ],
       [
-        "From your coach",
-        "If you are invited by a certified BrainWise coach, the coach provides your name and email and may provide context about which assessment you should take and whether they are paying for it."
+        "From your practitioner",
+        "If you are invited by a certified BrainWise practitioner, the practitioner provides your name and email and may provide context about which assessment you should take and whether they are paying for it."
       ],
       [
         "From payment processors",
@@ -216,7 +216,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "Provide coach-client functionality, certification training, organizational dashboards, and corporate administration tools as applicable to your account type."
+    "text": "Provide practitioner-client functionality, certification training, organizational dashboards, and corporate administration tools as applicable to your account type."
   },
   {
     "type": "h2",
@@ -405,12 +405,12 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "h2",
-    "text": "7.1 With your coach (if applicable)",
-    "id": "with-your-coach-if-applicable"
+    "text": "7.1 With your practitioner (if applicable)",
+    "id": "with-your-practitioner-if-applicable"
   },
   {
     "type": "p",
-    "text": "If you take an assessment as the client of a certified BrainWise coach, your coach can view your assessment results, your debrief status, and limited account information necessary to manage the coaching relationship. The visibility of your results is governed by the \"results released\" toggle controlled by your coach during the debrief lifecycle."
+    "text": "If you take an assessment as the client of a certified BrainWise practitioner, your practitioner can view your assessment results, your debrief status, and limited account information necessary to manage the coaching relationship. The visibility of your results is governed by the \"results released\" toggle controlled by your practitioner during the debrief lifecycle."
   },
   {
     "type": "h2",

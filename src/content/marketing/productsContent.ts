@@ -8,7 +8,7 @@ export const meta = {
   eyebrow: "Products",
   title: "Assessments and certifications.",
   subhead:
-    "Four neuroscience-based assessment instruments and four coach certification tracks. Each instrument is built on validated research. Each certification trains practitioners to deliver them with depth and accuracy.",
+    "Four neuroscience-based assessment instruments and four practitioner certification tracks. Each instrument is built on validated research. Each certification trains practitioners to deliver them with depth and accuracy.",
 };
 
 export const assessments: MarketingCardData[] = [
@@ -23,7 +23,7 @@ export const assessments: MarketingCardData[] = [
       "89-item assessment, ~25 minutes to complete",
       "AI-generated narrative interpretation tied to your dimensional pattern",
       "Facet-level breakdown for deeper insight on each dimension",
-      "Optional debrief through a certified BrainWise coach",
+      "Optional debrief through a certified BrainWise practitioner",
     ],
     cta: { label: "Book a Conversation", action: "open-briefing" },
   },
@@ -76,12 +76,12 @@ export const assessments: MarketingCardData[] = [
 
 export const certifications: MarketingCardData[] = [
   {
-    id: "ptp-coach-cert",
-    title: "PTP Coach Certification",
+    id: "ptp-practitioner-cert",
+    title: "PTP Practitioner Certification",
     summary:
-      "Certify in BrainWise's flagship instrument and coach clients through threat-pattern awareness.",
+      "Certify in BrainWise's flagship instrument and practitioner clients through threat-pattern awareness.",
     body:
-      "The PTP Coach Certification trains you to deliver the Personal Threat Profile to your clients with depth, accuracy, and confidence. The program runs across 19 modules combining virtual instructor-led training (9 hours) with structured debrief practice. You'll deliver a debrief to a known actor, then to an unknown actor, while observing fellow participants debriefing and receiving your own debrief in turn. Certification grants ongoing access to the BrainWise platform, coach-paid client billing, the full assessment library, and the certified coach resources hub.",
+      "The PTP Practitioner Certification trains you to deliver the Personal Threat Profile to your clients with depth, accuracy, and confidence. The program runs across 19 modules combining virtual instructor-led training (9 hours) with structured debrief practice. You'll deliver a debrief to a known actor, then to an unknown actor, while observing fellow participants debriefing and receiving your own debrief in turn. Certification grants ongoing access to the BrainWise platform, practitioner-paid client billing, the full assessment library, and the certified practitioner resources hub.",
     benefits: [
       "19 modules of structured curriculum",
       "9 hours of virtual instructor-led training",
@@ -93,9 +93,9 @@ export const certifications: MarketingCardData[] = [
   },
   {
     id: "ai-transformation-cert",
-    title: "AI Transformation Coach Certification",
+    title: "AI Transformation Practitioner Certification",
     summary:
-      "Certify to coach leaders through AI adoption using the C.A.F.E.S. framework.",
+      "Certify to practitioner leaders through AI adoption using the C.A.F.E.S. framework.",
     body:
       "Coming Soon. Curriculum and pricing details available when this certification launches.",
     benefits: [],
@@ -106,7 +106,7 @@ export const certifications: MarketingCardData[] = [
     id: "combined-cert",
     title: "Combined Certification (PTP + AI Transformation)",
     summary:
-      "Master both BrainWise instruments and coach across both domains.",
+      "Master both BrainWise instruments and practitioner across both domains.",
     body:
       "Coming Soon. Curriculum and pricing details available when this certification launches.",
     benefits: [],
@@ -114,10 +114,10 @@ export const certifications: MarketingCardData[] = [
     cta: { label: "Notify me", action: "open-briefing" },
   },
   {
-    id: "my-brainwise-coach-cert",
-    title: "My BrainWise Coach Certification",
+    id: "my-brainwise-practitioner-cert",
+    title: "My BrainWise Practitioner Certification",
     summary:
-      "Become a fully credentialed BrainWise coach with platform-wide privileges.",
+      "Become a fully credentialed BrainWise practitioner with platform-wide privileges.",
     body:
       "Coming Soon. Curriculum and pricing details available when this certification launches.",
     benefits: [],

@@ -11,10 +11,10 @@ export const CERT_INSTRUMENTS = [
 ];
 
 export const CERTIFICATION_TYPES = [
-  { value: "ptp_coach", label: "PTP Coach" },
-  { value: "ai_transformation_coach", label: "AI Transformation Coach" },
-  { value: "ai_transformation_ptp_coach", label: "AI Transformation + PTP Coach" },
-  { value: "my_brainwise_coach", label: "My BrainWise Coach" },
+  { value: "ptp_coach", label: "PTP Practitioner" },
+  { value: "ai_transformation_coach", label: "AI Transformation Practitioner" },
+  { value: "ai_transformation_ptp_coach", label: "AI Transformation + PTP Practitioner" },
+  { value: "my_brainwise_coach", label: "My BrainWise Practitioner" },
 ];
 
 export const DELIVERY_MODES = [

@@ -427,7 +427,7 @@ export default function MembersTable({
                   {showCol("relationship") && (
                     <TableCell className="hidden lg:table-cell">
                       {row.is_coach_actor ? <Badge>Actor</Badge>
-                        : row.is_coach_client ? <Badge variant="secondary">Coach client</Badge>
+                        : row.is_coach_client ? <Badge variant="secondary">Practitioner client</Badge>
                         : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                   )}

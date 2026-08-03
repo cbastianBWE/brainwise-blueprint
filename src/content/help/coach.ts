@@ -26,9 +26,9 @@ const SIDEBAR = {
 
 export const coachContent: HelpRoleContent = {
   role: "coach",
-  label: "Coach",
+  label: "Practitioner",
   description:
-    "You use BrainWise with your own coaching clients. These are the tasks coaches do most often — invite clients, order assessments, review their results, and generate team or paired reports.",
+    "You use BrainWise with your own coaching clients. These are the tasks practitioners do most often — invite clients, order assessments, review their results, and generate team or paired reports.",
   guides: [
     {
       id: "invite-and-manage-clients",
@@ -40,7 +40,7 @@ export const coachContent: HelpRoleContent = {
           body:
             "In the sidebar, click My Clients. This is your roster of coaching clients and the hub for inviting new ones.",
           imageUrl: myClients.url,
-          imageAlt: "Coach sidebar with My Clients highlighted",
+          imageAlt: "Practitioner sidebar with My Clients highlighted",
           capture: { path: "/my-clients", assetPath: "src/assets/help/coach/10_my_clients.png" },
           hotspots: [{ ...SIDEBAR.myClients, label: "Click My Clients" }],
         },
@@ -93,7 +93,7 @@ export const coachContent: HelpRoleContent = {
         {
           title: "Read and share the report",
           body:
-            "Once open, the client's report renders just like your own. You can highlight passages during a debrief; your highlights are visible to you and any coach the client has shared with.",
+            "Once open, the client's report renders just like your own. You can highlight passages during a debrief; your highlights are visible to you and any practitioner the client has shared with.",
         },
       ],
     },
@@ -200,8 +200,8 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "coach-dashboard",
-      title: "Use your coach dashboard",
+      id: "practitioner-dashboard",
+      title: "Use your practitioner dashboard",
       summary: "Get oriented every time you sign in — the dashboard is your daily home.",
       steps: [
         {
@@ -209,7 +209,7 @@ export const coachContent: HelpRoleContent = {
           body:
             "Sign in and you'll arrive at Dashboard. Quick-jump cards take you to My Clients, Team & Paired Reports, and Client Results, and any in-progress assessments of your own appear in 'Continue where you left off'.",
           imageUrl: coachDashboard.url,
-          imageAlt: "Coach dashboard with quick-jump cards",
+          imageAlt: "Practitioner dashboard with quick-jump cards",
           capture: { path: "/dashboard", assetPath: "src/assets/help/coach/90_dashboard.png" },
         },
         {
@@ -227,9 +227,9 @@ export const coachContent: HelpRoleContent = {
         {
           title: "Open AI Chat",
           body:
-            "Click AI Chat in the sidebar. As a coach, you can load any client whose results you have access to into the assessment context bar at the top.",
+            "Click AI Chat in the sidebar. As a practitioner, you can load any client whose results you have access to into the assessment context bar at the top.",
           imageUrl: aiChat.url,
-          imageAlt: "Coach AI Chat with client context selector",
+          imageAlt: "Practitioner AI Chat with client context selector",
           capture: { path: "/ai-chat", assetPath: "src/assets/help/coach/70_ai_chat.png" },
           hotspots: [
             { x: 1.2, y: 27.0, w: 18.3, h: 1.9, label: "Click AI Chat" },
@@ -248,25 +248,25 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "coach-resources",
-      title: "Find and use Coach Resources",
-      summary: "Access reference cards, videos, and debrief guides curated for coaches.",
+      id: "practitioner-resources",
+      title: "Find and use Practitioner Resources",
+      summary: "Access reference cards, videos, and debrief guides curated for practitioners.",
       steps: [
         {
           title: "Open Resources",
           body:
-            "Click Resources in the sidebar. As a coach you'll land on the Coach Resources tab by default — it holds the PTP coach cards, debrief videos ('What Great Looks Like'), and every reference guide.",
+            "Click Resources in the sidebar. As a practitioner you'll land on the Practitioner Resources tab by default — it holds the PTP practitioner cards, debrief videos ('What Great Looks Like'), and every reference guide.",
           imageUrl: resourcesPage.url,
-          imageAlt: "Coach Resources page with folders and guides",
+          imageAlt: "Practitioner Resources page with folders and guides",
           capture: { path: "/resources", assetPath: "src/assets/help/coach/80_resources.png" },
           hotspots: [
-            { x: 33.5, y: 9.5, w: 15.5, h: 2.4, label: "Coach Resources tab" },
+            { x: 33.5, y: 9.5, w: 15.5, h: 2.4, label: "Practitioner Resources tab" },
           ],
         },
         {
           title: "Open a folder or resource",
           body:
-            "Folders like 'PTP Coach Cards' group related material. Everything on this page is also shown at the top level so you can browse quickly without drilling in. Use the search bar to jump to a specific topic.",
+            "Folders like 'PTP Practitioner Cards' group related material. Everything on this page is also shown at the top level so you can browse quickly without drilling in. Use the search bar to jump to a specific topic.",
         },
         {
           title: "Watch a debrief video",
@@ -276,7 +276,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "coach-own-results",
+      id: "practitioner-own-results",
       title: "Manage your own assessments",
       summary: "You take BrainWise assessments too — treat your own results like any client.",
       steps: [
@@ -285,7 +285,7 @@ export const coachContent: HelpRoleContent = {
           body:
             "Click My Assessments in the sidebar to see everything you've completed personally. This is separate from Client Results and stays private to you.",
           imageUrl: coachMyResults.url,
-          imageAlt: "Coach's own My Results page",
+          imageAlt: "Practitioner's own My Results page",
           capture: { path: "/my-results", assetPath: "src/assets/help/coach/91_my_results.png" },
         },
         {
@@ -296,7 +296,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "coach-account-security",
+      id: "practitioner-account-security",
       title: "Update account & security settings",
       summary: "Change your password, enable 2FA, and manage trusted devices.",
       steps: [
@@ -305,13 +305,13 @@ export const coachContent: HelpRoleContent = {
           body:
             "Click Settings in the sidebar. Your profile info, password, notification preferences, two-factor authentication, and trusted devices are all here.",
           imageUrl: coachSettings.url,
-          imageAlt: "Coach settings page",
+          imageAlt: "Practitioner settings page",
           capture: { path: "/settings", assetPath: "src/assets/help/coach/92_settings.png" },
         },
         {
           title: "Enable two-factor authentication",
           body:
-            "In the Two-Factor Authentication card, click Enable and scan the QR code with an authenticator app. As a coach with access to client data, keeping 2FA on is strongly recommended.",
+            "In the Two-Factor Authentication card, click Enable and scan the QR code with an authenticator app. As a practitioner with access to client data, keeping 2FA on is strongly recommended.",
         },
         {
           title: "Revoke trusted devices",

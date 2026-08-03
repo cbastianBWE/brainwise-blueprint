@@ -24,7 +24,7 @@ export default function CoupleRoster({
     return (
       <Card>
         <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          No couples yet. A couple appears here once you coach both partners.
+          No couples yet. A couple appears here once you practitioner both partners.
         </CardContent>
       </Card>
     );

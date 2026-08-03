@@ -224,7 +224,7 @@ export default function ForPractitioners() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginTop: 48 }}>
             {[
               { eyebrow: "PTP Practitioner", color: "var(--bw-teal)", title: "The entry credential", body: "Certified to administer and debrief the Personal Threat & Reward Profile, and to run paired and team profiles." },
-              { eyebrow: "Full Coach", color: "var(--bw-orange)", title: "The deeper credential", body: "Trained across the full activity library — foundational, typical, and advanced. A separate, deeper certification taken when you're ready to run the whole program with clients." },
+              { eyebrow: "Full Practitioner", color: "var(--bw-orange)", title: "The deeper credential", body: "Trained across the full activity library — foundational, typical, and advanced. A separate, deeper certification taken when you're ready to run the whole program with clients." },
               { eyebrow: "Enterprise Pathway", color: "var(--bw-forest)", title: "For internal teams", body: "For L&D, OD, and talent teams equipping their own people to guide the activity modules, usually through asynchronous learning rather than a full second certification." },
             ].map((c) => (
               <div key={c.eyebrow} style={cardStyle}>
@@ -300,7 +300,7 @@ export default function ForPractitioners() {
           </p>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {[
-              { color: "var(--bw-teal)", title: "Personalized cohorts, never more than six to one", body: "Every cohort is capped at six participants to one master certified coach. Facilitators scale with enrollment, so the ratio never slips. You are one of six people a master coach is actually developing, not a seat in a webinar." },
+              { color: "var(--bw-teal)", title: "Personalized cohorts, never more than six to one", body: "Every cohort is capped at six participants to one master certified practitioner. Facilitators scale with enrollment, so the ratio never slips. You are one of six people a master practitioner is actually developing, not a seat in a webinar." },
               { color: "var(--bw-orange)", title: "The actor debriefs", body: "You put what you learn into practice on live people, not case studies. You send the PTP to two actors, one you know and one you do not, and both take the full assessment. Then you deliver your first real debrief to each, with feedback. Debriefing a stranger and someone familiar surfaces different challenges, which is exactly the point." },
             ].map((c) => (
               <div key={c.title} style={cardStyle}>
@@ -361,7 +361,7 @@ export default function ForPractitioners() {
           <div>
             <h2 style={h2Style}>What you can deliver</h2>
             <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20 }}>
-              The PTP debrief, the Paired Profile, and the Team Profile at the practitioner level. Once you hold the full coach certification, the complete 200+ activity program with guided pathways.
+              The PTP debrief, the Paired Profile, and the Team Profile at the practitioner level. Once you hold the full practitioner certification, the complete 200+ activity program with guided pathways.
             </p>
           </div>
           <p

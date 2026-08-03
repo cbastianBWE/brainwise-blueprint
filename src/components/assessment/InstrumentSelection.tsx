@@ -563,7 +563,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                       className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
                       onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
                     >
-                      {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Paid)"}
+                      {isInProgress ? "Continue Assessment" : "Start Assessment (Practitioner Paid)"}
                     </Button>
                   );
                 }
@@ -621,7 +621,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
               } else if (hasFreeCertPool) {
                 buttonContent = (
                   <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'free_cert_pool')}>
-                    {isInProgress ? "Continue Assessment" : "Start Assessment (Coach Cert)"}
+                    {isInProgress ? "Continue Assessment" : "Start Assessment (Practitioner Cert)"}
                   </Button>
                 );
               } else if (actorDebrief) {
@@ -652,7 +652,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 } else {
                   buttonContent = (
                     <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
-                      Your Coach Wants You to Take This
+                      Your Practitioner Wants You to Take This
                     </Button>
                   );
                 }
@@ -729,9 +729,9 @@ export default function InstrumentSelection({ onSelect }: Props) {
       <Dialog open={showSelfPayDialog} onOpenChange={setShowSelfPayDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Your Coach Has Invited You</DialogTitle>
+            <DialogTitle>Your Practitioner Has Invited You</DialogTitle>
             <DialogDescription>
-              Your coach has ordered {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} for you.
+              Your practitioner has ordered {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} for you.
               Choose how you'd like to access them.
             </DialogDescription>
           </DialogHeader>
@@ -797,7 +797,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                       <p className="text-sm text-muted-foreground">
                         {unavailable
                           ? "Pricing unavailable, please refresh."
-                          : `One-time payment of $${perPrice!.toFixed(2)} × ${selfPayCoachInstrumentIds.size} assessment${selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your coach ordered. No subscription required.`}
+                          : `One-time payment of $${perPrice!.toFixed(2)} × ${selfPayCoachInstrumentIds.size} assessment${selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} your practitioner ordered. No subscription required.`}
                       </p>
                       <Button
                         className="w-full"

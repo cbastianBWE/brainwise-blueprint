@@ -1092,10 +1092,10 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
           {debriefPendingIds.has(selected.result.assessment_id) && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="flex flex-col items-center justify-center py-12 space-y-3 text-center">
-                <p className="text-lg font-semibold text-foreground">Results Pending Coach Debrief</p>
+                <p className="text-lg font-semibold text-foreground">Results Pending Practitioner Debrief</p>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Your coach has asked to review your results with you before they are released.
-                  Please connect with your coach to schedule your debrief session.
+                  Your practitioner has asked to review your results with you before they are released.
+                  Please connect with your practitioner to schedule your debrief session.
                 </p>
               </CardContent>
             </Card>
@@ -1160,13 +1160,13 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 onValueChange={(v) => setCoachViewActive(v === "coach")}
               >
                 <TabsList>
-                  <TabsTrigger value="coach">Coach Report</TabsTrigger>
+                  <TabsTrigger value="coach">Practitioner Report</TabsTrigger>
                   <TabsTrigger value="client">Client Report</TabsTrigger>
                 </TabsList>
               </Tabs>
               <p className="text-xs text-muted-foreground mt-2">
                 {coachViewActive
-                  ? "Coach view — includes pattern alert, coaching questions, and C.A.F.E.S.–PTP mapping."
+                  ? "Practitioner view — includes pattern alert, coaching questions, and C.A.F.E.S.–PTP mapping."
                   : "Client view — shows only what the client sees. PDF export will reflect this view."}
               </p>
             </section>
@@ -1609,7 +1609,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 <CardContent className="space-y-3">
                   {isCoachView && permissionLevel === 'score_summary' ? (
                     <p className="text-sm text-muted-foreground">
-                      The client has limited coach access to scores only.
+                      The client has limited practitioner access to scores only.
                     </p>
                   ) : selected.result.ai_narrative ? (
                     <>
@@ -2320,7 +2320,7 @@ function AirsaAwaitingView({
         </div>
       </section>
 
-      {/* Block 3: Action buttons (not in coach view) */}
+      {/* Block 3: Action buttons (not in practitioner view) */}
       {!isCoachView && (
         <section style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
           {!hasPairedManager ? (

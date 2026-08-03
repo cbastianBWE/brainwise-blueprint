@@ -784,7 +784,7 @@ function ContentItemEditor({
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="auto">Auto</SelectItem>
-                    <SelectItem value="coach_review_required">Coach review required</SelectItem>
+                    <SelectItem value="coach_review_required">Practitioner review required</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

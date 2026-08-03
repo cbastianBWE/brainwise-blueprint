@@ -385,7 +385,7 @@ export default function DevelopmentPlan() {
                         <div key={c.id} className="text-sm rounded-md border p-2.5">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              {c.author_name ?? (c.author_role === "coach" ? "Coach" : "You")}
+                              {c.author_name ?? (c.author_role === "coach" ? "Practitioner" : "You")}
                             </span>
                             <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                               {c.author_role}

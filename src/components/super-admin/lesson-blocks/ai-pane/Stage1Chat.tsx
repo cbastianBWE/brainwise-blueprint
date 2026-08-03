@@ -63,7 +63,7 @@ interface Props {
 }
 
 const VOICE_LABELS: Record<string, string> = {
-  conversational_coach: "Conversational coach",
+  conversational_coach: "Conversational practitioner",
   tactical_direct: "Tactical, direct",
   reflective_inquiry: "Reflective inquiry",
   academic_grounded: "Academic, grounded",

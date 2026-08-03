@@ -81,12 +81,12 @@ export const content: LegalBlock[] = [
         "Direct subscribers who pay for their own assessments and features."
       ],
       [
-        "Coach",
-        "Certified BrainWise coaches who deliver assessments to their own clients."
+        "Practitioner",
+        "Certified BrainWise practitioners who deliver assessments to their own clients."
       ],
       [
-        "Coach client",
-        "Individuals who take assessments at the invitation of a certified coach."
+        "Practitioner client",
+        "Individuals who take assessments at the invitation of a certified practitioner."
       ],
       [
         "Corporate employee",
@@ -104,7 +104,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "Your account type may change as your relationship with BrainWise evolves (for example, if you become certified as a coach, or if your employer signs a corporate contract that includes you). Different rights and obligations apply to different account types."
+    "text": "Your account type may change as your relationship with BrainWise evolves (for example, if you become certified as a practitioner, or if your employer signs a corporate contract that includes you). Different rights and obligations apply to different account types."
   },
   {
     "type": "h1",
@@ -151,7 +151,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "Pricing for individual subscriptions, per-assessment purchases, coach certifications, and corporate contracts is set forth on our pricing page or in your specific contract. Prices are quoted in US Dollars unless otherwise specified and exclude taxes, which you are responsible for paying where applicable."
+    "text": "Pricing for individual subscriptions, per-assessment purchases, practitioner certifications, and corporate contracts is set forth on our pricing page or in your specific contract. Prices are quoted in US Dollars unless otherwise specified and exclude taxes, which you are responsible for paying where applicable."
   },
   {
     "type": "h2",
@@ -164,16 +164,16 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "h2",
-    "text": "5.3 Coach-paid client assessments",
-    "id": "coach-paid-client-assessments"
+    "text": "5.3 Practitioner-paid client assessments",
+    "id": "practitioner-paid-client-assessments"
   },
   {
     "type": "p",
-    "text": "When a coach pays for a client's assessment, we generate a credit (Stripe coupon) valued at the amount paid, which is automatically applied when the client signs up. Coupons expire 90 days after issuance unless otherwise specified."
+    "text": "When a practitioner pays for a client's assessment, we generate a credit (Stripe coupon) valued at the amount paid, which is automatically applied when the client signs up. Coupons expire 90 days after issuance unless otherwise specified."
   },
   {
     "type": "p",
-    "text": "Refund policy for coach-paid assessments: Refunds are processed automatically when the coach revokes an active invitation that has not been redeemed by the client AND the original payment was made within the last 90 days, OR when the invitation expires (30 days) without the client redeeming it."
+    "text": "Refund policy for practitioner-paid assessments: Refunds are processed automatically when the practitioner revokes an active invitation that has not been redeemed by the client AND the original payment was made within the last 90 days, OR when the invitation expires (30 days) without the client redeeming it."
   },
   {
     "type": "p",
@@ -207,7 +207,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "Coach-paid client assessments: See Section 5.3 above for the auto-refund policy applicable to coach-paid invitations."
+    "text": "Practitioner-paid client assessments: See Section 5.3 above for the auto-refund policy applicable to practitioner-paid invitations."
   },
   {
     "type": "p",
@@ -305,12 +305,12 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "h1",
-    "text": "7. Coach obligations and certification",
-    "id": "coach-obligations-and-certification"
+    "text": "7. Practitioner obligations and certification",
+    "id": "practitioner-obligations-and-certification"
   },
   {
     "type": "p",
-    "text": "If you are or become a BrainWise-certified coach, the following additional obligations apply to your use of the Service. These obligations are material; failure to comply may result in suspension or revocation of your certification."
+    "text": "If you are or become a BrainWise-certified practitioner, the following additional obligations apply to your use of the Service. These obligations are material; failure to comply may result in suspension or revocation of your certification."
   },
   {
     "type": "p",
@@ -326,7 +326,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "Not use coupons, free assessment allotments, or other coach-paid mechanisms in ways that violate these Terms or applicable law."
+    "text": "Not use coupons, free assessment allotments, or other practitioner-paid mechanisms in ways that violate these Terms or applicable law."
   },
   {
     "type": "p",
@@ -360,7 +360,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "Subject to your compliance with these Terms, we grant you a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to access and use the Service for your personal, non-commercial purposes (or, for coaches and corporate accounts, for the licensed coaching or organizational purposes set forth in your applicable contract). All other rights are reserved."
+    "text": "Subject to your compliance with these Terms, we grant you a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to access and use the Service for your personal, non-commercial purposes (or, for practitioners and corporate accounts, for the licensed coaching or organizational purposes set forth in your applicable contract). All other rights are reserved."
   },
   {
     "type": "h2",
@@ -431,12 +431,12 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "h2",
-    "text": "9.4 Coaches must apply professional judgment",
-    "id": "coaches-must-apply-professional-judgment"
+    "text": "9.4 Practitioners must apply professional judgment",
+    "id": "practitioners-must-apply-professional-judgment"
   },
   {
     "type": "p",
-    "text": "Coaches who use AI-generated content must apply their own professional judgment, training, and ethical standards before delivering it to clients. AI output should not be relayed verbatim or treated as authoritative."
+    "text": "Practitioners who use AI-generated content must apply their own professional judgment, training, and ethical standards before delivering it to clients. AI output should not be relayed verbatim or treated as authoritative."
   },
   {
     "type": "h2",
@@ -467,16 +467,16 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "h1",
-    "text": "10. Coach-client and peer access disclosures",
-    "id": "coach-client-and-peer-access-disclosures"
+    "text": "10. Practitioner-client and peer access disclosures",
+    "id": "practitioner-client-and-peer-access-disclosures"
   },
   {
     "type": "p",
-    "text": "If you are a coach client, your coach can view your assessment results during the coaching relationship. If you are a corporate user, certain peer or supervisor sharing options exist that you control through your privacy settings, plus a per-request peer access mechanism that requires your explicit consent for each request. Your individual NAI and HSS results are never visible to coaches or peers regardless of corporate context. See our Privacy Policy for details."
+    "text": "If you are a practitioner client, your practitioner can view your assessment results during the coaching relationship. If you are a corporate user, certain peer or supervisor sharing options exist that you control through your privacy settings, plus a per-request peer access mechanism that requires your explicit consent for each request. Your individual NAI and HSS results are never visible to practitioners or peers regardless of corporate context. See our Privacy Policy for details."
   },
   {
     "type": "p",
-    "text": "By accepting a coach invitation, you consent to the coach's access to your assessment results during the coaching relationship. You may revoke this access by contacting us, though doing so may end the coaching relationship."
+    "text": "By accepting a practitioner invitation, you consent to the practitioner's access to your assessment results during the coaching relationship. You may revoke this access by contacting us, though doing so may end the coaching relationship."
   },
   {
     "type": "h1",
@@ -567,7 +567,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "If you are a coach: any claim arising from your coaching practice, including from your delivery of assessments to clients, your interpretation of results for clients, or your conduct in coaching relationships."
+    "text": "If you are a practitioner: any claim arising from your coaching practice, including from your delivery of assessments to clients, your interpretation of results for clients, or your conduct in coaching relationships."
   },
   {
     "type": "p",
@@ -654,7 +654,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "If informal resolution does not succeed, any dispute, claim, or controversy arising out of or relating to these Terms or the Service (\"Dispute\") will be resolved by binding individual arbitration administered by the American Arbitration Association (AAA) under its Consumer Arbitration Rules then in effect (or, for disputes between BrainWise and businesses or coaches, the AAA Commercial Arbitration Rules). Arbitration will be conducted by a single arbitrator. The arbitration will be held in Fulton County, Georgia, or, at your election as a consumer, by phone or video. Judgment on the arbitration award may be entered in any court of competent jurisdiction."
+    "text": "If informal resolution does not succeed, any dispute, claim, or controversy arising out of or relating to these Terms or the Service (\"Dispute\") will be resolved by binding individual arbitration administered by the American Arbitration Association (AAA) under its Consumer Arbitration Rules then in effect (or, for disputes between BrainWise and businesses or practitioners, the AAA Commercial Arbitration Rules). Arbitration will be conducted by a single arbitrator. The arbitration will be held in Fulton County, Georgia, or, at your election as a consumer, by phone or video. Judgment on the arbitration award may be entered in any court of competent jurisdiction."
   },
   {
     "type": "h2",

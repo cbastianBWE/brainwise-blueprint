@@ -485,7 +485,7 @@ export default function PrivacySettings() {
         </CardContent>
       </Card>
 
-      {/* Data Sharing card — Coach only */}
+      {/* Data Sharing card — Practitioner only */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -499,8 +499,8 @@ export default function PrivacySettings() {
               <div className="flex items-center gap-3">
                 <UserCircle className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-foreground">My Coach</p>
-                  <p className="text-sm text-muted-foreground">Allow your assigned coach to view your results</p>
+                  <p className="font-medium text-foreground">My Practitioner</p>
+                  <p className="text-sm text-muted-foreground">Allow your assigned practitioner to view your results</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

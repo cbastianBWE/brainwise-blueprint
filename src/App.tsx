@@ -288,7 +288,7 @@ const App = () => (
               <Route path="/settings/access-history" element={<AccessHistory />} />
               <Route path="/help" element={<Help />} />
 
-              {/* Coach */}
+              {/* Practitioner */}
               <Route path="/coach/clients" element={<PractitionerCoachGuard><CoachClients /></PractitionerCoachGuard>} />
               <Route path="/coach/order-assessment" element={<PractitionerCoachGuard><OrderAssessment /></PractitionerCoachGuard>} />
               <Route path="/coach/client-results" element={<PractitionerCoachGuard><ClientResults /></PractitionerCoachGuard>} />

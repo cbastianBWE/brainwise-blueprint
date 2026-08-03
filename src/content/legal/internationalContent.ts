@@ -220,7 +220,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "We do not make solely automated decisions that produce legal or similarly significant effects about you. AI-generated content from the Service supports human reflection and human-led coaching; it does not, by itself, determine outcomes that legally affect you. If your employer or coach uses our Service in any decision-making process, that use is governed by the human-decision-maker, not by us, and is subject to applicable employment and anti-discrimination laws."
+    "text": "We do not make solely automated decisions that produce legal or similarly significant effects about you. AI-generated content from the Service supports human reflection and human-led coaching; it does not, by itself, determine outcomes that legally affect you. If your employer or practitioner uses our Service in any decision-making process, that use is governed by the human-decision-maker, not by us, and is subject to applicable employment and anti-discrimination laws."
   },
   {
     "type": "h1",
@@ -297,7 +297,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "As described in Section 3 of our Privacy Policy: directly from you, automatically from your device when you use the Service, and from third parties acting on your behalf (your employer, your coach, our service providers)."
+    "text": "As described in Section 3 of our Privacy Policy: directly from you, automatically from your device when you use the Service, and from third parties acting on your behalf (your employer, your practitioner, our service providers)."
   },
   {
     "type": "h2",
@@ -324,7 +324,7 @@ export const content: LegalBlock[] = [
   },
   {
     "type": "p",
-    "text": "California residents have the right to direct businesses to limit the use of sensitive personal information to specified purposes. We use sensitive personal information (assessment responses) only for the purposes you have authorized: providing assessment results, generating AI interpretations you have requested, providing your assessment data to your coach (if you are a coach client) or your employer (subject to the visibility rules described in our Privacy Policy and the configuration of your sharing preferences). We do not use sensitive personal information for any other purpose, so the practical effect of a limit-use request is to confirm our existing practice. To make such a request, contact privacy@brainwiseenterprises.com."
+    "text": "California residents have the right to direct businesses to limit the use of sensitive personal information to specified purposes. We use sensitive personal information (assessment responses) only for the purposes you have authorized: providing assessment results, generating AI interpretations you have requested, providing your assessment data to your practitioner (if you are a practitioner client) or your employer (subject to the visibility rules described in our Privacy Policy and the configuration of your sharing preferences). We do not use sensitive personal information for any other purpose, so the practical effect of a limit-use request is to confirm our existing practice. To make such a request, contact privacy@brainwiseenterprises.com."
   },
   {
     "type": "h2",

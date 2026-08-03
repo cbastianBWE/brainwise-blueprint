@@ -57,10 +57,10 @@ const instrumentLabel = (code: string) =>
   INSTRUMENTS.find((i) => i.code === code)?.label ?? code;
 
 const CERT_LABELS: Record<string, string> = {
-  ptp_coach: "PTP Certified Coach",
-  ai_transformation_coach: "AI Transformation Certified Coach",
-  ai_transformation_ptp_coach: "AI Transformation + PTP Certified Coach",
-  my_brainwise_coach: "My BrainWise Coach",
+  ptp_coach: "PTP Certified Practitioner",
+  ai_transformation_coach: "AI Transformation Certified Practitioner",
+  ai_transformation_ptp_coach: "AI Transformation + PTP Certified Practitioner",
+  my_brainwise_coach: "My BrainWise Practitioner",
 };
 
 
@@ -210,14 +210,14 @@ export default function MemberDrawerCoach({
 
       {!relQuery.error && (relQuery.data?.length ?? 0) > 0 && (
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold">Coach client & actor activity</h3>
+          <h3 className="text-sm font-semibold">Practitioner client & actor activity</h3>
           <div className="rounded-md border divide-y">
             {(relQuery.data ?? []).map((row, i) => (
               <div key={i} className="p-3 text-sm flex flex-wrap items-center gap-2">
                 {row.is_actor ? (
                   <Badge>Actor</Badge>
                 ) : (
-                  <Badge variant="secondary">Coach client</Badge>
+                  <Badge variant="secondary">Practitioner client</Badge>
                 )}
                 <span className="text-muted-foreground">{row.invitation_status}</span>
                 <span className="text-muted-foreground">·</span>
@@ -286,7 +286,7 @@ export default function MemberDrawerCoach({
           <JustifiedActionDialog
             open={markCertifyOpen}
             onOpenChange={setMarkCertifyOpen}
-            title="Mark coach as certified"
+            title="Mark practitioner as certified"
             description={
               <span>
                 You are about to mark{" "}
@@ -298,7 +298,7 @@ export default function MemberDrawerCoach({
                 .
               </span>
             }
-            successTitle="Coach certified"
+            successTitle="Practitioner certified"
             onSubmit={async () => {
               if (!user?.id || !selectedCertType) {
                 throw new Error("Missing context");
@@ -512,7 +512,7 @@ export default function MemberDrawerCoach({
             <span>
               You are about to grant <strong>{freeClientCount}</strong> free{" "}
               <strong>{instrumentLabel(freeClientInstrument)}</strong> client
-              assessment(s) to <strong>{fullName ?? "this coach"}</strong>.
+              assessment(s) to <strong>{fullName ?? "this practitioner"}</strong>.
             </span>
           }
           successTitle={`Granted ${freeClientCount} free client assessment(s)`}
@@ -538,7 +538,7 @@ export default function MemberDrawerCoach({
             if (raw.includes("invalid_instrument_id"))
               return "Please select a valid instrument.";
             if (raw.includes("coach_not_found"))
-              return "That coach could not be found.";
+              return "That practitioner could not be found.";
             if (raw.includes("reason_required_min_chars"))
               return "Please provide a longer reason for this action.";
             return null;

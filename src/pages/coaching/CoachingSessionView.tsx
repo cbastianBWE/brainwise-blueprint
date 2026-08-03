@@ -105,11 +105,11 @@ export default function CoachingSessionView() {
         .select("id")
         .single();
       if (error) {
-        toast.error("Couldn't share with your coach.");
+        toast.error("Couldn't share with your practitioner.");
         return;
       }
       setExistingShareId((data as any).id);
-      toast.success("Shared with your coach.");
+      toast.success("Shared with your practitioner.");
     } finally {
       setSharing(false);
     }
@@ -278,7 +278,7 @@ export default function CoachingSessionView() {
                   ) : (
                     <Share2 className="h-4 w-4" />
                   )}
-                  Share with my coach
+                  Share with my practitioner
                 </>
               )}
             </Button>

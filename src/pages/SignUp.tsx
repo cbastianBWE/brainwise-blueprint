@@ -14,10 +14,10 @@ import { stashBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 
 const CERT_LABELS: Record<string, string> = {
-  ptp_coach: 'PTP Certified Coach',
-  ai_transformation_coach: 'AI Transformation Certified Coach',
-  ai_transformation_ptp_coach: 'AI Transformation + PTP Certified Coach',
-  my_brainwise_coach: 'My BrainWise Coach',
+  ptp_coach: 'PTP Certified Practitioner',
+  ai_transformation_coach: 'AI Transformation Certified Practitioner',
+  ai_transformation_ptp_coach: 'AI Transformation + PTP Certified Practitioner',
+  my_brainwise_coach: 'My BrainWise Practitioner',
 };
 
 const SignUp = () => {
@@ -206,15 +206,15 @@ const SignUp = () => {
               <p className="text-sm text-foreground">
                 {bulkInfo.valid ? (
                   <>
-                    {bulkInfo.coach_name ? <strong>{bulkInfo.coach_name}</strong> : "Your coach"} has
+                    {bulkInfo.coach_name ? <strong>{bulkInfo.coach_name}</strong> : "Your practitioner"} has
                     prepaid a <strong>{bulkInfo.instrument_name ?? "BrainWise"}</strong> assessment for you.
                     Create your account and it will be added automatically
                     {typeof bulkInfo.seats_remaining === "number" ? ` (${bulkInfo.seats_remaining} seats left)` : ""}.
                   </>
                 ) : bulkInfo.reason === "exhausted" ? (
-                  <>This assessment link is full — all seats have been claimed. Ask your coach for a new link.</>
+                  <>This assessment link is full — all seats have been claimed. Ask your practitioner for a new link.</>
                 ) : bulkInfo.reason === "expired" ? (
-                  <>This assessment link has expired. Ask your coach for a new one.</>
+                  <>This assessment link has expired. Ask your practitioner for a new one.</>
                 ) : bulkInfo.reason === "not_yet_active" ? (
                   <>This assessment link isn't active yet. Check back shortly.</>
                 ) : (

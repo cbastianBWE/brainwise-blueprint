@@ -126,7 +126,7 @@ export default function ManageReportAccessDialog({ report, open, onOpenChange }:
     }
     const res = data as { granted_count?: number; already_granted?: string[]; invalid?: string[] };
     const n = res?.granted_count ?? 0;
-    if (n > 0) toast.success(`Granted access to ${n} coach${n === 1 ? "" : "es"}.`);
+    if (n > 0) toast.success(`Granted access to ${n} practitioner${n === 1 ? "" : "s"}.`);
     else toast.info("No new access granted.");
     if (res?.invalid && res.invalid.length > 0) {
       toast.warning(`${res.invalid.length} selected user(s) could not be found.`);
@@ -171,12 +171,12 @@ export default function ManageReportAccessDialog({ report, open, onOpenChange }:
 
         <div className="space-y-6 py-2">
           <div className="space-y-2">
-            <Label>Coaches with access</Label>
+            <Label>Practitioners with access</Label>
             {loadingGrantees ? (
               <div className="py-6 text-sm text-muted-foreground text-center">Loading...</div>
             ) : grantees.length === 0 ? (
               <div className="border rounded-md px-3 py-6 text-sm text-muted-foreground text-center">
-                No coaches have access yet.
+                No practitioners have access yet.
               </div>
             ) : (
               <div className="border rounded-md divide-y">
@@ -208,11 +208,11 @@ export default function ManageReportAccessDialog({ report, open, onOpenChange }:
           </div>
 
           <div className="space-y-2">
-            <Label>Add coaches</Label>
-            <Input placeholder="Search coaches by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <Label>Add practitioners</Label>
+            <Input placeholder="Search practitioners by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
             <div className="border rounded-md max-h-56 overflow-y-auto divide-y">
               {results.length === 0 ? (
-                <div className="px-3 py-6 text-sm text-muted-foreground text-center">No coaches found.</div>
+                <div className="px-3 py-6 text-sm text-muted-foreground text-center">No practitioners found.</div>
               ) : (
                 results.map((row) => {
                   const alreadyHasAccess = granteeIds.has(row.user_id);

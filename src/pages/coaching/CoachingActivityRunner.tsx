@@ -387,11 +387,11 @@ export default function CoachingActivityRunner() {
       .select("id,mode")
       .single();
     if (error) {
-      toast.error("Couldn't share with your coach.");
+      toast.error("Couldn't share with your practitioner.");
       return;
     }
     setExistingShare({ id: data.id, mode: data.mode });
-    toast.success("Shared with your coach.");
+    toast.success("Shared with your practitioner.");
   }, [user, coachUserId]);
 
   const toggleAlwaysShare = useCallback(
@@ -747,12 +747,12 @@ export default function CoachingActivityRunner() {
                   <div className="flex flex-wrap items-center gap-2">
                     <Button onClick={shareSnapshot} disabled={!!existingShare}>
                       <Share2 className="h-4 w-4" />
-                      {existingShare ? "Shared" : "Share with my coach"}
+                      {existingShare ? "Shared" : "Share with my practitioner"}
                     </Button>
                   </div>
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div>
-                      <Label htmlFor="always-share">Always share my coaching with my coach</Label>
+                      <Label htmlFor="always-share">Always share my coaching with my practitioner</Label>
                       <p className="text-xs text-muted-foreground">
                         New completed activities will be shared automatically.
                       </p>

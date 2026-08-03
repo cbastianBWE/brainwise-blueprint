@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const ACCOUNT_TYPE_OPTIONS = [
   { value: "individual", label: "Individual" },
-  { value: "coach", label: "Coach" },
+  { value: "coach", label: "Practitioner" },
   { value: "corporate_employee", label: "Corporate Employee" },
   { value: "company_admin", label: "Company Admin" },
   { value: "org_admin", label: "Org Admin" },

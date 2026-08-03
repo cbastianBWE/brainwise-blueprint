@@ -125,11 +125,11 @@ export default function PlatformHealth() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-3">Coach Certifications</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-3">Practitioner Certifications</h2>
         {Object.keys(stats.certificationCounts).length === 0 ? (
           <Card>
             <CardContent className="py-4">
-              <p className="text-sm text-muted-foreground">No coach certifications found.</p>
+              <p className="text-sm text-muted-foreground">No practitioner certifications found.</p>
             </CardContent>
           </Card>
         ) : (

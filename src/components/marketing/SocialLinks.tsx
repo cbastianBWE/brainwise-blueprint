@@ -2,7 +2,7 @@ import { CSSProperties } from "react";
 import { Instagram, Youtube } from "lucide-react";
 
 // BrainWise's social media accounts (single handle across all platforms).
-// Brand note: destinations are branded "My BrainWise Coach" — keep our UI labels
+// Brand note: destinations are branded "My BrainWise Practitioner" — keep our UI labels
 // generic (platform names, not handles) to keep visitor attention on platform.
 //
 // Hover pattern note: this component uses inline onMouseEnter/Leave handlers

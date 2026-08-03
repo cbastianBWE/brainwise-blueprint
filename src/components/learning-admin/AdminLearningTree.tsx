@@ -9,10 +9,10 @@ import ContentItemArtifactPanel from "./ContentItemArtifactPanel";
 import type { MarkTarget } from "./learning-tree-types";
 
 const CERT_LABELS: Record<string, string> = {
-  ptp_coach: "PTP Certified Coach",
-  ai_transformation_coach: "AI Transformation Certified Coach",
-  ai_transformation_ptp_coach: "AI Transformation + PTP Certified Coach",
-  my_brainwise_coach: "My BrainWise Coach",
+  ptp_coach: "PTP Certified Practitioner",
+  ai_transformation_coach: "AI Transformation Certified Practitioner",
+  ai_transformation_ptp_coach: "AI Transformation + PTP Certified Practitioner",
+  my_brainwise_coach: "My BrainWise Practitioner",
 };
 
 type Status = string | null | undefined;

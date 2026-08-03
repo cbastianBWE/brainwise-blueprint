@@ -71,7 +71,7 @@ export function CoachDisclosureModal({
     >
       <div className="bg-background rounded-lg shadow-xl max-w-3xl w-full my-8 flex flex-col max-h-[90vh]">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-foreground">Coach Confidentiality Obligations</h2>
+          <h2 className="text-xl font-semibold text-foreground">Practitioner Confidentiality Obligations</h2>
           {effectiveFrom && (
             <p className="text-xs text-muted-foreground mt-1">
               Effective from {new Date(effectiveFrom).toLocaleDateString()}
@@ -91,7 +91,7 @@ export function CoachDisclosureModal({
               className="mt-1"
             />
             <span className="text-sm text-foreground">
-              I have read and understood these coach confidentiality obligations. I agree to
+              I have read and understood these practitioner confidentiality obligations. I agree to
               comply with them in my use of the BrainWise platform.
             </span>
           </label>

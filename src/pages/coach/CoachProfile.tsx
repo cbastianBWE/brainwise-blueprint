@@ -68,7 +68,7 @@ export default function CoachProfile() {
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                You have not yet accepted a coach confidentiality disclosure.
+                You have not yet accepted a practitioner confidentiality disclosure.
               </p>
             )}
           </div>

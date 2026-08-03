@@ -635,7 +635,7 @@ function CoachLimitedNotice() {
       }}
     >
       <p style={{ fontSize: 14, color: "var(--fg-2)", margin: 0 }}>
-        The client has limited coach access to scores only.
+        The client has limited practitioner access to scores only.
       </p>
     </div>
   );
@@ -732,7 +732,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
         </div>
       )}
 
-      {/* Suggested Next Steps — shown in both client and coach views */}
+      {/* Suggested Next Steps — shown in both client and practitioner views */}
       {(actionPlan.length > 0 || loadingNarrativeSections) && (
         <div>
           <h3 style={sectionHeadingStyle}>Suggested Next Steps</h3>
@@ -806,7 +806,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
       {props.isCoachView && (
         <div>
           <h3 style={sectionHeadingStyle}>Suggested Coaching Questions</h3>
-          <p style={subtitleStyle}>Private to you as the coach. Open questions grounded in this profile's tensions.</p>
+          <p style={subtitleStyle}>Private to you as the practitioner. Open questions grounded in this profile's tensions.</p>
           {coachQuestions.length === 0 && loadingNarrativeSections ? (
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating coaching questions...</p>
           ) : coachQuestions.length > 0 ? (

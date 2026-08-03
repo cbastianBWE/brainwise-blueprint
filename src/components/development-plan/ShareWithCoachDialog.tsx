@@ -41,10 +41,10 @@ export function ShareWithCoachDialog() {
     );
     setBusy(null);
     if (error) {
-      toast.error(enabled ? "Could not share with this coach." : "Could not stop sharing.");
+      toast.error(enabled ? "Could not share with this practitioner." : "Could not stop sharing.");
       return;
     }
-    toast.success(enabled ? "Shared with your coach" : "Stopped sharing");
+    toast.success(enabled ? "Shared with your practitioner" : "Stopped sharing");
     queryClient.invalidateQueries({ queryKey: ["my-coaches"] });
   };
 
@@ -52,14 +52,14 @@ export function ShareWithCoachDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <Users className="h-4 w-4 mr-1.5" /> Share with coach
+          <Users className="h-4 w-4 mr-1.5" /> Share with practitioner
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Share your development plan</DialogTitle>
           <DialogDescription>
-            Coaches you share with can see your plan and add comments. They can't edit your
+            Practitioners you share with can see your plan and add comments. They can't edit your
             actions or entries, and you can stop sharing at any time.
           </DialogDescription>
         </DialogHeader>
@@ -70,7 +70,7 @@ export function ShareWithCoachDialog() {
           </div>
         ) : coaches.length === 0 ? (
           <div className="py-6 text-sm text-muted-foreground text-center">
-            You don't have a coach yet. When a coach adds you as a client, they'll appear here.
+            You don't have a practitioner yet. When a practitioner adds you as a client, they'll appear here.
           </div>
         ) : (
           <div className="space-y-3">

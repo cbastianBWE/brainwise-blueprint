@@ -208,7 +208,7 @@ function CohortDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? "Edit Cohort" : "New Cohort"}</DialogTitle>
-          <DialogDescription>PTP Certified Coach cohort details.</DialogDescription>
+          <DialogDescription>PTP Certified Practitioner cohort details.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">

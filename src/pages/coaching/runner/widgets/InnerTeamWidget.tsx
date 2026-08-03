@@ -102,7 +102,7 @@ export function InnerTeamWidget({
       <div className="rounded-md border bg-muted/30 p-3">
         <p className="text-sm font-semibold">How this works</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose {suggestLabel} and your coach will read your answers and sketch a first team — each player with a name and a short description. Then shape it: rename a player, rewrite a description, remove one that doesn't fit, or add one your coach missed. When it feels right, {mapLabel} to see how your players ally, clash and drive your decisions. Nothing is fixed — re-map as often as you like.
+          Choose {suggestLabel} and your practitioner will read your answers and sketch a first team — each player with a name and a short description. Then shape it: rename a player, rewrite a description, remove one that doesn't fit, or add one your practitioner missed. When it feels right, {mapLabel} to see how your players ally, clash and drive your decisions. Nothing is fixed — re-map as often as you like.
         </p>
       </div>
       {step.intro && <p className="text-sm text-muted-foreground">{step.intro}</p>}
@@ -119,7 +119,7 @@ export function InnerTeamWidget({
         <>
           <div className="space-y-3">
             <p className="text-sm font-semibold">Your team</p>
-            <p className="text-sm text-muted-foreground">Edit any name or description, remove a player, or add one your coach missed. Then re-map to update the profiles below.</p>
+            <p className="text-sm text-muted-foreground">Edit any name or description, remove a player, or add one your practitioner missed. Then re-map to update the profiles below.</p>
             <div className="space-y-3">
               {roster.map((c, i) => (
                 <div key={i} className="rounded-md border p-3">
@@ -157,7 +157,7 @@ export function InnerTeamWidget({
           {map?.sufficiency && map.sufficiency.enough === false ? (
             <div className="rounded-md border p-4" style={{ borderColor: "var(--bw-orange)", background: "color-mix(in oklab, var(--bw-orange) 8%, transparent)" }}>
               <p className="text-sm font-semibold" style={{ color: "var(--bw-orange)" }}>A part of you may be missing</p>
-              <p className="mt-1 text-sm text-muted-foreground">Your coach spotted an angle you haven't covered. Add anything these spark — as a new player above, or back in your answers — then re-map. You can still continue when you're ready.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Your practitioner spotted an angle you haven't covered. Add anything these spark — as a new player above, or back in your answers — then re-map. You can still continue when you're ready.</p>
               {map.sufficiency.note && <p className="mt-2 text-sm">{map.sufficiency.note}</p>}
               {map.sufficiency.questions?.length > 0 && (
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">{map.sufficiency.questions.map((q, i) => <li key={i}>{q}</li>)}</ul>

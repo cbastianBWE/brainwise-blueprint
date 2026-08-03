@@ -173,8 +173,8 @@ const NAI_GROUPS: SectionGroup<keyof NaiPdfSectionsUi>[] = [
   {
     title: "Cross-cutting sections",
     options: [
-      { key: "patternAlert", name: "Pattern Alert", description: "Coach coaching guidance", coachOnly: true },
-      { key: "cafesPtpMapping", name: "C.A.F.E.S.–PTP Mapping", description: "Coach coaching materials", coachOnly: true },
+      { key: "patternAlert", name: "Pattern Alert", description: "Practitioner coaching guidance", coachOnly: true },
+      { key: "cafesPtpMapping", name: "C.A.F.E.S.–PTP Mapping", description: "Practitioner coaching materials", coachOnly: true },
       { key: "crossAssessmentInterpretation", name: "Cross-Assessment Interpretation", description: "AI-generated analysis" },
     ],
   },
@@ -259,7 +259,7 @@ const PAIRED_GROUPS: SectionGroup<keyof PairedPdfSectionsUi>[] = [
   {
     title: "Privileged",
     options: [
-      { key: "coach", name: "For the coach or admin only", description: "Facilitation material", coachOnly: true },
+      { key: "coach", name: "For the practitioner or admin only", description: "Facilitation material", coachOnly: true },
     ],
   },
 ];
@@ -299,7 +299,7 @@ const TEAM_GROUPS: SectionGroup<keyof TeamPdfSectionsUi>[] = [
   {
     title: "Privileged",
     options: [
-      { key: "coach", name: "For the coach, org admin & super admin", description: "Facilitation material", coachOnly: true },
+      { key: "coach", name: "For the practitioner, org admin & super admin", description: "Facilitation material", coachOnly: true },
     ],
   },
 ];

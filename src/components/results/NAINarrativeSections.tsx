@@ -322,7 +322,7 @@ export default function NAINarrativeSections({
     return (
       <section>
         <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-          The client has limited coach access to scores only.
+          The client has limited practitioner access to scores only.
         </div>
       </section>
     );
@@ -421,7 +421,7 @@ export default function NAINarrativeSections({
 
   return (
     <div className="space-y-6">
-      {/* Pattern alert — coach only, before Profile overview */}
+      {/* Pattern alert — practitioner only, before Profile overview */}
       {showPatternAlert && (
         <div
           className="rounded-lg p-4 border-l-4"
@@ -652,7 +652,7 @@ export default function NAINarrativeSections({
         </section>
       )}
 
-      {/* 8. C.A.F.E.S.-PTP mapping — coach only */}
+      {/* 8. C.A.F.E.S.-PTP mapping — practitioner only */}
       {isCoachView && Object.keys(mappings).length > 0 && (
         <section className="space-y-3">
           <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 600, color: "var(--fg-1)", margin: 0, letterSpacing: "-0.01em" }}>C.A.F.E.S.–PTP mapping</h3>

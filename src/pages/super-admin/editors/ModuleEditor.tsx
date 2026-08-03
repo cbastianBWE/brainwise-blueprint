@@ -525,7 +525,7 @@ function ModuleEditor({
               id="mo-tags"
               value={audienceTagsText}
               onChange={(e) => setAudienceTagsText(e.target.value)}
-              placeholder="e.g. coach, beginner"
+              placeholder="e.g. practitioner, beginner"
               disabled={saving}
             />
             <p className="text-xs text-muted-foreground">

@@ -37,7 +37,7 @@ export default function CoachReport() {
             setSearchParams(next);
           }}
         >
-          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to coach reports
+          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to practitioner reports
         </Button>
         <MyResults
           isCoachView
@@ -87,7 +87,7 @@ function CoachAssessmentList({
         .eq("id", coachUserId)
         .single();
       if (cErr) throw new Error(cErr.message);
-      setCoachName(coachData?.full_name || "Coach");
+      setCoachName(coachData?.full_name || "Practitioner");
 
       const { data: resultRowsRaw, error: arErr } = await supabase
         .from("assessment_results")
@@ -227,7 +227,7 @@ function CoachAssessmentList({
 
       {assessments.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">
-          No completed PTP reports for this coach.
+          No completed PTP reports for this practitioner.
         </p>
       ) : (
         <div className="space-y-3">

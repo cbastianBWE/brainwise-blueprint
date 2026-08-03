@@ -205,7 +205,7 @@ export function generateNaiPdf(data: NaiPdfData, sections: NaiPdfSections, optio
   if (data.isCoachView) {
     doc.setFontSize(11);
     doc.setTextColor(200, 220, 235);
-    doc.text("Coach Report", MARGIN_L, 58);
+    doc.text("Practitioner Report", MARGIN_L, 58);
   }
 
   const coverY = 110;

@@ -28,10 +28,10 @@ import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrac
 import CohortsSessionsSection from "@/components/super-admin/CohortsSessionsSection";
 
 const CERT_TYPES = [
-  { value: "ptp_coach", label: "PTP Certified Coach" },
-  { value: "ai_transformation_coach", label: "AI Transformation Certified Coach" },
-  { value: "ai_transformation_ptp_coach", label: "AI Transformation + PTP Certified Coach" },
-  { value: "my_brainwise_coach", label: "My BrainWise Coach" },
+  { value: "ptp_coach", label: "PTP Certified Practitioner" },
+  { value: "ai_transformation_coach", label: "AI Transformation Certified Practitioner" },
+  { value: "ai_transformation_ptp_coach", label: "AI Transformation + PTP Certified Practitioner" },
+  { value: "my_brainwise_coach", label: "My BrainWise Practitioner" },
 ] as const;
 
 const CERT_LABELS: Record<string, string> = Object.fromEntries(
@@ -267,7 +267,7 @@ function UploadExcelTab() {
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([["first_name", "last_name", "email", "certification_type"]]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Coaches");
+    XLSX.utils.book_append_sheet(wb, ws, "Practitioners");
     XLSX.writeFile(wb, "coach_invite_template.xlsx");
   };
 
@@ -375,7 +375,7 @@ export default function CoachManagement() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Coach Management</h1>
+      <h1 className="text-2xl font-bold">Practitioner Management</h1>
 
       <Tabs defaultValue="invitations">
         <TabsList>
@@ -387,7 +387,7 @@ export default function CoachManagement() {
         <TabsContent value="invitations" className="space-y-6">
           {/* Section 1 — Invite */}
           <Card>
-            <CardHeader><CardTitle>Invite Coaches</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Invite Practitioners</CardTitle></CardHeader>
             <CardContent>
               <Tabs defaultValue="single">
                 <TabsList>

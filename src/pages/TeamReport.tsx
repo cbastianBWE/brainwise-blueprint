@@ -1068,7 +1068,7 @@ export default function TeamReport() {
         </section>
       )}
 
-      {/* Coach (privileged) */}
+      {/* Practitioner (privileged) */}
       {canSeePrivileged && coach && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
@@ -1076,9 +1076,9 @@ export default function TeamReport() {
               display: "inline-block", border: `1px solid ${TEAL}`, color: TEAL, fontSize: 13,
               fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
               padding: "5px 12px", borderRadius: 999, marginBottom: 10,
-            }}>For the coach, org admin &amp; super admin</div>
+            }}>For the practitioner, org admin &amp; super admin</div>
             <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Running the debrief</h2>
-            <p style={{ color: MUTED, margin: "0 0 18px" }}>Facilitation material, shown to coaches and administrators.</p>
+            <p style={{ color: MUTED, margin: "0 0 18px" }}>Facilitation material, shown to practitioners and administrators.</p>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="The why behind each call">
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
