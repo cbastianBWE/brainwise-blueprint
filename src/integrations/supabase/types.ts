@@ -20204,6 +20204,38 @@ export type Database = {
           other_first_name: string
         }[]
       }
+      relationship_focus_area_activities: {
+        Args: { p_area_code: string; p_relationship: string }
+        Returns: {
+          activity_id: string
+          allowed: boolean
+          barrier_blocks: string
+          briefing_description: string
+          briefing_prerequisites: string
+          code: string
+          est_minutes_high: number
+          est_minutes_low: number
+          hero_image_url: string
+          learning_outcomes: string[]
+          own_status: string
+          own_step: number
+          partner_mode: string
+          partner_status: string
+          practitioner_gated: boolean
+          prerequisite_codes: string[]
+          prerequisite_titles: string[]
+          reason: string
+          reason_code: string
+          reason_detail: string[]
+          repeatable: boolean
+          romantic_disclaimer: boolean
+          seq: number
+          tags: string[]
+          time_estimate: string
+          title: string
+          visibility_mode: string
+        }[]
+      }
       relationship_focus_areas_state: {
         Args: { p_relationship: string }
         Returns: {
