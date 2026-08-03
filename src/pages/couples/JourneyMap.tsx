@@ -728,6 +728,16 @@ export function JourneyMap({
         </div>
 
 
+        {/* Focus Stops sit beside the road, never on it. */}
+        <FocusStops
+          className="mt-4 border-t pt-3"
+          relationshipId={relationshipId}
+          otherName={otherName}
+          onOpenActivity={(code) =>
+            navigate(`/couples/${relationshipId}/activity/${code}`)
+          }
+        />
+
         {/* Legend + marker colour */}
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-3 text-xs" style={{ borderColor: "#E4DFD3" }}>
           <div className="flex items-center gap-2">
