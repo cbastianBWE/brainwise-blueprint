@@ -566,6 +566,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
                   setPayer(v as "coach" | "client");
                   setClientUserId(null);
                   setPayerSearch("");
+                  setUseCredit(true);
                 }}
                 className="space-y-2"
               >
