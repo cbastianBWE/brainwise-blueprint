@@ -189,6 +189,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
     setClientUserId(null);
     setTeamCandidates(null);
     setPayerSearch("");
+    setUseCredit(true);
   }, [kind]);
 
   const toggleSelect = (row: SubjectRow) => {
