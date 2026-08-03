@@ -45,7 +45,7 @@ function sentenceFor(code: string, otherName: string): string {
     case "purchase_required":
       return "Opens once the journey has been purchased for the two of you.";
     case "focus_area_not_selected":
-      return "You have not chosen this focus area.";
+      return "You have not added this Focus Stop yet.";
     case "denied":
     case "unavailable":
     case "not_found":
