@@ -228,6 +228,9 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
 
   const priceLabel = kind === "team" ? TEAM_PRICE_LABEL : PAIRED_PRICE_LABEL;
 
+  const creditsForKind = poolBalances[kind] ?? 0;
+  const canUseCredit = !isSuperAdmin && payer === "coach" && creditsForKind > 0;
+
   const filteredTeamCandidates = useMemo(() => {
     if (!teamCandidates) return [];
     const q = payerSearch.trim().toLowerCase();
