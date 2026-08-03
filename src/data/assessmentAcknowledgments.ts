@@ -32,7 +32,7 @@ A few things to know before you start:
 
 **Find an uninterrupted block of time.** The PTP takes about 20–25 minutes to complete. You'll get the most accurate results if you take it in one sitting, in a quiet place, when you're not rushed or significantly stressed. Your responses are saved as you go, so if you do need to step away, you can resume where you left off.
 
-**Who sees your results.** Your individual PTP report is yours by default. If a coach invited you, your coach will also receive your report so they can support your development. Your results are not shared with your organization, your manager, or anyone else unless you explicitly grant access through your sharing settings. You can grant, revoke, or modify access at any time after viewing your report.
+**Who sees your results.** Your individual PTP report is yours by default. If a practitioner invited you, your practitioner will also receive your report so they can support your development. Your results are not shared with your organization, your manager, or anyone else unless you explicitly grant access through your sharing settings. You can grant, revoke, or modify access at any time after viewing your report.
 
 **Use of your results.** The PTP is a developmental tool — it's designed to inform coaching, self-awareness, and growth. It is not a clinical diagnosis and should not be used in isolation for hiring, promotion, or termination decisions.`,
     buttonLabel: "Begin Assessment",
@@ -50,7 +50,7 @@ A few things to know before you start:
 
 **Find an uninterrupted block of time.** The NAI takes about 7–10 minutes. Take it in one sitting, in a quiet place, when you're not rushed. Your responses are saved as you go if you do need to step away.
 
-**Who sees your results.** Your individual NAI report is yours. If a coach invited you, your coach will also receive your report so they can support your development. Your individual NAI responses are never shared with your organization, your manager, or anyone else — even if your organization purchased the assessment for you. Your organization may see aggregate, de-identified group-level summaries (for example, average scores across a team or department) used to inform organization-wide AI rollout planning, but never individual responses tied to you.
+**Who sees your results.** Your individual NAI report is yours. If a practitioner invited you, your practitioner will also receive your report so they can support your development. Your individual NAI responses are never shared with your organization, your manager, or anyone else — even if your organization purchased the assessment for you. Your organization may see aggregate, de-identified group-level summaries (for example, average scores across a team or department) used to inform organization-wide AI rollout planning, but never individual responses tied to you.
 
 **Use of your results.** The NAI is a developmental tool. It informs coaching, training design, and AI adoption planning. It is not a measure of intelligence, capability, or fitness for any role.`,
     buttonLabel: "Begin Assessment",
@@ -106,7 +106,7 @@ A few things to know before you start:
 
 **Find an uninterrupted block of time.** AIRSA takes about 8–10 minutes. Take it in one sitting, in a quiet place. Your responses are saved as you go if you do need to step away.
 
-**Who sees your results.** The employee will see your individual ratings as part of their AIRSA report. Your name will be identified in the report as their manager — this is different from anonymous 360 feedback. Your organization's BrainWise administrators can also view the report. If the employee has a coach supporting them through this assessment, that coach will also see your ratings.
+**Who sees your results.** The employee will see your individual ratings as part of their AIRSA report. Your name will be identified in the report as their manager — this is different from anonymous 360 feedback. Your organization's BrainWise administrators can also view the report. If the employee has a practitioner supporting them through this assessment, that practitioner will also see your ratings.
 
 **Use of these results.** The AIRSA is designed to support development conversations and coaching. It is not a performance review and should not be used in isolation for compensation, promotion, or termination decisions.`,
     buttonLabel: "Begin Assessment",

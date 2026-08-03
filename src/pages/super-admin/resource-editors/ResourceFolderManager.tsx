@@ -744,7 +744,7 @@ function GrantsDialog({
                     </Select>
                   )}
                   {row.grant_type === "all_coaches" && (
-                    <div className="flex-1 text-xs italic text-muted-foreground px-2">Applies to all coaches.</div>
+                    <div className="flex-1 text-xs italic text-muted-foreground px-2">Applies to all practitioners.</div>
                   )}
                   {!row.grant_type && <div className="flex-1" />}
 
