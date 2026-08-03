@@ -326,6 +326,9 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           if (blockedResult?.billing_mode === "included") {
             const rem = blockedResult.included_remaining;
             toast.success(rem === null || rem === undefined ? "Report generated (covered by your organization)." : `Report generated. ${rem} included ${kind} report${rem === 1 ? "" : "s"} remaining.`);
+          } else if (result.billing_mode === "pool") {
+            const rem = result.pool_remaining ?? 0;
+            toast.success(`Report generated using a free credit. ${rem === 0 ? `No ${kind} credits remaining.` : `${rem} ${kind} credit${rem === 1 ? "" : "s"} remaining.`}`);
           }
           onGenerated();
           onOpenChange(false);
