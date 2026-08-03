@@ -642,7 +642,7 @@ export async function generateTeamProfilePdf(
 
   // 10. coach (privileged)
   if (sections.coach && s.coach) {
-    ctx.sectionHeading("For the coach, org admin & super admin");
+    ctx.sectionHeading("For the practitioner, org admin & super admin");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);

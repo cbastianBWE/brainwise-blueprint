@@ -96,7 +96,7 @@ export const orgMemberContent: HelpRoleContent = {
         {
           title: "Export a PDF if you want",
           body:
-            "Click Export PDF near the top of the report to save a copy you can share with a coach or manager on your own terms.",
+            "Click Export PDF near the top of the report to save a copy you can share with a practitioner or manager on your own terms.",
         },
       ],
     },
@@ -119,7 +119,7 @@ export const orgMemberContent: HelpRoleContent = {
         {
           title: "Add or edit actions",
           body:
-            "Add your own actions, mark ones as in-progress or done, and keep the list realistic. This is the page your manager or coach will most often look at with you.",
+            "Add your own actions, mark ones as in-progress or done, and keep the list realistic. This is the page your manager or practitioner will most often look at with you.",
         },
       ],
     },
@@ -184,8 +184,8 @@ export const orgMemberContent: HelpRoleContent = {
     },
     {
       id: "share-your-results",
-      title: "Share your results with a manager or coach",
-      summary: "Grant a colleague or coach read access to your report on your terms.",
+      title: "Share your results with a manager or practitioner",
+      summary: "Grant a colleague or practitioner read access to your report on your terms.",
       steps: [
         {
           title: "Open Sharing from Settings",
@@ -209,7 +209,7 @@ export const orgMemberContent: HelpRoleContent = {
     {
       id: "ai-chat-your-results",
       title: "Talk to AI Chat about your report",
-      summary: "Get a plain-English walk-through of your results without waiting for a coach.",
+      summary: "Get a plain-English walk-through of your results without waiting for a practitioner.",
       steps: [
         {
           title: "Open AI Chat",
@@ -267,7 +267,7 @@ export const orgMemberContent: HelpRoleContent = {
         {
           title: "Open My Learning",
           body:
-            "Click My Learning in the sidebar. The Assigned tab lists anything your admin or coach required for you. Complete these first — they may be tied to a certification or org requirement.",
+            "Click My Learning in the sidebar. The Assigned tab lists anything your admin or practitioner required for you. Complete these first — they may be tied to a certification or org requirement.",
           imageUrl: myLearning.url,
           imageAlt: "My Learning page",
           capture: { path: "/my-learning", assetPath: "src/assets/help/org_member/90_my_learning.png" },

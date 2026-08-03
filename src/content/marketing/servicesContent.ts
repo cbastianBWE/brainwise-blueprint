@@ -30,26 +30,26 @@ export const services: ServiceCard[] = [
     summary:
       "Diagnose, design, and deploy AI initiatives that don't stall in week six.",
     body:
-      "Most enterprise AI initiatives fail not because the tools are wrong, but because the organization isn't ready to absorb them. Our consulting engagement runs three workstreams: a workforce readiness diagnostic using PTP and NAI to surface where your organization is fluent and where it stalls, a tailored adoption framework built on what your data actually shows, and ongoing deployment support delivered alongside certified BrainWise coaches with structured check-ins at 30, 60, and 90 days post-launch.",
+      "Most enterprise AI initiatives fail not because the tools are wrong, but because the organization isn't ready to absorb them. Our consulting engagement runs three workstreams: a workforce readiness diagnostic using PTP and NAI to surface where your organization is fluent and where it stalls, a tailored adoption framework built on what your data actually shows, and ongoing deployment support delivered alongside certified BrainWise practitioners with structured check-ins at 30, 60, and 90 days post-launch.",
     benefits: [
       "Workforce readiness diagnostic with prioritized intervention areas",
       "Tailored adoption framework built on your specific friction points",
-      "90 days of deployment support with certified coaches",
+      "90 days of deployment support with certified practitioners",
       "Leadership-readable reporting throughout",
     ],
     cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
     id: "coach-certification",
-    title: "Coach Certification",
+    title: "Practitioner Certification",
     summary:
-      "Train as a BrainWise-certified coach across four specialized tracks.",
+      "Train as a BrainWise-certified practitioner across four specialized tracks.",
     body:
-      "BrainWise certifies coaches in four tracks: Personal Threat Profile (PTP), AI Transformation Coaching, Combined Certification, and the My BrainWise Coach program. Each track combines virtual instructor-led training with supervised debrief practice — including known and unknown actor scenarios, peer observation, and your own debrief experience. Certified coaches gain platform access for client management, coach-paid client billing, the full assessment library, and the ongoing coach resources hub.",
+      "BrainWise certifies practitioners in four tracks: Personal Threat Profile (PTP), AI Transformation Coaching, Combined Certification, and the My BrainWise Practitioner program. Each track combines virtual instructor-led training with supervised debrief practice — including known and unknown actor scenarios, peer observation, and your own debrief experience. Certified practitioners gain platform access for client management, practitioner-paid client billing, the full assessment library, and the ongoing practitioner resources hub.",
     benefits: [
       "Four specialized certification tracks to match your practice",
       "Virtual instructor-led training with supervised debrief practice",
-      "Platform access for client management and self-pay or coach-paid billing",
+      "Platform access for client management and self-pay or practitioner-paid billing",
       "Ongoing access to certification resources and assessment updates",
     ],
     cta: { label: "Explore certifications", action: "navigate", to: "/products#coach-certifications" },
@@ -90,12 +90,12 @@ export const services: ServiceCard[] = [
     summary:
       "1:1 coaching for senior leaders, grounded in their personal threat and adoption profile.",
     body:
-      "Executive coaching with BrainWise starts where most coaching ends — with data. Each engagement begins with the leader completing the full Personal Threat Profile and Neuroscience Adoption Index, giving the coach a structural map of where this leader is fluent, where they stall, and which dimensions matter most for their current role and challenges. Coaching sessions then focus on those specific dimensions rather than open-ended exploration. Delivered by BrainWise-certified coaches matched to the leader's profile and industry context. Engagements typically run six to twelve months with quarterly progress reviews against measurable dimensional shifts.",
+      "Executive coaching with BrainWise starts where most coaching ends — with data. Each engagement begins with the leader completing the full Personal Threat Profile and Neuroscience Adoption Index, giving the practitioner a structural map of where this leader is fluent, where they stall, and which dimensions matter most for their current role and challenges. Coaching sessions then focus on those specific dimensions rather than open-ended exploration. Delivered by BrainWise-certified practitioners matched to the leader's profile and industry context. Engagements typically run six to twelve months with quarterly progress reviews against measurable dimensional shifts.",
     benefits: [
       "Initial PTP and NAI assessment with detailed personal debrief",
       "Coaching sessions structured around your individual data",
       "Quarterly progress reviews with measurable dimensional change",
-      "Coach matched to your profile and industry",
+      "Practitioner matched to your profile and industry",
     ],
     cta: { label: "Book a Conversation", action: "open-briefing" },
   },

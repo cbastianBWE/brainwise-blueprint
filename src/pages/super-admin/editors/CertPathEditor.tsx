@@ -578,7 +578,7 @@ function CertPathEditor({
               id="cp-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. AI Transformation Coach"
+              placeholder="e.g. AI Transformation Practitioner"
               disabled={saving}
             />
           </div>

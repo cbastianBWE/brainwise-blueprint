@@ -159,7 +159,7 @@ function MemberDrawerBody({
           <TabsList>
             <TabsTrigger value="learning">Learning</TabsTrigger>
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            {showCoach && <TabsTrigger value="coach">Coach</TabsTrigger>}
+            {showCoach && <TabsTrigger value="coach">Practitioner</TabsTrigger>}
             {showAccess && <TabsTrigger value="access">Access</TabsTrigger>}
             <TabsTrigger value="audit">Audit</TabsTrigger>
           </TabsList>

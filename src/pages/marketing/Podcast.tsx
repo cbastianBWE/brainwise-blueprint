@@ -32,7 +32,7 @@ export default function Podcast() {
   });
 
   const feed = feedQuery.data;
-  const showTitle = feed?.show.title ?? "My BrainWise Coach";
+  const showTitle = feed?.show.title ?? "My BrainWise Practitioner";
   const showDescription = feed?.show.description_text ?? "";
   const showImage = feed?.show.image ?? null;
   const heroEpisode: PodcastEpisode | undefined = feed?.episodes[0];
@@ -59,7 +59,7 @@ export default function Podcast() {
     };
     const desc = showDescription
       ? showDescription.slice(0, 160)
-      : "My BrainWise Coach — neuroscience, behavioral science, and psychology with Cole Bastian and Phil Dixon.";
+      : "My BrainWise Practitioner — neuroscience, behavioral science, and psychology with Cole Bastian and Phil Dixon.";
     setMeta("description", desc);
     setMeta("og:title", `${showTitle} | BrainWise Enterprises`, "property");
     setMeta("og:description", desc, "property");

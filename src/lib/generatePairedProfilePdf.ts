@@ -713,7 +713,7 @@ export async function generatePairedProfilePdf(
 
   // 13. coach (privileged)
   if (sections.coach && s.coach) {
-    ctx.sectionHeading("For the coach or admin only");
+    ctx.sectionHeading("For the practitioner or admin only");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);

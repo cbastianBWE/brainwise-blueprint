@@ -5,7 +5,7 @@ export default function CoachResourcesTab({ tab }: { tab: ResourceTab }) {
   return (
     <ResourceGridTab
       tab={tab}
-      emptyStateText="No coach resources have been published yet."
+      emptyStateText="No practitioner resources have been published yet."
       showAllAtRoot
     />
   );

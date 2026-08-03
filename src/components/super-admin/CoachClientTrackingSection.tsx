@@ -98,7 +98,7 @@ export default function CoachClientTrackingSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Coach Client &amp; Actor Tracking</CardTitle>
+        <CardTitle>Practitioner Client &amp; Actor Tracking</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
@@ -132,7 +132,7 @@ export default function CoachClientTrackingSection() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Coach</TableHead>
+              <TableHead>Practitioner</TableHead>
               <TableHead>Client / Actor</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Invitation</TableHead>

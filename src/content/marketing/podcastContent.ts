@@ -34,6 +34,6 @@ export const podcastMeta = {
   tagline: "Stay Curious. Stay Compassionate. Stay BrainWise.",
   /** Pagination size for the archive grid. */
   episodesPerPage: 12,
-  /** Hosts string for SEO + page footer credit (RSS author field is "My BrainWise Coach", not the host names). */
+  /** Hosts string for SEO + page footer credit (RSS author field is "My BrainWise Practitioner", not the host names). */
   hosts: "Cole Bastian and Phil Dixon",
 };

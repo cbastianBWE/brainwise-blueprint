@@ -346,7 +346,7 @@ const dateFormats = ["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"];
 const formatAccountType = (t: string | null) => {
   const map: Record<string, string> = {
     individual: "Individual",
-    coach: "Coach",
+    coach: "Practitioner",
     admin: "Admin",
     brainwise_super_admin: "Super Admin",
     corporate_employee: "Corporate Employee",

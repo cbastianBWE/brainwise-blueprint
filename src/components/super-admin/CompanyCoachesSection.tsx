@@ -67,8 +67,8 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
       p_organization_id: orgId, p_coach_user_id: coachUserId, p_note: null,
     });
     setAssigningId(null);
-    if (error) { toast({ title: "Couldn't assign coach", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Coach assigned" });
+    if (error) { toast({ title: "Couldn't assign practitioner", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Practitioner assigned" });
     setAddOpen(false); setQuery(""); setHits([]);
     load();
   };
@@ -79,8 +79,8 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
       p_organization_id: orgId, p_coach_user_id: coachUserId,
     });
     setRemoving(null);
-    if (error) { toast({ title: "Couldn't remove coach", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Coach removed" });
+    if (error) { toast({ title: "Couldn't remove practitioner", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Practitioner removed" });
     load();
   };
 
@@ -88,7 +88,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Organization Coaches</CardTitle>
+          <CardTitle>Organization Practitioners</CardTitle>
           <CardDescription>
             An assigned coach can view and coach every member of this organization
             (results, development plans, coaching, and team/paired reports).
@@ -111,7 +111,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Coach</TableHead>
+                <TableHead>Practitioner</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Assigned</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -147,13 +147,13 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
       <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) { setQuery(""); setHits([]); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Assign a coach</DialogTitle>
-            <DialogDescription>Search certified coaches by name or email.</DialogDescription>
+            <DialogTitle>Assign a practitioner</DialogTitle>
+            <DialogDescription>Search certified practitioners by name or email.</DialogDescription>
           </DialogHeader>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search coaches…"
+              placeholder="Search practitioners…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"

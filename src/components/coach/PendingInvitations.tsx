@@ -217,7 +217,7 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                       </TableCell>
                       <TableCell>
                         <Badge variant={r.payment_mode === "coach_paid" ? "default" : "outline"}>
-                          {r.payment_mode === "coach_paid" ? "Coach" : "Self"}
+                          {r.payment_mode === "coach_paid" ? "Practitioner" : "Self"}
                         </Badge>
                       </TableCell>
                       <TableCell>

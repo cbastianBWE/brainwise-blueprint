@@ -174,7 +174,7 @@ function getNavItems(profile: { account_type?: string | null; is_practitioner_co
         const superUrls = new Set(superAdminNav.map((i) => i.url));
         const filtered = coachNav.filter((i) => i.url !== "/coach/resources" && !superUrls.has(i.url));
         const coachToolsWithHeader = filtered.map((item, idx) =>
-          idx === 0 ? { ...item, sectionHeader: "Coach Tools" } : item
+          idx === 0 ? { ...item, sectionHeader: "Practitioner Tools" } : item
         );
         return [...superAdminNav, ...coachToolsWithHeader];
       }
@@ -192,7 +192,7 @@ function formatAccountType(type: string | null | undefined): string {
   switch (type) {
     case "individual": return "Individual";
     case "corporate_employee": return "Corporate";
-    case "coach": return "Coach";
+    case "coach": return "Practitioner";
     case "company_admin": return "Company Admin";
     case "org_admin": return "Org Admin";
     case "brainwise_super_admin": return "Super Admin";

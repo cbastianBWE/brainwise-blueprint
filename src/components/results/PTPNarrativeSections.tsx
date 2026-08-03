@@ -806,7 +806,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
       {props.isCoachView && (
         <div>
           <h3 style={sectionHeadingStyle}>Suggested Coaching Questions</h3>
-          <p style={subtitleStyle}>Private to you as the coach. Open questions grounded in this profile's tensions.</p>
+          <p style={subtitleStyle}>Private to you as the practitioner. Open questions grounded in this profile's tensions.</p>
           {coachQuestions.length === 0 && loadingNarrativeSections ? (
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating coaching questions...</p>
           ) : coachQuestions.length > 0 ? (

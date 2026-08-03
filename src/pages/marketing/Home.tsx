@@ -255,8 +255,8 @@ export default function Home() {
               {
                 eyebrow: "Practitioners",
                 eyebrowColor: "var(--bw-teal)",
-                title: "Certify to debrief the PTP, or train as a full coach",
-                body: "Get certified to administer and debrief the Personal Threat & Reward Profile, including paired and team profiles. Go deeper with the full coach certification to work the whole activity library. Build your own practice, or develop the people inside your own organization.",
+                title: "Certify to debrief the PTP, or train as a full practitioner",
+                body: "Get certified to administer and debrief the Personal Threat & Reward Profile, including paired and team profiles. Go deeper with the full practitioner certification to work the whole activity library. Build your own practice, or develop the people inside your own organization.",
                 cta: (
                   <MarketingButton
                     variant="ghost"

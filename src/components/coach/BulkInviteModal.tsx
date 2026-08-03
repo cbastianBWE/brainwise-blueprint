@@ -241,13 +241,13 @@ export default function BulkInviteModal({
       }
 
       if (data?.bulk_batch) {
-        console.log("[BulkInviteModal] coach-paid batch detected, redirecting to checkout");
+        console.log("[BulkInviteModal] practitioner-paid batch detected, redirecting to checkout");
         const { data: checkoutData, error: checkoutErr } = await supabase.functions.invoke("create-checkout", {
           body: { mode: "coach_bulk_order", batch_id: data.bulk_batch.batch_id },
         });
         console.log("[BulkInviteModal] create-checkout response:", { checkoutData, checkoutErr });
         if (checkoutErr || !checkoutData?.url) {
-          toast.error("Bulk order created but checkout redirect failed. Self-pay rows were sent. Contact support if coach-paid rows are needed.");
+          toast.error("Bulk order created but checkout redirect failed. Self-pay rows were sent. Contact support if practitioner-paid rows are needed.");
           setRpcResults(data.results || []);
           setRpcSummary(data.summary || null);
           setStage("results");
@@ -290,7 +290,7 @@ export default function BulkInviteModal({
                 <div className="text-sm text-muted-foreground">{rows.length} / {MAX_ROWS}</div>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => setAllPayment("self_pay")}>Set all to self-pay</Button>
-                  <Button size="sm" variant="outline" onClick={() => setAllPayment("coach_paid")}>Set all to coach-paid</Button>
+                  <Button size="sm" variant="outline" onClick={() => setAllPayment("coach_paid")}>Set all to practitioner-paid</Button>
                   <input
                     ref={fileInputRef}
                     type="file"

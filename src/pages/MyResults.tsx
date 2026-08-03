@@ -1160,13 +1160,13 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 onValueChange={(v) => setCoachViewActive(v === "coach")}
               >
                 <TabsList>
-                  <TabsTrigger value="coach">Coach Report</TabsTrigger>
+                  <TabsTrigger value="coach">Practitioner Report</TabsTrigger>
                   <TabsTrigger value="client">Client Report</TabsTrigger>
                 </TabsList>
               </Tabs>
               <p className="text-xs text-muted-foreground mt-2">
                 {coachViewActive
-                  ? "Coach view — includes pattern alert, coaching questions, and C.A.F.E.S.–PTP mapping."
+                  ? "Practitioner view — includes pattern alert, coaching questions, and C.A.F.E.S.–PTP mapping."
                   : "Client view — shows only what the client sees. PDF export will reflect this view."}
               </p>
             </section>

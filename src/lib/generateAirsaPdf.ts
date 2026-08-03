@@ -356,11 +356,11 @@ export function generateAirsaPdf(
   if (data.isCoachView && data.isSelfOnly) {
     doc.setFontSize(11);
     doc.setTextColor(200, 220, 235);
-    doc.text("Coach Report — Self-Only", MARGIN_L, 58);
+    doc.text("Practitioner Report — Self-Only", MARGIN_L, 58);
   } else if (data.isCoachView) {
     doc.setFontSize(11);
     doc.setTextColor(200, 220, 235);
-    doc.text("Coach Report", MARGIN_L, 58);
+    doc.text("Practitioner Report", MARGIN_L, 58);
   } else if (data.isSelfOnly) {
     doc.setFontSize(11);
     doc.setTextColor(200, 220, 235);

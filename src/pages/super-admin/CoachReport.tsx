@@ -87,7 +87,7 @@ function CoachAssessmentList({
         .eq("id", coachUserId)
         .single();
       if (cErr) throw new Error(cErr.message);
-      setCoachName(coachData?.full_name || "Coach");
+      setCoachName(coachData?.full_name || "Practitioner");
 
       const { data: resultRowsRaw, error: arErr } = await supabase
         .from("assessment_results")

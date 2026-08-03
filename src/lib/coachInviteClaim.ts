@@ -44,9 +44,9 @@ export async function claimPendingCoachInvite(
         } else if (/already_claimed/.test(msg)) {
           toast.error("This invitation has already been claimed by someone else.");
         } else if (/revoked/.test(msg)) {
-          toast.error("This invitation has been revoked by your coach.");
+          toast.error("This invitation has been revoked by your practitioner.");
         } else if (/expired/.test(msg)) {
-          toast.error("This invitation has expired. Ask your coach to resend it.");
+          toast.error("This invitation has expired. Ask your practitioner to resend it.");
         } else {
           toast.error("This invitation link is no longer valid.");
         }
@@ -61,14 +61,14 @@ export async function claimPendingCoachInvite(
   if (!opts?.silent) {
     if (row?.out_duplicate_self_purchase) {
       toast.success(
-        "Your coach-paid assessment is now on your account. Heads up: it looks like you already paid for this assessment yourself — contact your coach about a refund."
+        "Your practitioner-paid assessment is now on your account. Heads up: it looks like you already paid for this assessment yourself — contact your practitioner about a refund."
       );
     } else if (row?.out_already_claimed) {
-      toast.success("This coach-paid assessment is already on your account.");
+      toast.success("This practitioner-paid assessment is already on your account.");
     } else if (row?.out_linked_existing_assessment) {
-      toast.success("Your completed assessment is now linked to your coach.");
+      toast.success("Your completed assessment is now linked to your practitioner.");
     } else {
-      toast.success("Your coach-paid assessment has been added to your account.");
+      toast.success("Your practitioner-paid assessment has been added to your account.");
     }
   }
   return true;

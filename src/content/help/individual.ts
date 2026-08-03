@@ -87,7 +87,7 @@ export const individualContent: HelpRoleContent = {
         {
           title: "Use coaching questions to reflect",
           body:
-            "Every section ends with reflection prompts. Read them, pause, and jot down what comes up for you. These are the questions a great coach would ask.",
+            "Every section ends with reflection prompts. Read them, pause, and jot down what comes up for you. These are the questions a great practitioner would ask.",
         },
       ],
     },
@@ -117,8 +117,8 @@ export const individualContent: HelpRoleContent = {
     },
     {
       id: "share-with-a-coach",
-      title: "Share results with a coach",
-      summary: "Grant a coach or trusted person read access to your report.",
+      title: "Share results with a practitioner",
+      summary: "Grant a practitioner or trusted person read access to your report.",
       steps: [
         {
           title: "Open the sharing screen",
@@ -190,7 +190,7 @@ export const individualContent: HelpRoleContent = {
     {
       id: "explore-with-ai-chat",
       title: "Explore your results with AI Chat",
-      summary: "Talk through your assessment with an AI coach that already knows your report.",
+      summary: "Talk through your assessment with an AI practitioner that already knows your report.",
       steps: [
         {
           title: "Open AI Chat",
@@ -254,7 +254,7 @@ export const individualContent: HelpRoleContent = {
         {
           title: "Open My Learning",
           body:
-            "Click My Learning in the sidebar. The Assigned tab shows anything a coach or admin required for you; the Browse & Enroll tab shows what else you can add to your queue.",
+            "Click My Learning in the sidebar. The Assigned tab shows anything a practitioner or admin required for you; the Browse & Enroll tab shows what else you can add to your queue.",
           imageUrl: myLearning.url,
           imageAlt: "My Learning page with Browse & Enroll tab",
           capture: { path: "/my-learning", assetPath: "src/assets/help/individual/90_my_learning.png" },

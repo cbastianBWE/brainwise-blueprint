@@ -213,7 +213,7 @@ export default function ForIndividuals() {
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {[
               { eyebrow: "Your Profile", color: "var(--bw-orange)", title: "Your own PTP", body: "Your profile across 89 facets, with a narrative written to your own results. Not a four-box type, the specific driver underneath your behavior." },
-              { eyebrow: "AI Coach", color: "var(--bw-teal)", title: "An AI coach that knows you", body: "Every activity is a short, guided conversation with an AI coach that already has your profile. It can surface values you haven't named or risks you're underweighting, and you keep only what lands, so a blank page is never where you start." },
+              { eyebrow: "AI Practitioner", color: "var(--bw-teal)", title: "An AI practitioner that knows you", body: "Every activity is a short, guided conversation with an AI practitioner that already has your profile. It can surface values you haven't named or risks you're underweighting, and you keep only what lands, so a blank page is never where you start." },
               { eyebrow: "Your Program", color: "var(--bw-plum)", title: "A personalized program", body: "200+ guided activities that adapt to your profile and build on your earlier work, so the journey compounds over time." },
               { eyebrow: "Share It", color: "var(--bw-forest)", title: "Share it", body: "Share your results with a partner, a colleague, or your therapist, and talk about what actually drives you." },
             ].map((c) => (

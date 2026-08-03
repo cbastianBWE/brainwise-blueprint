@@ -88,7 +88,7 @@ A few things to know before you start:
 
 **Find an uninterrupted block of time.** AIRSA takes about 8–10 minutes. Take it in one sitting, in a quiet place. Your responses are saved as you go if you do need to step away.
 
-**Who sees your results.** Your AIRSA self-ratings will be visible to your manager (who is also rating you) and your organization's BrainWise administrators. If a coach invited you or is supporting you through this assessment, your coach will also receive your report. Side-by-side comparison reports of your self-rating and your manager's rating are generated once both ratings are complete. Your responses are not visible to your peers, direct reports, or anyone else.
+**Who sees your results.** Your AIRSA self-ratings will be visible to your manager (who is also rating you) and your organization's BrainWise administrators. If a practitioner invited you or is supporting you through this assessment, your practitioner will also receive your report. Side-by-side comparison reports of your self-rating and your manager's rating are generated once both ratings are complete. Your responses are not visible to your peers, direct reports, or anyone else.
 
 **Use of your results.** The AIRSA is designed to support development conversations, coaching, and team-level AI capability planning. It is not a performance review and should not be used in isolation for hiring, promotion, or termination decisions.`,
     buttonLabel: "Begin Assessment",

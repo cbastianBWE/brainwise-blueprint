@@ -25,7 +25,7 @@ export const coachPricing: CoachPricingItem[] = [
   },
   {
     id: "ai-transformation-cert",
-    title: "AI Transformation Coach Certification",
+    title: "AI Transformation Practitioner Certification",
     priceLabel: "Coming Soon",
     status: "coming_soon",
     highlights: [],
@@ -39,7 +39,7 @@ export const coachPricing: CoachPricingItem[] = [
   },
   {
     id: "my-brainwise-coach-cert",
-    title: "My BrainWise Coach Certification",
+    title: "My BrainWise Practitioner Certification",
     priceLabel: "Coming Soon",
     status: "coming_soon",
     highlights: [],

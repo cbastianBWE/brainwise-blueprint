@@ -1,16 +1,16 @@
 export const GRANT_TYPE_OPTIONS = [
-  { value: "all_coaches", label: "All coaches" },
+  { value: "all_coaches", label: "All practitioners" },
   { value: "account_type", label: "Account type" },
   { value: "plan_tier", label: "Plan tier" },
   { value: "corporate_level", label: "Corporate level" },
-  { value: "coach_certification", label: "Coach certification" },
+  { value: "coach_certification", label: "Practitioner certification" },
   { value: "organization", label: "Specific organization" },
 ];
 
 export const ACCOUNT_TYPE_OPTIONS = [
   { value: "individual", label: "Individual" },
   { value: "corporate_employee", label: "Corporate Employee" },
-  { value: "coach", label: "Coach" },
+  { value: "coach", label: "Practitioner" },
   { value: "company_admin", label: "Company Admin" },
   { value: "org_admin", label: "Org Admin" },
   { value: "brainwise_super_admin", label: "Super Admin" },

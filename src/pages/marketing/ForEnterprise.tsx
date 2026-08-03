@@ -98,7 +98,7 @@ export default function ForEnterprise() {
     {
       eyebrow: "Leadership Development",
       eyebrowColor: "var(--bw-teal)",
-      title: "Coach your leaders",
+      title: "Practitioner your leaders",
       body: "A personalized coaching program for a whole leadership layer, delivered by your own certified practitioner or run independently.",
     },
     {
@@ -254,7 +254,7 @@ export default function ForEnterprise() {
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 1000, margin: "0 auto" }}>
           <Eyebrow color="var(--bw-orange)">The Problem</Eyebrow>
-          <h2 style={h2Style}>The people you most need to move are the ones you can't afford to coach.</h2>
+          <h2 style={h2Style}>The people you most need to move are the ones you can't afford to practitioner.</h2>
           <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
             Coaching works. It is also the most expensive line in your development budget per person reached, which is why it goes to the top of the house and stops. Everyone below gets a workshop and a personality assessment, and neither changes what people do on Monday. The leaders you most need to move through change are the ones you cannot afford to coach one to one.
           </p>

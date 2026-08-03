@@ -682,7 +682,7 @@ function CurriculumEditor({
               id="cu-tags"
               value={audienceTagsText}
               onChange={(e) => setAudienceTagsText(e.target.value)}
-              placeholder="e.g. coach, advanced, ptp-track"
+              placeholder="e.g. practitioner, advanced, ptp-track"
               disabled={saving}
             />
             <p className="text-xs text-muted-foreground">

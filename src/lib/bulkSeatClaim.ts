@@ -55,8 +55,8 @@ export async function claimPendingBulkSeat(opts?: { silent?: boolean }): Promise
   const row = (data as any[])?.[0];
   if (!opts?.silent) {
     toast.success(row?.already_claimed
-      ? "Your coach-paid assessment is already on your account."
-      : "Your coach-paid assessment has been added to your account.");
+      ? "Your practitioner-paid assessment is already on your account."
+      : "Your practitioner-paid assessment has been added to your account.");
   }
   return true;
 }

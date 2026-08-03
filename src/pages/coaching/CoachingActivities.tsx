@@ -1381,7 +1381,7 @@ function ReviewActionPlanDialog({
                       }
                     >
                       <span className="text-xs uppercase tracking-wide mr-2 opacity-70">
-                        {m.role === "user" ? "You" : "Coach"}
+                        {m.role === "user" ? "You" : "Practitioner"}
                       </span>
                       {m.content}
                     </div>

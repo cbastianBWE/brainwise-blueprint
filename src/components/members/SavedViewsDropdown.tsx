@@ -99,7 +99,7 @@ export default function SavedViewsDropdown({
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Active coaches"
+              placeholder="e.g. Active practitioners"
               autoFocus
             />
           </div>

@@ -195,7 +195,7 @@ export default function Certification() {
     {
       eyebrow: "Level 2",
       eyebrowColor: "var(--bw-orange)",
-      title: "Full Coach",
+      title: "Full Practitioner",
       status: "Coming soon",
       body: "Trained across the full activity library — foundational, typical, and advanced. A separate, deeper certification for running the whole program with clients.",
     },
@@ -364,7 +364,7 @@ export default function Certification() {
 
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20, marginTop: 48 }}>
             {[
-              { eyebrow: "Small Cohorts", eyebrowColor: "var(--bw-teal)", title: "Personalized cohorts, never more than six to one", body: "Every cohort is capped at six participants to one master certified coach, so the ratio never slips. You are one of six people a master coach is actually developing, not a seat in a webinar." },
+              { eyebrow: "Small Cohorts", eyebrowColor: "var(--bw-teal)", title: "Personalized cohorts, never more than six to one", body: "Every cohort is capped at six participants to one master certified practitioner, so the ratio never slips. You are one of six people a master practitioner is actually developing, not a seat in a webinar." },
               { eyebrow: "Format", eyebrowColor: "var(--bw-orange)", title: "Live plus self-paced", body: "Roughly nine hours of virtual instructor-led training across four sessions, plus about four and a half hours of self-paced modules, across nineteen structured modules." },
               { eyebrow: "Practice", eyebrowColor: "var(--bw-plum)", title: "The actor debriefs", body: "You deliver your first real debriefs to two actors, one you know and one you do not, both of whom take the full assessment, with feedback each time." },
               { eyebrow: "Graduation", eyebrowColor: "var(--bw-forest)", title: "A competency review", body: "A thirty-minute one-to-one before you graduate." },
@@ -471,7 +471,7 @@ export default function Certification() {
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 900, margin: "0 auto" }}>
           <Eyebrow>Straight Answers</Eyebrow>
-          <h2 style={h2Style}>The questions coaches actually ask.</h2>
+          <h2 style={h2Style}>The questions practitioners actually ask.</h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 32, marginTop: 48 }}>
             {qa.map((item) => (

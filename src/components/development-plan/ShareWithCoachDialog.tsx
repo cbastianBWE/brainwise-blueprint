@@ -41,10 +41,10 @@ export function ShareWithCoachDialog() {
     );
     setBusy(null);
     if (error) {
-      toast.error(enabled ? "Could not share with this coach." : "Could not stop sharing.");
+      toast.error(enabled ? "Could not share with this practitioner." : "Could not stop sharing.");
       return;
     }
-    toast.success(enabled ? "Shared with your coach" : "Stopped sharing");
+    toast.success(enabled ? "Shared with your practitioner" : "Stopped sharing");
     queryClient.invalidateQueries({ queryKey: ["my-coaches"] });
   };
 
@@ -70,7 +70,7 @@ export function ShareWithCoachDialog() {
           </div>
         ) : coaches.length === 0 ? (
           <div className="py-6 text-sm text-muted-foreground text-center">
-            You don't have a coach yet. When a coach adds you as a client, they'll appear here.
+            You don't have a practitioner yet. When a practitioner adds you as a client, they'll appear here.
           </div>
         ) : (
           <div className="space-y-3">
