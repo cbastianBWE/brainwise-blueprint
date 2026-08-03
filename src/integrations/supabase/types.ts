@@ -20301,6 +20301,14 @@ export type Database = {
         Args: { p_about_user: string; p_relationship: string }
         Returns: boolean
       }
+      relationship_own_dimension_scores: {
+        Args: { p_activity: string }
+        Returns: {
+          dimension_key: string
+          dimension_name: string
+          score: number
+        }[]
+      }
       relationship_own_material_admissible: {
         Args: {
           p_activity: string
@@ -20313,6 +20321,14 @@ export type Database = {
           disclosure: string
           material: Json
           reason: string
+        }[]
+      }
+      relationship_partner_dimension_scores: {
+        Args: { p_activity: string; p_relationship: string; p_run?: number }
+        Returns: {
+          dimension_key: string
+          dimension_name: string
+          score: number
         }[]
       }
       relationship_partner_labels: {
