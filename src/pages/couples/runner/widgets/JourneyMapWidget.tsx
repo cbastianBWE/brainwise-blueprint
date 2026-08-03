@@ -6,8 +6,8 @@ import type { CoupleStep } from "../coupleShared";
 /**
  * The journey map step inside the runner. It renders the real interactive
  * map (same component as the standalone page) rather than a row of numbers.
- * Focus-area detours are deliberately not drawn — they do not exist in the
- * catalogue yet, and offering them would be a promise the product cannot keep.
+ * The map also carries the Focus Stop cluster chips beside the road — the
+ * catalogue behind them is published, so they are browsable from here too.
  */
 export function JourneyMapWidget({ step }: { step: CoupleStep; value?: string[]; onChange?: (next: string[]) => void }) {
   const { relationshipId } = useParams<{ relationshipId: string }>();
