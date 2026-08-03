@@ -99,9 +99,16 @@ export default function MemberDrawerCoach({
   const [freeClientCount, setFreeClientCount] = useState<string>("1");
   const [freeClientGrantOpen, setFreeClientGrantOpen] = useState(false);
 
+  // Free report grants (team / paired report credits)
+  const [freeReportBalances, setFreeReportBalances] = useState<Record<string, number>>({});
+  const [freeReportLedger, setFreeReportLedger] = useState<any[]>([]);
+  const [freeReportType, setFreeReportType] = useState<string>("");
+  const [freeReportCount, setFreeReportCount] = useState<string>("1");
+  const [freeReportGrantOpen, setFreeReportGrantOpen] = useState(false);
+
   useEffect(() => {
-    setHasUnsavedChanges(grantDialogOpen || markCertifyOpen || freeClientGrantOpen);
-  }, [grantDialogOpen, markCertifyOpen, freeClientGrantOpen, setHasUnsavedChanges]);
+    setHasUnsavedChanges(grantDialogOpen || markCertifyOpen || freeClientGrantOpen || freeReportGrantOpen);
+  }, [grantDialogOpen, markCertifyOpen, freeClientGrantOpen, freeReportGrantOpen, setHasUnsavedChanges]);
 
   const loadFreeClientPool = async () => {
     const { data, error } = await supabase.rpc(
@@ -119,8 +126,26 @@ export default function MemberDrawerCoach({
     setFreeClientBalances(map);
   };
 
+  const loadFreeReportPool = async () => {
+    const { data, error } = await supabase.rpc(
+      "admin_list_coach_free_report_pool" as any,
+      { p_coach_user_id: userId } as any,
+    );
+    if (error) {
+      console.error("admin_list_coach_free_report_pool error:", error);
+      return;
+    }
+    const map: Record<string, number> = {};
+    (((data as any)?.pools ?? []) as any[]).forEach((row: any) => {
+      if (row?.report_type) map[row.report_type] = Number(row.balance) || 0;
+    });
+    setFreeReportBalances(map);
+    setFreeReportLedger((((data as any)?.ledger ?? []) as any[]));
+  };
+
   useEffect(() => {
     loadFreeClientPool();
+    loadFreeReportPool();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -130,11 +155,23 @@ export default function MemberDrawerCoach({
     return entries.map((i) => `${i.label}: ${freeClientBalances[i.code]}`).join(", ");
   };
 
+  const renderFreeReportSummary = () => {
+    const entries = REPORT_TYPES.filter((r) => (freeReportBalances[r.code] ?? 0) > 0);
+    if (entries.length === 0) return "—";
+    return entries
+      .map((r) => `${r.code === "team" ? "Team" : "Paired"}: ${freeReportBalances[r.code]}`)
+      .join(", ");
+  };
+
   const freeClientCountNum = Number(freeClientCount);
   const canOpenFreeClientDialog =
     !!freeClientInstrument &&
     Number.isFinite(freeClientCountNum) &&
     freeClientCountNum >= 1;
+
+  const freeReportCountNum = Number(freeReportCount);
+  const canOpenFreeReportDialog =
+    !!freeReportType && Number.isFinite(freeReportCountNum) && freeReportCountNum >= 1;
 
 
   const certsQuery = useQuery({
