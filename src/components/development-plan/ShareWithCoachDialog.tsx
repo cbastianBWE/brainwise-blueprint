@@ -31,7 +31,7 @@ export function ShareWithCoachDialog() {
     },
   });
 
-  const coaches = (data?.coaches ?? []) as CoachRow[];
+  const practitioners = (data?.coaches ?? []) as CoachRow[];
 
   const toggleShare = async (coachId: string, enabled: boolean) => {
     setBusy(coachId);
@@ -52,7 +52,7 @@ export function ShareWithCoachDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          <Users className="h-4 w-4 mr-1.5" /> Share with coach
+          <Users className="h-4 w-4 mr-1.5" /> Share with practitioner
         </Button>
       </DialogTrigger>
       <DialogContent>

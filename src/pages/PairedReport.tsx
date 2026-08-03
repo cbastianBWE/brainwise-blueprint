@@ -645,7 +645,7 @@ export default function PairedReport() {
   const conflict = sections["conflict"] as ConflictSection | undefined;
   const repair = sections["repair"] as RepairSection | undefined;
   const intimacy = sections["intimacy"] as IntimacySection | undefined;
-  const coach = sections["coach"] as CoachSection | undefined;
+  const practitioner = sections["coach"] as CoachSection | undefined;
   const leaderActions = sections["leader_actions"] as LeadershipItem[] | undefined;
   const hasLeaderActions = mode === "work" && Array.isArray(leaderActions) && leaderActions.length > 0;
 
@@ -1158,8 +1158,8 @@ export default function PairedReport() {
           </>
         )}
 
-        {/* coach (privileged) */}
-        {canSeePrivileged && coach && (
+        {/* practitioner (privileged) */}
+        {canSeePrivileged && practitioner && (
           <>
             <h2 style={sectionLabel}>For the practitioner or admin only</h2>
             {Array.isArray(coach.why) && coach.why.length > 0 && (

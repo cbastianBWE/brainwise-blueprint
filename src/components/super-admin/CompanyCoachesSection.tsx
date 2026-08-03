@@ -95,7 +95,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
           </CardDescription>
         </div>
         <Button onClick={() => setAddOpen(true)} className="gap-2 shrink-0">
-          <UserPlus className="h-4 w-4" /> Assign coach
+          <UserPlus className="h-4 w-4" /> Assign practitioner
         </Button>
       </CardHeader>
       <CardContent>
@@ -167,7 +167,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
               </div>
             )}
             {!searching && query.trim().length >= 2 && hits.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No coaches found.</p>
+              <p className="text-sm text-muted-foreground text-center py-4">No practitioners found.</p>
             )}
             {hits.map(h => {
               const already = assignedIds.has(h.user_id);

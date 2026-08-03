@@ -992,7 +992,7 @@ export default function CoachClients() {
       <div className="flex items-center justify-between rounded-md border p-3">
         <div className="space-y-0.5">
           <Label className="text-sm">Allow client to see results immediately</Label>
-          <p className="text-xs text-muted-foreground">If off, client must wait for coach debrief before viewing results</p>
+          <p className="text-xs text-muted-foreground">If off, client must wait for practitioner debrief before viewing results</p>
         </div>
         <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
       </div>
@@ -1478,7 +1478,7 @@ export default function CoachClients() {
                       </TableCell>
                       <TableCell>
                         {c.stripe_payment_intent_id ? (
-                          <Badge variant="default" className="text-xs">Coach Paid</Badge>
+                          <Badge variant="default" className="text-xs">Practitioner Paid</Badge>
                         ) : (
                           <Badge variant="outline" className="text-xs">Self Pay</Badge>
                         )}

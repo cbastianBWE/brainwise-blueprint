@@ -26,7 +26,7 @@ export interface TeamPdfSectionData {
     lean_on: string;
   };
   leadership?: Array<{ headline: string; detail: string; action?: string }>;
-  coach?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
+  practitioner?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
 }
 
 export interface TeamPdfData {

@@ -635,7 +635,7 @@ export default function TeamReport() {
   const communication = sections["communication"] as CommunicationSection | undefined;
   const conflict = sections["conflict"] as ConflictSection | undefined;
   const leader = sections["leader_brief"] as LeaderBriefSection | undefined;
-  const coach = sections["coach"] as CoachSection | undefined;
+  const practitioner = sections["coach"] as CoachSection | undefined;
   const leadership = sections["leadership"] as LeadershipItem[] | undefined;
   const hasLeadership = Array.isArray(leadership) && leadership.length > 0;
 
@@ -1068,8 +1068,8 @@ export default function TeamReport() {
         </section>
       )}
 
-      {/* Coach (privileged) */}
-      {canSeePrivileged && coach && (
+      {/* Practitioner (privileged) */}
+      {canSeePrivileged && practitioner && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <div style={{

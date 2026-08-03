@@ -210,7 +210,7 @@ export default function MemberDrawerCoach({
 
       {!relQuery.error && (relQuery.data?.length ?? 0) > 0 && (
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold">Coach client & actor activity</h3>
+          <h3 className="text-sm font-semibold">Practitioner client & actor activity</h3>
           <div className="rounded-md border divide-y">
             {(relQuery.data ?? []).map((row, i) => (
               <div key={i} className="p-3 text-sm flex flex-wrap items-center gap-2">

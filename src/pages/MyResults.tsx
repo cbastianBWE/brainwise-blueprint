@@ -1092,7 +1092,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
           {debriefPendingIds.has(selected.result.assessment_id) && (
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="flex flex-col items-center justify-center py-12 space-y-3 text-center">
-                <p className="text-lg font-semibold text-foreground">Results Pending Coach Debrief</p>
+                <p className="text-lg font-semibold text-foreground">Results Pending Practitioner Debrief</p>
                 <p className="text-sm text-muted-foreground max-w-md">
                   Your practitioner has asked to review your results with you before they are released.
                   Please connect with your practitioner to schedule your debrief session.
@@ -2320,7 +2320,7 @@ function AirsaAwaitingView({
         </div>
       </section>
 
-      {/* Block 3: Action buttons (not in coach view) */}
+      {/* Block 3: Action buttons (not in practitioner view) */}
       {!isCoachView && (
         <section style={{ display: "flex", flexDirection: "column", gap: "var(--s-3)" }}>
           {!hasPairedManager ? (

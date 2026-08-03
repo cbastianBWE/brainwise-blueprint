@@ -161,7 +161,7 @@ export default function AppLayout() {
               {showBanner && (
                 <div className="relative flex items-center justify-between gap-4 rounded-lg border border-primary bg-primary/10 p-4 mb-6">
                   <p className="text-sm font-medium">
-                    🎉 You have a ${couponData.coupon_amount} coach credit toward an annual subscription! Upgrade and save before it expires on {formattedExpiry}.
+                    🎉 You have a ${couponData.coupon_amount} practitioner credit toward an annual subscription! Upgrade and save before it expires on {formattedExpiry}.
                   </p>
                   <div className="flex items-center gap-2 shrink-0">
                     <Button size="sm" onClick={() => navigate("/pricing?billing=annual")}>

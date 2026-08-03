@@ -731,7 +731,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
           <DialogHeader>
             <DialogTitle>Your Practitioner Has Invited You</DialogTitle>
             <DialogDescription>
-              Your coach has ordered {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} for you.
+              Your practitioner has ordered {selfPayCoachInstrumentIds.size} assessment{selfPayCoachInstrumentIds.size !== 1 ? "s" : ""} for you.
               Choose how you'd like to access them.
             </DialogDescription>
           </DialogHeader>

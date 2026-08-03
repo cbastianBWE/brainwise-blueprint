@@ -71,7 +71,7 @@ export function CoachDisclosureModal({
     >
       <div className="bg-background rounded-lg shadow-xl max-w-3xl w-full my-8 flex flex-col max-h-[90vh]">
         <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold text-foreground">Coach Confidentiality Obligations</h2>
+          <h2 className="text-xl font-semibold text-foreground">Practitioner Confidentiality Obligations</h2>
           {effectiveFrom && (
             <p className="text-xs text-muted-foreground mt-1">
               Effective from {new Date(effectiveFrom).toLocaleDateString()}

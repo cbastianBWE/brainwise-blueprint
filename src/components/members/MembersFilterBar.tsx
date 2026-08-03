@@ -232,7 +232,7 @@ export default function MembersFilterBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Coach actor */}
+        {/* Practitioner actor */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">{actorLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
@@ -244,7 +244,7 @@ export default function MembersFilterBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Coach client */}
+        {/* Practitioner client */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">{clientLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>

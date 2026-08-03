@@ -375,7 +375,7 @@ export default function CoachManagement() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold">Coach Management</h1>
+      <h1 className="text-2xl font-bold">Practitioner Management</h1>
 
       <Tabs defaultValue="invitations">
         <TabsList>

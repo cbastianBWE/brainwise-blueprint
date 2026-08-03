@@ -212,7 +212,7 @@ export default function ManageReportAccessDialog({ report, open, onOpenChange }:
             <Input placeholder="Search practitioners by name or email" value={query} onChange={(e) => setQuery(e.target.value)} />
             <div className="border rounded-md max-h-56 overflow-y-auto divide-y">
               {results.length === 0 ? (
-                <div className="px-3 py-6 text-sm text-muted-foreground text-center">No coaches found.</div>
+                <div className="px-3 py-6 text-sm text-muted-foreground text-center">No practitioners found.</div>
               ) : (
                 results.map((row) => {
                   const alreadyHasAccess = granteeIds.has(row.user_id);

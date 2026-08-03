@@ -258,7 +258,7 @@ function LifecycleReminderCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Coach subscription reminder emails</CardTitle>
+        <CardTitle className="text-lg">Practitioner subscription reminder emails</CardTitle>
         <CardDescription>
           Occasional reminders about your practitioner subscription status.
         </CardDescription>

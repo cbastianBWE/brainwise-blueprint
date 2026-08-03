@@ -732,7 +732,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
         </div>
       )}
 
-      {/* Suggested Next Steps — shown in both client and coach views */}
+      {/* Suggested Next Steps — shown in both client and practitioner views */}
       {(actionPlan.length > 0 || loadingNarrativeSections) && (
         <div>
           <h3 style={sectionHeadingStyle}>Suggested Next Steps</h3>

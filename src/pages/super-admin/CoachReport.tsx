@@ -37,7 +37,7 @@ export default function CoachReport() {
             setSearchParams(next);
           }}
         >
-          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to coach reports
+          <ArrowLeft className="h-4 w-4 mr-1" aria-hidden="true" /> Back to practitioner reports
         </Button>
         <MyResults
           isCoachView
