@@ -25,7 +25,7 @@ const SIDEBAR = {
 };
 
 export const coachContent: HelpRoleContent = {
-  role: "practitioner",
+  role: "coach",
   label: "Practitioner",
   description:
     "You use BrainWise with your own coaching clients. These are the tasks practitioners do most often — invite clients, order assessments, review their results, and generate team or paired reports.",
