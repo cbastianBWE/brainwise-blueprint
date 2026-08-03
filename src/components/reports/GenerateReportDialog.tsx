@@ -99,6 +99,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
   const [candidatesError, setCandidatesError] = useState(false);
   const [payerSearch, setPayerSearch] = useState("");
 
+  // Free report credits (practitioner's own pool)
+  const [poolBalances, setPoolBalances] = useState<{ team: number; paired: number }>({ team: 0, paired: 0 });
+  const [useCredit, setUseCredit] = useState(true);
+
   const debounceRef = useRef<number | null>(null);
 
   // Reset on close
@@ -118,8 +122,36 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       setCandidatesLoading(false);
       setCandidatesError(false);
       setPayerSearch("");
+      setPoolBalances({ team: 0, paired: 0 });
+      setUseCredit(true);
     }
   }, [open, allowedModes]);
+
+  // Load the practitioner's own free-report credit balances on each open
+  useEffect(() => {
+    if (!open || isSuperAdmin) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase.from as unknown as (t: string) => {
+        select: (c: string) => Promise<{ data: { report_type: string; balance: number }[] | null; error: unknown }>;
+      })("coach_free_report_pool").select("report_type, balance");
+      if (cancelled) return;
+      if (error || !data) {
+        setPoolBalances({ team: 0, paired: 0 });
+        return;
+      }
+      const next = { team: 0, paired: 0 };
+      for (const row of data) {
+        if (row.report_type === "team") next.team = row.balance ?? 0;
+        if (row.report_type === "paired") next.paired = row.balance ?? 0;
+      }
+      setPoolBalances(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isSuperAdmin]);
+
 
   // Search subjects (debounced)
   useEffect(() => {
