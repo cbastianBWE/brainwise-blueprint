@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TerrainDesktop, TerrainPhone } from "./journey/JourneyTerrain";
 import ModuleBriefingDialog from "./journey/ModuleBriefingDialog";
 import ActivityBriefingDialog from "./journey/ActivityBriefingDialog";
+import FocusStops from "./journey/FocusStops";
 import {
   minuteRange,
   type CatalogueActivity,
