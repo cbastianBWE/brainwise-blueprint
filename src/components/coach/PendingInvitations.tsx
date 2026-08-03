@@ -276,7 +276,7 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                 The link will become unusable. If you paid for this assessment, your coupon will be voided.
               </p>
               <p className="text-xs text-muted-foreground">
-                Note: If the recipient has already started signing up, they may still be able to create an account with this email. Revocation prevents the coach-client linkage from forming, not the signup itself.
+                Note: If the recipient has already started signing up, they may still be able to create an account with this email. Revocation prevents the practitioner-client linkage from forming, not the signup itself.
               </p>
             </div>
           )}

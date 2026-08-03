@@ -85,7 +85,7 @@ export async function assembleTeamPdfData(params: {
   }
   if (!canSeePrivileged) {
     delete sections.leader_brief;
-    delete sections.coach;
+    delete sections.practitioner;
   }
 
   const { data: items } = await supabase

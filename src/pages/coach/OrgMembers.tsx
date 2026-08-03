@@ -113,7 +113,7 @@ function MemberList({ onSelect }: { onSelect: (memberId: string) => void }) {
           <Users className="h-6 w-6" /> Organization Members
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Members of organizations you coach. Open anyone to view their results, plan, and coaching.
+          Members of organizations you practitioner. Open anyone to view their results, plan, and coaching.
         </p>
       </div>
 
@@ -124,7 +124,7 @@ function MemberList({ onSelect }: { onSelect: (memberId: string) => void }) {
       ) : members.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            You're not assigned to any organizations yet. A BrainWise admin assigns organization coaches.
+            You're not assigned to any organizations yet. A BrainWise admin assigns organization practitioners.
           </CardContent>
         </Card>
       ) : (

@@ -40,7 +40,7 @@ export const services: ServiceCard[] = [
     cta: { label: "Book a Conversation", action: "open-briefing" },
   },
   {
-    id: "coach-certification",
+    id: "practitioner-certification",
     title: "Practitioner Certification",
     summary:
       "Train as a BrainWise-certified practitioner across four specialized tracks.",

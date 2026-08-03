@@ -176,7 +176,7 @@ export default function ManageReportAccessDialog({ report, open, onOpenChange }:
               <div className="py-6 text-sm text-muted-foreground text-center">Loading...</div>
             ) : grantees.length === 0 ? (
               <div className="border rounded-md px-3 py-6 text-sm text-muted-foreground text-center">
-                No coaches have access yet.
+                No practitioners have access yet.
               </div>
             ) : (
               <div className="border rounded-md divide-y">

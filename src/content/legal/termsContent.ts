@@ -165,7 +165,7 @@ export const content: LegalBlock[] = [
   {
     "type": "h2",
     "text": "5.3 Practitioner-paid client assessments",
-    "id": "coach-paid-client-assessments"
+    "id": "practitioner-paid-client-assessments"
   },
   {
     "type": "p",
@@ -306,7 +306,7 @@ export const content: LegalBlock[] = [
   {
     "type": "h1",
     "text": "7. Practitioner obligations and certification",
-    "id": "coach-obligations-and-certification"
+    "id": "practitioner-obligations-and-certification"
   },
   {
     "type": "p",
@@ -432,7 +432,7 @@ export const content: LegalBlock[] = [
   {
     "type": "h2",
     "text": "9.4 Practitioners must apply professional judgment",
-    "id": "coaches-must-apply-professional-judgment"
+    "id": "practitioners-must-apply-professional-judgment"
   },
   {
     "type": "p",
@@ -468,7 +468,7 @@ export const content: LegalBlock[] = [
   {
     "type": "h1",
     "text": "10. Practitioner-client and peer access disclosures",
-    "id": "coach-client-and-peer-access-disclosures"
+    "id": "practitioner-client-and-peer-access-disclosures"
   },
   {
     "type": "p",

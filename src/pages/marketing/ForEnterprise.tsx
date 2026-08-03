@@ -256,7 +256,7 @@ export default function ForEnterprise() {
           <Eyebrow color="var(--bw-orange)">The Problem</Eyebrow>
           <h2 style={h2Style}>The people you most need to move are the ones you can't afford to practitioner.</h2>
           <p style={{ ...bodyStyle, fontSize: 16, marginTop: 24, maxWidth: 820 }}>
-            Coaching works. It is also the most expensive line in your development budget per person reached, which is why it goes to the top of the house and stops. Everyone below gets a workshop and a personality assessment, and neither changes what people do on Monday. The leaders you most need to move through change are the ones you cannot afford to coach one to one.
+            Coaching works. It is also the most expensive line in your development budget per person reached, which is why it goes to the top of the house and stops. Everyone below gets a workshop and a personality assessment, and neither changes what people do on Monday. The leaders you most need to move through change are the ones you cannot afford to practitioner one to one.
           </p>
         </div>
       </section>

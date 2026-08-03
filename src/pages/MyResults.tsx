@@ -1094,8 +1094,8 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               <CardContent className="flex flex-col items-center justify-center py-12 space-y-3 text-center">
                 <p className="text-lg font-semibold text-foreground">Results Pending Coach Debrief</p>
                 <p className="text-sm text-muted-foreground max-w-md">
-                  Your coach has asked to review your results with you before they are released.
-                  Please connect with your coach to schedule your debrief session.
+                  Your practitioner has asked to review your results with you before they are released.
+                  Please connect with your practitioner to schedule your debrief session.
                 </p>
               </CardContent>
             </Card>
@@ -1609,7 +1609,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 <CardContent className="space-y-3">
                   {isCoachView && permissionLevel === 'score_summary' ? (
                     <p className="text-sm text-muted-foreground">
-                      The client has limited coach access to scores only.
+                      The client has limited practitioner access to scores only.
                     </p>
                   ) : selected.result.ai_narrative ? (
                     <>

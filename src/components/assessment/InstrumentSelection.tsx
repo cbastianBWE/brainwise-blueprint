@@ -652,7 +652,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 } else {
                   buttonContent = (
                     <Button className="w-full" onClick={() => setShowSelfPayDialog(true)}>
-                      Your Coach Wants You to Take This
+                      Your Practitioner Wants You to Take This
                     </Button>
                   );
                 }

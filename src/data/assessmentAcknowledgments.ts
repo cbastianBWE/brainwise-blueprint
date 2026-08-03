@@ -116,7 +116,7 @@ A few things to know before you start:
     title: "Habit Self-Survey (HSS) — Quick Check-in",
     body: `The HSS is a brief 6-item check-in on how the AI-related habits you're building are progressing. It takes about 2 minutes.
 
-Be honest — even if a week didn't go the way you hoped, an accurate read is more useful than an optimistic one for tracking your progress over time. Your responses are visible to your organization's BrainWise administrators, and to your coach if a coach is supporting you.`,
+Be honest — even if a week didn't go the way you hoped, an accurate read is more useful than an optimistic one for tracking your progress over time. Your responses are visible to your organization's BrainWise administrators, and to your practitioner if a practitioner is supporting you.`,
     buttonLabel: "Start Check-in",
   },
 };

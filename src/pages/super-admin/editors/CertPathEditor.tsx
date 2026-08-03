@@ -684,7 +684,7 @@ function CertPathEditor({
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              The instruments this path certifies the coach to administer.
+              The instruments this path certifies the practitioner to administer.
             </p>
           </div>
 

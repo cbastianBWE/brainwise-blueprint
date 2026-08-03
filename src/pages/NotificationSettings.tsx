@@ -260,7 +260,7 @@ function LifecycleReminderCard() {
       <CardHeader>
         <CardTitle className="text-lg">Coach subscription reminder emails</CardTitle>
         <CardDescription>
-          Occasional reminders about your coach subscription status.
+          Occasional reminders about your practitioner subscription status.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -279,7 +279,7 @@ function LifecycleReminderCard() {
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0">
               <Label htmlFor="lifecycle-reminder" className="text-sm">
-                Receive coach subscription reminder emails.
+                Receive practitioner subscription reminder emails.
               </Label>
             </div>
             <Switch

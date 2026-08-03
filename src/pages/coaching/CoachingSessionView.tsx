@@ -278,7 +278,7 @@ export default function CoachingSessionView() {
                   ) : (
                     <Share2 className="h-4 w-4" />
                   )}
-                  Share with my coach
+                  Share with my practitioner
                 </>
               )}
             </Button>

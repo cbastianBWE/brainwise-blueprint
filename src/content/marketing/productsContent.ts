@@ -76,7 +76,7 @@ export const assessments: MarketingCardData[] = [
 
 export const certifications: MarketingCardData[] = [
   {
-    id: "ptp-coach-cert",
+    id: "ptp-practitioner-cert",
     title: "PTP Practitioner Certification",
     summary:
       "Certify in BrainWise's flagship instrument and practitioner clients through threat-pattern awareness.",
@@ -114,7 +114,7 @@ export const certifications: MarketingCardData[] = [
     cta: { label: "Notify me", action: "open-briefing" },
   },
   {
-    id: "my-brainwise-coach-cert",
+    id: "my-brainwise-practitioner-cert",
     title: "My BrainWise Practitioner Certification",
     summary:
       "Become a fully credentialed BrainWise practitioner with platform-wide privileges.",

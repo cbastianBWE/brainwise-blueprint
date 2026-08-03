@@ -242,7 +242,7 @@ export function JointSessionWidget({
           {!introText && (
             <div className="rounded-lg border bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground">
-                Your coach will guide this conversation one step at a time. This is where that appears.
+                Your practitioner will guide this conversation one step at a time. This is where that appears.
               </p>
             </div>
           )}

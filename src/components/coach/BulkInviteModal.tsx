@@ -279,7 +279,7 @@ export default function BulkInviteModal({
         <DialogHeader>
           <DialogTitle>Bulk Invite Clients</DialogTitle>
           <DialogDescription>
-            Invite up to 75 clients at once. Mix self-pay and coach-paid invitations in a single batch.
+            Invite up to 75 clients at once. Mix self-pay and practitioner-paid invitations in a single batch.
           </DialogDescription>
         </DialogHeader>
 
@@ -589,7 +589,7 @@ export default function BulkInviteModal({
 
               {rpcResults.some((r: any) => r.email_failed) && (
                 <div className="rounded-md border bg-yellow-50 p-3 text-xs text-yellow-900">
-                  These coach-client records were created but the email did not send. The client can still sign up at the URL, you may want to contact them directly.
+                  These practitioner-client records were created but the email did not send. The client can still sign up at the URL, you may want to contact them directly.
                 </div>
               )}
 

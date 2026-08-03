@@ -361,7 +361,7 @@ export default function ForPractitioners() {
           <div>
             <h2 style={h2Style}>What you can deliver</h2>
             <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20 }}>
-              The PTP debrief, the Paired Profile, and the Team Profile at the practitioner level. Once you hold the full coach certification, the complete 200+ activity program with guided pathways.
+              The PTP debrief, the Paired Profile, and the Team Profile at the practitioner level. Once you hold the full practitioner certification, the complete 200+ activity program with guided pathways.
             </p>
           </div>
           <p

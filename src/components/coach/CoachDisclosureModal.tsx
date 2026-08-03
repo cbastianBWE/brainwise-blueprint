@@ -91,7 +91,7 @@ export function CoachDisclosureModal({
               className="mt-1"
             />
             <span className="text-sm text-foreground">
-              I have read and understood these coach confidentiality obligations. I agree to
+              I have read and understood these practitioner confidentiality obligations. I agree to
               comply with them in my use of the BrainWise platform.
             </span>
           </label>

@@ -66,7 +66,7 @@ export default function ReportPaymentConfirmed() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Your report is still waiting. Ask your coach to resend the payment link when you're ready.
+              Your report is still waiting. Ask your practitioner to resend the payment link when you're ready.
             </p>
           </CardContent>
         </Card>
@@ -83,7 +83,7 @@ export default function ReportPaymentConfirmed() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              We couldn't find that order. If you were charged, contact your coach.
+              We couldn't find that order. If you were charged, contact your practitioner.
             </p>
           </CardContent>
         </Card>

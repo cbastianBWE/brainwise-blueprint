@@ -46,7 +46,7 @@ export interface PairedPdfSections {
   intimacy: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
-  coach: boolean;
+  practitioner: boolean;
 }
 
 const PAIR_SHAPES = ["farApart", "bothHigh", "bothLow", "bothMedium", "mild"] as const;

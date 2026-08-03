@@ -90,7 +90,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
         <div>
           <CardTitle>Organization Practitioners</CardTitle>
           <CardDescription>
-            An assigned coach can view and coach every member of this organization
+            An assigned practitioner can view and practitioner every member of this organization
             (results, development plans, coaching, and team/paired reports).
           </CardDescription>
         </div>
@@ -105,7 +105,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
           </div>
         ) : coaches.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">
-            No coaches assigned to this organization yet.
+            No practitioners assigned to this organization yet.
           </p>
         ) : (
           <Table>

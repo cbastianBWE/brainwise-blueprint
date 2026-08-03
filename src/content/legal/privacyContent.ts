@@ -406,11 +406,11 @@ export const content: LegalBlock[] = [
   {
     "type": "h2",
     "text": "7.1 With your practitioner (if applicable)",
-    "id": "with-your-coach-if-applicable"
+    "id": "with-your-practitioner-if-applicable"
   },
   {
     "type": "p",
-    "text": "If you take an assessment as the client of a certified BrainWise coach, your coach can view your assessment results, your debrief status, and limited account information necessary to manage the coaching relationship. The visibility of your results is governed by the \"results released\" toggle controlled by your practitioner during the debrief lifecycle."
+    "text": "If you take an assessment as the client of a certified BrainWise practitioner, your practitioner can view your assessment results, your debrief status, and limited account information necessary to manage the coaching relationship. The visibility of your results is governed by the \"results released\" toggle controlled by your practitioner during the debrief lifecycle."
   },
   {
     "type": "h2",

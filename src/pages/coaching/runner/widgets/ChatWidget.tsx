@@ -63,7 +63,7 @@ export function ChatWidget({
       <div className="space-y-2 max-h-[420px] overflow-y-auto rounded-lg border p-3">
         {(chat || []).length === 0 && (
           <p className="text-sm text-muted-foreground">
-            Ask the AI coach anything about the plan above.
+            Ask the AI practitioner anything about the plan above.
           </p>
         )}
         {(chat || []).map((m, i) => (

@@ -37,7 +37,7 @@ export interface TeamPdfSections {
   leaderBrief: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
-  coach: boolean;
+  practitioner: boolean;
 }
 
 const TEAM_SHAPES = ["allHigh", "allLow", "two", "even", "together"] as const;

@@ -44,7 +44,7 @@ const ACCOUNT_TYPES = [
   "brainwise_super_admin",
   "org_admin",
   "company_admin",
-  "coach",
+  "practitioner",
   "corporate_employee",
   "individual",
 ];

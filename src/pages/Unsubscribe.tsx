@@ -36,7 +36,7 @@ export default function Unsubscribe() {
         )}
         {status === "success" && (
           <p className="text-muted-foreground">
-            You've been unsubscribed from coach subscription reminders.
+            You've been unsubscribed from practitioner subscription reminders.
           </p>
         )}
         {status === "error" && (

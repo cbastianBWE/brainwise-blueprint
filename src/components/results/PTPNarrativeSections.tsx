@@ -635,7 +635,7 @@ function CoachLimitedNotice() {
       }}
     >
       <p style={{ fontSize: 14, color: "var(--fg-2)", margin: 0 }}>
-        The client has limited coach access to scores only.
+        The client has limited practitioner access to scores only.
       </p>
     </div>
   );

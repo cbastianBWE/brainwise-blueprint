@@ -128,7 +128,7 @@ export function IkigaiWidget({
               Brainstorm each of the three circles below — just put down whatever
               comes, one idea per line. You don&apos;t need to sort them. When
               you&apos;re ready, choose <span className="font-medium">Map my Hedgehog</span> and
-              your coach will work out where your ideas overlap and show you the
+              your practitioner will work out where your ideas overlap and show you the
               picture. Nothing is fixed: you can adjust where any idea sits, and
               re-map as often as you like.
             </>

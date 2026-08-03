@@ -116,7 +116,7 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
-      id: "share-with-a-coach",
+      id: "share-with-a-practitioner",
       title: "Share results with a practitioner",
       summary: "Grant a practitioner or trusted person read access to your report.",
       steps: [

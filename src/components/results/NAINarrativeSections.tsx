@@ -322,7 +322,7 @@ export default function NAINarrativeSections({
     return (
       <section>
         <div className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-          The client has limited coach access to scores only.
+          The client has limited practitioner access to scores only.
         </div>
       </section>
     );

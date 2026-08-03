@@ -68,7 +68,7 @@ export interface TeamPdfSectionsUi {
   leaderBrief: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
-  coach: boolean;
+  practitioner: boolean;
 }
 
 export interface PairedPdfSectionsUi {
@@ -86,7 +86,7 @@ export interface PairedPdfSectionsUi {
   intimacy: boolean;
   fullMap: boolean;
   fullMapCharts: boolean;
-  coach: boolean;
+  practitioner: boolean;
 }
 
 interface Props {
@@ -373,7 +373,7 @@ export default function ExportPdfModal({
     leaderBrief: true,
     fullMap: true,
     fullMapCharts: false,
-    coach: true,
+    practitioner: true,
   });
 
   const [pairedSections, setPairedSections] = useState<PairedPdfSectionsUi>({
@@ -391,7 +391,7 @@ export default function ExportPdfModal({
     intimacy: true,
     fullMap: true,
     fullMapCharts: false,
-    coach: true,
+    practitioner: true,
   });
 
   const [exporting, setExporting] = useState(false);

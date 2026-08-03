@@ -59,7 +59,7 @@ export function ShareWithCoachDialog() {
         <DialogHeader>
           <DialogTitle>Share your development plan</DialogTitle>
           <DialogDescription>
-            Coaches you share with can see your plan and add comments. They can't edit your
+            Practitioners you share with can see your plan and add comments. They can't edit your
             actions or entries, and you can stop sharing at any time.
           </DialogDescription>
         </DialogHeader>

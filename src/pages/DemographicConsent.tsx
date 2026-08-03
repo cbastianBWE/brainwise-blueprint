@@ -96,7 +96,7 @@ const DemographicConsent = () => {
           <CardTitle className="text-2xl">Optional: Help Us Understand Our Users</CardTitle>
           <CardDescription className="text-base leading-relaxed pt-2">
             We collect optional background information to improve our platform through aggregate research.
-            This data is never shared with your employer, coach, or any third party in identifiable form.
+            This data is never shared with your employer, practitioner, or any third party in identifiable form.
             Providing it is entirely optional and you can withdraw consent at any time from your Privacy settings.
           </CardDescription>
         </CardHeader>

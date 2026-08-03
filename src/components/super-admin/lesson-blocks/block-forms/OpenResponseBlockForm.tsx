@@ -45,7 +45,7 @@ export function OpenResponseBlockForm({ value, onConfigChange }: Props) {
           placeholder="Private steering note for the AI practitioner"
         />
         <p className="text-xs text-muted-foreground">
-          Private steering note for the AI coach. Never shown to the learner.
+          Private steering note for the AI practitioner. Never shown to the learner.
         </p>
       </div>
 

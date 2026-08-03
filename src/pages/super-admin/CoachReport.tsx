@@ -227,7 +227,7 @@ function CoachAssessmentList({
 
       {assessments.length === 0 ? (
         <p className="text-muted-foreground text-center py-10">
-          No completed PTP reports for this coach.
+          No completed PTP reports for this practitioner.
         </p>
       ) : (
         <div className="space-y-3">
