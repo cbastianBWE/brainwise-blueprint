@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AiAnalysisPanel } from "@/components/coaching/CoachingViews";
-import { scoreFor, type GuessValue } from "./GuessLockWidget";
+import { type GuessValue } from "./GuessLockWidget";
 import type { CoupleContext, CoupleStep } from "../coupleShared";
 
 export function ProfileRevealWidget({
@@ -11,42 +11,51 @@ export function ProfileRevealWidget({
   couple,
   responses,
   analysisHtml,
+  relationshipId,
+  activityId,
 }: {
   step: CoupleStep;
   couple: CoupleContext;
   responses: Record<string, unknown>;
   analysisHtml?: string;
+  relationshipId?: string;
+  activityId?: string;
 }) {
   const guesses = (responses?.[step.guessSource || "partner_force_guesses"] as GuessValue) || {};
-  const [truth, setTruth] = useState<Record<string, unknown> | null>(null);
+  const [truth, setTruth] = useState<Record<string, number> | null>(null);
   const [unavailable, setUnavailable] = useState(false);
   const [shown, setShown] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const pid = couple.partnerUserId;
-      if (!pid) {
+      const { data, error } = await supabase.rpc("relationship_partner_dimension_scores", {
+        p_relationship: relationshipId ?? null,
+        p_activity: activityId ?? null,
+        p_run: null,
+      });
+      if (cancelled) return;
+      if (error) {
         setUnavailable(true);
         return;
       }
-      const { data, error } = await supabase
-        .from("assessment_results")
-        .select("dimension_scores, created_at")
-        .eq("user_id", pid)
-        .eq("instrument_id", "INST-001")
-        .is("superseded_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1);
-      if (cancelled) return;
-      const row = (data as Array<{ dimension_scores: unknown }> | null)?.[0];
-      if (error || !row?.dimension_scores) setUnavailable(true);
-      else setTruth(row.dimension_scores as Record<string, unknown>);
+      const rows = (data as Array<{ dimension_key: string; score: number }> | null) || [];
+      if (rows.length === 0) {
+        setTruth(null);
+        setUnavailable(!!couple.barrierCleared);
+        return;
+      }
+      const map: Record<string, number> = {};
+      rows.forEach((r) => {
+        map[r.dimension_key] = Number(r.score);
+      });
+      setTruth(map);
+      setUnavailable(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [couple.partnerUserId]);
+  }, [relationshipId, activityId, couple.barrierCleared]);
 
   if (!couple.barrierCleared) {
     return step.waitingCopy ? (
@@ -56,7 +65,7 @@ export function ProfileRevealWidget({
 
   const rows = Object.keys(guesses).map((dim) => {
     const guess = guesses[dim]?.guess;
-    const actual = truth ? scoreFor(truth, dim) : null;
+    const actual = truth?.[dim] ?? null;
     const gap = typeof guess === "number" && actual != null ? Math.abs(guess - actual) : null;
     return { dim, guess, actual, gap };
   });
