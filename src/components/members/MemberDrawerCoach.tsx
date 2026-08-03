@@ -56,6 +56,17 @@ const renderPool = (uses: Record<string, number> | null) => {
 const instrumentLabel = (code: string) =>
   INSTRUMENTS.find((i) => i.code === code)?.label ?? code;
 
+const REPORT_TYPES: { code: "team" | "paired"; label: string }[] = [
+  { code: "team", label: "Team report" },
+  { code: "paired", label: "Paired report" },
+];
+
+const reportTypeLabel = (code: string) =>
+  REPORT_TYPES.find((r) => r.code === code)?.label ?? code ?? "—";
+
+const titleCase = (s: string | null | undefined) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1) : "—";
+
 const CERT_LABELS: Record<string, string> = {
   ptp_coach: "PTP Certified Practitioner",
   ai_transformation_coach: "AI Transformation Certified Practitioner",
