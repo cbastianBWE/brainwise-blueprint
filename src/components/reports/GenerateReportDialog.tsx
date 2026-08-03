@@ -287,7 +287,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       if (result?.requires_payment === false) {
         if (kind === "team") {
           const { data, error } = await supabase.functions.invoke("generate-team-profile", {
-            body: { subject_user_ids: ids },
+            body: { subject_user_ids: ids, ...(result.order_id ? { order_id: result.order_id } : {}) },
           });
           if (error) {
             const msg = await readErrorMessage(error);
