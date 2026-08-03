@@ -17,7 +17,7 @@ const placeholder = (
 
 export const helpContent: Record<HelpRoleContent["role"], HelpRoleContent> = {
   individual: individualContent,
-  practitioner: coachContent,
+  coach: coachContent,
   org_member: orgMemberContent,
   org_admin: orgAdminContent,
   mentor: placeholder(
@@ -42,7 +42,7 @@ export const helpContent: Record<HelpRoleContent["role"], HelpRoleContent> = {
 export const helpRoleOrder: HelpRoleContent["role"][] = [
   "individual",
   "org_member",
-  "practitioner",
+  "coach",
   "mentor",
   "org_admin",
   "super_admin",

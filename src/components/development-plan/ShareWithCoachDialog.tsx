@@ -31,7 +31,7 @@ export function ShareWithCoachDialog() {
     },
   });
 
-  const practitioners = (data?.coaches ?? []) as CoachRow[];
+  const coaches = (data?.coaches ?? []) as CoachRow[];
 
   const toggleShare = async (coachId: string, enabled: boolean) => {
     setBusy(coachId);

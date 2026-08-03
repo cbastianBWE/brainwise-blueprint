@@ -1,7 +1,7 @@
 export type HelpRole =
   | "individual"
   | "coach_client"
-  | "practitioner"
+  | "coach"
   | "mentor"
   | "org_member"
   | "org_admin"

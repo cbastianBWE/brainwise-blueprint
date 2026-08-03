@@ -35,7 +35,7 @@ interface OrderRow {
   relationship_mode: string | null;
   status: "pending_payment" | "paid" | "generating" | string;
   amount_cents: number;
-  payer: "practitioner" | "client";
+  payer: "coach" | "client";
   client_email: string | null;
   subject_names: string;
   subject_count: number;

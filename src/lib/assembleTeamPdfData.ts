@@ -26,7 +26,7 @@ export interface TeamPdfSectionData {
     lean_on: string;
   };
   leadership?: Array<{ headline: string; detail: string; action?: string }>;
-  practitioner?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
+  coach?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
 }
 
 export interface TeamPdfData {
@@ -85,7 +85,7 @@ export async function assembleTeamPdfData(params: {
   }
   if (!canSeePrivileged) {
     delete sections.leader_brief;
-    delete sections.practitioner;
+    delete sections.coach;
   }
 
   const { data: items } = await supabase
