@@ -247,17 +247,25 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
     <JourneyMapWidget step={step} value={(value as string[]) || []} onChange={(v) => onChange(v)} />
   ),
   visibility_explainer: ({ step }) => <VisibilityExplainerWidget step={step} />,
-  guess_lock: ({ step, couple, value, onChange, readOnly }) => (
+  guess_lock: ({ step, couple, value, onChange, readOnly, activityId }) => (
     <GuessLockWidget
       step={step}
       couple={couple}
       value={(value as GuessValue) || {}}
       onChange={(v) => onChange(v)}
       readOnly={readOnly}
+      activityId={activityId}
     />
   ),
-  profile_reveal: ({ step, couple, responses, analysisHtml }) => (
-    <ProfileRevealWidget step={step} couple={couple} responses={responses || {}} analysisHtml={analysisHtml} />
+  profile_reveal: ({ step, couple, responses, analysisHtml, relationshipId, activityId }) => (
+    <ProfileRevealWidget
+      step={step}
+      couple={couple}
+      responses={responses || {}}
+      analysisHtml={analysisHtml}
+      relationshipId={relationshipId}
+      activityId={activityId}
+    />
   ),
   safety_screen: ({ step, value, onChange, responses, relationshipId, activityId }) => (
     <SafetyScreenWidget
