@@ -311,7 +311,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           navigate(`/team-report/${id}`);
         } else {
           const { data, error } = await supabase.functions.invoke("generate-paired-profile", {
-            body: { user_a: ids[0], user_b: ids[1], relationship_mode: mode },
+            body: { user_a: ids[0], user_b: ids[1], relationship_mode: mode, ...(result.order_id ? { order_id: result.order_id } : {}) },
           });
           if (error) {
             const msg = await readErrorMessage(error);
