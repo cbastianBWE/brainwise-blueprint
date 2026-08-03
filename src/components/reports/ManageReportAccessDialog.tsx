@@ -126,7 +126,7 @@ export default function ManageReportAccessDialog({ report, open, onOpenChange }:
     }
     const res = data as { granted_count?: number; already_granted?: string[]; invalid?: string[] };
     const n = res?.granted_count ?? 0;
-    if (n > 0) toast.success(`Granted access to ${n} practitioner${n === 1 ? "" : "es"}.`);
+    if (n > 0) toast.success(`Granted access to ${n} practitioner${n === 1 ? "" : "s"}.`);
     else toast.info("No new access granted.");
     if (res?.invalid && res.invalid.length > 0) {
       toast.warning(`${res.invalid.length} selected user(s) could not be found.`);
