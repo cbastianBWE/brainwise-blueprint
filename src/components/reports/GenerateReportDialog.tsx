@@ -655,7 +655,11 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
 
         <DialogFooter className="flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {!isSuperAdmin && (
-            <div className="text-sm text-muted-foreground sm:mr-auto">{priceLabel}</div>
+            <div className="text-sm text-muted-foreground sm:mr-auto">
+              {canUseCredit && useCredit
+                ? `Free — uses 1 of your ${creditsForKind} credit${creditsForKind === 1 ? "" : "s"}`
+                : priceLabel}
+            </div>
           )}
           <div className="flex gap-2 sm:ml-auto">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
