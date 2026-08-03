@@ -113,7 +113,7 @@ const superAdminNav: NavItem[] = [
   { title: "Global Features & Settings", url: "/super-admin/features", icon: SlidersHorizontal },
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
-  { title: "Coach Invitations", url: "/super-admin/coaches", icon: Users },
+  { title: "Practitioner Management", url: "/super-admin/coaches", icon: Users },
   { title: "Organizations", url: "/super-admin/companies", icon: Briefcase },
   { title: "Report Requests", url: "/super-admin/report-requests", icon: FileClock },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
