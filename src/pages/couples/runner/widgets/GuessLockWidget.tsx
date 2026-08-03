@@ -93,7 +93,7 @@ export function GuessLockWidget({
         {dims.map((dim) => {
           const entry = current[dim];
           const guess = typeof entry?.guess === "number" ? entry.guess : 50;
-          const ref = ownScores ? scoreFor(ownScores, dim) : null;
+          const ref = ownScores?.[dim] ?? null;
           return (
             <div key={dim} className="space-y-2">
               <div className="flex items-baseline justify-between">
