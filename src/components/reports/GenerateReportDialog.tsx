@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowUp, ArrowDown, X, Loader2 } from "lucide-react";
 
@@ -98,6 +99,10 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
   const [candidatesError, setCandidatesError] = useState(false);
   const [payerSearch, setPayerSearch] = useState("");
 
+  // Free report credits (practitioner's own pool)
+  const [poolBalances, setPoolBalances] = useState<{ team: number; paired: number }>({ team: 0, paired: 0 });
+  const [useCredit, setUseCredit] = useState(true);
+
   const debounceRef = useRef<number | null>(null);
 
   // Reset on close
@@ -117,8 +122,36 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       setCandidatesLoading(false);
       setCandidatesError(false);
       setPayerSearch("");
+      setPoolBalances({ team: 0, paired: 0 });
+      setUseCredit(true);
     }
   }, [open, allowedModes]);
+
+  // Load the practitioner's own free-report credit balances on each open
+  useEffect(() => {
+    if (!open || isSuperAdmin) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase.from as unknown as (t: string) => {
+        select: (c: string) => Promise<{ data: { report_type: string; balance: number }[] | null; error: unknown }>;
+      })("coach_free_report_pool").select("report_type, balance");
+      if (cancelled) return;
+      if (error || !data) {
+        setPoolBalances({ team: 0, paired: 0 });
+        return;
+      }
+      const next = { team: 0, paired: 0 };
+      for (const row of data) {
+        if (row.report_type === "team") next.team = row.balance ?? 0;
+        if (row.report_type === "paired") next.paired = row.balance ?? 0;
+      }
+      setPoolBalances(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isSuperAdmin]);
+
 
   // Search subjects (debounced)
   useEffect(() => {
@@ -188,6 +221,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
     setClientUserId(null);
     setTeamCandidates(null);
     setPayerSearch("");
+    setUseCredit(true);
   }, [kind]);
 
   const toggleSelect = (row: SubjectRow) => {
@@ -227,6 +261,9 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
 
   const priceLabel = kind === "team" ? TEAM_PRICE_LABEL : PAIRED_PRICE_LABEL;
 
+  const creditsForKind = poolBalances[kind] ?? 0;
+  const canUseCredit = !isSuperAdmin && payer === "coach" && creditsForKind > 0;
+
   const filteredTeamCandidates = useMemo(() => {
     if (!teamCandidates) return [];
     const q = payerSearch.trim().toLowerCase();
@@ -250,6 +287,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         p_client_user_id: !isSuperAdmin && payer === "client" ? clientUserId : null,
         p_release_now: releaseNow,
         p_report_label: kind === "team" ? (reportLabel.trim() || null) : null,
+        p_use_pool: canUseCredit ? useCredit : false,
       };
 
       const { data: orderResult, error: orderErr } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>)(
@@ -269,6 +307,8 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         order_type?: "team" | "paired";
         payer?: "practitioner" | "client";
         client_name?: string;
+        billing_mode?: string;
+        pool_remaining?: number;
       };
 
       const blockedResult = orderResult as { blocked?: boolean; order_type?: "team" | "paired"; included?: number; used?: number; billing_mode?: string; included_remaining?: number | null };
@@ -286,7 +326,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
       if (result?.requires_payment === false) {
         if (kind === "team") {
           const { data, error } = await supabase.functions.invoke("generate-team-profile", {
-            body: { subject_user_ids: ids },
+            body: { subject_user_ids: ids, ...(result.order_id ? { order_id: result.order_id } : {}) },
           });
           if (error) {
             const msg = await readErrorMessage(error);
@@ -310,7 +350,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           navigate(`/team-report/${id}`);
         } else {
           const { data, error } = await supabase.functions.invoke("generate-paired-profile", {
-            body: { user_a: ids[0], user_b: ids[1], relationship_mode: mode },
+            body: { user_a: ids[0], user_b: ids[1], relationship_mode: mode, ...(result.order_id ? { order_id: result.order_id } : {}) },
           });
           if (error) {
             const msg = await readErrorMessage(error);
@@ -325,6 +365,9 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           if (blockedResult?.billing_mode === "included") {
             const rem = blockedResult.included_remaining;
             toast.success(rem === null || rem === undefined ? "Report generated (covered by your organization)." : `Report generated. ${rem} included ${kind} report${rem === 1 ? "" : "s"} remaining.`);
+          } else if (result.billing_mode === "pool") {
+            const rem = result.pool_remaining ?? 0;
+            toast.success(`Report generated using a free credit. ${rem === 0 ? `No ${kind} credits remaining.` : `${rem} ${kind} credit${rem === 1 ? "" : "s"} remaining.`}`);
           }
           onGenerated();
           onOpenChange(false);
@@ -547,6 +590,17 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
           {/* Who pays — non super-admins only */}
           {!isSuperAdmin && (
             <div className="space-y-3 border-t pt-4">
+              {canUseCredit && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <Switch id="use-credit" checked={useCredit} onCheckedChange={setUseCredit} />
+                    <Label htmlFor="use-credit" className="cursor-pointer">Use a free credit</Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    You have {creditsForKind} free {kind} report credit{creditsForKind === 1 ? "" : "s"}.
+                  </p>
+                </div>
+              )}
               <Label>Who pays</Label>
               <RadioGroup
                 value={payer}
@@ -554,6 +608,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
                   setPayer(v as "coach" | "client");
                   setClientUserId(null);
                   setPayerSearch("");
+                  setUseCredit(true);
                 }}
                 className="space-y-2"
               >
@@ -654,7 +709,11 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
 
         <DialogFooter className="flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {!isSuperAdmin && (
-            <div className="text-sm text-muted-foreground sm:mr-auto">{priceLabel}</div>
+            <div className="text-sm text-muted-foreground sm:mr-auto">
+              {canUseCredit && useCredit
+                ? `Free — uses 1 of your ${creditsForKind} credit${creditsForKind === 1 ? "" : "s"}`
+                : priceLabel}
+            </div>
           )}
           <div className="flex gap-2 sm:ml-auto">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>

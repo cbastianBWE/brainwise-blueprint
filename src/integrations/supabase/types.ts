@@ -2403,6 +2403,165 @@ export type Database = {
           },
         ]
       }
+      coach_free_report_ledger: {
+        Row: {
+          actor_user_id: string | null
+          balance_after: number
+          coach_user_id: string
+          created_at: string
+          delta: number
+          entry_type: string
+          id: string
+          reason: string
+          report_order_id: string | null
+          report_type: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          balance_after: number
+          coach_user_id: string
+          created_at?: string
+          delta: number
+          entry_type: string
+          id?: string
+          reason: string
+          report_order_id?: string | null
+          report_type: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          balance_after?: number
+          coach_user_id?: string
+          created_at?: string
+          delta?: number
+          entry_type?: string
+          id?: string
+          reason?: string
+          report_order_id?: string | null
+          report_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_free_report_ledger_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_ledger_report_order_id_fkey"
+            columns: ["report_order_id"]
+            isOneToOne: false
+            referencedRelation: "report_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_free_report_pool: {
+        Row: {
+          balance: number
+          coach_user_id: string
+          created_at: string
+          id: string
+          report_type: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          coach_user_id: string
+          created_at?: string
+          id?: string
+          report_type: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          coach_user_id?: string
+          created_at?: string
+          id?: string
+          report_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_free_report_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_free_report_pool_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_invitations: {
         Row: {
           accepted_at: string | null
@@ -16592,6 +16751,10 @@ export type Database = {
           instrument_id: string
         }[]
       }
+      admin_list_coach_free_report_pool: {
+        Args: { p_coach_user_id: string }
+        Returns: Json
+      }
       admin_list_report_grantees: {
         Args: { p_report_id: string; p_report_type: string }
         Returns: {
@@ -17630,6 +17793,7 @@ export type Database = {
           p_report_label?: string
           p_subject_user_ids: string[]
           p_team_id?: string
+          p_use_pool?: boolean
         }
         Returns: Json
       }
@@ -18281,6 +18445,15 @@ export type Database = {
           p_count: number
           p_instrument_id: string
           p_reason: string
+        }
+        Returns: Json
+      }
+      grant_free_reports: {
+        Args: {
+          p_coach_user_id: string
+          p_count: number
+          p_reason: string
+          p_report_type: string
         }
         Returns: Json
       }
@@ -20006,6 +20179,10 @@ export type Database = {
           p_last_position_seconds?: number
           p_watch_pct: number
         }
+        Returns: Json
+      }
+      refund_free_report_credit: {
+        Args: { p_order_id: string; p_reason: string }
         Returns: Json
       }
       relationship_activity_access: {
