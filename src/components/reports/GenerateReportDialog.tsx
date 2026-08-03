@@ -251,6 +251,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         p_client_user_id: !isSuperAdmin && payer === "client" ? clientUserId : null,
         p_release_now: releaseNow,
         p_report_label: kind === "team" ? (reportLabel.trim() || null) : null,
+        p_use_pool: canUseCredit ? useCredit : false,
       };
 
       const { data: orderResult, error: orderErr } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message?: string } | null }>)(
