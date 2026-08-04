@@ -208,8 +208,8 @@ function hexRgb(hex: string): [number, number, number] {
 }
 
 function activationLabel(score: number): { label: string; bg: string; color: string } {
-  if (score >= 76) return { label: "High", bg: "#faece7", color: "#993c1d" };
-  if (score >= 50) return { label: "Elevated", bg: "#faeeda", color: "#633806" };
+  if (score >= 70) return { label: "High", bg: "#faece7", color: "#993c1d" };
+  if (score >= 40) return { label: "Moderate", bg: "#faeeda", color: "#633806" };
   return { label: "Low", bg: "#e1f5ee", color: "#0f6e56" };
 }
 
@@ -453,7 +453,7 @@ export function generateNAIDashboardPdf(data: NAIDashboardPdfData): void {
         pdf.text(DIM_NAMES[dimId], ML + 8, y + 4.5);
         pdf.setTextColor(2, 31, 54);
         pdf.text(String(Math.round(dim.avg_score)), ML + 72, y + 4.5);
-        const actCol: [number, number, number] = act.label === "High" ? [163, 45, 45] : act.label === "Elevated" ? [99, 56, 6] : [15, 110, 86];
+        const actCol: [number, number, number] = act.label === "High" ? [163, 45, 45] : act.label === "Moderate" ? [99, 56, 6] : [15, 110, 86];
         pdf.setFontSize(7); pdf.setFont("helvetica", "normal"); pdf.setTextColor(actCol[0], actCol[1], actCol[2]);
         pdf.text(act.label, ML + 90, y + 4.5);
         pdf.setTextColor(80, 80, 80);
@@ -532,7 +532,7 @@ export function generateNAIDashboardPdf(data: NAIDashboardPdfData): void {
 
       pdf.setFontSize(15); pdf.setFont("helvetica", "bold"); pdf.setTextColor(r, g, b);
       pdf.text(String(Math.round(dim.avg_score)), ML + CW - 18, y + 8, { align: "right" });
-      const actCol: [number, number, number] = act.label === "High" ? [163, 45, 45] : act.label === "Elevated" ? [99, 56, 6] : [15, 110, 86];
+      const actCol: [number, number, number] = act.label === "High" ? [163, 45, 45] : act.label === "Moderate" ? [99, 56, 6] : [15, 110, 86];
       pdf.setFontSize(7); pdf.setFont("helvetica", "normal"); pdf.setTextColor(actCol[0], actCol[1], actCol[2]);
       pdf.text(act.label, ML + CW - 4, y + 8, { align: "right" });
 
@@ -588,7 +588,7 @@ export function generateNAIDashboardPdf(data: NAIDashboardPdfData): void {
         const dim = dims[dimId]; if (!dim) return;
         const act = activationLabel(dim.avg_score);
         const [r, g, b] = hexRgb(DIM_COLORS[dimId]);
-        const actBg: [number, number, number] = act.label === "High" ? [250, 236, 231] : act.label === "Elevated" ? [250, 238, 218] : [225, 245, 238];
+        const actBg: [number, number, number] = act.label === "High" ? [250, 236, 231] : act.label === "Moderate" ? [250, 238, 218] : [225, 245, 238];
         const cx2 = ML + i * (dw + 4);
         pdf.setFillColor(actBg[0], actBg[1], actBg[2]); pdf.roundedRect(cx2, y, dw, 20, 2, 2, "F");
         pdf.setFontSize(6); pdf.setFont("helvetica", "bold"); pdf.setTextColor(r, g, b);
@@ -755,7 +755,7 @@ export function generateNAIDashboardPdf(data: NAIDashboardPdfData): void {
         const dim = dims[dimId]; if (!dim) return;
         const act = activationLabel(dim.avg_score);
         const [r, g, b] = hexRgb(DIM_COLORS[dimId]);
-        const actCol: [number, number, number] = act.label === "High" ? [163, 45, 45] : act.label === "Elevated" ? [99, 56, 6] : [15, 110, 86];
+        const actCol: [number, number, number] = act.label === "High" ? [163, 45, 45] : act.label === "Moderate" ? [99, 56, 6] : [15, 110, 86];
         pdf.setFontSize(7.5); pdf.setFont("helvetica", "bold"); pdf.setTextColor(r, g, b);
         pdf.text(DIM_NAMES[dimId], ML + 4, dy2);
         pdf.setTextColor(2, 31, 54);

@@ -2061,9 +2061,8 @@ function NAIDomainCards({
   dimensionNameMap: Map<string, string>;
 }) {
   const getBand = (score: number) => {
-    if (score >= 76) return "High";
-    if (score >= 51) return "Elevated";
-    if (score >= 26) return "Moderate";
+    if (score >= 70) return "High";
+    if (score >= 40) return "Moderate";
     return "Low";
   };
 
@@ -2112,7 +2111,7 @@ function NAIDomainCards({
       })}
       </div>
       <p style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, textAlign: "center" }}>
-        Score ranges: <strong>Low</strong> 0–25 · <strong>Moderate</strong> 26–50 · <strong>Elevated</strong> 51–75 · <strong>High</strong> 76–100
+        Score ranges: <strong>Low</strong> 0–39 · <strong>Moderate</strong> 40–69 · <strong>High</strong> 70–100
       </p>
     </div>
   );
