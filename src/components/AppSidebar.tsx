@@ -192,8 +192,7 @@ function formatAccountType(type: string | null | undefined): string {
   switch (type) {
     case "individual": return "Individual";
     case "corporate_employee": return "Corporate";
-    case "coach":
-    case "practitioner": return "Practitioner";
+    case "coach": return "Practitioner";
     case "company_admin": return "Company Admin";
     case "org_admin": return "Org Admin";
     case "brainwise_super_admin": return "Super Admin";
