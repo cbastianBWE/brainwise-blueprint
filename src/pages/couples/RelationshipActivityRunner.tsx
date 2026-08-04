@@ -479,6 +479,9 @@ export default function RelationshipActivityRunner() {
   // Verbatim, clinically-approved copy carried on the step itself. Taken from
   // the RAW step so nothing substitutes, trims, or rewrites it.
   const curated = curatedEvidenceFor(step as any);
+  // The runner already renders the curated panel above the widget; don't let the
+  // hardcoded gate render a second, duplicate callout for the same step.
+  const evidence = curated ? null : evidenceGate;
 
 
   // Fail closed: no journey row (or a failed state call) means no banner.
