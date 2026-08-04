@@ -869,6 +869,151 @@ function EnrollParticipantDialog({
   );
 }
 
+function ResendWelcomeDialog({
+  open,
+  onOpenChange,
+  cohortId,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  cohortId: string;
+}) {
+  const { toast } = useToast();
+  const [previewing, setPreviewing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [wouldSend, setWouldSend] = useState<any[]>([]);
+  const [skippedCount, setSkippedCount] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const run = async () => {
+      setPreviewing(true);
+      setWouldSend([]);
+      setSkippedCount(0);
+      const { data, error } = await supabase.functions.invoke("admin-resend-cohort-welcome", {
+        body: { cohort_id: cohortId, dry_run: true },
+      });
+      if (cancelled) return;
+      setPreviewing(false);
+      if (error) {
+        let payload: any = null;
+        try {
+          payload = await (error as any).context.json();
+        } catch {
+          payload = null;
+        }
+        toast({
+          title: "Preview failed",
+          description: payload?.error ?? "Could not load the resend preview.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const results: any[] = (data as any)?.results ?? [];
+      setWouldSend(results.filter((r) => r?.would_send));
+      setSkippedCount(results.filter((r) => r?.skipped).length);
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [open, cohortId, toast]);
+
+  const handleSend = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("admin-resend-cohort-welcome", {
+      body: { cohort_id: cohortId, dry_run: false },
+    });
+    if (error) {
+      let payload: any = null;
+      try {
+        payload = await (error as any).context.json();
+      } catch {
+        payload = null;
+      }
+      setSubmitting(false);
+      toast({
+        title: "Resend failed",
+        description: payload?.error ?? "Could not resend the welcome email.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSubmitting(false);
+    const sent = (data as any)?.sent ?? 0;
+    const failed = (data as any)?.failed ?? 0;
+    toast({ title: `Welcome email resent to ${sent} people` });
+    if (failed > 0) {
+      const failing: string[] = ((data as any)?.results ?? [])
+        .filter((r: any) => r?.sent === false)
+        .map((r: any) => r.email);
+      toast({
+        title: `${failed} failed to send`,
+        description: failing.join(", "),
+        variant: "destructive",
+      });
+    }
+    onOpenChange(false);
+  };
+
+  const n = wouldSend.length;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!submitting) onOpenChange(o); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Resend welcome email</DialogTitle>
+          <DialogDescription>
+            Only members who have never signed in are emailed again, with a fresh set-password link.
+          </DialogDescription>
+        </DialogHeader>
+        {previewing ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading preview…
+          </div>
+        ) : n === 0 ? (
+          <p className="text-sm text-muted-foreground py-4">
+            Everyone in this cohort has already signed in. Nothing to send.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm">
+              {n} {n === 1 ? "person" : "people"} will receive the welcome email again with a fresh
+              set-password link.
+            </p>
+            <ul className="space-y-1 text-sm max-h-56 overflow-y-auto">
+              {wouldSend.map((r: any) => (
+                <li key={r.user_id ?? r.email} className="flex justify-between gap-4">
+                  <span>{r.first_name || "—"}</span>
+                  <span className="text-muted-foreground">{r.email}</span>
+                </li>
+              ))}
+            </ul>
+            {skippedCount > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {skippedCount} already signed in and will not be emailed.
+              </p>
+            )}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            Close
+          </Button>
+          {!previewing && n > 0 && (
+            <Button onClick={handleSend} disabled={submitting || previewing}>
+              {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Send to {n} {n === 1 ? "person" : "people"}
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+
 // ─── Main Section ───
 export default function CohortsSessionsSection() {
   const { toast } = useToast();
