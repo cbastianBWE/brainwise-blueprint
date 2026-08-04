@@ -115,7 +115,7 @@ export const certifications: MarketingCardData[] = [
   },
   {
     id: "my-brainwise-practitioner-cert",
-    title: "My BrainWise Practitioner Certification",
+    title: "My BrainWise Coach Certification",
     summary:
       "Become a fully credentialed BrainWise practitioner with platform-wide privileges.",
     body:
