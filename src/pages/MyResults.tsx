@@ -629,26 +629,42 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   const hasPtpTabs = (ptpProfessionalResults.length > 0 && ptpPersonalResults.length > 0) || isBothAssessment;
   const showPtpTabs = selected?.isPTP && hasPtpTabs;
 
-  // For combined tab: merge dimension scores from most recent professional + personal
-  const combinedDimensionScores = useMemo(() => {
-    if (!hasPtpTabs || !ptpProfessionalResults[0] || !ptpPersonalResults[0]) return null;
-    const profScores = ptpProfessionalResults[0].result.dimension_scores;
-    const persScores = ptpPersonalResults[0].result.dimension_scores;
-    const allDims = new Set([...Object.keys(profScores), ...Object.keys(persScores)]);
-    const merged: Record<string, DimensionScore> = {};
-    allDims.forEach(dim => {
-      const profMean = profScores[dim]?.mean ?? null;
-      const persMean = persScores[dim]?.mean ?? null;
-      if (profMean !== null && persMean !== null) {
-        merged[dim] = { mean: (profMean + persMean) / 2, band: profScores[dim]?.band ?? persScores[dim]?.band };
-      } else if (profMean !== null) {
-        merged[dim] = profScores[dim];
-      } else {
-        merged[dim] = persScores[dim];
+  // For combined tab: authoritative pooled scores from the backend RPC
+  const [combinedDimensionScores, setCombinedDimensionScores] =
+    useState<Record<string, DimensionScore> | null>(null);
+  const [combinedScoresError, setCombinedScoresError] = useState(false);
+
+  useEffect(() => {
+    if (!hasPtpTabs || !effectiveUserId) {
+      setCombinedDimensionScores(null);
+      setCombinedScoresError(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCombinedScoresError(false);
+      const { data, error } = await supabase.rpc("ptp_dimension_scores" as never, {
+        p_user_id: effectiveUserId,
+        p_context: "combined",
+      } as never);
+      if (cancelled) return;
+      if (error || !Array.isArray(data)) {
+        console.error("[MyResults] ptp_dimension_scores failed", error);
+        setCombinedDimensionScores(null);
+        setCombinedScoresError(true);
+        return;
       }
-    });
-    return merged;
-  }, [hasPtpTabs, ptpProfessionalResults, ptpPersonalResults]);
+      const merged: Record<string, DimensionScore> = {};
+      for (const row of data as any[]) {
+        merged[row.dimension_id] = {
+          mean: typeof row.mean === "number" ? row.mean : parseFloat(String(row.mean)),
+          band: row.band,
+        };
+      }
+      setCombinedDimensionScores(merged);
+    })();
+    return () => { cancelled = true; };
+  }, [hasPtpTabs, effectiveUserId]);
 
   // Effective selected based on tab
   const effectiveSelected = useMemo(() => {
@@ -677,11 +693,12 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       if (ptpContextTab === 'personal') return Object.entries(bothSplitScores.personal);
       if (ptpContextTab === 'combined') return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
     }
-    if (ptpContextTab === 'combined' && combinedDimensionScores) {
-      return Object.entries(combinedDimensionScores);
+    if (ptpContextTab === 'combined' && !isBothAssessment) {
+      if (combinedScoresError) return [];
+      return combinedDimensionScores ? Object.entries(combinedDimensionScores) : [];
     }
     return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
-  }, [ptpContextTab, combinedDimensionScores, effectiveSelected, isBothAssessment, bothSplitScores]);
+  }, [ptpContextTab, combinedDimensionScores, combinedScoresError, effectiveSelected, isBothAssessment, bothSplitScores]);
 
   useEffect(() => {
     if (!effectiveSelected?.isPTP) { setDimensionFacetRanges({}); return; }
@@ -1146,7 +1163,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               )}
               {ptpContextTab === 'combined' && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Showing averaged scores across your most recent Professional and Personal assessments.
+                  Showing your combined profile, scored across every question from both your Professional and Personal assessments.
                 </p>
               )}
             </section>
@@ -1347,11 +1364,17 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               </CardHeader>
               <CardContent>
                 {effectiveSelected?.isPTP ? (
-                  <PTPDomainCards
-                    dimensions={dimensionScores}
-                    dimensionNameMap={dimensionNameMap}
-                    ranges={dimensionFacetRanges}
-                  />
+                  combinedScoresError && ptpContextTab === 'combined' && !isBothAssessment ? (
+                    <p className="text-sm text-muted-foreground py-6 text-center">
+                      Combined scores are unavailable for this view.
+                    </p>
+                  ) : (
+                    <PTPDomainCards
+                      dimensions={dimensionScores}
+                      dimensionNameMap={dimensionNameMap}
+                      ranges={dimensionFacetRanges}
+                    />
+                  )
                 ) : isNAI ? (
                   <NAIDomainCards
                     dimensions={dimensionScores}
@@ -2038,9 +2061,8 @@ function NAIDomainCards({
   dimensionNameMap: Map<string, string>;
 }) {
   const getBand = (score: number) => {
-    if (score >= 76) return "High";
-    if (score >= 51) return "Elevated";
-    if (score >= 26) return "Moderate";
+    if (score >= 70) return "High";
+    if (score >= 40) return "Moderate";
     return "Low";
   };
 
@@ -2089,7 +2111,7 @@ function NAIDomainCards({
       })}
       </div>
       <p style={{ fontSize: 11, color: "var(--fg-3)", marginTop: 8, textAlign: "center" }}>
-        Score ranges: <strong>Low</strong> 0–25 · <strong>Moderate</strong> 26–50 · <strong>Elevated</strong> 51–75 · <strong>High</strong> 76–100
+        Score ranges: <strong>Low</strong> 0–39 · <strong>Moderate</strong> 40–69 · <strong>High</strong> 70–100
       </p>
     </div>
   );

@@ -77,9 +77,8 @@ function formatDimensionName(id: string): string {
 }
 
 function bandOf(score: number): string {
-  if (score >= 76) return "High";
-  if (score >= 51) return "Elevated";
-  if (score >= 26) return "Moderate";
+  if (score >= 70) return "High";
+  if (score >= 40) return "Moderate";
   return "Low";
 }
 
@@ -166,40 +165,25 @@ export async function assemblePtpPdfData(params: {
   // Build dimension_scores for the chosen tab
   let dimensionScoresMap: Record<string, DimensionScore> = result.dimension_scores ?? {};
 
-  // Split-pair Combined: merge dimension scores from professional + personal result rows.
-  // Mirrors the combinedDimensionScores logic in MyResults.tsx (lines 562-580):
-  // when both results have a score for a dimension, average them; otherwise take whichever exists.
+  // Split-pair Combined: authoritative pooled scores from the backend RPC.
   if (isSplitPairCombined) {
-    const { data: personalResult } = await supabase
-      .from("assessment_results")
-      .select("dimension_scores")
-      .eq("assessment_id", params.additionalAssessmentId!)
-      .maybeSingle();
+    const { data: rows, error: scoresErr } = await supabase.rpc("ptp_dimension_scores" as never, {
+      p_user_id: params.userId,
+      p_context: "combined",
+    } as never);
 
-    const personalScoresMap = (personalResult?.dimension_scores ?? {}) as Record<string, DimensionScore>;
-    const professionalScoresMap = dimensionScoresMap;
-
-    const allDims = new Set([
-      ...Object.keys(professionalScoresMap),
-      ...Object.keys(personalScoresMap),
-    ]);
+    if (scoresErr || !Array.isArray(rows)) {
+      console.error("[assemblePtpPdfData] ptp_dimension_scores failed", scoresErr);
+      throw new Error("Combined scores are unavailable, so this PDF cannot be generated.");
+    }
 
     const merged: Record<string, DimensionScore> = {};
-    allDims.forEach((dim) => {
-      const profMean = professionalScoresMap[dim]?.mean ?? null;
-      const persMean = personalScoresMap[dim]?.mean ?? null;
-      if (profMean !== null && persMean !== null) {
-        merged[dim] = {
-          mean: (profMean + persMean) / 2,
-          band: professionalScoresMap[dim]?.band ?? personalScoresMap[dim]?.band,
-        };
-      } else if (profMean !== null) {
-        merged[dim] = professionalScoresMap[dim];
-      } else {
-        merged[dim] = personalScoresMap[dim];
-      }
-    });
-
+    for (const row of rows as any[]) {
+      merged[row.dimension_id] = {
+        mean: typeof row.mean === "number" ? row.mean : parseFloat(String(row.mean)),
+        band: row.band,
+      };
+    }
     dimensionScoresMap = merged;
   }
 

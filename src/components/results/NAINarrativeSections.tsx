@@ -29,9 +29,8 @@ const NAI_DIMENSION_NAMES: Record<string, string> = {
 };
 
 const NAI_ACTIVATION_BAND = (score: number): string => {
-  if (score >= 76) return "High";
-  if (score >= 51) return "Elevated";
-  if (score >= 26) return "Moderate";
+  if (score >= 70) return "High";
+  if (score >= 40) return "Moderate";
   return "Low";
 };
 

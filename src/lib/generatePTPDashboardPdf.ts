@@ -180,8 +180,8 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 function activationLabel(score: number): string {
-  if (score >= 76) return "High";
-  if (score >= 50) return "Elevated";
+  if (score >= 70) return "High";
+  if (score >= 40) return "Moderate";
   return "Low";
 }
 

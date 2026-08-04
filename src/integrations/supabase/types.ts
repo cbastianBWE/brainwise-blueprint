@@ -10751,6 +10751,88 @@ export type Database = {
         }
         Relationships: []
       }
+      ptp_combined_reports: {
+        Row: {
+          dimension_scores: Json
+          id: string
+          interval_days: number | null
+          paired_at: string
+          personal_completed_at: string | null
+          personal_result_id: string
+          professional_completed_at: string | null
+          professional_result_id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          dimension_scores: Json
+          id?: string
+          interval_days?: number | null
+          paired_at?: string
+          personal_completed_at?: string | null
+          personal_result_id: string
+          professional_completed_at?: string | null
+          professional_result_id: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          dimension_scores?: Json
+          id?: string
+          interval_days?: number | null
+          paired_at?: string
+          personal_completed_at?: string | null
+          personal_result_id?: string
+          professional_completed_at?: string | null
+          professional_result_id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_combined_reports_personal_result_id_fkey"
+            columns: ["personal_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_combined_reports_professional_result_id_fkey"
+            columns: ["professional_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_combined_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_combined_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_combined_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_combined_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ptp_facet_types: {
         Row: {
           floor_risk: string
@@ -17644,6 +17726,7 @@ export type Database = {
           module_group: string
         }[]
       }
+      coaching_has_full_access: { Args: never; Returns: boolean }
       coaching_session_save: {
         Args: { p_current_step: number; p_patch: Json; p_session_id: string }
         Returns: undefined
@@ -20189,6 +20272,20 @@ export type Database = {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
       }
+      ptp_dimension_scores: {
+        Args: {
+          p_assessment_ids?: string[]
+          p_context: string
+          p_user_id: string
+        }
+        Returns: {
+          band: string
+          contexts_present: string[]
+          dimension_id: string
+          item_count: number
+          mean: number
+        }[]
+      }
       ptp_intro_gate_resolve: { Args: never; Returns: Json }
       ptp_intro_gate_status: { Args: never; Returns: Json }
       ptp_intro_video_progress_upsert: {
@@ -20227,6 +20324,7 @@ export type Database = {
         Args: { p_owner_user_id: string }
         Returns: boolean
       }
+      ptp_try_pair_combined: { Args: { p_user_id: string }; Returns: Json }
       publish_article: {
         Args: { p_article_id: string; p_reason: string }
         Returns: Json
