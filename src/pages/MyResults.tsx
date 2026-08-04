@@ -629,26 +629,42 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   const hasPtpTabs = (ptpProfessionalResults.length > 0 && ptpPersonalResults.length > 0) || isBothAssessment;
   const showPtpTabs = selected?.isPTP && hasPtpTabs;
 
-  // For combined tab: merge dimension scores from most recent professional + personal
-  const combinedDimensionScores = useMemo(() => {
-    if (!hasPtpTabs || !ptpProfessionalResults[0] || !ptpPersonalResults[0]) return null;
-    const profScores = ptpProfessionalResults[0].result.dimension_scores;
-    const persScores = ptpPersonalResults[0].result.dimension_scores;
-    const allDims = new Set([...Object.keys(profScores), ...Object.keys(persScores)]);
-    const merged: Record<string, DimensionScore> = {};
-    allDims.forEach(dim => {
-      const profMean = profScores[dim]?.mean ?? null;
-      const persMean = persScores[dim]?.mean ?? null;
-      if (profMean !== null && persMean !== null) {
-        merged[dim] = { mean: (profMean + persMean) / 2, band: profScores[dim]?.band ?? persScores[dim]?.band };
-      } else if (profMean !== null) {
-        merged[dim] = profScores[dim];
-      } else {
-        merged[dim] = persScores[dim];
+  // For combined tab: authoritative pooled scores from the backend RPC
+  const [combinedDimensionScores, setCombinedDimensionScores] =
+    useState<Record<string, DimensionScore> | null>(null);
+  const [combinedScoresError, setCombinedScoresError] = useState(false);
+
+  useEffect(() => {
+    if (!hasPtpTabs || !effectiveUserId) {
+      setCombinedDimensionScores(null);
+      setCombinedScoresError(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCombinedScoresError(false);
+      const { data, error } = await supabase.rpc("ptp_dimension_scores" as never, {
+        p_user_id: effectiveUserId,
+        p_context: "combined",
+      } as never);
+      if (cancelled) return;
+      if (error || !Array.isArray(data)) {
+        console.error("[MyResults] ptp_dimension_scores failed", error);
+        setCombinedDimensionScores(null);
+        setCombinedScoresError(true);
+        return;
       }
-    });
-    return merged;
-  }, [hasPtpTabs, ptpProfessionalResults, ptpPersonalResults]);
+      const merged: Record<string, DimensionScore> = {};
+      for (const row of data as any[]) {
+        merged[row.dimension_id] = {
+          mean: typeof row.mean === "number" ? row.mean : parseFloat(String(row.mean)),
+          band: row.band,
+        };
+      }
+      setCombinedDimensionScores(merged);
+    })();
+    return () => { cancelled = true; };
+  }, [hasPtpTabs, effectiveUserId]);
 
   // Effective selected based on tab
   const effectiveSelected = useMemo(() => {
