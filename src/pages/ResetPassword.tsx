@@ -102,6 +102,19 @@ const ResetPassword = () => {
   }
 
   if (status === "invalid") {
+    const handleResend = async () => {
+      setResendLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(resendEmail.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setResendLoading(false);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        setResendSent(true);
+      }
+    };
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -110,6 +123,35 @@ const ResetPassword = () => {
             <CardTitle className="text-2xl">Invalid Link</CardTitle>
             <CardDescription>This password reset link is invalid or has expired.</CardDescription>
           </CardHeader>
+          <CardContent className="space-y-4">
+            {resendSent ? (
+              <p className="text-sm text-center text-muted-foreground">
+                If that email is registered, a new link is on its way.
+              </p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="resendEmail">Email Address</Label>
+                  <Input
+                    id="resendEmail"
+                    type="email"
+                    value={resendEmail}
+                    onChange={(e) => setResendEmail(e.target.value)}
+                  />
+                </div>
+                <Button
+                  className="w-full"
+                  onClick={handleResend}
+                  disabled={resendLoading || resendEmail.trim().length === 0}
+                >
+                  {resendLoading ? "Sending..." : "Send me a new link"}
+                </Button>
+              </>
+            )}
+            <p className="text-center text-sm text-muted-foreground">
+              <Link to="/login" className="text-primary underline">Back to Log In</Link>
+            </p>
+          </CardContent>
         </Card>
       </div>
     );
