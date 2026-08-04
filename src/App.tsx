@@ -40,6 +40,7 @@ import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Activate from "./pages/Activate";
 import Onboarding from "./pages/Onboarding";
 import DemographicConsent from "./pages/DemographicConsent";
 import DemographicForm from "./pages/DemographicForm";
