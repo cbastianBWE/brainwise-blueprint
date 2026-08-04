@@ -56,16 +56,21 @@ export function InnerTeamWidget({
   const removeChar = (i: number) => setRoster(roster.filter((_, idx) => idx !== i));
   const addChar = () => setRoster([...roster, { name: "", description: "" }]);
 
+  const isRelationship = sessionKind === "relationship";
+  const saveRpc = isRelationship ? "relationship_session_save" : "coaching_session_save";
+  const sessionTable = isRelationship ? "relationship_activity_sessions" : "coaching_activity_sessions";
+  const defaultMapFn = isRelationship ? "relationship-inner-team-map" : "coaching-inner-team-map";
+
   const run = async () => {
     if (!session) return;
     setMapping(true);
     try {
-      await supabase.rpc("coaching_session_save", {
+      await supabase.rpc(saveRpc as any, {
         p_session_id: session.id, p_current_step: session.current_step,
         p_patch: buildUserPatch(responses) as any,
       });
       const { data, error } = await supabase.functions.invoke(
-        step.mapAction?.function || step.suggestAction?.function || "coaching-inner-team-map",
+        step.mapAction?.function || step.suggestAction?.function || defaultMapFn,
         { body: { session_id: session.id } },
       );
       if (error) {
@@ -78,8 +83,10 @@ export function InnerTeamWidget({
       }
       const remaining = (data as any)?.coaching_remaining;
       if (typeof remaining === "number") setCoachingRemaining(remaining);
-      const { data: row } = await supabase.from("coaching_activity_sessions").select("responses").eq("id", session.id).maybeSingle();
-      if (row?.responses) { setResponses(() => row.responses as Responses); }
+      const { data: row } = await supabase.from(sessionTable as any).select("responses").eq("id", session.id).maybeSingle();
+      const savedResponses = (row as { responses?: unknown } | null)?.responses;
+      if (savedResponses) { setResponses(() => savedResponses as Responses); }
+
       else {
         const returnedMap = (data as any)?.inner_team_map;
         const returnedRoster = (data as any)?.roster;
