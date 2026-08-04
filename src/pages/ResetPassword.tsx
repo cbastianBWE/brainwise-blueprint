@@ -75,6 +75,13 @@ const ResetPassword = () => {
     if (!result.ok) {
       toast({ title: "Error", description: result.error ?? "Could not update password", variant: "destructive" });
     } else {
+      const at = sessionStorage.getItem("bw_activation_token");
+      if (at) {
+        supabase.functions
+          .invoke("activate-account", { body: { action: "consume", token: at } })
+          .catch(() => {});
+        sessionStorage.removeItem("bw_activation_token");
+      }
       toast({ title: "Password Updated", description: "Your password has been reset. You can now log in." });
       navigate("/login");
     }
