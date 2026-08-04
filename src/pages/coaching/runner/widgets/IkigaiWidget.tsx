@@ -83,9 +83,11 @@ export function IkigaiWidget({
         .select("responses")
         .eq("id", session.id)
         .maybeSingle();
+      const savedResponses = (row as { responses?: unknown } | null)?.responses;
 
-      if (row?.responses) {
-        setResponses(() => row.responses as Responses);
+      if (savedResponses) {
+        setResponses(() => savedResponses as Responses);
+
       } else {
         const returnedMap = (data as any)?.ikigai_map;
         const html = (data as any)?.analysis_html;
