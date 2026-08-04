@@ -1364,11 +1364,17 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               </CardHeader>
               <CardContent>
                 {effectiveSelected?.isPTP ? (
-                  <PTPDomainCards
-                    dimensions={dimensionScores}
-                    dimensionNameMap={dimensionNameMap}
-                    ranges={dimensionFacetRanges}
-                  />
+                  combinedScoresError && ptpContextTab === 'combined' && !isBothAssessment ? (
+                    <p className="text-sm text-muted-foreground py-6 text-center">
+                      Combined scores are unavailable for this view.
+                    </p>
+                  ) : (
+                    <PTPDomainCards
+                      dimensions={dimensionScores}
+                      dimensionNameMap={dimensionNameMap}
+                      ranges={dimensionFacetRanges}
+                    />
+                  )
                 ) : isNAI ? (
                   <NAIDomainCards
                     dimensions={dimensionScores}
