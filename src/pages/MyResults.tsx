@@ -1163,7 +1163,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               )}
               {ptpContextTab === 'combined' && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Showing averaged scores across your most recent Professional and Personal assessments.
+                  Showing your combined profile, scored across every question from both your Professional and Personal assessments.
                 </p>
               )}
             </section>
