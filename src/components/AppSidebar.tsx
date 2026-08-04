@@ -163,7 +163,6 @@ function getNavItems(profile: { account_type?: string | null; is_practitioner_co
   const accountType = profile?.account_type;
   switch (accountType) {
     case "coach":
-    case "practitioner":
       return coachNav;
     case "company_admin":
     case "org_admin":
