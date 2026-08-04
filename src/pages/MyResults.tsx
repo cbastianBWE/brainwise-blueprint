@@ -693,11 +693,12 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       if (ptpContextTab === 'personal') return Object.entries(bothSplitScores.personal);
       if (ptpContextTab === 'combined') return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
     }
-    if (ptpContextTab === 'combined' && combinedDimensionScores) {
-      return Object.entries(combinedDimensionScores);
+    if (ptpContextTab === 'combined' && !isBothAssessment) {
+      if (combinedScoresError) return [];
+      return combinedDimensionScores ? Object.entries(combinedDimensionScores) : [];
     }
     return effectiveSelected ? Object.entries(effectiveSelected.result.dimension_scores) : [];
-  }, [ptpContextTab, combinedDimensionScores, effectiveSelected, isBothAssessment, bothSplitScores]);
+  }, [ptpContextTab, combinedDimensionScores, combinedScoresError, effectiveSelected, isBothAssessment, bothSplitScores]);
 
   useEffect(() => {
     if (!effectiveSelected?.isPTP) { setDimensionFacetRanges({}); return; }
