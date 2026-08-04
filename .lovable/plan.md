@@ -1,32 +1,27 @@
-# Verification of the F1 step 4 plan (individual PTP sectioned generation)
+# Plan — Couples runner: inner_team / ikigai hit the coaching backend
 
-I read the current `useNarrativeGenerator`, `PTPNarrativeSections`, and `PeerPtpReport` to check the plan against reality. The plan is coherent, backward-compatible for team/paired, and safe to apply. Two small clarifications worth flagging before build.
+## Confirmed problem
+`mr-core-1-4-who-i-am` (step `inner_team`) and `mr-core-7-2-what-we-are-for` (step `circles`, widget `ikigai`)
+render the coaching widgets `InnerTeamWidget` / `IkigaiWidget`. Those widgets:
 
-## What definitely won't break
+- call `supabase.rpc("coaching_session_save", { p_session_id: <relationship session id> })`
+- invoke the edge functions `coaching-inner-team-map` / `coaching-ikigai-map` with that same id
+- read back from `coaching_activity_sessions` by that id
 
-- **Team/paired hook usage.** They don't pass `context`, so:
-  - `idBody` stays `{ team_profile_id | paired_profile_id: id }` (no stray `narrative_context` or `include_coach`).
-  - The auto-run branch still gates on `status !== "complete"` and keys on `${id}:`.
-  - `startedRef.current === key` for `${id}:` matches the prior single-id gate, so no double-run and no stuck loop.
-- **Peer report swap.** `sec()` already filters by `currentResult.assessment_result_id`, and `facet_insights_all` is one row per result. Same element shape (`name`, `positive_self/others`, `negative_self/others`), same render block. Owner report, peer report, and PDF now share one source.
-- **Provider wiring.** `PTPNarrativeProvider` already forwards the full `usePTPNarrativeData` return through context; adding `generator` and `sectionRefreshKey` to that return automatically exposes them to `PTPReportProgressOverlay`, `FacetList`, and the response accordion.
-- **FacetList swap.** Sections 6/7 already know how to render a `FacetInterpretation`. `allFacetInsights` entries have the same shape and the same suffixed `name` used to look up matches, so `.find(f => f.name === facetName)` works unchanged.
-- **`fetchNarrativeSections` as a pure read.** On first render sections may be missing; the driver fills them and each `onSectionDone` bumps `sectionRefreshKey`, which re-runs the read effect. Already-generated reports (the common case, since `calculate-scores` fires the orchestrator) render immediately.
-- **`fetchFacets` cleanup.** Removing the `facet_insights_${ctx}` block is safe because sections 6/7 no longer read `facetInterpretations` after the FacetList swap. Leaving the `facetInterpretations` / `loadingInterpretations` state declarations dangling is a harmless dead branch.
+Because the id belongs to `relationship_activity_sessions`, the save and the map action fail
+(403 / "Access denied") and the map never appears for couples.
 
-## Two things to confirm during build (not blockers)
+Note: the recording path is already correct — the registry now passes `sessionKind="relationship"`
+to every reused widget that renders `MultimodalField`, and `recap` is not used by any couples activity.
 
-1. **Unit-name vs row-name mapping.** The plan's tracked unit is `overview_narrative_<ctx>`, but the DB rows the frontend reads are `profile_overview_<ctx>` and `personal_summary_<ctx>`. This is fine as long as the backend `overview_narrative_<ctx>` unit writes both of those rows (the prompt states "section content is unchanged", which implies it does). No frontend action needed — the read effect still selects the same `section_type` values it does today, and the driver only tracks unit names for progress. If the backend actually renamed the row to `overview_narrative_<ctx>`, the read effect will need the same rename. Worth a 30-second check on the first generated report.
-
-2. **Progress overlay JSX in the prompt is stripped of tags** (blank lines instead of `<div>`s). Treat that block as pseudocode: the actual JSX must still render the header row (icon + label), the progress bar (`completed / total`), and the retry row. Logic (VISIBLE array, `isDone`, `visible` gate, `currentLabel` fallback) is correct as-is.
-
-## Nothing else regresses
-
-- `SharedResults` → `PeerPtpReport`: peer viewer keeps working; only the impact-table source key changes to a row the RPC already returns.
-- `MyResults` coach view: driver runs with `includeCoach: true`, plan includes `coach_questions_<ctx>`, existing coach-question render is unchanged.
-- `calculate-scores` still generates on scoring; the driver is only a healer + progress indicator, so the healthy path is unaffected.
-- No changes to PDF assembly, sharing controls, or NAI/AIRSA flows.
-
-## Recommendation
-
-Proceed with the plan as written. During implementation, verify point (1) above on the first generated PTP report by checking that `profile_overview_<ctx>` and `personal_summary_<ctx>` rows exist after `overview_narrative_<ctx>` lands in `generator.done`. If they don't, add a small alias in the read effect — no other change needed.
+## Proposed change
+1. Backend: add relationship-aware handling.
+   - Either extend `coaching-inner-team-map` / `coaching-ikigai-map` to accept
+     `{ session_kind: "relationship", session_id }` and read/write `relationship_activity_sessions`
+     with the couples access checks, or add two thin relationship counterparts.
+   - These edge functions are not in this repo, so this step needs their source or a decision to
+     create new ones under `supabase/functions/`.
+2. Frontend: add an optional `sessionKind` prop to `InnerTeamWidget` and `IkigaiWidget` that switches
+   the save RPC (`coaching_session_save` vs `relationship_session_save`), the function name, and the
+   read-back table; pass `sessionKind="relationship"` from `widgetRegistry.tsx`.
+3. Verify by running both couples activities end to end (map action returns a map, responses persist).

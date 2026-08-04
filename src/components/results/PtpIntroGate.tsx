@@ -4,6 +4,7 @@ import MuxPlayer from "@mux/mux-player-react";
 import { Loader2, CircleCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
 
@@ -298,8 +299,18 @@ export default function PtpIntroGate() {
 
   const advance = async () => {
     if (idx >= videos.length - 1) {
-      const { data } = await supabase.rpc("ptp_intro_gate_resolve" as never);
-      if ((data as any)?.resolved) {
+      try {
+        const { data, error } = await supabase.rpc("ptp_intro_gate_resolve" as never);
+        if (error) throw error;
+        if ((data as any)?.resolved) {
+          setOpen(false);
+          return;
+        }
+        throw new Error("not_resolved");
+      } catch {
+        // Never trap the user in front of their own report: close the gate and
+        // let them read it. The server still knows the gate is unresolved.
+        toast.error("We couldn't save your progress, but you can continue to your report.");
         setOpen(false);
       }
       return;

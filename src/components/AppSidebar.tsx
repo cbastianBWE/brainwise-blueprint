@@ -162,6 +162,7 @@ const operationsNav: NavItem[] = [
 function getNavItems(profile: { account_type?: string | null; is_practitioner_coach?: boolean } | null | undefined): NavItem[] {
   const accountType = profile?.account_type;
   switch (accountType) {
+    case "coach":
     case "practitioner":
       return coachNav;
     case "company_admin":
@@ -192,6 +193,7 @@ function formatAccountType(type: string | null | undefined): string {
   switch (type) {
     case "individual": return "Individual";
     case "corporate_employee": return "Corporate";
+    case "coach":
     case "practitioner": return "Practitioner";
     case "company_admin": return "Company Admin";
     case "org_admin": return "Org Admin";

@@ -27,7 +27,7 @@ interface Transaction {
 
 export default function CoachInvoices() {
   const { user } = useAuth();
-  const { oneTimePrice } = useSubscriptionPlans();
+  const { oneTimePrice, loading: plansLoading } = useSubscriptionPlans();
   const fallbackPrice = oneTimePrice("individual") ?? 0;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,9 +159,12 @@ export default function CoachInvoices() {
   };
 
   useEffect(() => {
+    // Wait for the price catalogue: fetching earlier would bake a 0 fallback
+    // price into every transaction total.
+    if (plansLoading) return;
     fetchTransactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, plansLoading, fallbackPrice]);
 
   const filtered = useMemo(() => {
     let result = transactions;
