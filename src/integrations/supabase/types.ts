@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_activation_links: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          created_by: string | null
+          last_used_at: string | null
+          purpose: string
+          revoked_at: string | null
+          token: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          last_used_at?: string | null
+          purpose?: string
+          revoked_at?: string | null
+          token?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          last_used_at?: string | null
+          purpose?: string
+          revoked_at?: string | null
+          token?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_activation_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_activation_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_authoring_context: {
         Row: {
           body_markdown: string
@@ -16801,6 +16894,10 @@ export type Database = {
       admin_reset_user_mfa: {
         Args: { p_reason: string; p_target_user_id: string }
         Returns: Json
+      }
+      admin_revoke_activation_link: {
+        Args: { p_user_id: string }
+        Returns: number
       }
       admin_revoke_company_admin: {
         Args: { p_target_user_id: string }

@@ -40,6 +40,7 @@ import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Activate from "./pages/Activate";
 import Onboarding from "./pages/Onboarding";
 import DemographicConsent from "./pages/DemographicConsent";
 import DemographicForm from "./pages/DemographicForm";
@@ -205,6 +206,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/activate/:token" element={<Activate />} />
             <Route path="/peer-access-responded" element={<PeerAccessResponded />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/auth/verify-conversion" element={<VerifyConversion />} />
