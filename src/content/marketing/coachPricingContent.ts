@@ -39,7 +39,7 @@ export const coachPricing: CoachPricingItem[] = [
   },
   {
     id: "my-brainwise-practitioner-cert",
-    title: "My BrainWise Practitioner Certification",
+    title: "My BrainWise Coach Certification",
     priceLabel: "Coming Soon",
     status: "coming_soon",
     highlights: [],

@@ -45,7 +45,7 @@ export const services: ServiceCard[] = [
     summary:
       "Train as a BrainWise-certified practitioner across four specialized tracks.",
     body:
-      "BrainWise certifies practitioners in four tracks: Personal Threat Profile (PTP), AI Transformation Coaching, Combined Certification, and the My BrainWise Practitioner program. Each track combines virtual instructor-led training with supervised debrief practice — including known and unknown actor scenarios, peer observation, and your own debrief experience. Certified practitioners gain platform access for client management, practitioner-paid client billing, the full assessment library, and the ongoing practitioner resources hub.",
+      "BrainWise certifies practitioners in four tracks: Personal Threat Profile (PTP), AI Transformation Coaching, Combined Certification, and the My BrainWise Coach program. Each track combines virtual instructor-led training with supervised debrief practice — including known and unknown actor scenarios, peer observation, and your own debrief experience. Certified practitioners gain platform access for client management, practitioner-paid client billing, the full assessment library, and the ongoing practitioner resources hub.",
     benefits: [
       "Four specialized certification tracks to match your practice",
       "Virtual instructor-led training with supervised debrief practice",
