@@ -305,7 +305,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         requires_payment: boolean;
         order_id?: string;
         order_type?: "team" | "paired";
-        payer?: "practitioner" | "client";
+        payer?: "coach" | "client";
         client_name?: string;
         billing_mode?: string;
         pool_remaining?: number;

@@ -12,7 +12,7 @@ const CERT_LABELS: Record<string, string> = {
   ptp_coach: "PTP Certified Practitioner",
   ai_transformation_coach: "AI Transformation Certified Practitioner",
   ai_transformation_ptp_coach: "AI Transformation + PTP Certified Practitioner",
-  my_brainwise_coach: "My BrainWise Practitioner",
+  my_brainwise_coach: "My BrainWise Coach",
 };
 
 type Status = string | null | undefined;

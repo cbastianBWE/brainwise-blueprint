@@ -44,12 +44,22 @@ const ACCOUNT_TYPES = [
   "brainwise_super_admin",
   "org_admin",
   "company_admin",
-  "practitioner",
+  "coach",
   "corporate_employee",
   "individual",
 ];
 
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  brainwise_super_admin: "Super Admin",
+  org_admin: "Org Admin",
+  company_admin: "Company Admin",
+  coach: "Practitioner",
+  corporate_employee: "Corporate Employee",
+  individual: "Individual",
+};
+
 const ACCOUNT_TYPE_LABEL = (t: string) =>
+  ACCOUNT_TYPE_LABELS[t] ??
   t.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
 export default function MembersFilterBar({

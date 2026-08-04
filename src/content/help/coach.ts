@@ -200,7 +200,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "practitioner-dashboard",
+      id: "coach-dashboard",
       title: "Use your practitioner dashboard",
       summary: "Get oriented every time you sign in — the dashboard is your daily home.",
       steps: [
@@ -248,7 +248,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "practitioner-resources",
+      id: "coach-resources",
       title: "Find and use Practitioner Resources",
       summary: "Access reference cards, videos, and debrief guides curated for practitioners.",
       steps: [
@@ -276,7 +276,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "practitioner-own-results",
+      id: "coach-own-results",
       title: "Manage your own assessments",
       summary: "You take BrainWise assessments too — treat your own results like any client.",
       steps: [
@@ -296,7 +296,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "practitioner-account-security",
+      id: "coach-account-security",
       title: "Update account & security settings",
       summary: "Change your password, enable 2FA, and manage trusted devices.",
       steps: [

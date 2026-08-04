@@ -90,7 +90,7 @@ export default function CompanyCoachesSection({ orgId }: { orgId: string }) {
         <div>
           <CardTitle>Organization Practitioners</CardTitle>
           <CardDescription>
-            An assigned practitioner can view and practitioner every member of this organization
+            An assigned practitioner can view and coach every member of this organization
             (results, development plans, coaching, and team/paired reports).
           </CardDescription>
         </div>

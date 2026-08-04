@@ -18,7 +18,7 @@ type Filters = { search?: string; status_id?: string; pool?: string; attention?:
 
 const POOL_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
-  practitioner: "Practitioner",
+  coach: "Practitioner",
   faith: "Faith",
   clinical: "Clinical",
 };
