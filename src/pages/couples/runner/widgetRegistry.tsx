@@ -240,6 +240,7 @@ export const widgetRegistry: Record<string, WidgetRenderer> = {
       setResponses={(u) => onChange(u(((value as any) || {}) as any))}
       activityCode={activityCode}
       setCoachingRemaining={() => {}}
+      sessionKind="relationship"
     />
   ),
 
