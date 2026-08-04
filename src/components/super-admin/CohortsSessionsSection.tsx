@@ -1305,6 +1305,13 @@ export default function CohortsSessionsSection() {
           onEnrolled={() => { loadCohortDetail(selectedCohortId); loadCohorts(); }}
         />
       )}
+      {selectedCohortId && (
+        <ResendWelcomeDialog
+          open={resendDialogOpen}
+          onOpenChange={setResendDialogOpen}
+          cohortId={selectedCohortId}
+        />
+      )}
     </div>
   );
 }
