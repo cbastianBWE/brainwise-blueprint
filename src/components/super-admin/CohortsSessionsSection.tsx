@@ -1221,9 +1221,14 @@ export default function CohortsSessionsSection() {
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" /> Enrollees — {selectedCohort.name}
               </CardTitle>
-              <Button size="sm" onClick={() => setEnrollDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Enroll a participant
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" onClick={() => setResendDialogOpen(true)}>
+                  <Mail className="h-4 w-4 mr-1" /> Resend welcome
+                </Button>
+                <Button size="sm" onClick={() => setEnrollDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" /> Enroll a participant
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {members.length === 0 ? (
