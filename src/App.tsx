@@ -206,6 +206,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/activate/:token" element={<Activate />} />
             <Route path="/peer-access-responded" element={<PeerAccessResponded />} />
             <Route path="/unsubscribe" element={<Unsubscribe />} />
             <Route path="/auth/verify-conversion" element={<VerifyConversion />} />
