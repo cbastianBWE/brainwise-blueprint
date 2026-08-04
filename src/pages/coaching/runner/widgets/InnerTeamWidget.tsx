@@ -17,10 +17,12 @@ import { type Step, type Session, type Responses, buildUserPatch } from "../shar
 
 export function InnerTeamWidget({
   step, session, responses, setResponses, activityCode, setCoachingRemaining,
+  sessionKind = "coaching",
 }: {
   step: Step; session: Session; responses: Responses;
   setResponses: (u: (prev: Responses) => Responses) => void;
   activityCode: string; setCoachingRemaining: (n: number) => void;
+  sessionKind?: "coaching" | "relationship";
 }) {
   const [mapping, setMapping] = useState(false);
   const charactersKey = step.charactersKey || "it_characters";
