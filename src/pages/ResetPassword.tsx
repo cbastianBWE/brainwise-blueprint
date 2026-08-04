@@ -16,6 +16,9 @@ const ResetPassword = () => {
   const [status, setStatus] = useState<"checking" | "ready" | "invalid">("checking");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
