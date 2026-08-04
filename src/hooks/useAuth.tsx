@@ -146,7 +146,6 @@ export const useRoleRedirect = () => {
 
     switch (accountType) {
       case "coach":
-      case "practitioner":
         navigate("/coach/clients");
         break;
       case "company_admin":

@@ -31,7 +31,7 @@ const CERT_TYPES = [
   { value: "ptp_coach", label: "PTP Certified Practitioner" },
   { value: "ai_transformation_coach", label: "AI Transformation Certified Practitioner" },
   { value: "ai_transformation_ptp_coach", label: "AI Transformation + PTP Certified Practitioner" },
-  { value: "my_brainwise_coach", label: "My BrainWise Practitioner" },
+  { value: "my_brainwise_coach", label: "My BrainWise Coach" },
 ] as const;
 
 const CERT_LABELS: Record<string, string> = Object.fromEntries(

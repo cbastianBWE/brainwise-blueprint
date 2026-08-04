@@ -42,10 +42,10 @@ export function OpenResponseBlockForm({ value, onConfigChange }: Props) {
             const next = e.target.value;
             onConfigChange({ ...value, guidance: next.trim() === "" ? null : next });
           }}
-          placeholder="Private steering note for the AI practitioner"
+          placeholder="Private steering note for the AI coach"
         />
         <p className="text-xs text-muted-foreground">
-          Private steering note for the AI practitioner. Never shown to the learner.
+          Private steering note for the AI coach. Never shown to the learner.
         </p>
       </div>
 
