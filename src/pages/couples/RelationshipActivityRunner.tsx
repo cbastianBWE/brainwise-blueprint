@@ -475,7 +475,7 @@ export default function RelationshipActivityRunner() {
     ),
   ].sort((a, b) => (a.signal === "crisis_signal" ? -1 : b.signal === "crisis_signal" ? 1 : 0));
   const standingFooter = hasStandingFooter(activity.code);
-  const evidence = evidenceGateFor(activity.code, localizedStep as any);
+  const evidenceGate = evidenceGateFor(activity.code, localizedStep as any);
   // Verbatim, clinically-approved copy carried on the step itself. Taken from
   // the RAW step so nothing substitutes, trims, or rewrites it.
   const curated = curatedEvidenceFor(step as any);
