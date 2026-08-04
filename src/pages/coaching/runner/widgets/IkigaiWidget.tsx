@@ -44,17 +44,22 @@ export function IkigaiWidget({
     return n + (Array.isArray(arr) ? arr.filter((v) => mmIsFilled(v)).length : 0);
   }, 0);
 
+  const isRelationship = sessionKind === "relationship";
+  const saveRpc = isRelationship ? "relationship_session_save" : "coaching_session_save";
+  const sessionTable = isRelationship ? "relationship_activity_sessions" : "coaching_activity_sessions";
+  const defaultMapFn = isRelationship ? "relationship-ikigai-map" : "coaching-ikigai-map";
+
   const doMap = async () => {
     if (!session) return;
     setMapping(true);
     try {
-      await supabase.rpc("coaching_session_save", {
+      await supabase.rpc(saveRpc as any, {
         p_session_id: session.id,
         p_current_step: session.current_step,
         p_patch: buildUserPatch(responses) as any,
       });
       const { data, error } = await supabase.functions.invoke(
-        step.mapAction?.function || "coaching-ikigai-map",
+        step.mapAction?.function || defaultMapFn,
         { body: { session_id: session.id } },
       );
       if (error) {
@@ -74,10 +79,11 @@ export function IkigaiWidget({
       const remaining = (data as any)?.coaching_remaining;
       if (typeof remaining === "number") setCoachingRemaining(remaining);
       const { data: row } = await supabase
-        .from("coaching_activity_sessions")
+        .from(sessionTable as any)
         .select("responses")
         .eq("id", session.id)
         .maybeSingle();
+
       if (row?.responses) {
         setResponses(() => row.responses as Responses);
       } else {
