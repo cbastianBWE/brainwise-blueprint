@@ -1217,7 +1217,7 @@ export default function PairedReport() {
         {/* Radial */}
         {dims.length >= 3 && (
           <>
-            <h2 style={sectionLabel}>The two of you at a glance</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>The two of you at a glance</h2>
             <div style={cardStyle}>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }} className="rad-flex">
                 <Radial dims={dims} labA={nameA} labB={nameB} />
@@ -1252,7 +1252,7 @@ export default function PairedReport() {
 
 
         {/* shape glyphs */}
-        <h2 style={sectionLabel}>The shapes a pair can make</h2>
+        <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>The shapes a pair can make</h2>
         <div style={cardStyle}>
           <div style={{ fontSize: 13, color: GRAY, marginBottom: 10 }}>
             Every trait below falls into one of these. Tap one to highlight it in the full map.
@@ -1287,7 +1287,7 @@ export default function PairedReport() {
         {/* drivers */}
         {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
           <>
-            <h2 style={sectionLabel}>What is driving your pair</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What is driving your pair</h2>
             {driving?.opening && (
               <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
             )}
@@ -1306,7 +1306,7 @@ export default function PairedReport() {
         {/* within */}
         {within && (
           <>
-            <h2 style={sectionLabel}>What is going on inside each of you</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What is going on inside each of you</h2>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
@@ -1326,7 +1326,7 @@ export default function PairedReport() {
         {/* needs */}
         {needs && (
           <>
-            <h2 style={sectionLabel}>What each of you needs from the other</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What each of you needs from the other</h2>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
@@ -1346,7 +1346,7 @@ export default function PairedReport() {
         {/* communication */}
         {communication && (
           <>
-            <h2 style={sectionLabel}>How the two of you communicate</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>How the two of you communicate</h2>
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
@@ -1370,7 +1370,7 @@ export default function PairedReport() {
         {/* conflict */}
         {conflict && (
           <>
-            <h2 style={sectionLabel}>How the two of you handle conflict</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>How the two of you handle conflict</h2>
             <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
@@ -1411,7 +1411,7 @@ export default function PairedReport() {
         {/* repair (all modes) */}
         {repair && (
           <>
-            <h2 style={sectionLabel}>Repair after conflict</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
@@ -1442,7 +1442,7 @@ export default function PairedReport() {
         {/* intimacy (romantic only) */}
         {isRomantic && intimacy && (
           <>
-            <h2 style={sectionLabel}>Building intimacy</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Building intimacy</h2>
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
@@ -1467,7 +1467,7 @@ export default function PairedReport() {
         {/* full map */}
         {fullMapGroups.length > 0 && (
           <>
-            <h2 style={sectionLabel}>Every pattern between you</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Every pattern between you</h2>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
               return (
@@ -1510,7 +1510,7 @@ export default function PairedReport() {
         {/* practitioner (privileged) */}
         {canSeePrivileged && coach && (
           <>
-            <h2 style={sectionLabel}>For the practitioner or admin only</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>For the practitioner or admin only</h2>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="Why these were flagged" defaultOpen>
                 {coach.why.map((w, i) => {
