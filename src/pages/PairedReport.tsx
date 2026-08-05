@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -31,7 +32,25 @@ import {
   type RepairSection,
   type StepItem,
   type WithinPersonSection,
+  type OnePagerSection,
 } from "@/lib/pairedSectionTypes";
+import PairedOnePager from "@/components/results/PairedOnePager";
+import {
+  DIM_COLOR,
+  PSC,
+  PAIR_SHAPE_KEYS,
+  PAIR_SHAPE_TITLE,
+  PAIR_SHAPE_SHORT,
+  pairShapeKey,
+  useTipController,
+  showTip,
+  hideTip,
+  hexAlpha,
+  bandWord,
+  FacetChip,
+  type PairShapeKey,
+  type FacetEntry,
+} from "@/components/results/pairedFacetChip";
 
 
 
@@ -52,14 +71,6 @@ const LINE_STRONG = "rgba(2,31,54,.18)";
 const COLOR_A = NAVY;
 const COLOR_B = MUSTARD;
 
-/* dimension colors (matches PTP_DIMENSION_COLORS) */
-const DIM_COLOR: Record<string, string> = {
-  Protection: NAVY,
-  Participation: TEAL,
-  Prediction: GRAY,
-  Purpose: PURPLE,
-  Pleasure: AMBER,
-};
 /* pale tint for Pleasure radial sector and pills so amber doesn't compete with the meter */
 const DIM_SECTOR_OPACITY: Record<string, number> = {
   Protection: 0.08,
@@ -69,50 +80,6 @@ const DIM_SECTOR_OPACITY: Record<string, number> = {
   Pleasure: 0.05,
 };
 
-/* pair shape mapping */
-const PAIR_SHAPE_KEYS = ["farApart", "bothHigh", "bothLow", "bothMedium", "mild"] as const;
-type PairShapeKey = (typeof PAIR_SHAPE_KEYS)[number];
-const PSC: Record<PairShapeKey, string> = {
-  farApart: MUSTARD,
-  bothHigh: GREEN,
-  bothLow: NAVY,
-  bothMedium: TEAL,
-  mild: GRAY,
-};
-const PAIR_SHAPE_TITLE: Record<PairShapeKey, string> = {
-  farApart: "Far apart (opposite ends)",
-  bothHigh: "Both high",
-  bothLow: "Both low",
-  bothMedium: "Both medium",
-  mild: "Mild (small, soft difference)",
-};
-const PAIR_SHAPE_SHORT: Record<PairShapeKey, { t: string; s: string }> = {
-  farApart: { t: "Far apart", s: "opposite ends" },
-  bothHigh: { t: "Both high", s: "both up here" },
-  bothLow: { t: "Both low", s: "neither is high" },
-  bothMedium: { t: "Both medium", s: "meet in the middle" },
-  mild: { t: "Mild", s: "a soft difference" },
-};
-
-function pairShapeKey(shape: string | null | undefined, a?: number, b?: number): PairShapeKey {
-  const s = (shape ?? "").toLowerCase();
-  if (s.includes("far apart") || s === "farapart") return "farApart";
-  if (s.includes("both high")) return "bothHigh";
-  if (s.includes("both low")) return "bothLow";
-  if (s.includes("both medium") || s.includes("medium")) return "bothMedium";
-  if (s.includes("mild")) return "mild";
-  // fallback inference
-  if (typeof a === "number" && typeof b === "number") {
-    const diff = Math.abs(a - b);
-    const mean = (a + b) / 2;
-    if (diff >= 35) return "farApart";
-    if (mean >= 65 && diff < 20) return "bothHigh";
-    if (mean <= 35 && diff < 20) return "bothLow";
-    if (diff < 12) return "bothMedium";
-    return "mild";
-  }
-  return "mild";
-}
 
 const PRIVILEGED_ACCOUNT_TYPES = new Set([
   "org_admin",
@@ -128,25 +95,6 @@ const renderBold = (s: string) => {
 const splitSentences = (raw: string) =>
   (raw ?? "").replace(/([.!?])\s+(?=[A-Z(])/g, "$1|").split("|").map((s) => s.trim()).filter(Boolean);
 
-/* ---------- tooltip ---------- */
-type Tip = { x: number; y: number; text: string } | null;
-const TipCtx = { current: null as null | ((t: Tip) => void) };
-function useTipController() {
-  const [tip, setTip] = useState<Tip>(null);
-  useEffect(() => {
-    TipCtx.current = setTip;
-    return () => { TipCtx.current = null; };
-  }, []);
-  return tip;
-}
-function showTip(e: React.MouseEvent, text: string) {
-  TipCtx.current?.({
-    x: Math.min(e.clientX + 12, window.innerWidth - 310),
-    y: e.clientY + 14,
-    text,
-  });
-}
-function hideTip() { TipCtx.current?.(null); }
 
 /* ---------- Pair distribution glyph (two dots) ---------- */
 function PairGlyph({ a, b, onOpen }: { a: number; b: number; onOpen: () => void }) {
@@ -203,7 +151,7 @@ function PairDistModal({
           position: "absolute", top: 12, right: 16, border: 0, background: "none",
           fontSize: 24, lineHeight: 1, color: GRAY, cursor: "pointer",
         }}>×</button>
-        <h3 style={{ margin: "0 0 2px", fontSize: 18, color: NAVY }}>{title}</h3>
+        <h3 style={{ fontFamily: POPPINS, margin: "0 0 2px", fontSize: 18, color: NAVY }}>{title}</h3>
         <div style={{ fontSize: 13, color: GRAY, marginBottom: 14 }}>
           {labA} and {labB}. Hover a dot to see its score.
         </div>
@@ -470,83 +418,6 @@ function Acc({ title, defaultOpen = false, children }: { title: string; defaultO
 
 const POPPINS = 'Poppins, Montserrat, system-ui, sans-serif';
 
-/* ---------- facet index (name-keyed) ---------- */
-export interface FacetEntry {
-  itemNumber: number;
-  facetName: string;
-  domain?: string | null;
-  shape?: string | null;
-  a?: number | null;
-  b?: number | null;
-}
-
-function hexAlpha(hex: string, alpha: number): string {
-  const h = hex.replace("#", "");
-  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
-}
-
-function bandWord(v: number | null | undefined): string {
-  if (typeof v !== "number") return "not scored";
-  if (v >= 67) return "high";
-  if (v <= 33) return "low";
-  return "middle";
-}
-
-/* ---------- facet chip ---------- */
-function FacetChip({
-  name, entry, firstA, firstB, delay,
-}: {
-  name: string;
-  entry?: FacetEntry;
-  firstA: string;
-  firstB: string;
-  delay: number;
-}) {
-  const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
-  const text = base ? (base === AMBER ? MUSTARD : base) : GRAY;
-  const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
-  const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
-  const tip = entry
-    ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
-    : null;
-
-  const jump = () => {
-    if (!entry) return;
-    const el = document.getElementById(`facet-${entry.itemNumber}`);
-    if (!el) return; // row filtered out of the visible map — silent no-op
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.remove("pr-pulse");
-    void el.offsetWidth;
-    el.classList.add("pr-pulse");
-    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
-  };
-
-  return (
-    <span
-      className="pr-chip"
-      onClick={jump}
-      onMouseMove={tip ? (e) => showTip(e, tip) : undefined}
-      onMouseLeave={hideTip}
-      style={{
-        ["--pr-chip-delay" as string]: `${delay}ms`,
-        display: "inline-block",
-        borderRadius: 999,
-        fontFamily: "Montserrat, system-ui, sans-serif",
-        fontWeight: 600,
-        fontSize: 10.5,
-        padding: "3px 9px",
-        background: bg,
-        border: `1px solid ${border}`,
-        color: text,
-        cursor: entry ? "pointer" : "default",
-        whiteSpace: "nowrap",
-      } as React.CSSProperties}
-    >
-      {name}
-    </span>
-  );
-}
 
 
 
@@ -579,6 +450,7 @@ export default function PairedReport() {
   const canHighlight = !noAccess;
  const [exportOpen, setExportOpen] = useState(false);
  const [leaderActionsOpen, setLeaderActionsOpen] = useState(false);
+  const [onePagerOpen, setOnePagerOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
 
   const handleExportPaired = useCallback(
@@ -966,6 +838,29 @@ export default function PairedReport() {
   const leaderActions = sections["leader_actions"] as LeadershipItem[] | undefined;
   const hasLeaderActions = mode === "work" && Array.isArray(leaderActions) && leaderActions.length > 0;
 
+  /* ---------- one-pager (v20 only; older reports simply have no section) ---------- */
+  const onePager = sections["one_pager"] as OnePagerSection | undefined;
+  const hasOnePager = !!onePager && typeof onePager === "object" && !!onePager.shared;
+
+  useEffect(() => {
+    if (!onePagerOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOnePagerOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onePagerOpen]);
+
+  const printOnePager = useCallback((pageOneOnly: boolean) => {
+    const el = document.getElementById("bw-one-pager");
+    if (!el) return;
+    if (pageOneOnly) el.classList.add("op-print-page1");
+    const cleanup = () => {
+      el.classList.remove("op-print-page1");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    window.setTimeout(() => window.print(), 30);
+  }, []);
+
   /* full map groups */
   const fullMapGroups = useMemo(() => {
     const full = profile?.structured?.fullMap ?? profile?.structured?.facets ?? [];
@@ -1046,8 +941,21 @@ export default function PairedReport() {
   });
 
   const sectionLabel: React.CSSProperties = {
-    fontSize: 26, fontWeight: 800, color: NAVY, margin: "34px 0 6px",
+    fontFamily: POPPINS, fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px",
   };
+  const SectionHead = ({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) => (
+    <div ref={revealRef} className="pr-anim" style={{ margin: "34px 0 0" }}>
+      <div
+        style={{
+          fontFamily: POPPINS, fontWeight: 700, fontSize: 12, letterSpacing: "0.2em",
+          textTransform: "uppercase", color: ORANGE, marginBottom: 8,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <h2 style={sectionLabel}>{children}</h2>
+    </div>
+  );
   const sectionLead: React.CSSProperties = {
     color: GRAY, maxWidth: 760, margin: "0 0 18px",
   };
@@ -1069,12 +977,12 @@ export default function PairedReport() {
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 18px 80px" }}>
         {/* Hero */}
         <div style={{ background: NAVY, color: "#fff", borderRadius: "0 0 20px 20px", margin: "0 -18px 0", padding: "30px 28px 56px" }}>
-          <div style={{ color: ORANGE, fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
+          <div style={{ fontFamily: POPPINS, color: ORANGE, fontSize: 13, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>
             BrainWise · Paired Profile
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
             <div>
-              <h1 style={{ margin: "0 0 4px", fontSize: 30 }}>{modeTitle(mode)}</h1>
+              <h1 style={{ fontFamily: POPPINS, margin: "0 0 4px", fontSize: 30 }}>{modeTitle(mode)}</h1>
               <div style={{ color: "rgba(255,255,255,.72)", fontSize: 14 }}>
                 How the two of you fit, where you pull apart, and what to do about it.
               </div>
@@ -1090,6 +998,16 @@ export default function PairedReport() {
                   <FileText className="mr-2 h-4 w-4" />
                   Export PDF
                 </Button>
+                {hasOnePager && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setOnePagerOpen(true)}
+                    style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                  >
+                    View summary
+                  </Button>
+                )}
                 {hasLeaderActions && (
                   <Button
                     variant="outline"
@@ -1219,7 +1137,7 @@ export default function PairedReport() {
         {/* Radial */}
         {dims.length >= 3 && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>The two of you at a glance</h2>
+            <SectionHead eyebrow="THE SHAPE">The two of you at a glance</SectionHead>
             <div style={cardStyle}>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }} className="rad-flex">
                 <Radial dims={dims} labA={nameA} labB={nameB} />
@@ -1254,7 +1172,7 @@ export default function PairedReport() {
 
 
         {/* shape glyphs */}
-        <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>The shapes a pair can make</h2>
+        <SectionHead eyebrow="HOW TO READ THIS">The shapes a pair can make</SectionHead>
         <div style={cardStyle}>
           <div style={{ fontSize: 13, color: GRAY, marginBottom: 10 }}>
             Every trait below falls into one of these. Tap one to highlight it in the full map.
@@ -1289,7 +1207,7 @@ export default function PairedReport() {
         {/* drivers */}
         {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What is driving your pair</h2>
+            <SectionHead eyebrow="THE DRIVERS">What is driving your pair</SectionHead>
             {driving?.opening && (
               <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
             )}
@@ -1308,7 +1226,7 @@ export default function PairedReport() {
         {/* within */}
         {within && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What is going on inside each of you</h2>
+            <SectionHead eyebrow="EACH OF YOU">What is going on inside each of you</SectionHead>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
@@ -1328,7 +1246,7 @@ export default function PairedReport() {
         {/* needs */}
         {needs && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What each of you needs from the other</h2>
+            <SectionHead eyebrow="THE ASKS">What each of you needs from the other</SectionHead>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
@@ -1348,7 +1266,7 @@ export default function PairedReport() {
         {/* communication */}
         {communication && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>How the two of you communicate</h2>
+            <SectionHead eyebrow="THE MECHANICS">How the two of you communicate</SectionHead>
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
@@ -1372,7 +1290,7 @@ export default function PairedReport() {
         {/* conflict */}
         {conflict && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>How the two of you handle conflict</h2>
+            <SectionHead eyebrow="THE PATTERN">How the two of you handle conflict</SectionHead>
             <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
@@ -1413,7 +1331,7 @@ export default function PairedReport() {
         {/* repair (all modes) */}
         {repair && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Repair after conflict</h2>
+            <SectionHead eyebrow="THE WAY BACK">Repair after conflict</SectionHead>
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
@@ -1444,7 +1362,7 @@ export default function PairedReport() {
         {/* intimacy (romantic only) */}
         {isRomantic && intimacy && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Building intimacy</h2>
+            <SectionHead eyebrow="CLOSENESS">Building intimacy</SectionHead>
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
@@ -1469,7 +1387,7 @@ export default function PairedReport() {
         {/* full map */}
         {fullMapGroups.length > 0 && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Every pattern between you</h2>
+            <SectionHead eyebrow="THE FULL MAP">Every pattern between you</SectionHead>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
               return (
@@ -1512,7 +1430,7 @@ export default function PairedReport() {
         {/* practitioner (privileged) */}
         {canSeePrivileged && coach && (
           <>
-            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>For the practitioner or admin only</h2>
+            <SectionHead eyebrow="PRACTITIONER ONLY">For the practitioner or admin only</SectionHead>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="Why these were flagged" defaultOpen>
                 {coach.why.map((w, i) => {
@@ -1575,6 +1493,58 @@ export default function PairedReport() {
           items={leaderActions!}
           transform={nm}
         />
+      )}
+      {hasOnePager && onePagerOpen && createPortal(
+        <div
+          id="bw-one-pager-portal"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => { if (e.target === e.currentTarget) setOnePagerOpen(false); }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 60, background: "rgba(2,31,54,.55)",
+            overflow: "auto", padding: "24px 12px",
+          }}
+        >
+          <div
+            className="op-shell"
+            style={{
+              maxWidth: 900, margin: "0 auto", background: "#fff", borderRadius: 12,
+              boxShadow: "0 30px 60px rgba(2,31,54,.30)", overflow: "hidden",
+            }}
+          >
+            <div
+              className="op-no-print"
+              style={{
+                display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between",
+                padding: "12px 16px", borderBottom: `1px solid ${LINE}`, flexWrap: "wrap",
+                position: "sticky", top: 0, background: "#fff", zIndex: 2,
+              }}
+            >
+              <div style={{ fontFamily: POPPINS, fontWeight: 700, color: NAVY }}>Your summary</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Button variant="outline" size="sm" onClick={() => printOnePager(true)}>
+                  Print summary
+                </Button>
+                {Array.isArray(onePager?.report_preview) && onePager!.report_preview!.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => printOnePager(false)}>
+                    Print summary + report guide
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" onClick={() => setOnePagerOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+            <PairedOnePager
+              data={onePager!}
+              firstA={firstA}
+              firstB={firstB}
+              nm={nm}
+              lookupFacet={lookupFacet}
+            />
+          </div>
+        </div>,
+        document.body,
       )}
       {pairedProfileId && (
         <AddReportCommitmentModal
