@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 (globalThis as any).fetch = async () => ({ ok: false });
 const out: any = {};
-(jsPDF as any).prototype.save = function (name: string) {
+(jsPDF as any).API.save = function (name: string) {
   require("fs").writeFileSync("/tmp/op.pdf", Buffer.from(this.output("arraybuffer")));
   out.name = name;
 };
