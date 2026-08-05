@@ -14,6 +14,8 @@ import {
   GREEN,
   MUSTARD,
   GRAY,
+  PURPLE,
+  AMBER,
   createPdfContext,
   renderCoverPage,
   stampPageNumbers,
@@ -22,7 +24,15 @@ import {
   drawPairDistRow,
   type PdfContext,
 } from "./generatePdfPrimitivesShared";
+import {
+  bulletFacets,
+  bulletToText,
+  normFacetName,
+  type Bullet,
+  type StepItem,
+} from "./pairedSectionTypes";
 import type { PairedPdfData, PairedFacetForPdf } from "./assemblePairedPdfData";
+
 
 const PAIRED_COVER_DISCLAIMER_ROMANTIC =
   "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. If any pattern here involves fear, control, or harm, please seek support from a qualified professional.";
