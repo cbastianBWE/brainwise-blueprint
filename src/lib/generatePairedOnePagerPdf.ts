@@ -128,7 +128,8 @@ export async function generatePairedOnePagerPdf(
    * so a dry run can measure the exact height before anything is drawn.
    */
   const layoutPageOne = (step: number, draw: boolean): number => {
-    const body = 9.5 - step * 0.35;
+    // 10pt is the ceiling for page one; the shrink guard steps down from there.
+    const body = 10 - step * 0.35;
     const lh = body * 0.4556;
     let y = BAND_H + 12;
 
