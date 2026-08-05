@@ -41,6 +41,8 @@ export interface PairedOnePagerPdfOpts {
   nm?: (s: string) => string;
   /** Dimension colour for a facet chip, when the facet resolves in the map. */
   facetColor?: (facet: string) => RGB | undefined;
+  /** "summary" renders page one only. Defaults to the complete document. */
+  scope?: "summary" | "full";
 }
 
 export async function generatePairedOnePagerPdf(
