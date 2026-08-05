@@ -687,12 +687,14 @@ export default function PairedReport() {
   useEffect(() => () => observer?.disconnect(), [observer]);
   const revealRef = useCallback(
     (el: HTMLElement | null) => {
-      if (!el || !observer) return;
+      if (!el) return;
+      if (!observer) { el.classList.add("pr-in"); return; }
       if (el.classList.contains("pr-in")) return;
       observer.observe(el);
     },
     [observer],
   );
+
   const revealProps = (delayIndex = 0) => ({
     ref: revealRef,
     className: "pr-anim",
