@@ -426,8 +426,7 @@ export async function generatePairedOnePagerPdf(
 
     if (preview.length === 0) {
       footer();
-      const only = `${opts.nameA}_and_${opts.nameB}_paired-snapshot.pdf`.replace(/\s+/g, "_");
-      doc.save(only);
+      doc.save(fullFile);
       return;
     }
 
