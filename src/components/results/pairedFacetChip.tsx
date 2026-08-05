@@ -6,6 +6,7 @@
  * Chip colour comes only from the locked PTP dimension namespace.
  */
 import { useEffect, useState } from "react";
+import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
 
 /* ---------- palette (brand-only) ---------- */
 export const NAVY = "#021F36";
@@ -123,7 +124,7 @@ export interface FacetEntry {
 
 /* ---------- facet chip ---------- */
 export function FacetChip({
-  name, entry, firstA, firstB, delay, size = "md",
+  name, entry, firstA, firstB, delay, size = "md", mode,
 }: {
   name: string;
   entry?: FacetEntry;
@@ -132,6 +133,8 @@ export function FacetChip({
   delay: number;
   /** "sm" is used by the printed one-pager, where vertical space is fixed. */
   size?: "md" | "sm";
+  /** Relationship mode; drives the displayed label only, never a lookup. */
+  mode?: string | null;
 }) {
   const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
   const text = base ? (base === AMBER ? MUSTARD : base) : GRAY;
@@ -173,7 +176,7 @@ export function FacetChip({
         whiteSpace: "nowrap",
       } as React.CSSProperties}
     >
-      {name}
+      {facetDisplayLabel(name, mode)}
     </span>
   );
 }
