@@ -898,7 +898,7 @@ export async function generatePairedProfilePdf(
 
   // 1. pair in three
   if (sections.pairInThree && Array.isArray(s.pair_in_three) && s.pair_in_three.length > 0) {
-    ctx.sectionHeading("Your pair in three");
+    ctx.sectionHeading("Your pair in three", 24, "The shape");
     s.pair_in_three.slice(0, 3).forEach((it, i) => {
       ctx.ensureBlockSpace(20);
       doc.setFont("Poppins", "bold");
@@ -926,13 +926,13 @@ export async function generatePairedProfilePdf(
 
   // 2. at a glance (radial + agreement bars)
   if (sections.atAGlance && Object.keys(data.dimensions).length > 0) {
-    ctx.sectionHeading("At a glance");
+    ctx.sectionHeading("At a glance", 100, "The scores");
     drawRadial(ctx, data);
   }
 
   // 3. shape legend
   if (sections.shapeLegend) {
-    ctx.sectionHeading("How to read the shapes");
+    ctx.sectionHeading("How to read the shapes", 14, "How to read this");
     for (const k of PAIR_SHAPES) {
       ctx.ensureBlockSpace(14);
       doc.setFont("Poppins", "bold");
@@ -947,7 +947,7 @@ export async function generatePairedProfilePdf(
 
   // 4. driving
   if (sections.driving && s.driving_facets) {
-    ctx.sectionHeading("Driving facets");
+    ctx.sectionHeading("Driving facets", 22, "The drivers");
     if (s.driving_facets.opening) paragraphs(ctx, nm(s.driving_facets.opening));
     ctx.y += 2;
 
@@ -981,7 +981,7 @@ export async function generatePairedProfilePdf(
       (f) => f.stats && typeof f.stats.a === "number" && typeof f.stats.b === "number",
     );
     if (set.length > 0) {
-      ctx.sectionHeading("Driving facets — distribution");
+      ctx.sectionHeading("Driving facets — distribution", 22, "The drivers");
       for (const f of set) {
         drawPairDistRow(ctx, { label: f.facetName, a: f.stats!.a, b: f.stats!.b });
       }
@@ -990,7 +990,7 @@ export async function generatePairedProfilePdf(
 
   // 6. within
   if (sections.within && s.within_person) {
-    ctx.sectionHeading("Within each person");
+    ctx.sectionHeading("Within each person", 26, "Each of you");
     twoColumn(
       ctx,
       data.firstA,
@@ -1002,7 +1002,7 @@ export async function generatePairedProfilePdf(
 
   // 7. needs
   if (sections.needs && s.needs) {
-    ctx.sectionHeading("What each of you needs");
+    ctx.sectionHeading("What each of you needs", 26, "The asks");
     twoColumn(
       ctx,
       `What ${data.firstA} needs from ${data.firstB}`,
@@ -1016,7 +1016,7 @@ export async function generatePairedProfilePdf(
 
   // 8. communication
   if (sections.communication && s.communication) {
-    ctx.sectionHeading("Communication");
+    ctx.sectionHeading("Communication", 22, "The mechanics");
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
@@ -1049,7 +1049,7 @@ export async function generatePairedProfilePdf(
 
   // 9. conflict
   if (sections.conflict && s.conflict) {
-    ctx.sectionHeading("Conflict");
+    ctx.sectionHeading("Conflict", 22, "The pattern");
     if (s.conflict.summary) paragraphs(ctx, nm(s.conflict.summary));
     ctx.y += 2;
     twoColumn(
@@ -1093,7 +1093,7 @@ export async function generatePairedProfilePdf(
     Array.isArray(s.leader_actions) &&
     s.leader_actions.length > 0
   ) {
-    ctx.sectionHeading("For the leader");
+    ctx.sectionHeading("For the leader", 22, "For the leader");
     for (let i = 0; i < Math.min(3, s.leader_actions.length); i++) {
       const it = s.leader_actions[i];
       ctx.ensureBlockSpace(20);
@@ -1116,7 +1116,7 @@ export async function generatePairedProfilePdf(
 
   // 10. repair (all modes)
   if (sections.repair && s.repair) {
-    ctx.sectionHeading("Repair");
+    ctx.sectionHeading("Repair", 22, "The way back");
     if (s.repair.overview) paragraphs(ctx, nm(s.repair.overview));
     ctx.y += 2;
     twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b));
@@ -1141,7 +1141,7 @@ export async function generatePairedProfilePdf(
 
   // 11. intimacy (romantic only)
   if (sections.intimacy && data.mode === "romantic" && s.intimacy) {
-    ctx.sectionHeading("Intimacy");
+    ctx.sectionHeading("Intimacy", 22, "Closeness");
     if (s.intimacy.overview) paragraphs(ctx, nm(s.intimacy.overview));
     ctx.y += 2;
     twoColumn(
@@ -1167,7 +1167,7 @@ export async function generatePairedProfilePdf(
 
   // 12. full map (+ chart mode)
   if (sections.fullMap || sections.fullMapCharts) {
-    ctx.sectionHeading("The full map");
+    ctx.sectionHeading("The full map", 20, "The full map");
     const buckets: Record<PairShapeKey, PairedFacetForPdf[]> = {
       farApart: [], bothHigh: [], bothLow: [], bothMedium: [], mild: [],
     };
@@ -1202,7 +1202,7 @@ export async function generatePairedProfilePdf(
 
   // 13. coach (privileged)
   if (sections.coach && s.coach) {
-    ctx.sectionHeading("For the practitioner or admin only");
+    ctx.sectionHeading("For the practitioner or admin only", 22, "Practitioner only");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
