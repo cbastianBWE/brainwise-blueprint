@@ -348,7 +348,11 @@ export default function PairedOnePager({
                     </p>
                   )}
                 </div>
-                <DownloadButton />
+                <DownloadButton
+                  scope="full"
+                  label="Full PDF"
+                  title="Download the summary plus the questions and report guide"
+                />
               </div>
             {talkAbout.length > 0 && (
             <>
