@@ -450,7 +450,6 @@ export default function PairedReport() {
   const canHighlight = !noAccess;
  const [exportOpen, setExportOpen] = useState(false);
  const [leaderActionsOpen, setLeaderActionsOpen] = useState(false);
-  const [onePagerOpen, setOnePagerOpen] = useState(false);
   const [commitOpen, setCommitOpen] = useState(false);
 
   const handleExportPaired = useCallback(
@@ -842,25 +841,6 @@ export default function PairedReport() {
   const onePager = sections["one_pager"] as OnePagerSection | undefined;
   const hasOnePager = !!onePager && typeof onePager === "object" && !!onePager.shared;
 
-  useEffect(() => {
-    if (!onePagerOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOnePagerOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onePagerOpen]);
-
-  const printOnePager = useCallback((pageOneOnly: boolean) => {
-    const el = document.getElementById("bw-one-pager");
-    if (!el) return;
-    if (pageOneOnly) el.classList.add("op-print-page1");
-    const cleanup = () => {
-      el.classList.remove("op-print-page1");
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    window.setTimeout(() => window.print(), 30);
-  }, []);
-
   /* full map groups */
   const fullMapGroups = useMemo(() => {
     const full = profile?.structured?.fullMap ?? profile?.structured?.facets ?? [];
@@ -999,14 +979,13 @@ export default function PairedReport() {
                   Export PDF
                 </Button>
                 {hasOnePager && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setOnePagerOpen(true)}
-                    style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
-                  >
-                    View summary
-                  </Button>
+                  <PairedOnePager
+                    data={onePager!}
+                    firstA={firstA}
+                    firstB={firstB}
+                    nm={nm}
+                    lookupFacet={lookupFacet}
+                  />
                 )}
                 {hasLeaderActions && (
                   <Button
@@ -1493,58 +1472,6 @@ export default function PairedReport() {
           items={leaderActions!}
           transform={nm}
         />
-      )}
-      {hasOnePager && onePagerOpen && createPortal(
-        <div
-          id="bw-one-pager-portal"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => { if (e.target === e.currentTarget) setOnePagerOpen(false); }}
-          style={{
-            position: "fixed", inset: 0, zIndex: 60, background: "rgba(2,31,54,.55)",
-            overflow: "auto", padding: "24px 12px",
-          }}
-        >
-          <div
-            className="op-shell"
-            style={{
-              maxWidth: 900, margin: "0 auto", background: "#fff", borderRadius: 12,
-              boxShadow: "0 30px 60px rgba(2,31,54,.30)", overflow: "hidden",
-            }}
-          >
-            <div
-              className="op-no-print"
-              style={{
-                display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between",
-                padding: "12px 16px", borderBottom: `1px solid ${LINE}`, flexWrap: "wrap",
-                position: "sticky", top: 0, background: "#fff", zIndex: 2,
-              }}
-            >
-              <div style={{ fontFamily: POPPINS, fontWeight: 700, color: NAVY }}>Your summary</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <Button variant="outline" size="sm" onClick={() => printOnePager(true)}>
-                  Print summary
-                </Button>
-                {Array.isArray(onePager?.report_preview) && onePager!.report_preview!.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => printOnePager(false)}>
-                    Print summary + report guide
-                  </Button>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => setOnePagerOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
-            <PairedOnePager
-              data={onePager!}
-              firstA={firstA}
-              firstB={firstB}
-              nm={nm}
-              lookupFacet={lookupFacet}
-            />
-          </div>
-        </div>,
-        document.body,
       )}
       {pairedProfileId && (
         <AddReportCommitmentModal
