@@ -23,6 +23,7 @@ import {
   drawTeamDistRow,
   type PdfContext,
 } from "./generatePdfPrimitivesShared";
+import { facetDisplayLabel } from "./pairedSectionTypes";
 import type { TeamPdfData, TeamFacetForPdf } from "./assembleTeamPdfData";
 
 export interface TeamPdfSections {
@@ -422,7 +423,7 @@ export async function generateTeamProfilePdf(
       const acts = src?.actions ?? (src?.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "strength",
-        name: f.facetName,
+        name: facetDisplayLabel(f.facetName, "work"),
         why: src?.why ?? "",
         actions: acts.slice(0, 3),
       });
@@ -433,7 +434,7 @@ export async function generateTeamProfilePdf(
       const acts = src?.actions ?? (src?.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "focus",
-        name: f.facetName,
+        name: facetDisplayLabel(f.facetName, "work"),
         why: src?.why ?? "",
         actions: acts.slice(0, 3),
       });
@@ -448,7 +449,7 @@ export async function generateTeamProfilePdf(
       for (const f of set) {
         const scores = data.scoresByItem.get(f.itemNumber) ?? [];
         drawTeamDistRow(ctx, {
-          label: f.facetName,
+          label: facetDisplayLabel(f.facetName, "work"),
           scores,
           dotColor: TEAM_SHAPE_COLOR[shapeKey(f.shape)],
         });
@@ -621,7 +622,7 @@ export async function generateTeamProfilePdf(
       if (sections.fullMapCharts) {
         for (const f of items) {
           drawTeamDistRow(ctx, {
-            label: f.facetName,
+            label: facetDisplayLabel(f.facetName, "work"),
             scores: data.scoresByItem.get(f.itemNumber) ?? [],
             dotColor: TEAM_SHAPE_COLOR[k],
           });
@@ -632,7 +633,7 @@ export async function generateTeamProfilePdf(
         doc.setTextColor(...BLACK);
         for (const f of items) {
           ctx.checkPageBreak(5);
-          doc.text("• " + cleanMarkdown(f.facetName), MARGIN_L + 3, ctx.y);
+          doc.text("• " + cleanMarkdown(facetDisplayLabel(f.facetName, "work")), MARGIN_L + 3, ctx.y);
           ctx.y += 4.5;
         }
       }
