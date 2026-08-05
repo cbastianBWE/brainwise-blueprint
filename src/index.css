@@ -206,6 +206,9 @@ All colors MUST be HSL.
       animation: none !important;
       opacity: 1 !important;
       transform: none !important;
+      translate: none !important;
+      scale: none !important;
+
     }
     .pr-card:hover,
     .pr-chip:hover { transform: none; }
