@@ -507,9 +507,8 @@ export async function generatePairedOnePagerPdf(
           let cx = x + 4;
           doc.setFont("Montserrat", "semibold");
           doc.setFontSize(7);
-          for (const label of m.chipRows[r]) {
-            const w = doc.getTextWidth(label) + 4;
-            const c = opts.facetColor?.(chipRaw.get(label) ?? label) ?? GRAY;
+          for (const chip of m.chipRows[r]) {
+            const { label, w, color: c } = chip;
             doc.setFillColor(c[0], c[1], c[2]);
             doc.setDrawColor(c[0], c[1], c[2]);
             doc.setLineWidth(0.2);
@@ -518,7 +517,9 @@ export async function generatePairedOnePagerPdf(
             doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "F");
             doc.restoreGraphicsState();
             doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "S");
-            doc.setTextColor(c === AMBER ? MUSTARD[0] : c[0], c === AMBER ? MUSTARD[1] : c[1], c === AMBER ? MUSTARD[2] : c[2]);
+            // safety net: amber is illegible at 7pt, so swap in its text-safe pair
+            const isAmber = c[0] === AMBER[0] && c[1] === AMBER[1] && c[2] === AMBER[2];
+            doc.setTextColor(...(isAmber ? MUSTARD : c));
             doc.text(label, cx + 2, yy);
             cx += w + 2;
           }
