@@ -137,14 +137,41 @@ export function stripMovePrefix(point: string): string {
     : t;
 }
 
-/** Normalise the facet name for name-keyed lookups. */
+/** Normalise the facet name for name-keyed lookups.
+ *  Strips the instrument's trailing context suffix so names frozen into older
+ *  reports ("Action orientation (professional)") match names from newer ones
+ *  ("Action orientation"). Verified collision-free for every item set the paired
+ *  and team reports use. */
 export function normFacetName(name: string): string {
   return (name ?? "")
+    .replace(/\s*\((personal|professional)\)\s*$/i, "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
+
+/** Facets whose instrument wording is workplace-specific and needs a relational
+ *  label outside work context. Keyed on the normalised facet name. Both spellings
+ *  are listed because reports generated before the catalogue fix froze the British
+ *  form into their structured snapshot. */
+const NON_WORK_FACET_LABEL: Record<string, string> = {
+  [normFacetName("Values alignment (organisational)")]: "Values alignment (community)",
+  [normFacetName("Values alignment (organizational)")]: "Values alignment (community)",
+};
+
+/** The label to DISPLAY for a facet. Never use this for lookups. */
+export function facetDisplayLabel(
+  facetName: string,
+  mode?: string | null,
+): string {
+  // Always drop the instrument's context suffix. It is noise on every report:
+  // the document already establishes the context.
+  const base = (facetName ?? "").replace(/\s*\((personal|professional)\)\s*$/i, "").trim();
+  if (mode === "work") return base;
+  return NON_WORK_FACET_LABEL[normFacetName(base)] ?? base;
+}
+
 
 /* ---------- v20: the printable one-pager ---------- */
 
