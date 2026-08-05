@@ -145,3 +145,53 @@ export function normFacetName(name: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
+
+/* ---------- v20: the printable one-pager ---------- */
+
+export interface OnePagerVoiceLine {
+  text: string;
+  facets?: string[];
+}
+
+export interface OnePagerShared {
+  strong: OnePagerVoiceLine;
+  talk: OnePagerVoiceLine;
+  fight: OnePagerVoiceLine;
+  repair: OnePagerVoiceLine;
+}
+
+/** First-person voice column. "I" is the speaker, "you" is the partner. */
+export interface OnePagerVoice {
+  bring: OnePagerVoiceLine;
+  need: OnePagerVoiceLine;
+  talk: OnePagerVoiceLine;
+  clash: OnePagerVoiceLine;
+  repair: OnePagerVoiceLine;
+  /** romantic mode only */
+  close?: OnePagerVoiceLine;
+}
+
+export interface OnePagerWatchItem {
+  point: string;
+  body: string;
+  facets?: string[];
+}
+
+export interface OnePagerPreviewItem {
+  section: string;
+  heading: string;
+  text: string;
+  facets?: string[];
+}
+
+export interface OnePagerSection {
+  title: string;
+  opening: string;
+  shared: OnePagerShared;
+  a_to_b: OnePagerVoice;
+  b_to_a: OnePagerVoice;
+  watch: OnePagerWatchItem[];
+  talk_about: string[];
+  report_preview?: OnePagerPreviewItem[];
+  disclaimer: string;
+}
