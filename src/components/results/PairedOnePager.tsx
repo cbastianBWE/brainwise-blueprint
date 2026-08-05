@@ -1,3 +1,15 @@
+import { useState } from "react";
+import { FileText, Download, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type {
   OnePagerSection,
   OnePagerVoice,
@@ -5,6 +17,7 @@ import type {
 } from "@/lib/pairedSectionTypes";
 import {
   FacetChip,
+  DIM_COLOR,
   POPPINS,
   NAVY,
   TEAL,
@@ -15,10 +28,10 @@ import {
   ORANGE,
   type FacetEntry,
 } from "@/components/results/pairedFacetChip";
+import { generatePairedOnePagerPdf } from "@/lib/generatePairedOnePagerPdf";
 
 const COLOR_A = NAVY;
 const COLOR_B = MUSTARD;
-const LINE = "rgba(2,31,54,.12)";
 
 /* Fixed label order. Keys absent from the payload are skipped. */
 const SHARED_LABELS: [keyof OnePagerSection["shared"], string][] = [
@@ -39,13 +52,19 @@ const VOICE_LABELS: [keyof OnePagerVoice, string][] = [
 
 const lineText = (l: OnePagerVoiceLine | undefined): string => (l?.text ?? "").trim();
 
+const hexToRgb = (hex: string): [number, number, number] => {
+  const h = hex.replace("#", "");
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
         fontFamily: POPPINS,
         fontWeight: 700,
-        fontSize: 8,
+        fontSize: 11,
         letterSpacing: "0.2em",
         textTransform: "uppercase",
         color: ORANGE,
@@ -63,10 +82,9 @@ function Head({ children }: { children: React.ReactNode }) {
       style={{
         fontFamily: POPPINS,
         fontWeight: 700,
-        fontSize: 9.6,
-        letterSpacing: ".02em",
+        fontSize: 15,
         color: NAVY,
-        margin: "9px 0 5px",
+        margin: "18px 0 8px",
       }}
     >
       {children}
@@ -81,36 +99,70 @@ interface Props {
   /** Person A / Person B substitution used everywhere except the voice columns. */
   nm: (s: string) => string;
   lookupFacet: (name: string) => FacetEntry | undefined;
+  dateGenerated?: string;
 }
 
 /**
- * Fixed two-sheet summary. Page one is deliberately dense: it is measured to sit
- * at ~91% of a US Letter sheet at the generator's word caps, so do not add
- * padding, type size or extra sections here without re-measuring.
+ * Dialog entry point for the paired one-pager, mirroring PtpOnePagers:
+ * read it here, or download the branded two-page PDF.
  */
-export default function PairedOnePager({ data, firstA, firstB, nm, lookupFacet }: Props) {
+export default function PairedOnePager({
+  data,
+  firstA,
+  firstB,
+  nm,
+  lookupFacet,
+  dateGenerated,
+}: Props) {
+  const [open, setOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
   const preview = Array.isArray(data.report_preview) ? data.report_preview.filter(Boolean) : [];
   const hasPage2 = preview.length > 0;
   const watch = Array.isArray(data.watch) ? data.watch.filter(Boolean) : [];
   const talkAbout = Array.isArray(data.talk_about) ? data.talk_about.filter(Boolean) : [];
 
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await generatePairedOnePagerPdf(data, {
+        nameA: firstA,
+        nameB: firstB,
+        dateGenerated,
+        nm,
+        facetColor: (f) => {
+          const domain = lookupFacet(f)?.domain;
+          const hex = domain ? DIM_COLOR[domain] : undefined;
+          return hex ? hexToRgb(hex) : undefined;
+        },
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const DownloadButton = () => (
+    <Button size="sm" onClick={download} disabled={downloading}>
+      {downloading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Download className="mr-2 h-4 w-4" />
+      )}
+      PDF
+    </Button>
+  );
+
   const VoiceCol = ({
     voice, who, heading,
   }: { voice: OnePagerVoice; who: "a" | "b"; heading: string }) => (
-    <div
-      className="op-avoid"
-      style={{
-        borderLeft: `3px solid ${who === "a" ? COLOR_A : COLOR_B}`,
-        paddingLeft: 9,
-      }}
-    >
+    <div style={{ borderLeft: `3px solid ${who === "a" ? COLOR_A : COLOR_B}`, paddingLeft: 12 }}>
       <div
         style={{
           fontFamily: POPPINS,
           fontWeight: 700,
-          fontSize: 8.6,
+          fontSize: 13,
           color: who === "a" ? COLOR_A : COLOR_B,
-          marginBottom: 5,
+          marginBottom: 8,
         }}
       >
         {heading}
@@ -119,21 +171,21 @@ export default function PairedOnePager({ data, firstA, firstB, nm, lookupFacet }
         const text = lineText(voice?.[key]);
         if (!text) return null;
         return (
-          <div key={key} style={{ marginBottom: 5 }}>
+          <div key={key} style={{ marginBottom: 8 }}>
             <div
               style={{
-                fontSize: 6.4,
+                fontSize: 9.5,
                 letterSpacing: ".1em",
                 textTransform: "uppercase",
                 fontWeight: 700,
                 color: GRAY,
-                marginBottom: 1,
+                marginBottom: 2,
               }}
             >
               {label}
             </div>
             {/* first person, quoted speech — no name substitution here by design */}
-            <div style={{ fontSize: 8.3, lineHeight: 1.42, fontStyle: "italic", color: NAVY }}>
+            <div style={{ fontSize: 13, lineHeight: 1.5, fontStyle: "italic", color: NAVY }}>
               {text}
             </div>
           </div>
@@ -143,189 +195,206 @@ export default function PairedOnePager({ data, firstA, firstB, nm, lookupFacet }
   );
 
   return (
-    <div
-      id="bw-one-pager"
-      className="bw-one-pager"
-      style={{
-        background: "#fff",
-        color: NAVY,
-        fontFamily: "Montserrat, system-ui, sans-serif",
-        WebkitPrintColorAdjust: "exact",
-        printColorAdjust: "exact",
-      } as React.CSSProperties}
-    >
-      {/* ============ PAGE ONE ============ */}
-      <section className="op-page op-page-1" style={{ padding: "14mm 12mm" }}>
-        <Eyebrow>
-          {hasPage2
-            ? "BrainWise · Paired Profile · Page one of two"
-            : "BrainWise · Paired Profile · Page one"}
-        </Eyebrow>
-        <h1 style={{ fontFamily: POPPINS, fontWeight: 800, fontSize: 18, margin: "0 0 6px", color: NAVY }}>
-          {nm(data.title ?? "")}
-        </h1>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          Paired snapshot
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle style={{ fontFamily: POPPINS }}>{nm(data.title ?? "Your paired snapshot")}</DialogTitle>
+          <DialogDescription>
+            Read it here, or download it as a branded two-page PDF.
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* legend */}
-        <div style={{ display: "flex", gap: 14, alignItems: "center", fontSize: 8, color: GRAY, marginBottom: 8 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: COLOR_A, display: "inline-block" }} />
-            {firstA}
-          </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span style={{ width: 7, height: 7, borderRadius: 999, background: COLOR_B, display: "inline-block" }} />
-            {firstB}
-          </span>
-        </div>
-
-        {data.opening && (
-          <div
-            className="op-avoid"
-            style={{ borderLeft: `3px solid ${TEAL}`, paddingLeft: 9, fontSize: 8.8, lineHeight: 1.5 }}
+        <Tabs defaultValue="summary" className="w-full">
+          <TabsList
+            className="grid w-full"
+            style={{ gridTemplateColumns: `repeat(${hasPage2 ? 2 : 1}, minmax(0, 1fr))` }}
           >
-            {nm(data.opening)}
-          </div>
-        )}
+            <TabsTrigger value="summary">Your summary</TabsTrigger>
+            {hasPage2 && <TabsTrigger value="preview">What is in your full report</TabsTrigger>}
+          </TabsList>
 
-        {/* shared */}
-        <Head>What happens between you</Head>
-        <div>
-          {SHARED_LABELS.map(([key, label], i) => {
-            const text = lineText(data.shared?.[key]);
-            if (!text) return null;
-            return (
+          <TabsContent value="summary" className="mt-4" style={{ color: NAVY }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <Eyebrow>BrainWise · Paired Profile · {hasPage2 ? "Page one of two" : "Page one"}</Eyebrow>
+                <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 12, color: GRAY }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 999, background: COLOR_A }} />
+                    {firstA}
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 999, background: COLOR_B }} />
+                    {firstB}
+                  </span>
+                </div>
+              </div>
+              <DownloadButton />
+            </div>
+
+            {data.opening && (
               <div
-                key={key}
-                className="op-avoid"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "52mm 1fr",
-                  gap: 8,
-                  padding: "4px 0",
-                  borderTop: i === 0 ? "none" : `1px dotted ${LINE}`,
+                  borderLeft: `3px solid ${TEAL}`,
+                  paddingLeft: 12,
+                  fontSize: 13.5,
+                  lineHeight: 1.6,
+                  marginTop: 12,
                 }}
               >
-                <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 8, color: NAVY }}>{label}</div>
-                <div style={{ fontSize: 8.3, lineHeight: 1.45 }}>{nm(text)}</div>
+                {nm(data.opening)}
               </div>
-            );
-          })}
-        </div>
+            )}
 
-        {/* voices */}
-        <Head>In your own words, to each other</Head>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <VoiceCol voice={data.a_to_b} who="a" heading={`In ${firstA}'s words, to ${firstB}`} />
-          <VoiceCol voice={data.b_to_a} who="b" heading={`In ${firstB}'s words, to ${firstA}`} />
-        </div>
-
-        {/* watch */}
-        {watch.length > 0 && (
-          <>
-            <Head>Keep an eye on</Head>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {watch.slice(0, 2).map((w, i) => (
-                <div
-                  key={i}
-                  className="op-avoid"
-                  style={{ borderLeft: `3px solid ${AMBER}`, paddingLeft: 9 }}
-                >
-                  <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 8.4, color: MUSTARD }}>
-                    {nm(w.point ?? "")}
-                  </div>
-                  <div style={{ fontSize: 8.2, lineHeight: 1.45, marginTop: 2 }}>{nm(w.body ?? "")}</div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* talk about */}
-        {talkAbout.length > 0 && (
-          <>
-            <Head>Talk about this together</Head>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 12px" }}>
-              {talkAbout.slice(0, 4).map((t, i) => (
-                <div key={i} className="op-avoid" style={{ display: "flex", gap: 6, alignItems: "flex-start" }}>
-                  <span
+            <Head>What happens between you</Head>
+            <div>
+              {SHARED_LABELS.map(([key, label], i) => {
+                const text = lineText(data.shared?.[key]);
+                if (!text) return null;
+                return (
+                  <div
+                    key={key}
                     style={{
-                      flex: "0 0 auto",
-                      width: 14,
-                      height: 14,
-                      borderRadius: 999,
-                      background: PURPLE,
-                      color: "#fff",
-                      fontFamily: POPPINS,
-                      fontWeight: 700,
-                      fontSize: 8,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginTop: 1,
+                      display: "grid",
+                      gridTemplateColumns: "180px 1fr",
+                      gap: 12,
+                      padding: "8px 0",
+                      borderTop: i === 0 ? "none" : "1px dotted rgba(2,31,54,.12)",
                     }}
                   >
-                    {i + 1}
-                  </span>
-                  <span style={{ fontSize: 8.3, lineHeight: 1.45 }}>{nm(t)}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {data.disclaimer && (
-          <div style={{ marginTop: 10, paddingTop: 6, borderTop: `1px solid ${LINE}`, fontSize: 6.4, color: GRAY, lineHeight: 1.45 }}>
-            {nm(data.disclaimer)}
-          </div>
-        )}
-      </section>
-
-      {/* ============ PAGE TWO ============ */}
-      {hasPage2 && (
-        <section className="op-page op-page-2" style={{ padding: "14mm 12mm" }}>
-          <Eyebrow>BrainWise · Paired Profile · Page two of two</Eyebrow>
-          <h1 style={{ fontFamily: POPPINS, fontWeight: 800, fontSize: 18, margin: "0 0 6px", color: NAVY }}>
-            What is in your full report
-          </h1>
-          <p style={{ fontSize: 8.6, lineHeight: 1.5, color: GRAY, margin: "0 0 10px", maxWidth: "80ch" }}>
-            Page one is the short version. Your full report goes deeper on each of these, with the
-            patterns behind them mapped question by question.
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {preview.map((p, i) => (
-              <div
-                key={i}
-                className="op-avoid"
-                style={{ borderLeft: `3px solid ${TEAL}`, paddingLeft: 9, paddingBottom: 2 }}
-              >
-                <div style={{ display: "flex", gap: 7, alignItems: "baseline" }}>
-                  <span style={{ fontFamily: POPPINS, fontWeight: 800, fontSize: 15, color: TEAL, lineHeight: 1 }}>
-                    {i + 1}
-                  </span>
-                  <span style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 9, color: NAVY }}>
-                    {nm(p.heading ?? p.section ?? "")}
-                  </span>
-                </div>
-                <div style={{ fontSize: 8.1, lineHeight: 1.45, marginTop: 3 }}>{nm(p.text ?? "")}</div>
-                {Array.isArray(p.facets) && p.facets.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 5 }}>
-                    {p.facets.map((f, j) => (
-                      <FacetChip
-                        key={`${f}-${j}`}
-                        name={nm(f)}
-                        entry={lookupFacet(f)}
-                        firstA={firstA}
-                        firstB={firstB}
-                        delay={0}
-                        size="sm"
-                      />
-                    ))}
+                    <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 12.5, color: NAVY }}>
+                      {label}
+                    </div>
+                    <div style={{ fontSize: 13, lineHeight: 1.55 }}>{nm(text)}</div>
                   </div>
-                )}
+                );
+              })}
+            </div>
+
+            <Head>In your own words, to each other</Head>
+            <div className="grid gap-4 md:grid-cols-2">
+              <VoiceCol voice={data.a_to_b} who="a" heading={`In ${firstA}'s words, to ${firstB}`} />
+              <VoiceCol voice={data.b_to_a} who="b" heading={`In ${firstB}'s words, to ${firstA}`} />
+            </div>
+
+            {watch.length > 0 && (
+              <>
+                <Head>Keep an eye on</Head>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {watch.slice(0, 2).map((w, i) => (
+                    <div key={i} style={{ borderLeft: `3px solid ${AMBER}`, paddingLeft: 12 }}>
+                      <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 13, color: MUSTARD }}>
+                        {nm(w.point ?? "")}
+                      </div>
+                      <div style={{ fontSize: 13, lineHeight: 1.55, marginTop: 3 }}>{nm(w.body ?? "")}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {talkAbout.length > 0 && (
+              <>
+                <Head>Talk about this together</Head>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {talkAbout.slice(0, 4).map((t, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <span
+                        style={{
+                          flex: "0 0 auto",
+                          width: 20,
+                          height: 20,
+                          borderRadius: 999,
+                          background: PURPLE,
+                          color: "#fff",
+                          fontFamily: POPPINS,
+                          fontWeight: 700,
+                          fontSize: 11,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span style={{ fontSize: 13, lineHeight: 1.55 }}>{nm(t)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {data.disclaimer && (
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 10,
+                  borderTop: "1px solid rgba(2,31,54,.12)",
+                  fontSize: 10.5,
+                  color: GRAY,
+                  lineHeight: 1.5,
+                }}
+              >
+                {nm(data.disclaimer)}
               </div>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
+            )}
+          </TabsContent>
+
+          {hasPage2 && (
+            <TabsContent value="preview" className="mt-4" style={{ color: NAVY }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <Eyebrow>BrainWise · Paired Profile · Page two of two</Eyebrow>
+                  <p style={{ fontSize: 13, lineHeight: 1.55, color: GRAY, margin: 0 }}>
+                    Page one is the short version. Your full report goes deeper on each of these,
+                    with the patterns behind them mapped question by question.
+                  </p>
+                </div>
+                <DownloadButton />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 mt-4">
+                {preview.map((p, i) => (
+                  <div key={i} style={{ borderLeft: `3px solid ${TEAL}`, paddingLeft: 12 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                      <span style={{ fontFamily: POPPINS, fontWeight: 800, fontSize: 20, color: TEAL, lineHeight: 1 }}>
+                        {i + 1}
+                      </span>
+                      <span style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 13.5, color: NAVY }}>
+                        {nm(p.heading ?? p.section ?? "")}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, lineHeight: 1.55, marginTop: 4 }}>{nm(p.text ?? "")}</div>
+                    {Array.isArray(p.facets) && p.facets.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
+                        {p.facets.map((f, j) => (
+                          <FacetChip
+                            key={`${f}-${j}`}
+                            name={nm(f)}
+                            entry={lookupFacet(f)}
+                            firstA={firstA}
+                            firstB={firstB}
+                            delay={0}
+                            size="sm"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 }
