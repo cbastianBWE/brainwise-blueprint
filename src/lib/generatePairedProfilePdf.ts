@@ -1171,9 +1171,18 @@ export async function generatePairedProfilePdf(
     }
   }
 
-  // 13. coach (privileged)
+  // 13. coach (privileged) — practitioner-only, always starts on a fresh page
   if (sections.coach && s.coach) {
+    ctx.addFooter();
+    doc.addPage();
+    ctx.y = MARGIN_T;
     ctx.sectionHeading("For the practitioner or admin only", 22, "Practitioner only");
+
+    const facetByItem = new Map<number, string>();
+    for (const f of data.fullMap) {
+      if (f.itemNumber != null && f.facetName) facetByItem.set(f.itemNumber, f.facetName);
+    }
+
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
@@ -1181,43 +1190,160 @@ export async function generatePairedProfilePdf(
       ctx.checkPageBreak(6);
       doc.text("Why these matter", MARGIN_L, ctx.y);
       ctx.y += 5;
+
+      const LBL_H = 3.2;
+      const innerX = MARGIN_L + CARD_RULE_W + CARD_PAD;
+      const innerW = CONTENT_W - CARD_RULE_W - CARD_PAD * 2;
+
       for (const w of s.coach.why) {
-        const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
-        ctx.ensureBlockSpace(16);
-        doc.setFont("Montserrat", "semibold");
+        const question = cleanMarkdown(data.itemText.get(w.item) ?? `Item ${w.item}`);
+        const facet = facetByItem.get(w.item) ?? `Item ${w.item}`;
+        const accent = facetColor(facet);
+
+        // The generator emits one rationale string. splitParas gives the same
+        // structure the section already rendered as separate paragraphs: the
+        // first is the score read, the rest is the reasoning. With a single
+        // paragraph there is no clean split, so it all goes under WHY FLAGGED.
+        const paras = splitParas(cleanMarkdown(nm(w.rationale)));
+        const read = paras.length > 1 ? paras[0] : "";
+        const why = paras.length > 1 ? paras.slice(1).join(" ") : (paras[0] ?? "");
+
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(10);
+        const titleL: string[] = doc.splitTextToSize(cleanMarkdown(facet), innerW);
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(8);
+        const qL: string[] = doc.splitTextToSize(question, innerW);
         doc.setFontSize(8.5);
-        doc.setTextColor(...MUTED);
-        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
-        for (const l of ql) {
-          ctx.checkPageBreak(5);
-          doc.text(l, MARGIN_L, ctx.y);
-          ctx.y += 4;
+        const readL: string[] = read ? doc.splitTextToSize(read, innerW) : [];
+        const whyL: string[] = why ? doc.splitTextToSize(why, innerW) : [];
+        const chips = chipLayout(doc, [facet], innerW);
+
+        const cardH =
+          CARD_PAD +
+          titleL.length * 4.8 +
+          1.2 +
+          LBL_H + qL.length * 3.7 + 1.6 +
+          (readL.length > 0 ? LBL_H + readL.length * LH_BODY + 1.6 : 0) +
+          (whyL.length > 0 ? LBL_H + whyL.length * LH_BODY + 1.6 : 0) +
+          (chips.h > 0 ? chips.h + 0.5 : 0) +
+          CARD_PAD;
+
+        ctx.ensureBlockSpace(cardH + CARD_GAP);
+        const top = ctx.y;
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 228, 232);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(MARGIN_L, top, CONTENT_W, cardH, 1.6, 1.6, "FD");
+        doc.setFillColor(accent[0], accent[1], accent[2]);
+        doc.rect(MARGIN_L, top, CARD_RULE_W, cardH, "F");
+
+        let y = top + CARD_PAD + 3.4;
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(...NAVY);
+        for (const l of titleL) {
+          doc.text(l, innerX, y);
+          y += 4.8;
         }
-        ctx.y += 0.5;
-        paragraphs(ctx, nm(w.rationale));
-        ctx.y += 2;
+        y += 1.2;
+
+        const label = (t: string) => {
+          doc.setFont("Montserrat", "semibold");
+          doc.setFontSize(6.5);
+          doc.setTextColor(...MUTED);
+          doc.text(t, innerX, y);
+          y += LBL_H;
+        };
+
+        label("THE ITEM");
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(...MUTED);
+        for (const l of qL) {
+          doc.text(l, innerX, y);
+          y += 3.7;
+        }
+        y += 1.6;
+
+        if (readL.length > 0) {
+          label("THE READ");
+          doc.setFont("Montserrat", "normal");
+          doc.setFontSize(BODY_SIZE);
+          doc.setTextColor(...BLACK);
+          for (const l of readL) {
+            doc.text(l, innerX, y);
+            y += LH_BODY;
+          }
+          y += 1.6;
+        }
+        if (whyL.length > 0) {
+          label("WHY FLAGGED");
+          doc.setFont("Montserrat", "normal");
+          doc.setFontSize(BODY_SIZE);
+          doc.setTextColor(...BLACK);
+          for (const l of whyL) {
+            doc.text(l, innerX, y);
+            y += LH_BODY;
+          }
+          y += 1.6;
+        }
+        if (chips.h > 0) drawChipRows(doc, chips.rows, innerX, y - 2.6);
+
+        ctx.y = top + cardH + CARD_GAP;
       }
     }
+
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
-      ctx.checkPageBreak(6);
+      ctx.y += 2;
+      ctx.checkPageBreak(12);
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
       doc.setTextColor(...NAVY);
       doc.text("Debrief prompts", MARGIN_L, ctx.y);
-      ctx.y += 5;
-      s.coach.debrief_prompts.forEach((p, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(nm(p))}`, CONTENT_W - 4);
-        for (const l of lines) {
-          ctx.checkPageBreak(5);
+      ctx.y += 6;
+
+      /* two columns, so a short list does not leave a void on the last page */
+      const DISC_R = 2.25;
+      const gap = 8;
+      const colW = (CONTENT_W - gap) / 2;
+      const textOff = DISC_R * 2 + 3;
+      const prompts = s.coach.debrief_prompts;
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(BODY_SIZE);
+      const lines = prompts.map(
+        (p) => doc.splitTextToSize(cleanMarkdown(nm(p)), colW - textOff) as string[],
+      );
+      for (let i = 0; i < prompts.length; i += 2) {
+        const rowH =
+          Math.max(
+            lines[i].length,
+            lines[i + 1]?.length ?? 0,
+          ) * LH_BODY + 2.5;
+        ctx.reserveBlockOrAllow(Math.max(rowH, DISC_R * 2 + 2));
+        const top = ctx.y;
+        for (let j = i; j < Math.min(i + 2, prompts.length); j++) {
+          const x = j % 2 === 0 ? MARGIN_L : MARGIN_L + colW + gap;
+          doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
+          doc.circle(x + DISC_R, top + DISC_R, DISC_R, "F");
+          doc.setFont("Poppins", "bold");
+          doc.setFontSize(7);
+          doc.setTextColor(255, 255, 255);
+          doc.text(String(j + 1), x + DISC_R, top + DISC_R + 1.1, { align: "center" });
           doc.setFont("Montserrat", "normal");
-          doc.setFontSize(9);
+          doc.setFontSize(BODY_SIZE);
           doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
-          ctx.y += 4.5;
+          let ty = top + 3.2;
+          for (const l of lines[j]) {
+            doc.text(l, x + textOff, ty);
+            ty += LH_BODY;
+          }
         }
-      });
+        ctx.y = top + Math.max(rowH, DISC_R * 2 + 2);
+      }
     }
   }
+
 
   ctx.addFooter();
   stampPageNumbers(doc);
