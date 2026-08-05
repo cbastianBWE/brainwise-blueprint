@@ -669,11 +669,120 @@ export default function PairedReport() {
       </>
     );
   };
-  const Bullets = ({ text, blockKey }: { text: string | string[]; blockKey?: string }) => {
-    const items = Array.isArray(text)
-      ? text.map((t) => nm(t)).filter(Boolean)
-      : splitSentences(nm(text));
-    return (
+  /* ---------- scroll reveal (one shared observer, once per element) ---------- */
+  const [observer] = useState<IntersectionObserver | null>(() => {
+    if (typeof IntersectionObserver === "undefined") return null;
+    return new IntersectionObserver(
+      (entries, obs) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add("pr-in");
+            obs.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.12 },
+    );
+  });
+  useEffect(() => () => observer?.disconnect(), [observer]);
+  const revealRef = useCallback(
+    (el: HTMLElement | null) => {
+      if (!el || !observer) return;
+      if (el.classList.contains("pr-in")) return;
+      observer.observe(el);
+    },
+    [observer],
+  );
+  const revealProps = (delayIndex = 0) => ({
+    ref: revealRef,
+    className: "pr-anim",
+    style: { ["--pr-delay" as string]: `${Math.min(delayIndex * 40, 240)}ms` } as React.CSSProperties,
+  });
+
+  /* ---------- person filter ---------- */
+  const [personFilter, setPersonFilter] = useState<"both" | "a" | "b">("both");
+  const personDim = useCallback(
+    (who: "a" | "b" | "shared"): React.CSSProperties =>
+      personFilter === "both" || who === "shared" || personFilter === who
+        ? {}
+        : { opacity: 0.25, filter: "saturate(.4)" },
+    [personFilter],
+  );
+
+  /* ---------- name-keyed facet index ---------- */
+  const facetIndex = useMemo(() => {
+    const map = new Map<string, FacetEntry>();
+    const src = profile?.structured;
+    const lists: PairedFacetResult[][] = [
+      src?.fullMap ?? src?.facets ?? [],
+      src?.strengths ?? [],
+      src?.focusAreas ?? [],
+    ];
+    for (const list of lists) {
+      for (const f of list) {
+        const key = normFacetName(f?.facetName ?? "");
+        if (!key || map.has(key)) continue;
+        map.set(key, {
+          itemNumber: f.itemNumber,
+          facetName: f.facetName,
+          domain: f.domain,
+          shape: f.shape,
+          a: f.stats?.a ?? null,
+          b: f.stats?.b ?? null,
+        });
+      }
+    }
+    return map;
+  }, [profile]);
+
+  const warnedFacets = useRef<Set<string>>(new Set());
+  const lookupFacet = useCallback(
+    (name: string): FacetEntry | undefined => {
+      const key = normFacetName(name);
+      const hit = facetIndex.get(key);
+      if (!hit && key && !warnedFacets.current.has(key)) {
+        warnedFacets.current.add(key);
+        console.warn(`[PairedReport] facet not found in structured data: "${name}"`);
+      }
+      return hit;
+    },
+    [facetIndex],
+  );
+
+  const ChipRow = useCallback(
+    ({ facets }: { facets: string[] }) => {
+      if (!facets || facets.length === 0) return null;
+      return (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+          {facets.map((f, i) => (
+            <FacetChip
+              key={`${f}-${i}`}
+              name={nm(f)}
+              entry={lookupFacet(f)}
+              firstA={firstA}
+              firstB={firstB}
+              delay={i * 25}
+            />
+          ))}
+        </div>
+      );
+    },
+    [lookupFacet, firstA, firstB, nm],
+  );
+
+  /* ---------- bullets: accepts plain strings (pre-v19) and { point, body, facets } ---------- */
+  const TONE_BORDER: Record<"a" | "b" | "shared" | "move", string> = {
+    a: COLOR_A, b: COLOR_B, shared: TEAL, move: GREEN,
+  };
+
+  const Bullets = ({
+    text, blockKey, tone = "shared",
+  }: {
+    text: Bullet[] | string | undefined;
+    blockKey?: string;
+    tone?: "a" | "b" | "shared";
+  }) => {
+    const legacyList = (items: string[]) => (
       <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
         {items.map((s, i) => (
           <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
@@ -682,7 +791,122 @@ export default function PairedReport() {
         ))}
       </ul>
     );
+
+    if (!Array.isArray(text)) return legacyList(splitSentences(nm(text ?? "")));
+    if (!text.some(isBulletObject)) {
+      return legacyList(text.map((t) => nm(typeof t === "string" ? t : "")).filter(Boolean));
+    }
+
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        {text.map((b, i) => {
+          if (!isBulletObject(b)) {
+            const s = nm(typeof b === "string" ? b : "");
+            if (!s) return null;
+            return (
+              <div key={i} style={{ fontSize: 16, lineHeight: 1.6 }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={s} /> : renderBold(s)}
+              </div>
+            );
+          }
+          const move = isMoveBullet(b);
+          const point = nm(move ? stripMovePrefix(b.point ?? "") : (b.point ?? ""));
+          const body = nm(b.body ?? "");
+          const border = TONE_BORDER[move ? "move" : tone];
+          return (
+            <div
+              key={i}
+              {...revealProps(i)}
+              className="pr-anim pr-card"
+              style={{
+                ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`,
+                background: CARD_BG,
+                border: `1px solid ${LINE}`,
+                borderLeft: `4px solid ${border}`,
+                borderRadius: 12,
+                padding: "12px 13px",
+              } as React.CSSProperties}
+            >
+              {move && (
+                <div style={{ fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, color: GREEN, marginBottom: 4, fontFamily: POPPINS }}>
+                  The move
+                </div>
+              )}
+              {point && (
+                <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : renderBold(point)}
+                </div>
+              )}
+              {body && (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : renderBold(body)}
+                </div>
+              )}
+              <ChipRow facets={bulletFacets(b)} />
+            </div>
+          );
+        })}
+      </div>
+    );
   };
+
+  /* ---------- ordered sequence (avoid_conflict, repair steps) ---------- */
+  const Sequence = ({
+    items, blockKey, connector = false,
+  }: {
+    items: StepItem[];
+    blockKey: string;
+    connector?: boolean;
+  }) => (
+    <div style={{ display: "grid", gap: 12 }}>
+      {items.map((raw, i) => {
+        const obj = isBulletObject(raw);
+        const point = nm(obj ? (raw.point ?? "") : (typeof raw === "string" ? raw : ""));
+        const body = obj ? nm(raw.body ?? "") : "";
+        return (
+          <div key={i} {...revealProps(i)} style={{ ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`, display: "flex", gap: 10, alignItems: "flex-start", position: "relative" } as React.CSSProperties}>
+            <div style={{ position: "relative", flex: "0 0 24px" }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%", background: TEAL, color: "#fff",
+                fontSize: 12, fontWeight: 700, fontFamily: POPPINS,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{i + 1}</div>
+              {connector && i < items.length - 1 && (
+                <div className="pr-connector" style={{ position: "absolute", left: 11, top: 24, width: 2, height: "calc(100% + 12px)", background: LINE }} />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                <HighlightableText blockKey={`${blockKey}:${i}`} text={point} />
+              </div>
+              {body && (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: 3 }}>
+                  <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} />
+                </div>
+              )}
+              <ChipRow facets={bulletFacets(raw)} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  /* ---------- safety callout ---------- */
+  const SafetyCallout = ({ text, blockKey }: { text?: string | null; blockKey: string }) => {
+    const t = (text ?? "").trim();
+    if (!t) return null;
+    return (
+      <div style={{
+        marginTop: 14, background: "#fff", border: `1px solid ${AMBER}`, borderLeft: `5px solid ${AMBER}`,
+        borderRadius: 10, padding: "12px 16px", fontSize: 14, color: MUSTARD, lineHeight: 1.6,
+      }}>
+        <div style={{ fontFamily: POPPINS, fontWeight: 700, marginBottom: 4 }}>If this feels unsafe</div>
+        <HighlightableText blockKey={blockKey} text={nm(t)} />
+      </div>
+    );
+  };
+
 
   /* tooltip & modal */
   const tip = useTipController();
