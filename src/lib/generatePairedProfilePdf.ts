@@ -238,14 +238,16 @@ function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
 interface ColLine {
   text: string;
   x: number;
+  /** facet caption line: 8pt italic, coloured by the facet's dimension */
+  facetColor?: readonly [number, number, number];
 }
 
 function twoColumn(
   ctx: PdfContext,
   leftTitle: string,
-  leftBody: string[],
+  leftBody: ColItem[],
   rightTitle: string,
-  rightBody: string[],
+  rightBody: ColItem[],
   opts: { bulleted?: boolean } = {},
 ): void {
   const { doc } = ctx;
@@ -260,12 +262,12 @@ function twoColumn(
   doc.setFontSize(9);
   const bulletW = doc.getTextWidth("• ");
 
-  const wrapCol = (body: string[], x: number): ColLine[] => {
+  const wrapCol = (body: ColItem[], x: number): ColLine[] => {
     doc.setFont("Montserrat", "normal");
     doc.setFontSize(9);
     const out: ColLine[] = [];
-    body.forEach((raw, idx) => {
-      const clean = cleanMarkdown(raw);
+    body.forEach((item, idx) => {
+      const clean = cleanMarkdown(blockText(item));
       if (!clean) return;
       if (bulleted) {
         const wrapped: string[] = doc.splitTextToSize(clean, colW - 5 - bulletW);
@@ -275,8 +277,17 @@ function twoColumn(
       } else {
         const wrapped: string[] = doc.splitTextToSize(clean, colW - 5);
         wrapped.forEach((ln) => out.push({ text: ln, x }));
-        if (idx < body.length - 1) out.push({ text: "", x });
       }
+      const fx = blockFacets(item);
+      if (fx.length > 0) {
+        doc.setFont("Montserrat", "italic");
+        doc.setFontSize(8);
+        const fLines: string[] = doc.splitTextToSize(fx.join(" · "), colW - 5);
+        fLines.forEach((ln) => out.push({ text: ln, x, facetColor: facetColor(fx[0]) }));
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9);
+      }
+      if (!bulleted && idx < body.length - 1) out.push({ text: "", x });
     });
     return out;
   };
@@ -295,9 +306,25 @@ function twoColumn(
 
   ctx.ensureBlockSpace(5 + lineH * 3);
   let y = drawTitles(ctx.y);
-  doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...BLACK);
+  const bodyStyle = () => {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...BLACK);
+  };
+  bodyStyle();
+
+  const drawLine = (l: ColLine | undefined, yy: number) => {
+    if (!l || !l.text) return;
+    if (l.facetColor) {
+      doc.setFont("Montserrat", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(l.facetColor[0], l.facetColor[1], l.facetColor[2]);
+      doc.text(l.text, l.x, yy);
+      bodyStyle();
+    } else {
+      doc.text(l.text, l.x, yy);
+    }
+  };
 
   const n = Math.max(leftLines.length, rightLines.length);
   for (let i = 0; i < n; i++) {
@@ -307,18 +334,15 @@ function twoColumn(
       doc.addPage();
       ctx.renderContinuationHeader();
       y = drawTitles(MARGIN_T);
-      doc.setFont("Montserrat", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...BLACK);
+      bodyStyle();
     }
-    const L = leftLines[i];
-    const R = rightLines[i];
-    if (L && L.text) doc.text(L.text, L.x, y);
-    if (R && R.text) doc.text(R.text, R.x, y);
+    drawLine(leftLines[i], y);
+    drawLine(rightLines[i], y);
     y += lineH;
   }
   ctx.y = y + 3;
 }
+
 
 function paragraphs(ctx: PdfContext, text: string): void {
   const paras = splitParas(text);
