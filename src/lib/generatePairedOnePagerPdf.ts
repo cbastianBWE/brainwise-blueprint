@@ -460,23 +460,23 @@ export async function generatePairedOnePagerPdf(
       let h = Math.max(head.length * 4.6, 5.2) + body.length * 4.3 + 1.5;
 
       const facets = Array.isArray(p.facets) ? p.facets.filter(Boolean) : [];
-      const chipRows: string[][] = [];
+      const chipRows: Chip[][] = [];
       if (facets.length > 0) {
         doc.setFont("Montserrat", "semibold");
         doc.setFontSize(7);
-        let row: string[] = [];
+        let row: Chip[] = [];
         let cx = 4;
         for (const f of facets) {
-          // display label only; the raw name still drives the colour lookup below
+          // colour resolves from the raw name here; only the display label is carried on
           const label = facetDisplayLabel(nm(f), opts.mode);
+          const color = opts.facetColor?.(f) ?? GRAY;
           const w = doc.getTextWidth(label) + 4;
           if (row.length > 0 && cx + w > colW - 1) {
             chipRows.push(row);
             row = [];
             cx = 4;
           }
-          row.push(label);
-          chipRaw.set(label, f);
+          row.push({ label, w, color });
           cx += w + 2;
         }
         if (row.length > 0) chipRows.push(row);
