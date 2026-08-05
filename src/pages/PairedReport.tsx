@@ -433,6 +433,231 @@ const ROMANTIC_DEFAULT_DISCLAIMER =
 const NONROMANTIC_DEFAULT_DISCLAIMER =
   "This reflects tendencies from a self-report profile, not a diagnosis or a verdict. If any pattern here involves fear, control, or harm, please seek qualified support.";
 
+/* ---------- module-scope section components ----------
+   These MUST stay at module scope: declaring them inside PairedReport gave them a
+   fresh identity on every render, so React unmounted and remounted the whole section
+   subtree (which replayed the reveal animation and made the page blink on hover). */
+
+const REVEALED = new Set<string>();
+
+export interface ReportCtx {
+  nm: (s: string) => string;
+  lookupFacet: (name: string) => FacetEntry | undefined;
+  firstA: string;
+  firstB: string;
+  revealRef: (key: string) => (el: HTMLElement | null) => void;
+  revealProps: (delayIndex?: number, key?: string) => {
+    ref: (el: HTMLElement | null) => void;
+    className: string;
+    style: React.CSSProperties;
+  };
+}
+
+/* paragraph splitter */
+function splitParas(raw: string): string[] {
+  const s = (raw ?? "").trim();
+  if (!s) return [];
+  if (/\n{2,}/.test(s)) return s.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const sentences = s.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g)?.map((x) => x.trim()).filter(Boolean) ?? [s];
+  if (sentences.length < 2) return [s];
+  const mid = Math.ceil(sentences.length / 2);
+  return [sentences.slice(0, mid).join(" "), sentences.slice(mid).join(" ")];
+}
+
+function Paras({ ctx, text, style, blockKey }: { ctx: ReportCtx; text: string; style?: React.CSSProperties; blockKey?: string }) {
+  const paras = splitParas(ctx.nm(text));
+  return (
+    <>
+      {paras.map((p, i) => (
+        <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", ...style }}>
+          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={p} /> : renderBold(p)}
+        </p>
+      ))}
+    </>
+  );
+}
+
+function ChipRow({ ctx, facets }: { ctx: ReportCtx; facets: string[] }) {
+  if (!facets || facets.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+      {facets.map((f, i) => (
+        <FacetChip
+          key={`${f}-${i}`}
+          name={ctx.nm(f)}
+          entry={ctx.lookupFacet(f)}
+          firstA={ctx.firstA}
+          firstB={ctx.firstB}
+          delay={i * 25}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ---------- bullets: accepts plain strings (pre-v19) and { point, body, facets } ---------- */
+const TONE_BORDER: Record<"a" | "b" | "shared" | "move", string> = {
+  a: COLOR_A, b: COLOR_B, shared: TEAL, move: GREEN,
+};
+
+function Bullets({
+  ctx, text, blockKey, tone = "shared",
+}: {
+  ctx: ReportCtx;
+  text: Bullet[] | string | undefined;
+  blockKey?: string;
+  tone?: "a" | "b" | "shared";
+}) {
+  const { nm } = ctx;
+  const legacyList = (items: string[]) => (
+    <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
+      {items.map((s, i) => (
+        <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
+          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
+        </li>
+      ))}
+    </ul>
+  );
+
+  if (!Array.isArray(text)) return legacyList(splitSentences(nm(text ?? "")));
+  if (!text.some(isBulletObject)) {
+    return legacyList(text.map((t) => nm(typeof t === "string" ? t : "")).filter(Boolean));
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {text.map((b, i) => {
+        if (!isBulletObject(b)) {
+          const s = nm(typeof b === "string" ? b : "");
+          if (!s) return null;
+          return (
+            <div key={i} style={{ fontSize: 16, lineHeight: 1.6 }}>
+              {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={s} /> : renderBold(s)}
+            </div>
+          );
+        }
+        const move = isMoveBullet(b);
+        const point = nm(move ? stripMovePrefix(b.point ?? "") : (b.point ?? ""));
+        const body = nm(b.body ?? "");
+        const border = TONE_BORDER[move ? "move" : tone];
+        return (
+          <div
+            key={i}
+            {...ctx.revealProps(i, `${blockKey ?? "bullets"}:${i}`)}
+            className="pr-anim pr-card"
+            style={{
+              ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`,
+              background: CARD_BG,
+              border: `1px solid ${LINE}`,
+              borderLeft: `4px solid ${border}`,
+              borderRadius: 12,
+              padding: "12px 13px",
+            } as React.CSSProperties}
+          >
+            {move && (
+              <div style={{ fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, color: GREEN, marginBottom: 4, fontFamily: POPPINS }}>
+                The move
+              </div>
+            )}
+            {point && (
+              <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : renderBold(point)}
+              </div>
+            )}
+            {body && (
+              <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : renderBold(body)}
+              </div>
+            )}
+            <ChipRow ctx={ctx} facets={bulletFacets(b)} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- ordered sequence (avoid_conflict, repair steps) ---------- */
+function Sequence({
+  ctx, items, blockKey, connector = false,
+}: {
+  ctx: ReportCtx;
+  items: StepItem[];
+  blockKey: string;
+  connector?: boolean;
+}) {
+  const { nm } = ctx;
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      {items.map((raw, i) => {
+        const obj = isBulletObject(raw);
+        const point = nm(obj ? (raw.point ?? "") : (typeof raw === "string" ? raw : ""));
+        const body = obj ? nm(raw.body ?? "") : "";
+        return (
+          <div key={i} {...ctx.revealProps(i, `${blockKey}:${i}`)} style={{ ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`, display: "flex", gap: 10, alignItems: "flex-start", position: "relative" } as React.CSSProperties}>
+            <div style={{ position: "relative", flex: "0 0 24px" }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%", background: TEAL, color: "#fff",
+                fontSize: 12, fontWeight: 700, fontFamily: POPPINS,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{i + 1}</div>
+              {connector && i < items.length - 1 && (
+                <div className="pr-connector" style={{ position: "absolute", left: 11, top: 24, width: 2, height: "calc(100% + 12px)", background: LINE }} />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                <HighlightableText blockKey={`${blockKey}:${i}`} text={point} />
+              </div>
+              {body && (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: 3 }}>
+                  <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} />
+                </div>
+              )}
+              <ChipRow ctx={ctx} facets={bulletFacets(raw)} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- safety callout ---------- */
+function SafetyCallout({ ctx, text, blockKey }: { ctx: ReportCtx; text?: string | null; blockKey: string }) {
+  const t = (text ?? "").trim();
+  if (!t) return null;
+  return (
+    <div style={{
+      marginTop: 14, background: "#fff", border: `1px solid ${AMBER}`, borderLeft: `5px solid ${AMBER}`,
+      borderRadius: 10, padding: "12px 16px", fontSize: 14, color: MUSTARD, lineHeight: 1.6,
+    }}>
+      <div style={{ fontFamily: POPPINS, fontWeight: 700, marginBottom: 4 }}>If this feels unsafe</div>
+      <HighlightableText blockKey={blockKey} text={ctx.nm(t)} />
+    </div>
+  );
+}
+
+const sectionLabel: React.CSSProperties = {
+  fontFamily: POPPINS, fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px",
+};
+
+function SectionHead({ ctx, eyebrow, children }: { ctx: ReportCtx; eyebrow: string; children: React.ReactNode }) {
+  return (
+    <div ref={ctx.revealRef(`head:${eyebrow}`)} className="pr-anim" style={{ margin: "34px 0 0" }}>
+      <div
+        style={{
+          fontFamily: POPPINS, fontWeight: 700, fontSize: 12, letterSpacing: "0.2em",
+          textTransform: "uppercase", color: ORANGE, marginBottom: 8,
+        }}
+      >
+        {eyebrow}
+      </div>
+      <h2 style={sectionLabel}>{children}</h2>
+    </div>
+  );
+}
+
 /* ---------- page ---------- */
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
@@ -937,7 +1162,7 @@ export default function PairedReport() {
         {/* Radial */}
         {dims.length >= 3 && (
           <>
-            <SectionHead eyebrow="THE SHAPE">The two of you at a glance</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="THE SHAPE">The two of you at a glance</SectionHead>
             <div style={cardStyle}>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }} className="rad-flex">
                 <Radial dims={dims} labA={nameA} labB={nameB} />
@@ -972,7 +1197,7 @@ export default function PairedReport() {
 
 
         {/* shape glyphs */}
-        <SectionHead eyebrow="HOW TO READ THIS">The shapes a pair can make</SectionHead>
+        <SectionHead ctx={ctx} eyebrow="HOW TO READ THIS">The shapes a pair can make</SectionHead>
         <div style={cardStyle}>
           <div style={{ fontSize: 13, color: GRAY, marginBottom: 10 }}>
             Every trait below falls into one of these. Tap one to highlight it in the full map.
@@ -1007,9 +1232,9 @@ export default function PairedReport() {
         {/* drivers */}
         {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
           <>
-            <SectionHead eyebrow="THE DRIVERS">What is driving your pair</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="THE DRIVERS">What is driving your pair</SectionHead>
             {driving?.opening && (
-              <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
+              <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras ctx={ctx} text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
             )}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
               <DriverCard
@@ -1026,16 +1251,16 @@ export default function PairedReport() {
         {/* within */}
         {within && (
           <>
-            <SectionHead eyebrow="EACH OF YOU">What is going on inside each of you</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="EACH OF YOU">What is going on inside each of you</SectionHead>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={within.a} blockKey="within:a" tone="a" />
+                  <Bullets ctx={ctx} text={within.a} blockKey="within:a" tone="a" />
                 </div>
                 <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={within.b} blockKey="within:b" tone="b" />
+                  <Bullets ctx={ctx} text={within.b} blockKey="within:b" tone="b" />
                 </div>
               </div>
 
@@ -1046,16 +1271,16 @@ export default function PairedReport() {
         {/* needs */}
         {needs && (
           <>
-            <SectionHead eyebrow="THE ASKS">What each of you needs from the other</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="THE ASKS">What each of you needs from the other</SectionHead>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>What {firstA} needs from {firstB}</div>
-                  <Bullets text={needs.a_needs_from_b} blockKey="needs:a_from_b" tone="a" />
+                  <Bullets ctx={ctx} text={needs.a_needs_from_b} blockKey="needs:a_from_b" tone="a" />
                 </div>
                 <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
-                  <Bullets text={needs.b_needs_from_a} blockKey="needs:b_from_a" tone="b" />
+                  <Bullets ctx={ctx} text={needs.b_needs_from_a} blockKey="needs:b_from_a" tone="b" />
                 </div>
               </div>
 
@@ -1066,20 +1291,20 @@ export default function PairedReport() {
         {/* communication */}
         {communication && (
           <>
-            <SectionHead eyebrow="THE MECHANICS">How the two of you communicate</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="THE MECHANICS">How the two of you communicate</SectionHead>
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
-                <Bullets text={communication.general} blockKey="communication:general" />
+                <Bullets ctx={ctx} text={communication.general} blockKey="communication:general" />
               </div>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: MUSTARD }}>Under pressure</div>
-                <Bullets text={communication.under_pressure} blockKey="communication:under_pressure" />
+                <Bullets ctx={ctx} text={communication.under_pressure} blockKey="communication:under_pressure" />
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
                   <h4 style={{ fontFamily: POPPINS, margin: "0 0 10px", color: NAVY }}>Avoiding communication conflict</h4>
-                  <Sequence items={communication.avoid_conflict} blockKey="communication:avoid_conflict" />
+                  <Sequence ctx={ctx} items={communication.avoid_conflict} blockKey="communication:avoid_conflict" />
                 </div>
               )}
 
@@ -1090,20 +1315,20 @@ export default function PairedReport() {
         {/* conflict */}
         {conflict && (
           <>
-            <SectionHead eyebrow="THE PATTERN">How the two of you handle conflict</SectionHead>
-            <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
+            <SectionHead ctx={ctx} eyebrow="THE PATTERN">How the two of you handle conflict</SectionHead>
+            <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras ctx={ctx} text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={pbox} className="pr-card">
                   <div style={boxLabel}>Mitigate the unhealthy kind</div>
-                  <Bullets text={conflict.mitigate} blockKey="conflict:mitigate" />
+                  <Bullets ctx={ctx} text={conflict.mitigate} blockKey="conflict:mitigate" />
                 </div>
                 <div style={pbox} className="pr-card">
                   <div style={boxLabel}>Promote the healthy kind</div>
-                  <Bullets text={conflict.promote_healthy} blockKey="conflict:promote" />
+                  <Bullets ctx={ctx} text={conflict.promote_healthy} blockKey="conflict:promote" />
                 </div>
               </div>
-              <SafetyCallout text={conflict.safety} blockKey="conflict:safety" />
+              <SafetyCallout ctx={ctx} text={conflict.safety} blockKey="conflict:safety" />
             </div>
             {conflict.per_person && (
               <div style={cardStyle}>
@@ -1111,15 +1336,15 @@ export default function PairedReport() {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                   <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                    <Paras text={conflict.per_person.a.read} blockKey="conflict:per_person:a:read" />
+                    <Paras ctx={ctx} text={conflict.per_person.a.read} blockKey="conflict:per_person:a:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
-                    <Paras text={conflict.per_person.a.counter_move} blockKey="conflict:per_person:a:counter" />
+                    <Paras ctx={ctx} text={conflict.per_person.a.counter_move} blockKey="conflict:per_person:a:counter" />
                   </div>
                   <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                    <Paras text={conflict.per_person.b.read} blockKey="conflict:per_person:b:read" />
+                    <Paras ctx={ctx} text={conflict.per_person.b.read} blockKey="conflict:per_person:b:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
-                    <Paras text={conflict.per_person.b.counter_move} blockKey="conflict:per_person:b:counter" />
+                    <Paras ctx={ctx} text={conflict.per_person.b.counter_move} blockKey="conflict:per_person:b:counter" />
                   </div>
                 </div>
               </div>
@@ -1131,26 +1356,26 @@ export default function PairedReport() {
         {/* repair (all modes) */}
         {repair && (
           <>
-            <SectionHead eyebrow="THE WAY BACK">Repair after conflict</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="THE WAY BACK">Repair after conflict</SectionHead>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
+              <div style={{ marginBottom: 10 }}><Paras ctx={ctx} text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={repair.a} blockKey="repair:a" tone="a" />
+                  <Bullets ctx={ctx} text={repair.a} blockKey="repair:a" tone="a" />
                 </div>
                 <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={repair.b} blockKey="repair:b" tone="b" />
+                  <Bullets ctx={ctx} text={repair.b} blockKey="repair:b" tone="b" />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
                 <div style={{ marginTop: 12, borderRadius: 10, padding: "13px 16px", fontSize: 15, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
                   <div style={{ fontWeight: 700, marginBottom: 10 }}>A repair sequence for you</div>
-                  <Sequence items={repair.steps} blockKey="repair:steps" connector />
+                  <Sequence ctx={ctx} items={repair.steps} blockKey="repair:steps" connector />
                 </div>
               )}
-              <SafetyCallout text={repair.safety} blockKey="repair:safety" />
+              <SafetyCallout ctx={ctx} text={repair.safety} blockKey="repair:safety" />
 
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {repair.disclaimer || (isRomantic ? ROMANTIC_DEFAULT_DISCLAIMER : NONROMANTIC_DEFAULT_DISCLAIMER)}
@@ -1162,17 +1387,17 @@ export default function PairedReport() {
         {/* intimacy (romantic only) */}
         {isRomantic && intimacy && (
           <>
-            <SectionHead eyebrow="CLOSENESS">Building intimacy</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="CLOSENESS">Building intimacy</SectionHead>
             <div style={cardStyle}>
-              <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
+              <div style={{ marginBottom: 10 }}><Paras ctx={ctx} text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
                 <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={intimacy.a} blockKey="intimacy:a" tone="a" />
+                  <Bullets ctx={ctx} text={intimacy.a} blockKey="intimacy:a" tone="a" />
                 </div>
                 <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={intimacy.b} blockKey="intimacy:b" tone="b" />
+                  <Bullets ctx={ctx} text={intimacy.b} blockKey="intimacy:b" tone="b" />
                 </div>
               </div>
 
@@ -1187,7 +1412,7 @@ export default function PairedReport() {
         {/* full map */}
         {fullMapGroups.length > 0 && (
           <>
-            <SectionHead eyebrow="THE FULL MAP">Every pattern between you</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="THE FULL MAP">Every pattern between you</SectionHead>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
               return (
@@ -1230,7 +1455,7 @@ export default function PairedReport() {
         {/* practitioner (privileged) */}
         {canSeePrivileged && coach && (
           <>
-            <SectionHead eyebrow="PRACTITIONER ONLY">For the practitioner or admin only</SectionHead>
+            <SectionHead ctx={ctx} eyebrow="PRACTITIONER ONLY">For the practitioner or admin only</SectionHead>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="Why these were flagged" defaultOpen>
                 {coach.why.map((w, i) => {
