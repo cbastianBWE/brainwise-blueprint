@@ -346,10 +346,58 @@ export async function generatePairedOnePagerPdf(
   footer();
 
   /* ---------- page two ---------- */
-  if (preview.length > 0) {
+  if (preview.length > 0 || talkAbout.length > 0) {
     doc.addPage();
     header("YOUR FULL REPORT");
     let y = BAND_H + 12;
+    const gutter = 11;
+    const colW = (CONTENT_W - gutter) / 2;
+
+    /* talk about — moved off page one so page one can carry larger body type */
+    if (talkAbout.length > 0) {
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(15);
+      doc.setTextColor(...NAVY);
+      doc.text("Talk about this together", M, y);
+      y += 2.5;
+      doc.setDrawColor(...NAVY);
+      doc.setLineWidth(0.3);
+      doc.line(M, y, M + CONTENT_W, y);
+      y += 6;
+
+      let qRowY = y;
+      let qRowMax = y;
+      talkAbout.forEach((t, i) => {
+        const x = i % 2 === 0 ? M : M + colW + gutter;
+        if (i % 2 === 0 && i > 0) {
+          qRowY = qRowMax + 2.6;
+          qRowMax = qRowY;
+        }
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9.5);
+        const lines = doc.splitTextToSize(nm(t), colW - 9);
+        doc.setFillColor(...PURPLE);
+        doc.circle(x + 2.4, qRowY - 1.2, 2.4, "F");
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(i + 1), x + 2.4, qRowY - 0.2, { align: "center" });
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(...BLACK);
+        doc.text(lines, x + 7, qRowY);
+        qRowMax = Math.max(qRowMax, qRowY + lines.length * 4.3);
+      });
+      y = qRowMax + 8;
+    }
+
+    if (preview.length === 0) {
+      footer();
+      const only = `${opts.nameA}_and_${opts.nameB}_paired-snapshot.pdf`.replace(/\s+/g, "_");
+      doc.save(only);
+      return;
+    }
+
     doc.setFont("Poppins", "bold");
     doc.setFontSize(15);
     doc.setTextColor(...NAVY);
@@ -365,10 +413,9 @@ export async function generatePairedOnePagerPdf(
     doc.text(lead, M, y);
     y += lead.length * 4.4 + 4;
 
-    const gutter = 8;
-    const colW = (CONTENT_W - gutter) / 2;
     let rowY = y;
     let rowMax = y;
+
     preview.forEach((p, i) => {
       const x = i % 2 === 0 ? M : M + colW + gutter;
       if (i % 2 === 0 && i > 0) {
