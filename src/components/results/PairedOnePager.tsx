@@ -118,9 +118,9 @@ export default function PairedOnePager({
   const [downloading, setDownloading] = useState(false);
 
   const preview = Array.isArray(data.report_preview) ? data.report_preview.filter(Boolean) : [];
-  const hasPage2 = preview.length > 0;
-  const watch = Array.isArray(data.watch) ? data.watch.filter(Boolean) : [];
   const talkAbout = Array.isArray(data.talk_about) ? data.talk_about.filter(Boolean) : [];
+  const watch = Array.isArray(data.watch) ? data.watch.filter(Boolean) : [];
+  const hasPage2 = preview.length > 0 || talkAbout.length > 0;
 
   const download = async () => {
     setDownloading(true);
@@ -174,7 +174,7 @@ export default function PairedOnePager({
           <div key={key} style={{ marginBottom: 8 }}>
             <div
               style={{
-                fontSize: 9.5,
+                fontSize: 11,
                 letterSpacing: ".1em",
                 textTransform: "uppercase",
                 fontWeight: 700,
@@ -185,7 +185,7 @@ export default function PairedOnePager({
               {label}
             </div>
             {/* first person, quoted speech — no name substitution here by design */}
-            <div style={{ fontSize: 13, lineHeight: 1.5, fontStyle: "italic", color: NAVY }}>
+            <div style={{ fontSize: 15, lineHeight: 1.5, fontStyle: "italic", color: NAVY }}>
               {text}
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function PairedOnePager({
             style={{ gridTemplateColumns: `repeat(${hasPage2 ? 2 : 1}, minmax(0, 1fr))` }}
           >
             <TabsTrigger value="summary">Your summary</TabsTrigger>
-            {hasPage2 && <TabsTrigger value="preview">What is in your full report</TabsTrigger>}
+            {hasPage2 && <TabsTrigger value="preview">Talk about this, and what is next</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="summary" className="mt-4" style={{ color: NAVY }}>
@@ -246,7 +246,7 @@ export default function PairedOnePager({
                 style={{
                   borderLeft: `3px solid ${TEAL}`,
                   paddingLeft: 12,
-                  fontSize: 13.5,
+                  fontSize: 15,
                   lineHeight: 1.6,
                   marginTop: 12,
                 }}
@@ -271,10 +271,10 @@ export default function PairedOnePager({
                       borderTop: i === 0 ? "none" : "1px dotted rgba(2,31,54,.12)",
                     }}
                   >
-                    <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 12.5, color: NAVY }}>
+                    <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14, color: NAVY }}>
                       {label}
                     </div>
-                    <div style={{ fontSize: 13, lineHeight: 1.55 }}>{nm(text)}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.55 }}>{nm(text)}</div>
                   </div>
                 );
               })}
@@ -292,41 +292,10 @@ export default function PairedOnePager({
                 <div className="grid gap-4 md:grid-cols-2">
                   {watch.slice(0, 2).map((w, i) => (
                     <div key={i} style={{ borderLeft: `3px solid ${AMBER}`, paddingLeft: 12 }}>
-                      <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 13, color: MUSTARD }}>
+                      <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: MUSTARD }}>
                         {nm(w.point ?? "")}
                       </div>
-                      <div style={{ fontSize: 13, lineHeight: 1.55, marginTop: 3 }}>{nm(w.body ?? "")}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {talkAbout.length > 0 && (
-              <>
-                <Head>Talk about this together</Head>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {talkAbout.slice(0, 4).map((t, i) => (
-                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                      <span
-                        style={{
-                          flex: "0 0 auto",
-                          width: 20,
-                          height: 20,
-                          borderRadius: 999,
-                          background: PURPLE,
-                          color: "#fff",
-                          fontFamily: POPPINS,
-                          fontWeight: 700,
-                          fontSize: 11,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                      <span style={{ fontSize: 13, lineHeight: 1.55 }}>{nm(t)}</span>
+                      <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 3 }}>{nm(w.body ?? "")}</div>
                     </div>
                   ))}
                 </div>
@@ -339,7 +308,7 @@ export default function PairedOnePager({
                   marginTop: 16,
                   paddingTop: 10,
                   borderTop: "1px solid rgba(2,31,54,.12)",
-                  fontSize: 10.5,
+                  fontSize: 12,
                   color: GRAY,
                   lineHeight: 1.5,
                 }}
@@ -354,13 +323,49 @@ export default function PairedOnePager({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <Eyebrow>BrainWise · Paired Profile · Page two of two</Eyebrow>
-                  <p style={{ fontSize: 13, lineHeight: 1.55, color: GRAY, margin: 0 }}>
-                    Page one is the short version. Your full report goes deeper on each of these,
-                    with the patterns behind them mapped question by question.
-                  </p>
+                  {preview.length > 0 && (
+                    <p style={{ fontSize: 13.5, lineHeight: 1.55, color: GRAY, margin: 0 }}>
+                      Page one is the short version. Your full report goes deeper on each of these,
+                      with the patterns behind them mapped question by question.
+                    </p>
+                  )}
                 </div>
                 <DownloadButton />
               </div>
+            {talkAbout.length > 0 && (
+            <>
+              <Head>Talk about this together</Head>
+              <div className="grid gap-3 md:grid-cols-2">
+                {talkAbout.slice(0, 4).map((t, i) => (
+                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <span
+                      style={{
+                        flex: "0 0 auto",
+                        width: 20,
+                        height: 20,
+                        borderRadius: 999,
+                        background: PURPLE,
+                        color: "#fff",
+                        fontFamily: POPPINS,
+                        fontWeight: 700,
+                        fontSize: 11,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                    <span style={{ fontSize: 15, lineHeight: 1.55 }}>{nm(t)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+            )}
+
+              {preview.length > 0 && (
+              <>
+              <Head>What is in your full report</Head>
               <div className="grid gap-4 md:grid-cols-2 mt-4">
                 {preview.map((p, i) => (
                   <div key={i} style={{ borderLeft: `3px solid ${TEAL}`, paddingLeft: 12 }}>
@@ -368,11 +373,11 @@ export default function PairedOnePager({
                       <span style={{ fontFamily: POPPINS, fontWeight: 800, fontSize: 20, color: TEAL, lineHeight: 1 }}>
                         {i + 1}
                       </span>
-                      <span style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 13.5, color: NAVY }}>
+                      <span style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: NAVY }}>
                         {nm(p.heading ?? p.section ?? "")}
                       </span>
                     </div>
-                    <div style={{ fontSize: 13, lineHeight: 1.55, marginTop: 4 }}>{nm(p.text ?? "")}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 4 }}>{nm(p.text ?? "")}</div>
                     {Array.isArray(p.facets) && p.facets.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
                         {p.facets.map((f, j) => (
@@ -391,6 +396,8 @@ export default function PairedOnePager({
                   </div>
                 ))}
               </div>
+              </>
+              )}
             </TabsContent>
           )}
         </Tabs>

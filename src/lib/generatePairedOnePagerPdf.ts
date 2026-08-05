@@ -128,9 +128,10 @@ export async function generatePairedOnePagerPdf(
    * so a dry run can measure the exact height before anything is drawn.
    */
   const layoutPageOne = (step: number, draw: boolean): number => {
-    const body = 9 - step * 0.3;
-    const lh = 4.1 - step * 0.12;
+    const body = 9.5 - step * 0.35;
+    const lh = body * 0.4556;
     let y = BAND_H + 12;
+
 
     const heading = (t: string) => {
       y += 3.2;
@@ -209,7 +210,7 @@ export async function generatePairedOnePagerPdf(
       const lines = doc.splitTextToSize(nm(t), CONTENT_W - labelW - 4);
       if (draw) {
         doc.setFont("Poppins", "bold");
-        doc.setFontSize(body - 0.4);
+        doc.setFontSize(body - 0.5);
         doc.setTextColor(...NAVY);
         doc.text(doc.splitTextToSize(label, labelW - 3), M, y);
         doc.setFont("Montserrat", "normal");
@@ -222,7 +223,7 @@ export async function generatePairedOnePagerPdf(
 
     /* first-person columns */
     heading("In your own words, to each other");
-    const gutter = 8;
+    const gutter = 11;
     const colW = (CONTENT_W - gutter) / 2;
     const drawVoice = (
       voice: OnePagerVoice | undefined,
@@ -247,13 +248,13 @@ export async function generatePairedOnePagerPdf(
         if (!t) continue;
         if (draw) {
           doc.setFont("Montserrat", "semibold");
-          doc.setFontSize(body - 2.4);
+          doc.setFontSize(body - 1.5);
           doc.setTextColor(...GRAY);
           doc.text(label.toUpperCase(), x + 4, yy, { charSpace: 0.2 });
         }
-        yy += lh - 1;
+        yy += lh - 0.6;
         doc.setFont("Montserrat", "normal");
-        doc.setFontSize(body - 0.6);
+        doc.setFontSize(body);
         // quoted speech: no name substitution here by design
         const lines = doc.splitTextToSize(`“${t}”`, colW - 5);
         if (draw) {
@@ -281,7 +282,7 @@ export async function generatePairedOnePagerPdf(
         let yy = y;
         const top = yy;
         doc.setFont("Poppins", "bold");
-        doc.setFontSize(body - 0.4);
+        doc.setFontSize(body);
         const pt = doc.splitTextToSize(nm(w.point ?? ""), colW - 5);
         if (draw) {
           doc.setTextColor(...MUSTARD);
@@ -289,7 +290,7 @@ export async function generatePairedOnePagerPdf(
         }
         yy += pt.length * lh;
         doc.setFont("Montserrat", "normal");
-        doc.setFontSize(body - 0.5);
+        doc.setFontSize(body);
         const bd = doc.splitTextToSize(nm(w.body ?? ""), colW - 5);
         if (draw) {
           doc.setTextColor(...BLACK);
@@ -305,37 +306,6 @@ export async function generatePairedOnePagerPdf(
       y = maxY + 1;
     }
 
-    /* talk about */
-    if (talkAbout.length > 0) {
-      heading("Talk about this together");
-      let rowY = y;
-      let rowMax = y;
-      talkAbout.forEach((t, i) => {
-        const x = i % 2 === 0 ? M : M + colW + gutter;
-        if (i % 2 === 0 && i > 0) {
-          rowY = rowMax + 1.6;
-          rowMax = rowY;
-        }
-        doc.setFont("Montserrat", "normal");
-        doc.setFontSize(body - 0.5);
-        const lines = doc.splitTextToSize(nm(t), colW - 8);
-        if (draw) {
-          doc.setFillColor(...PURPLE);
-          doc.circle(x + 2.2, rowY - 1.1, 2.2, "F");
-          doc.setFont("Poppins", "bold");
-          doc.setFontSize(body - 2.4);
-          doc.setTextColor(255, 255, 255);
-          doc.text(String(i + 1), x + 2.2, rowY - 0.2, { align: "center" });
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(body - 0.5);
-          doc.setTextColor(...BLACK);
-          doc.text(lines, x + 6.4, rowY);
-        }
-        rowMax = Math.max(rowMax, rowY + lines.length * (lh - 0.2));
-      });
-      y = rowMax + 1;
-    }
-
     /* disclaimer */
     const disc = (data.disclaimer ?? "").trim();
     if (disc) {
@@ -347,13 +317,13 @@ export async function generatePairedOnePagerPdf(
       }
       y += 3.4;
       doc.setFont("Montserrat", "normal");
-      doc.setFontSize(6.6);
+      doc.setFontSize(7.5);
       const lines = doc.splitTextToSize(nm(disc), CONTENT_W);
       if (draw) {
         doc.setTextColor(...GRAY);
         doc.text(lines, M, y);
       }
-      y += lines.length * 3;
+      y += lines.length * 3.4;
     }
 
     return y;
@@ -376,10 +346,58 @@ export async function generatePairedOnePagerPdf(
   footer();
 
   /* ---------- page two ---------- */
-  if (preview.length > 0) {
+  if (preview.length > 0 || talkAbout.length > 0) {
     doc.addPage();
     header("YOUR FULL REPORT");
     let y = BAND_H + 12;
+    const gutter = 11;
+    const colW = (CONTENT_W - gutter) / 2;
+
+    /* talk about — moved off page one so page one can carry larger body type */
+    if (talkAbout.length > 0) {
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(15);
+      doc.setTextColor(...NAVY);
+      doc.text("Talk about this together", M, y);
+      y += 2.5;
+      doc.setDrawColor(...NAVY);
+      doc.setLineWidth(0.3);
+      doc.line(M, y, M + CONTENT_W, y);
+      y += 6;
+
+      let qRowY = y;
+      let qRowMax = y;
+      talkAbout.forEach((t, i) => {
+        const x = i % 2 === 0 ? M : M + colW + gutter;
+        if (i % 2 === 0 && i > 0) {
+          qRowY = qRowMax + 2.6;
+          qRowMax = qRowY;
+        }
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9.5);
+        const lines = doc.splitTextToSize(nm(t), colW - 9);
+        doc.setFillColor(...PURPLE);
+        doc.circle(x + 2.4, qRowY - 1.2, 2.4, "F");
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(7.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text(String(i + 1), x + 2.4, qRowY - 0.2, { align: "center" });
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9.5);
+        doc.setTextColor(...BLACK);
+        doc.text(lines, x + 7, qRowY);
+        qRowMax = Math.max(qRowMax, qRowY + lines.length * 4.3);
+      });
+      y = qRowMax + 8;
+    }
+
+    if (preview.length === 0) {
+      footer();
+      const only = `${opts.nameA}_and_${opts.nameB}_paired-snapshot.pdf`.replace(/\s+/g, "_");
+      doc.save(only);
+      return;
+    }
+
     doc.setFont("Poppins", "bold");
     doc.setFontSize(15);
     doc.setTextColor(...NAVY);
@@ -395,10 +413,9 @@ export async function generatePairedOnePagerPdf(
     doc.text(lead, M, y);
     y += lead.length * 4.4 + 4;
 
-    const gutter = 8;
-    const colW = (CONTENT_W - gutter) / 2;
     let rowY = y;
     let rowMax = y;
+
     preview.forEach((p, i) => {
       const x = i % 2 === 0 ? M : M + colW + gutter;
       if (i % 2 === 0 && i > 0) {
@@ -412,30 +429,30 @@ export async function generatePairedOnePagerPdf(
       doc.setTextColor(...TEAL);
       doc.text(String(i + 1), x + 4, yy + 0.6);
       doc.setFont("Poppins", "bold");
-      doc.setFontSize(9.5);
+      doc.setFontSize(10);
       doc.setTextColor(...NAVY);
       const head = doc.splitTextToSize(nm(p.heading || p.section || ""), colW - 14);
       doc.text(head, x + 12, yy);
-      yy += Math.max(head.length * 4.4, 5);
+      yy += Math.max(head.length * 4.6, 5.2);
       doc.setFont("Montserrat", "normal");
-      doc.setFontSize(8.6);
+      doc.setFontSize(9.5);
       doc.setTextColor(...BLACK);
       const body = doc.splitTextToSize(nm(p.text ?? ""), colW - 5);
       doc.text(body, x + 4, yy);
-      yy += body.length * 3.9 + 1.5;
+      yy += body.length * 4.3 + 1.5;
 
       /* facet chips — page two only */
       const facets = Array.isArray(p.facets) ? p.facets.filter(Boolean) : [];
       if (facets.length > 0) {
         let cx = x + 4;
         doc.setFont("Montserrat", "semibold");
-        doc.setFontSize(6.6);
+        doc.setFontSize(7);
         for (const f of facets) {
           const label = nm(f);
           const w = doc.getTextWidth(label) + 4;
           if (cx + w > x + colW - 1) {
             cx = x + 4;
-            yy += 5;
+            yy += 5.4;
           }
           const c = opts.facetColor?.(f) ?? GRAY;
           doc.setFillColor(c[0], c[1], c[2]);
@@ -443,9 +460,9 @@ export async function generatePairedOnePagerPdf(
           doc.setLineWidth(0.2);
           doc.saveGraphicsState();
           (doc as any).setGState(new (doc as any).GState({ opacity: 0.12 }));
-          doc.roundedRect(cx, yy - 3, w, 4.4, 2.2, 2.2, "F");
+          doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "F");
           doc.restoreGraphicsState();
-          doc.roundedRect(cx, yy - 3, w, 4.4, 2.2, 2.2, "S");
+          doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "S");
           doc.setTextColor(c === AMBER ? MUSTARD[0] : c[0], c === AMBER ? MUSTARD[1] : c[1], c === AMBER ? MUSTARD[2] : c[2]);
           doc.text(label, cx + 2, yy);
           cx += w + 2;

@@ -859,6 +859,13 @@ export async function generatePairedProfilePdf(
       ctx.y += 5;
       ctx.bodyText(nm(it.detail), 6);
       if (it.action) {
+        ctx.checkPageBreak(10);
+        ctx.y += 1.2;
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(6.5);
+        doc.setTextColor(...TEAL);
+        doc.text("DO THIS", MARGIN_L + 6, ctx.y);
+        ctx.y += 3.4;
         doc.setFont("Montserrat", "semibold");
         doc.setFontSize(9);
         doc.setTextColor(...TEAL);
@@ -882,16 +889,26 @@ export async function generatePairedProfilePdf(
   // 3. shape legend
   if (sections.shapeLegend) {
     ctx.sectionHeading("How to read the shapes", 14, "How to read this");
-    for (const k of PAIR_SHAPES) {
-      ctx.ensureBlockSpace(14);
+    // Two-column grid of one-line entries: title, then its description on the
+    // same line. A quarter of the space the stacked single column took.
+    const legendGutter = 8;
+    const legendColW = (CONTENT_W - legendGutter) / 2;
+    ctx.ensureBlockSpace(Math.ceil(PAIR_SHAPES.length / 2) * 5.6 + 4);
+    let legendY = ctx.y;
+    PAIR_SHAPES.forEach((k, i) => {
+      const x = i % 2 === 0 ? MARGIN_L : MARGIN_L + legendColW + legendGutter;
+      if (i % 2 === 0 && i > 0) legendY += 5.6;
       doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setTextColor(...NAVY);
-      doc.text(PAIR_SHAPE_TITLE[k], MARGIN_L, ctx.y);
-      ctx.y += 4.5;
-      ctx.bodyText(PAIR_SHAPE_DESC[k]);
-      ctx.y += 2;
-    }
+      doc.text(PAIR_SHAPE_TITLE[k], x, legendY);
+      const tw = doc.getTextWidth(PAIR_SHAPE_TITLE[k]);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+      doc.text(`— ${PAIR_SHAPE_DESC[k]}`, x + tw + 2.5, legendY);
+    });
+    ctx.y = legendY + 6;
   }
 
   // 4. driving
