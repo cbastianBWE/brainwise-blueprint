@@ -31,6 +31,7 @@ import {
   isMoveBullet,
   stripMovePrefix,
   normFacetName,
+  facetDisplayLabel,
   type Bullet,
   type StepItem,
 } from "./pairedSectionTypes";
@@ -125,6 +126,13 @@ export type ColItem = string | PdfBlock;
 /** Facet domain lookup, keyed on the normalised facet name. Set per render. */
 let facetDomainByName: Map<string, string> = new Map();
 
+/** Relationship mode for this render; display labels only, never lookups. */
+let renderMode: string | null = null;
+/** The label to print for a facet. Lookups keep using the raw name. */
+function facetLabel(name: string): string {
+  return facetDisplayLabel(name, renderMode);
+}
+
 const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
   Protection: NAVY,
   Participation: TEAL,
@@ -207,7 +215,7 @@ function chipLayout(
   let row: Chip[] = [];
   let rowW = 0;
   for (const raw of list) {
-    const label = cleanMarkdown(raw).trim();
+    const label = facetLabel(cleanMarkdown(raw).trim());
     if (!label) continue;
     const w = Math.min(maxW, doc.getTextWidth(label) + CHIP_PAD_X * 2 + 1.5);
     if (row.length > 0 && rowW + CHIP_GAP_X + w > maxW) {
@@ -836,6 +844,7 @@ export async function generatePairedProfilePdf(
   const s = data.sections;
 
   // name-keyed facet domain index, used to colour facet captions
+  renderMode = data.mode ?? null;
   facetDomainByName = new Map();
   for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
     const key = normFacetName(f.facetName ?? "");
@@ -923,7 +932,7 @@ export async function generatePairedProfilePdf(
       const acts = src?.actions ?? (src?.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "strength",
-        name: f.facetName,
+        name: facetLabel(f.facetName),
         why: nm(src?.why ?? ""),
         actions: acts.slice(0, 3).map(nm),
       });
@@ -934,7 +943,7 @@ export async function generatePairedProfilePdf(
       const acts = src?.actions ?? (src?.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "focus",
-        name: f.facetName,
+        name: facetLabel(f.facetName),
         why: nm(src?.why ?? ""),
         actions: acts.slice(0, 3).map(nm),
       });
@@ -949,7 +958,7 @@ export async function generatePairedProfilePdf(
     if (set.length > 0) {
       ctx.sectionHeading("Driving facets — distribution", 22, "The drivers");
       for (const f of set) {
-        drawPairDistRow(ctx, { label: f.facetName, a: f.stats!.a, b: f.stats!.b });
+        drawPairDistRow(ctx, { label: facetLabel(f.facetName), a: f.stats!.a, b: f.stats!.b });
       }
     }
   }
@@ -1155,7 +1164,7 @@ export async function generatePairedProfilePdf(
       ctx.y += 5;
       if (sections.fullMapCharts) {
         for (const f of items) {
-          drawPairDistRow(ctx, { label: f.facetName, a: f.stats?.a ?? null, b: f.stats?.b ?? null });
+          drawPairDistRow(ctx, { label: facetLabel(f.facetName), a: f.stats?.a ?? null, b: f.stats?.b ?? null });
         }
       } else {
         doc.setFont("Montserrat", "normal");
@@ -1163,7 +1172,7 @@ export async function generatePairedProfilePdf(
         doc.setTextColor(...BLACK);
         for (const f of items) {
           ctx.checkPageBreak(5);
-          doc.text("• " + cleanMarkdown(f.facetName), MARGIN_L + 3, ctx.y);
+          doc.text("• " + facetLabel(cleanMarkdown(f.facetName)), MARGIN_L + 3, ctx.y);
           ctx.y += 4.5;
         }
       }
@@ -1210,7 +1219,7 @@ export async function generatePairedProfilePdf(
 
         doc.setFont("Poppins", "bold");
         doc.setFontSize(10);
-        const titleL: string[] = doc.splitTextToSize(cleanMarkdown(facet), innerW);
+        const titleL: string[] = doc.splitTextToSize(facetLabel(cleanMarkdown(facet)), innerW);
         doc.setFont("Montserrat", "normal");
         doc.setFontSize(8);
         const qL: string[] = doc.splitTextToSize(question, innerW);
