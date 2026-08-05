@@ -337,6 +337,11 @@ export async function generatePairedOnePagerPdf(
     step += 1;
     end = layoutPageOne(step, false);
   }
+  if (step > 0) {
+    console.info(
+      `[paired one-pager] page one shrank ${step} step(s) to ${(10 - step * 0.35).toFixed(2)}pt body.`,
+    );
+  }
   if (end > BOTTOM) {
     console.warn(
       `[paired one-pager] page one overflows by ${(end - BOTTOM).toFixed(1)}mm at the smallest step; the generator's word caps need revisiting.`,
