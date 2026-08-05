@@ -778,20 +778,12 @@ export async function generatePairedProfilePdf(
     ctx.sectionHeading("Repair");
     if (s.repair.overview) paragraphs(ctx, nm(s.repair.overview));
     ctx.y += 2;
-    twoColumn(ctx, data.firstA, asLines(s.repair.a).map(nm), data.firstB, asLines(s.repair.b).map(nm));
+    twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b));
     if (Array.isArray(s.repair.steps) && s.repair.steps.length > 0) {
-      s.repair.steps.forEach((t, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(nm(t))}`, CONTENT_W - 4);
-        for (const l of lines) {
-          ctx.checkPageBreak(5);
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(9);
-          doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
-          ctx.y += 4.5;
-        }
-      });
+      numberedSteps(ctx, s.repair.steps, nm);
     }
+    safetyCallout(ctx, "If this feels unsafe", nm(s.repair.safety ?? ""));
+
     if (s.repair.disclaimer) {
       ctx.y += 2;
       doc.setFont("Montserrat", "italic");
