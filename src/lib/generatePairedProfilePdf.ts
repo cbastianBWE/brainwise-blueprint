@@ -1295,7 +1295,7 @@ export async function generatePairedProfilePdf(
     }
 
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
-      ctx.y += 2;
+      ctx.y += 7;
       ctx.checkPageBreak(12);
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
