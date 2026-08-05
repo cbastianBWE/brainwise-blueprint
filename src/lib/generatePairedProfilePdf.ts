@@ -666,18 +666,8 @@ export async function generatePairedProfilePdf(
       doc.setTextColor(...NAVY);
       doc.text("Avoiding conflict", MARGIN_L, ctx.y);
       ctx.y += 5;
-      s.communication.avoid_conflict.forEach((t, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(nm(t))}`, CONTENT_W - 6);
-        for (const l of lines) {
-          ctx.checkPageBreak(5);
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(9);
-          doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
-          ctx.y += 4.5;
-        }
-        ctx.y += 1;
-      });
+      numberedSteps(ctx, s.communication.avoid_conflict, nm);
+
     }
   }
 
