@@ -199,8 +199,8 @@ export default function PairedOnePager({
               {label}
             </div>
             {/* first person, quoted speech — no name substitution here by design */}
-            <div style={{ fontSize: 15, lineHeight: 1.5, fontStyle: "italic", color: NAVY }}>
-              {text}
+            <div style={{ fontSize: 15, lineHeight: 1.5, color: NAVY }}>
+              {`“${text}”`}
             </div>
           </div>
         );
