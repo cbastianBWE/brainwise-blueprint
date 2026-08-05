@@ -655,9 +655,9 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       data.firstA,
-      asLines(s.within_person.a).map(nm),
+      nmBlocks(s.within_person.a),
       data.firstB,
-      asLines(s.within_person.b).map(nm),
+      nmBlocks(s.within_person.b),
     );
   }
 
@@ -667,12 +667,13 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       `What ${data.firstA} needs from ${data.firstB}`,
-      asLines(s.needs.a_needs_from_b).map(nm),
+      nmBlocks(s.needs.a_needs_from_b),
       `What ${data.firstB} needs from ${data.firstA}`,
-      asLines(s.needs.b_needs_from_a).map(nm),
+      nmBlocks(s.needs.b_needs_from_a),
       { bulleted: true },
     );
   }
+
 
   // 8. communication
   if (sections.communication && s.communication) {
