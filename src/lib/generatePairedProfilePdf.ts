@@ -1023,23 +1023,16 @@ export async function generatePairedProfilePdf(
     ctx.checkPageBreak(6);
     doc.text("In general", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const blk of nmBlocks(s.communication.general)) {
-      paragraphs(ctx, blockText(blk));
-      facetCaption(ctx, blockFacets(blk));
-    }
+    renderBlocks(ctx, nmBlocks(s.communication.general));
 
-
-    ctx.y += 3;
+    ctx.y += 2;
     ctx.checkPageBreak(6);
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
     doc.text("Under pressure", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const blk of nmBlocks(s.communication.under_pressure)) {
-      paragraphs(ctx, blockText(blk));
-      facetCaption(ctx, blockFacets(blk));
-    }
+    renderBlocks(ctx, nmBlocks(s.communication.under_pressure));
 
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
