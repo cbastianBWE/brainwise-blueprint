@@ -19,6 +19,7 @@ import {
   isBulletObject,
   isMoveBullet,
   normFacetName,
+  facetDisplayLabel,
   stripMovePrefix,
   type Bullet,
   type CoachSection,
@@ -442,6 +443,8 @@ const REVEALED = new Set<string>();
 
 export interface ReportCtx {
   nm: (s: string) => string;
+  /** relationship mode — display labels only, never lookups */
+  mode?: string | null;
   lookupFacet: (name: string) => FacetEntry | undefined;
   firstA: string;
   firstB: string;
@@ -486,6 +489,7 @@ function ChipRow({ ctx, facets }: { ctx: ReportCtx; facets: string[] }) {
           key={`${f}-${i}`}
           name={ctx.nm(f)}
           entry={ctx.lookupFacet(f)}
+          mode={ctx.mode}
           firstA={ctx.firstA}
           firstB={ctx.firstB}
           delay={i * 25}
@@ -843,8 +847,8 @@ export default function PairedReport() {
 
   /* stable bag handed to the module-scope section components */
   const ctx = useMemo<ReportCtx>(
-    () => ({ nm, lookupFacet, firstA, firstB, revealRef, revealProps }),
-    [nm, lookupFacet, firstA, firstB, revealRef, revealProps],
+    () => ({ nm, mode, lookupFacet, firstA, firstB, revealRef, revealProps }),
+    [nm, mode, lookupFacet, firstA, firstB, revealRef, revealProps],
   );
 
 
@@ -957,7 +961,7 @@ export default function PairedReport() {
       kind: "strength" as const,
       shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),
       label: i === 0 ? "Start here · your strength" : "Strength",
-      name: f.facetName,
+      name: facetDisplayLabel(f.facetName, mode),
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
@@ -979,7 +983,7 @@ export default function PairedReport() {
       rank: idx + 1,
       shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),
       label,
-      name: f.facetName,
+      name: facetDisplayLabel(f.facetName, mode),
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
@@ -1037,6 +1041,7 @@ export default function PairedReport() {
                     firstA={firstA}
                     firstB={firstB}
                     nm={nm}
+                    mode={mode}
                     lookupFacet={lookupFacet}
                   />
                 )}
@@ -1448,7 +1453,7 @@ export default function PairedReport() {
                           {typeof a === "number" && typeof b === "number" && (
                             <PairGlyph a={a} b={b} onOpen={() => openDist(a, b, f.facetName)} />
                           )}
-                          <div style={{ fontWeight: 600, fontSize: 13, marginTop: 4 }}>{f.facetName}</div>
+                          <div style={{ fontWeight: 600, fontSize: 13, marginTop: 4 }}>{facetDisplayLabel(f.facetName, mode)}</div>
                         </div>
                       );
                     })}
@@ -1469,7 +1474,7 @@ export default function PairedReport() {
                   const f = facetLookup(w.item);
                   return (
                     <div key={i} style={{ fontSize: 14, margin: "6px 0", lineHeight: 1.6 }}>
-                      <b>{f?.facetName ?? `Item ${w.item}`}.</b> <HighlightableText blockKey={`coach:why:${i}`} text={nm(w.rationale)} />
+                      <b>{f?.facetName ? facetDisplayLabel(f.facetName, mode) : `Item ${w.item}`}.</b> <HighlightableText blockKey={`coach:why:${i}`} text={nm(w.rationale)} />
                     </div>
                   );
                 })}
