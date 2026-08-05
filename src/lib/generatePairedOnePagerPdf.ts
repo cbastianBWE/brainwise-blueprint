@@ -353,6 +353,14 @@ export async function generatePairedOnePagerPdf(
   layoutPageOne(step, true);
   footer();
 
+  const baseName = `${opts.nameA}_and_${opts.nameB}`.replace(/\s+/g, "_");
+  const fullFile = `${baseName}_paired-snapshot.pdf`;
+
+  if (opts.scope === "summary") {
+    doc.save(`${baseName}_paired-snapshot_one-page.pdf`);
+    return;
+  }
+
   /* ---------- page two onwards: flowing, paginated ---------- */
   if (preview.length > 0 || talkAbout.length > 0) {
     doc.addPage();
