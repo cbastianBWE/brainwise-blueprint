@@ -1179,6 +1179,41 @@ export default function PairedReport() {
           </div>
         )}
 
+        {/* person filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "6px 0 18px" }}>
+          <span style={{ fontSize: 12.5, color: GRAY }}>Focus on</span>
+          {([
+            { k: "both", label: "Both", color: TEAL },
+            { k: "a", label: firstA, color: COLOR_A },
+            { k: "b", label: firstB, color: COLOR_B },
+          ] as const).map((o) => {
+            const on = personFilter === o.k;
+            return (
+              <button
+                key={o.k}
+                type="button"
+                onClick={() => setPersonFilter(o.k)}
+                aria-pressed={on}
+                className="pr-chip"
+                style={{
+                  border: `1px solid ${on ? o.color : LINE}`,
+                  background: on ? hexAlpha(o.color, 0.12) : "#fff",
+                  color: on ? o.color : GRAY,
+                  borderRadius: 999,
+                  padding: "5px 13px",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  fontFamily: POPPINS,
+                  cursor: "pointer",
+                }}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+
+
         {/* Radial */}
         {dims.length >= 3 && (
           <>
