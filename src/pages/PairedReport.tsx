@@ -841,6 +841,13 @@ export default function PairedReport() {
     [facetIndex],
   );
 
+  /* stable bag handed to the module-scope section components */
+  const ctx = useMemo<ReportCtx>(
+    () => ({ nm, lookupFacet, firstA, firstB, revealRef, revealProps }),
+    [nm, lookupFacet, firstA, firstB, revealRef, revealProps],
+  );
+
+
 
 
   /* tooltip & modal */
