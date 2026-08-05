@@ -806,10 +806,11 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       data.firstA,
-      asLines(s.intimacy.a).map(nm),
+      nmBlocks(s.intimacy.a),
       data.firstB,
-      asLines(s.intimacy.b).map(nm),
+      nmBlocks(s.intimacy.b),
     );
+
     if (s.intimacy.disclaimer) {
       doc.setFont("Montserrat", "italic");
       doc.setFontSize(8);
