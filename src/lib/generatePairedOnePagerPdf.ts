@@ -444,8 +444,7 @@ export async function generatePairedOnePagerPdf(
           doc.setDrawColor(c[0], c[1], c[2]);
           doc.setLineWidth(0.2);
           doc.saveGraphicsState();
-          // @ts-expect-error jsPDF GState typing
-          doc.setGState(new (doc as any).GState({ opacity: 0.12 }));
+          (doc as any).setGState(new (doc as any).GState({ opacity: 0.12 }));
           doc.roundedRect(cx, yy - 3, w, 4.4, 2.2, 2.2, "F");
           doc.restoreGraphicsState();
           doc.roundedRect(cx, yy - 3, w, 4.4, 2.2, 2.2, "S");
