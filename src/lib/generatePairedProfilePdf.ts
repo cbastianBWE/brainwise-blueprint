@@ -27,6 +27,9 @@ import {
 import {
   bulletFacets,
   bulletToText,
+  isBulletObject,
+  isMoveBullet,
+  stripMovePrefix,
   normFacetName,
   type Bullet,
   type StepItem,
