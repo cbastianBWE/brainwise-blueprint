@@ -154,3 +154,59 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* ---------- Paired report v2: reveal + chip motion ---------- */
+@layer utilities {
+  @keyframes pr-reveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pr-chip-in {
+    from { opacity: 0; transform: scale(.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pr-pulse {
+    0% { background-color: #ffffff; }
+    35% { background-color: rgba(245,116,26,.16); }
+    100% { background-color: #ffffff; }
+  }
+  @keyframes pr-draw {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+  }
+
+  .pr-anim { opacity: 0; }
+  .pr-anim.pr-in {
+    animation: pr-reveal 420ms cubic-bezier(.22,.61,.36,1) both;
+    animation-delay: var(--pr-delay, 0ms);
+  }
+  .pr-chip {
+    transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  }
+  .pr-in .pr-chip {
+    animation: pr-chip-in 140ms ease-out both;
+    animation-delay: var(--pr-chip-delay, 0ms);
+  }
+  .pr-chip:hover { transform: translateY(-1px); }
+  .pr-card { transition: transform 140ms ease, box-shadow 140ms ease, opacity 240ms ease, filter 240ms ease; }
+  .pr-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .pr-pulse { animation: pr-pulse 900ms ease-out 1; }
+  .pr-connector { transform-origin: top; }
+  .pr-in .pr-connector { animation: pr-draw 420ms ease-out both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pr-anim,
+    .pr-anim.pr-in,
+    .pr-in .pr-chip,
+    .pr-in .pr-connector,
+    .pr-pulse {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .pr-card:hover,
+    .pr-chip:hover { transform: none; }
+    .pr-card { transition: opacity 1ms linear, filter 1ms linear; }
+  }
+}
+

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,25 @@ import LeadershipModal, { type LeadershipItem } from "@/components/results/Leade
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assemblePairedPdfData } from "@/lib/assemblePairedPdfData";
 import { generatePairedProfilePdf } from "@/lib/generatePairedProfilePdf";
+import {
+  bulletFacets,
+  isBulletObject,
+  isMoveBullet,
+  normFacetName,
+  stripMovePrefix,
+  type Bullet,
+  type CoachSection,
+  type CommunicationSection,
+  type ConflictSection,
+  type DrivingFacetsSection,
+  type IntimacySection,
+  type NeedsSection,
+  type PairInThreeItem,
+  type RepairSection,
+  type StepItem,
+  type WithinPersonSection,
+} from "@/lib/pairedSectionTypes";
+
 
 
 /* ---------- palette (brand-only) ---------- */
@@ -447,17 +466,89 @@ function Acc({ title, defaultOpen = false, children }: { title: string; defaultO
   );
 }
 
-/* ---------- section types ---------- */
-interface PairInThreeItem { headline: string; detail: string; action: string; }
-interface DrivingItem { item: number; why: string; actions?: string[]; action?: string; }
-interface DrivingFacetsSection { opening: string; strengths: DrivingItem[]; focus: DrivingItem[]; }
-interface WithinPersonSection { a: string | string[]; b: string | string[]; }
-interface NeedsSection { a_needs_from_b: string | string[]; b_needs_from_a: string | string[]; }
-interface CommunicationSection { general: string | string[]; under_pressure: string | string[]; avoid_conflict: string[]; }
-interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; per_person?: { a: { read: string; counter_move: string }; b: { read: string; counter_move: string } }; }
-interface RepairSection { overview: string; a: string | string[]; b: string | string[]; steps: string[]; disclaimer: string; }
-interface IntimacySection { overview: string; a: string[]; b: string[]; disclaimer: string; }
-interface CoachSection { why: { item: number; rationale: string }[]; debrief_prompts: string[]; }
+/* ---------- section types live in src/lib/pairedSectionTypes.ts ---------- */
+
+const POPPINS = 'Poppins, Montserrat, system-ui, sans-serif';
+
+/* ---------- facet index (name-keyed) ---------- */
+export interface FacetEntry {
+  itemNumber: number;
+  facetName: string;
+  domain?: string | null;
+  shape?: string | null;
+  a?: number | null;
+  b?: number | null;
+}
+
+function hexAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function bandWord(v: number | null | undefined): string {
+  if (typeof v !== "number") return "not scored";
+  if (v >= 67) return "high";
+  if (v <= 33) return "low";
+  return "middle";
+}
+
+/* ---------- facet chip ---------- */
+function FacetChip({
+  name, entry, firstA, firstB, delay,
+}: {
+  name: string;
+  entry?: FacetEntry;
+  firstA: string;
+  firstB: string;
+  delay: number;
+}) {
+  const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
+  const text = base ? (base === AMBER ? MUSTARD : base) : GRAY;
+  const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
+  const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
+  const tip = entry
+    ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
+    : null;
+
+  const jump = () => {
+    if (!entry) return;
+    const el = document.getElementById(`facet-${entry.itemNumber}`);
+    if (!el) return; // row filtered out of the visible map — silent no-op
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.remove("pr-pulse");
+    void el.offsetWidth;
+    el.classList.add("pr-pulse");
+    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+  };
+
+  return (
+    <span
+      className="pr-chip"
+      onClick={jump}
+      onMouseMove={tip ? (e) => showTip(e, tip) : undefined}
+      onMouseLeave={hideTip}
+      style={{
+        ["--pr-chip-delay" as string]: `${delay}ms`,
+        display: "inline-block",
+        borderRadius: 999,
+        fontFamily: "Montserrat, system-ui, sans-serif",
+        fontWeight: 600,
+        fontSize: 10.5,
+        padding: "3px 9px",
+        background: bg,
+        border: `1px solid ${border}`,
+        color: text,
+        cursor: entry ? "pointer" : "default",
+        whiteSpace: "nowrap",
+      } as React.CSSProperties}
+    >
+      {name}
+    </span>
+  );
+}
+
+
 
 function modeTitle(mode: string | null): string {
   if (mode === "work") return "Work Paired Report";
@@ -578,11 +669,122 @@ export default function PairedReport() {
       </>
     );
   };
-  const Bullets = ({ text, blockKey }: { text: string | string[]; blockKey?: string }) => {
-    const items = Array.isArray(text)
-      ? text.map((t) => nm(t)).filter(Boolean)
-      : splitSentences(nm(text));
-    return (
+  /* ---------- scroll reveal (one shared observer, once per element) ---------- */
+  const [observer] = useState<IntersectionObserver | null>(() => {
+    if (typeof IntersectionObserver === "undefined") return null;
+    return new IntersectionObserver(
+      (entries, obs) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add("pr-in");
+            obs.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.12 },
+    );
+  });
+  useEffect(() => () => observer?.disconnect(), [observer]);
+  const revealRef = useCallback(
+    (el: HTMLElement | null) => {
+      if (!el) return;
+      if (!observer) { el.classList.add("pr-in"); return; }
+      if (el.classList.contains("pr-in")) return;
+      observer.observe(el);
+    },
+    [observer],
+  );
+
+  const revealProps = (delayIndex = 0) => ({
+    ref: revealRef,
+    className: "pr-anim",
+    style: { ["--pr-delay" as string]: `${Math.min(delayIndex * 40, 240)}ms` } as React.CSSProperties,
+  });
+
+  /* ---------- person filter ---------- */
+  const [personFilter, setPersonFilter] = useState<"both" | "a" | "b">("both");
+  const personDim = useCallback(
+    (who: "a" | "b" | "shared"): React.CSSProperties =>
+      personFilter === "both" || who === "shared" || personFilter === who
+        ? {}
+        : { opacity: 0.25, filter: "saturate(.4)" },
+    [personFilter],
+  );
+
+  /* ---------- name-keyed facet index ---------- */
+  const facetIndex = useMemo(() => {
+    const map = new Map<string, FacetEntry>();
+    const src = profile?.structured;
+    const lists: PairedFacetResult[][] = [
+      src?.fullMap ?? src?.facets ?? [],
+      src?.strengths ?? [],
+      src?.focusAreas ?? [],
+    ];
+    for (const list of lists) {
+      for (const f of list) {
+        const key = normFacetName(f?.facetName ?? "");
+        if (!key || map.has(key)) continue;
+        map.set(key, {
+          itemNumber: f.itemNumber,
+          facetName: f.facetName,
+          domain: f.domain,
+          shape: f.shape,
+          a: f.stats?.a ?? null,
+          b: f.stats?.b ?? null,
+        });
+      }
+    }
+    return map;
+  }, [profile]);
+
+  const warnedFacets = useRef<Set<string>>(new Set());
+  const lookupFacet = useCallback(
+    (name: string): FacetEntry | undefined => {
+      const key = normFacetName(name);
+      const hit = facetIndex.get(key);
+      if (!hit && key && !warnedFacets.current.has(key)) {
+        warnedFacets.current.add(key);
+        console.warn(`[PairedReport] facet not found in structured data: "${name}"`);
+      }
+      return hit;
+    },
+    [facetIndex],
+  );
+
+  const ChipRow = useCallback(
+    ({ facets }: { facets: string[] }) => {
+      if (!facets || facets.length === 0) return null;
+      return (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+          {facets.map((f, i) => (
+            <FacetChip
+              key={`${f}-${i}`}
+              name={nm(f)}
+              entry={lookupFacet(f)}
+              firstA={firstA}
+              firstB={firstB}
+              delay={i * 25}
+            />
+          ))}
+        </div>
+      );
+    },
+    [lookupFacet, firstA, firstB, nm],
+  );
+
+  /* ---------- bullets: accepts plain strings (pre-v19) and { point, body, facets } ---------- */
+  const TONE_BORDER: Record<"a" | "b" | "shared" | "move", string> = {
+    a: COLOR_A, b: COLOR_B, shared: TEAL, move: GREEN,
+  };
+
+  const Bullets = ({
+    text, blockKey, tone = "shared",
+  }: {
+    text: Bullet[] | string | undefined;
+    blockKey?: string;
+    tone?: "a" | "b" | "shared";
+  }) => {
+    const legacyList = (items: string[]) => (
       <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc" }}>
         {items.map((s, i) => (
           <li key={i} style={{ fontSize: 16, lineHeight: 1.6, margin: "4px 0" }}>
@@ -591,7 +793,122 @@ export default function PairedReport() {
         ))}
       </ul>
     );
+
+    if (!Array.isArray(text)) return legacyList(splitSentences(nm(text ?? "")));
+    if (!text.some(isBulletObject)) {
+      return legacyList(text.map((t) => nm(typeof t === "string" ? t : "")).filter(Boolean));
+    }
+
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        {text.map((b, i) => {
+          if (!isBulletObject(b)) {
+            const s = nm(typeof b === "string" ? b : "");
+            if (!s) return null;
+            return (
+              <div key={i} style={{ fontSize: 16, lineHeight: 1.6 }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={s} /> : renderBold(s)}
+              </div>
+            );
+          }
+          const move = isMoveBullet(b);
+          const point = nm(move ? stripMovePrefix(b.point ?? "") : (b.point ?? ""));
+          const body = nm(b.body ?? "");
+          const border = TONE_BORDER[move ? "move" : tone];
+          return (
+            <div
+              key={i}
+              {...revealProps(i)}
+              className="pr-anim pr-card"
+              style={{
+                ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`,
+                background: CARD_BG,
+                border: `1px solid ${LINE}`,
+                borderLeft: `4px solid ${border}`,
+                borderRadius: 12,
+                padding: "12px 13px",
+              } as React.CSSProperties}
+            >
+              {move && (
+                <div style={{ fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 700, color: GREEN, marginBottom: 4, fontFamily: POPPINS }}>
+                  The move
+                </div>
+              )}
+              {point && (
+                <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : renderBold(point)}
+                </div>
+              )}
+              {body && (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : renderBold(body)}
+                </div>
+              )}
+              <ChipRow facets={bulletFacets(b)} />
+            </div>
+          );
+        })}
+      </div>
+    );
   };
+
+  /* ---------- ordered sequence (avoid_conflict, repair steps) ---------- */
+  const Sequence = ({
+    items, blockKey, connector = false,
+  }: {
+    items: StepItem[];
+    blockKey: string;
+    connector?: boolean;
+  }) => (
+    <div style={{ display: "grid", gap: 12 }}>
+      {items.map((raw, i) => {
+        const obj = isBulletObject(raw);
+        const point = nm(obj ? (raw.point ?? "") : (typeof raw === "string" ? raw : ""));
+        const body = obj ? nm(raw.body ?? "") : "";
+        return (
+          <div key={i} {...revealProps(i)} style={{ ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`, display: "flex", gap: 10, alignItems: "flex-start", position: "relative" } as React.CSSProperties}>
+            <div style={{ position: "relative", flex: "0 0 24px" }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%", background: TEAL, color: "#fff",
+                fontSize: 12, fontWeight: 700, fontFamily: POPPINS,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{i + 1}</div>
+              {connector && i < items.length - 1 && (
+                <div className="pr-connector" style={{ position: "absolute", left: 11, top: 24, width: 2, height: "calc(100% + 12px)", background: LINE }} />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                <HighlightableText blockKey={`${blockKey}:${i}`} text={point} />
+              </div>
+              {body && (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, marginTop: 3 }}>
+                  <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} />
+                </div>
+              )}
+              <ChipRow facets={bulletFacets(raw)} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  /* ---------- safety callout ---------- */
+  const SafetyCallout = ({ text, blockKey }: { text?: string | null; blockKey: string }) => {
+    const t = (text ?? "").trim();
+    if (!t) return null;
+    return (
+      <div style={{
+        marginTop: 14, background: "#fff", border: `1px solid ${AMBER}`, borderLeft: `5px solid ${AMBER}`,
+        borderRadius: 10, padding: "12px 16px", fontSize: 14, color: MUSTARD, lineHeight: 1.6,
+      }}>
+        <div style={{ fontFamily: POPPINS, fontWeight: 700, marginBottom: 4 }}>If this feels unsafe</div>
+        <HighlightableText blockKey={blockKey} text={nm(t)} />
+      </div>
+    );
+  };
+
 
   /* tooltip & modal */
   const tip = useTipController();
@@ -864,10 +1181,45 @@ export default function PairedReport() {
           </div>
         )}
 
+        {/* person filter */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "6px 0 18px" }}>
+          <span style={{ fontSize: 12.5, color: GRAY }}>Focus on</span>
+          {([
+            { k: "both", label: "Both", color: TEAL },
+            { k: "a", label: firstA, color: COLOR_A },
+            { k: "b", label: firstB, color: COLOR_B },
+          ] as const).map((o) => {
+            const on = personFilter === o.k;
+            return (
+              <button
+                key={o.k}
+                type="button"
+                onClick={() => setPersonFilter(o.k)}
+                aria-pressed={on}
+                className="pr-chip"
+                style={{
+                  border: `1px solid ${on ? o.color : LINE}`,
+                  background: on ? hexAlpha(o.color, 0.12) : "#fff",
+                  color: on ? o.color : GRAY,
+                  borderRadius: 999,
+                  padding: "5px 13px",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  fontFamily: POPPINS,
+                  cursor: "pointer",
+                }}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+
+
         {/* Radial */}
         {dims.length >= 3 && (
           <>
-            <h2 style={sectionLabel}>The two of you at a glance</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>The two of you at a glance</h2>
             <div style={cardStyle}>
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }} className="rad-flex">
                 <Radial dims={dims} labA={nameA} labB={nameB} />
@@ -902,7 +1254,7 @@ export default function PairedReport() {
 
 
         {/* shape glyphs */}
-        <h2 style={sectionLabel}>The shapes a pair can make</h2>
+        <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>The shapes a pair can make</h2>
         <div style={cardStyle}>
           <div style={{ fontSize: 13, color: GRAY, marginBottom: 10 }}>
             Every trait below falls into one of these. Tap one to highlight it in the full map.
@@ -937,7 +1289,7 @@ export default function PairedReport() {
         {/* drivers */}
         {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
           <>
-            <h2 style={sectionLabel}>What is driving your pair</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What is driving your pair</h2>
             {driving?.opening && (
               <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
             )}
@@ -956,18 +1308,19 @@ export default function PairedReport() {
         {/* within */}
         {within && (
           <>
-            <h2 style={sectionLabel}>What is going on inside each of you</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What is going on inside each of you</h2>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={within.a} blockKey="within:a" />
+                  <Bullets text={within.a} blockKey="within:a" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={within.b} blockKey="within:b" />
+                  <Bullets text={within.b} blockKey="within:b" tone="b" />
                 </div>
               </div>
+
             </div>
           </>
         )}
@@ -975,18 +1328,19 @@ export default function PairedReport() {
         {/* needs */}
         {needs && (
           <>
-            <h2 style={sectionLabel}>What each of you needs from the other</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>What each of you needs from the other</h2>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>What {firstA} needs from {firstB}</div>
-                  <Bullets text={needs.a_needs_from_b} blockKey="needs:a_from_b" />
+                  <Bullets text={needs.a_needs_from_b} blockKey="needs:a_from_b" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
-                  <Bullets text={needs.b_needs_from_a} blockKey="needs:b_from_a" />
+                  <Bullets text={needs.b_needs_from_a} blockKey="needs:b_from_a" tone="b" />
                 </div>
               </div>
+
             </div>
           </>
         )}
@@ -994,7 +1348,7 @@ export default function PairedReport() {
         {/* communication */}
         {communication && (
           <>
-            <h2 style={sectionLabel}>How the two of you communicate</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>How the two of you communicate</h2>
             <div style={cardStyle}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 8, color: TEAL }}>In general</div>
@@ -1006,14 +1360,11 @@ export default function PairedReport() {
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
-                  <h4 style={{ margin: "0 0 8px", color: NAVY }}>Avoiding communication conflict</h4>
-                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
-                    {communication.avoid_conflict.map((t, i) => (
-                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6, fontSize: 16 }}>{nm(t)}</li>
-                    ))}
-                  </ol>
+                  <h4 style={{ margin: "0 0 10px", color: NAVY }}>Avoiding communication conflict</h4>
+                  <Sequence items={communication.avoid_conflict} blockKey="communication:avoid_conflict" />
                 </div>
               )}
+
             </div>
           </>
         )}
@@ -1021,31 +1372,32 @@ export default function PairedReport() {
         {/* conflict */}
         {conflict && (
           <>
-            <h2 style={sectionLabel}>How the two of you handle conflict</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>How the two of you handle conflict</h2>
             <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={pbox} className="pr-card">
                   <div style={boxLabel}>Mitigate the unhealthy kind</div>
                   <Bullets text={conflict.mitigate} blockKey="conflict:mitigate" />
                 </div>
-                <div style={pbox}>
+                <div style={pbox} className="pr-card">
                   <div style={boxLabel}>Promote the healthy kind</div>
                   <Bullets text={conflict.promote_healthy} blockKey="conflict:promote" />
                 </div>
               </div>
+              <SafetyCallout text={conflict.safety} blockKey="conflict:safety" />
             </div>
             {conflict.per_person && (
               <div style={cardStyle}>
                 <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 10, color: GRAY }}>Where each of you may be vulnerable in conflict</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                  <div style={pbox}>
+                  <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
                     <Paras text={conflict.per_person.a.read} blockKey="conflict:per_person:a:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
                     <Paras text={conflict.per_person.a.counter_move} blockKey="conflict:per_person:a:counter" />
                   </div>
-                  <div style={pbox}>
+                  <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
                     <Paras text={conflict.per_person.b.read} blockKey="conflict:per_person:b:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
@@ -1054,35 +1406,34 @@ export default function PairedReport() {
                 </div>
               </div>
             )}
+
           </>
         )}
 
         {/* repair (all modes) */}
         {repair && (
           <>
-            <h2 style={sectionLabel}>Repair after conflict</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Repair after conflict</h2>
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={repair.a} blockKey="repair:a" />
+                  <Bullets text={repair.a} blockKey="repair:a" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={repair.b} blockKey="repair:b" />
+                  <Bullets text={repair.b} blockKey="repair:b" tone="b" />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
                 <div style={{ marginTop: 12, borderRadius: 10, padding: "13px 16px", fontSize: 15, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>A repair sequence for you</div>
-                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
-                    {repair.steps.map((t, i) => (
-                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}><HighlightableText blockKey={`repair:steps:${i}`} text={nm(t)} /></li>
-                    ))}
-                  </ol>
+                  <div style={{ fontWeight: 700, marginBottom: 10 }}>A repair sequence for you</div>
+                  <Sequence items={repair.steps} blockKey="repair:steps" connector />
                 </div>
               )}
+              <SafetyCallout text={repair.safety} blockKey="repair:safety" />
+
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {repair.disclaimer || (isRomantic ? ROMANTIC_DEFAULT_DISCLAIMER : NONROMANTIC_DEFAULT_DISCLAIMER)}
               </div>
@@ -1093,23 +1444,20 @@ export default function PairedReport() {
         {/* intimacy (romantic only) */}
         {isRomantic && intimacy && (
           <>
-            <h2 style={sectionLabel}>Building intimacy</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Building intimacy</h2>
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
-                    {(intimacy.a ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}><HighlightableText blockKey={`intimacy:a:${i}`} text={nm(t)} /></li>)}
-                  </ul>
+                  <Bullets text={intimacy.a} blockKey="intimacy:a" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
-                    {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}><HighlightableText blockKey={`intimacy:b:${i}`} text={nm(t)} /></li>)}
-                  </ul>
+                  <Bullets text={intimacy.b} blockKey="intimacy:b" tone="b" />
                 </div>
               </div>
+
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {intimacy.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
               </div>
@@ -1121,7 +1469,7 @@ export default function PairedReport() {
         {/* full map */}
         {fullMapGroups.length > 0 && (
           <>
-            <h2 style={sectionLabel}>Every pattern between you</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>Every pattern between you</h2>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
               return (
@@ -1137,13 +1485,16 @@ export default function PairedReport() {
                       return (
                         <div
                           key={f.itemNumber}
+                          id={`facet-${f.itemNumber}`}
                           onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
                           onMouseLeave={hideTip}
+                          className="pr-card"
                           style={{
                             border: `1px solid ${LINE}`, borderTop: `3px solid ${PSC[g.k]}`,
                             borderRadius: 10, padding: "11px 13px", background: "#fff", cursor: "help",
                           }}
                         >
+
                           {typeof a === "number" && typeof b === "number" && (
                             <PairGlyph a={a} b={b} onOpen={() => openDist(a, b, f.facetName)} />
                           )}
@@ -1161,7 +1512,7 @@ export default function PairedReport() {
         {/* practitioner (privileged) */}
         {canSeePrivileged && coach && (
           <>
-            <h2 style={sectionLabel}>For the practitioner or admin only</h2>
+            <h2 ref={revealRef} className="pr-anim" style={sectionLabel}>For the practitioner or admin only</h2>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="Why these were flagged" defaultOpen>
                 {coach.why.map((w, i) => {

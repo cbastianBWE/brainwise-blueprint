@@ -1,8 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
+import type {
+  CommunicationSection,
+  ConflictSection,
+  DrivingFacetsSection,
+  IntimacySection,
+  LeaderActionItem,
+  NeedsSection,
+  PairInThreeItem,
+  RepairSection,
+  WithinPersonSection,
+  CoachSection,
+} from "./pairedSectionTypes";
 
 export interface PairedFacetForPdf {
   itemNumber: number;
   facetName: string;
+  domain?: string | null;
   shape: string;
   driverScore?: number | null;
   stats?: { a: number; b: number } | null;
@@ -11,39 +24,18 @@ export interface PairedFacetForPdf {
 export type PairedRelationshipMode = "work" | "personal" | "romantic";
 
 export interface PairedPdfSectionData {
-  pair_in_three?: Array<{ headline: string; detail: string; action?: string }>;
-  driving_facets?: {
-    opening?: string;
-    strengths?: Array<{ item: number; why: string; actions?: string[]; action?: string }>;
-    focus?: Array<{ item: number; why: string; actions?: string[]; action?: string }>;
-  };
-  within_person?: { a: string | string[]; b: string | string[] };
-  needs?: { a_needs_from_b: string | string[]; b_needs_from_a: string | string[] };
-  communication?: {
-    general: string | string[];
-    under_pressure: string | string[];
-    avoid_conflict: string[];
-  };
-  conflict?: {
-    summary: string;
-    mitigate: string | string[];
-    promote_healthy: string | string[];
-    per_person?: {
-      a: { read: string; counter_move: string };
-      b: { read: string; counter_move: string };
-    };
-  };
-  repair?: {
-    overview: string;
-    a: string | string[];
-    b: string | string[];
-    steps: string[];
-    disclaimer: string;
-  };
-  intimacy?: { overview: string; a: string[]; b: string[]; disclaimer: string };
-  leader_actions?: Array<{ headline: string; detail: string; action?: string }>;
-  coach?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
+  pair_in_three?: PairInThreeItem[];
+  driving_facets?: DrivingFacetsSection;
+  within_person?: WithinPersonSection;
+  needs?: NeedsSection;
+  communication?: CommunicationSection;
+  conflict?: ConflictSection;
+  repair?: RepairSection;
+  intimacy?: IntimacySection;
+  leader_actions?: LeaderActionItem[];
+  coach?: CoachSection;
 }
+
 
 export interface PairedPdfData {
   mode: PairedRelationshipMode;

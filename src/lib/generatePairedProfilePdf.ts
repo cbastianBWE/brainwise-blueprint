@@ -14,6 +14,8 @@ import {
   GREEN,
   MUSTARD,
   GRAY,
+  PURPLE,
+  AMBER,
   createPdfContext,
   renderCoverPage,
   stampPageNumbers,
@@ -22,7 +24,15 @@ import {
   drawPairDistRow,
   type PdfContext,
 } from "./generatePdfPrimitivesShared";
+import {
+  bulletFacets,
+  bulletToText,
+  normFacetName,
+  type Bullet,
+  type StepItem,
+} from "./pairedSectionTypes";
 import type { PairedPdfData, PairedFacetForPdf } from "./assemblePairedPdfData";
+
 
 const PAIRED_COVER_DISCLAIMER_ROMANTIC =
   "This report interprets two self-report profiles and describes tendencies in how two people may relate. It is not a clinical assessment, a diagnosis, or a judgment about the relationship. If any pattern here involves fear, control, or harm, please seek support from a qualified professional.";
@@ -94,10 +104,136 @@ function modeTitle(mode: string): string {
   return "Paired Report";
 }
 
-function asLines(v: string | string[] | undefined): string[] {
+/* ---------- v19 bullet normalisation ----------
+   Sections may hold plain strings (pre-v19 reports) or { point, body, facets }
+   objects (v19+). Everything funnels through asLines / asBlocks so no object
+   ever reaches cleanMarkdown or nm(). */
+
+export interface PdfBlock {
+  text: string;
+  facets?: string[];
+}
+export type ColItem = string | PdfBlock;
+
+/** Facet domain lookup, keyed on the normalised facet name. Set per render. */
+let facetDomainByName: Map<string, string> = new Map();
+
+const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
+  Protection: NAVY,
+  Participation: TEAL,
+  Prediction: GRAY,
+  Purpose: PURPLE,
+  Pleasure: MUSTARD, // amber is illegible at 8pt; mustard is its text-safe pair
+};
+
+function facetColor(name: string): readonly [number, number, number] {
+  const dom = facetDomainByName.get(normFacetName(name));
+  return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+}
+
+function asLines(v: string | Bullet[] | undefined | null): string[] {
   if (!v) return [];
-  if (Array.isArray(v)) return v.filter(Boolean);
-  return [v];
+  if (Array.isArray(v)) return v.map(bulletToText).filter(Boolean);
+  return typeof v === "string" ? [v] : [];
+}
+
+function asBlocks(v: string | Bullet[] | undefined | null): PdfBlock[] {
+  if (!v) return [];
+  if (Array.isArray(v)) {
+    return v
+      .map((b) => ({ text: bulletToText(b), facets: bulletFacets(b) }))
+      .filter((b) => !!b.text);
+  }
+  return typeof v === "string" ? [{ text: v }] : [];
+}
+
+function blockText(item: ColItem): string {
+  return typeof item === "string" ? item : item.text;
+}
+function blockFacets(item: ColItem): string[] {
+  return typeof item === "string" ? [] : item.facets ?? [];
+}
+
+/** 8pt italic facet caption, coloured by the first facet's dimension. */
+function facetCaption(ctx: PdfContext, facets: string[], indent = 0): void {
+  if (!facets || facets.length === 0) return;
+  const { doc } = ctx;
+  doc.setFont("Montserrat", "italic");
+  doc.setFontSize(8);
+  const c = facetColor(facets[0]);
+  doc.setTextColor(c[0], c[1], c[2]);
+  const lines: string[] = doc.splitTextToSize(facets.join(" · "), CONTENT_W - indent);
+  for (const l of lines) {
+    ctx.checkPageBreak(4);
+    doc.text(l, MARGIN_L + indent, ctx.y);
+    ctx.y += 4;
+  }
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+  ctx.y += 1;
+}
+
+
+/** Bordered amber callout used for conflict.safety / repair.safety. */
+function safetyCallout(ctx: PdfContext, title: string, text: string): void {
+  const body = (text ?? "").trim();
+  if (!body) return;
+  const { doc } = ctx;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const lines: string[] = doc.splitTextToSize(cleanMarkdown(body), CONTENT_W - 12);
+  const boxH = 6 + 4.5 + lines.length * 4.5 + 4;
+  ctx.ensureBlockSpace(boxH + 3);
+  const top = ctx.y;
+  doc.setDrawColor(AMBER[0], AMBER[1], AMBER[2]);
+  doc.setFillColor(255, 252, 245);
+  doc.roundedRect(MARGIN_L, top, CONTENT_W, boxH, 2, 2, "FD");
+  doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
+  doc.rect(MARGIN_L, top, 1.5, boxH, "F");
+
+  let y = top + 6;
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...MUSTARD);
+  doc.text(title, MARGIN_L + 5, y);
+  y += 4.5;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+  for (const l of lines) {
+    doc.text(l, MARGIN_L + 5, y);
+    y += 4.5;
+  }
+  ctx.y = top + boxH + 4;
+}
+
+/** Numbered sequence (repair steps, avoid-conflict) accepting both shapes. */
+function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => string): void {
+  const { doc } = ctx;
+  items.forEach((raw, i) => {
+    const text = nm(bulletToText(raw));
+    if (!text) return;
+    const lines: string[] = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(text)}`, CONTENT_W - 6);
+    for (const l of lines) {
+      ctx.checkPageBreak(5);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+      doc.text(l, MARGIN_L + 3, ctx.y);
+      ctx.y += 4.5;
+    }
+    const fx = bulletFacets(raw);
+    if (fx.length > 0) {
+      ctx.checkPageBreak(4);
+      doc.setFont("Montserrat", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(...facetColor(fx[0]));
+      doc.text(fx.join(" · "), MARGIN_L + 6, ctx.y);
+      ctx.y += 4;
+    }
+    ctx.y += 1;
+  });
 }
 
 function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
@@ -119,17 +255,20 @@ function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
   }
 }
 
+
 interface ColLine {
   text: string;
   x: number;
+  /** facet caption line: 8pt italic, coloured by the facet's dimension */
+  facetColor?: readonly [number, number, number];
 }
 
 function twoColumn(
   ctx: PdfContext,
   leftTitle: string,
-  leftBody: string[],
+  leftBody: ColItem[],
   rightTitle: string,
-  rightBody: string[],
+  rightBody: ColItem[],
   opts: { bulleted?: boolean } = {},
 ): void {
   const { doc } = ctx;
@@ -144,12 +283,12 @@ function twoColumn(
   doc.setFontSize(9);
   const bulletW = doc.getTextWidth("• ");
 
-  const wrapCol = (body: string[], x: number): ColLine[] => {
+  const wrapCol = (body: ColItem[], x: number): ColLine[] => {
     doc.setFont("Montserrat", "normal");
     doc.setFontSize(9);
     const out: ColLine[] = [];
-    body.forEach((raw, idx) => {
-      const clean = cleanMarkdown(raw);
+    body.forEach((item, idx) => {
+      const clean = cleanMarkdown(blockText(item));
       if (!clean) return;
       if (bulleted) {
         const wrapped: string[] = doc.splitTextToSize(clean, colW - 5 - bulletW);
@@ -159,8 +298,17 @@ function twoColumn(
       } else {
         const wrapped: string[] = doc.splitTextToSize(clean, colW - 5);
         wrapped.forEach((ln) => out.push({ text: ln, x }));
-        if (idx < body.length - 1) out.push({ text: "", x });
       }
+      const fx = blockFacets(item);
+      if (fx.length > 0) {
+        doc.setFont("Montserrat", "italic");
+        doc.setFontSize(8);
+        const fLines: string[] = doc.splitTextToSize(fx.join(" · "), colW - 5);
+        fLines.forEach((ln) => out.push({ text: ln, x, facetColor: facetColor(fx[0]) }));
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9);
+      }
+      if (!bulleted && idx < body.length - 1) out.push({ text: "", x });
     });
     return out;
   };
@@ -179,9 +327,25 @@ function twoColumn(
 
   ctx.ensureBlockSpace(5 + lineH * 3);
   let y = drawTitles(ctx.y);
-  doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...BLACK);
+  const bodyStyle = () => {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...BLACK);
+  };
+  bodyStyle();
+
+  const drawLine = (l: ColLine | undefined, yy: number) => {
+    if (!l || !l.text) return;
+    if (l.facetColor) {
+      doc.setFont("Montserrat", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(l.facetColor[0], l.facetColor[1], l.facetColor[2]);
+      doc.text(l.text, l.x, yy);
+      bodyStyle();
+    } else {
+      doc.text(l.text, l.x, yy);
+    }
+  };
 
   const n = Math.max(leftLines.length, rightLines.length);
   for (let i = 0; i < n; i++) {
@@ -191,18 +355,15 @@ function twoColumn(
       doc.addPage();
       ctx.renderContinuationHeader();
       y = drawTitles(MARGIN_T);
-      doc.setFont("Montserrat", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...BLACK);
+      bodyStyle();
     }
-    const L = leftLines[i];
-    const R = rightLines[i];
-    if (L && L.text) doc.text(L.text, L.x, y);
-    if (R && R.text) doc.text(R.text, R.x, y);
+    drawLine(leftLines[i], y);
+    drawLine(rightLines[i], y);
     y += lineH;
   }
   ctx.y = y + 3;
 }
+
 
 function paragraphs(ctx: PdfContext, text: string): void {
   const paras = splitParas(text);
@@ -407,6 +568,16 @@ export async function generatePairedProfilePdf(
   const nm = data.nm;
   const s = data.sections;
 
+  // name-keyed facet domain index, used to colour facet captions
+  facetDomainByName = new Map();
+  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
+    const key = normFacetName(f.facetName ?? "");
+    if (key && f.domain && !facetDomainByName.has(key)) facetDomainByName.set(key, f.domain);
+  }
+  const nmBlocks = (v: Parameters<typeof asBlocks>[0]): ColItem[] =>
+    asBlocks(v).map((b) => ({ text: nm(b.text), facets: (b.facets ?? []).map(nm) }));
+
+
   // 1. pair in three
   if (sections.pairInThree && Array.isArray(s.pair_in_three) && s.pair_in_three.length > 0) {
     ctx.sectionHeading("Your pair in three");
@@ -505,9 +676,9 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       data.firstA,
-      asLines(s.within_person.a).map(nm),
+      nmBlocks(s.within_person.a),
       data.firstB,
-      asLines(s.within_person.b).map(nm),
+      nmBlocks(s.within_person.b),
     );
   }
 
@@ -517,12 +688,13 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       `What ${data.firstA} needs from ${data.firstB}`,
-      asLines(s.needs.a_needs_from_b).map(nm),
+      nmBlocks(s.needs.a_needs_from_b),
       `What ${data.firstB} needs from ${data.firstA}`,
-      asLines(s.needs.b_needs_from_a).map(nm),
+      nmBlocks(s.needs.b_needs_from_a),
       { bulleted: true },
     );
   }
+
 
   // 8. communication
   if (sections.communication && s.communication) {
@@ -533,7 +705,12 @@ export async function generatePairedProfilePdf(
     ctx.checkPageBreak(6);
     doc.text("In general", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const line of asLines(s.communication.general)) paragraphs(ctx, nm(line));
+    for (const blk of nmBlocks(s.communication.general)) {
+      paragraphs(ctx, blockText(blk));
+      facetCaption(ctx, blockFacets(blk));
+    }
+
+
     ctx.y += 3;
     ctx.checkPageBreak(6);
     doc.setFont("Poppins", "bold");
@@ -541,7 +718,11 @@ export async function generatePairedProfilePdf(
     doc.setTextColor(...NAVY);
     doc.text("Under pressure", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, nm(line));
+    for (const blk of nmBlocks(s.communication.under_pressure)) {
+      paragraphs(ctx, blockText(blk));
+      facetCaption(ctx, blockFacets(blk));
+    }
+
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
       ctx.checkPageBreak(6);
@@ -550,18 +731,8 @@ export async function generatePairedProfilePdf(
       doc.setTextColor(...NAVY);
       doc.text("Avoiding conflict", MARGIN_L, ctx.y);
       ctx.y += 5;
-      s.communication.avoid_conflict.forEach((t, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(nm(t))}`, CONTENT_W - 6);
-        for (const l of lines) {
-          ctx.checkPageBreak(5);
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(9);
-          doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
-          ctx.y += 4.5;
-        }
-        ctx.y += 1;
-      });
+      numberedSteps(ctx, s.communication.avoid_conflict, nm);
+
     }
   }
 
@@ -573,9 +744,9 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       "Mitigate",
-      asLines(s.conflict.mitigate).map(nm),
+      nmBlocks(s.conflict.mitigate),
       "Promote healthy",
-      asLines(s.conflict.promote_healthy).map(nm),
+      nmBlocks(s.conflict.promote_healthy),
       { bulleted: true },
     );
     if (s.conflict.per_person) {
@@ -583,12 +754,26 @@ export async function generatePairedProfilePdf(
       twoColumn(
         ctx,
         `${data.firstA}: read + counter-move`,
-        [nm(s.conflict.per_person.a.read), nm(s.conflict.per_person.a.counter_move)],
+        [
+          { text: nm(s.conflict.per_person.a.read) },
+          {
+            text: nm(s.conflict.per_person.a.counter_move),
+            facets: (s.conflict.per_person.a.facets ?? []).map(nm),
+          },
+        ],
         `${data.firstB}: read + counter-move`,
-        [nm(s.conflict.per_person.b.read), nm(s.conflict.per_person.b.counter_move)],
+        [
+          { text: nm(s.conflict.per_person.b.read) },
+          {
+            text: nm(s.conflict.per_person.b.counter_move),
+            facets: (s.conflict.per_person.b.facets ?? []).map(nm),
+          },
+        ],
       );
     }
+    safetyCallout(ctx, "If this feels unsafe", nm(s.conflict.safety ?? ""));
   }
+
 
   // 9b. leader actions (work mode only)
   if (
@@ -623,20 +808,12 @@ export async function generatePairedProfilePdf(
     ctx.sectionHeading("Repair");
     if (s.repair.overview) paragraphs(ctx, nm(s.repair.overview));
     ctx.y += 2;
-    twoColumn(ctx, data.firstA, asLines(s.repair.a).map(nm), data.firstB, asLines(s.repair.b).map(nm));
+    twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b));
     if (Array.isArray(s.repair.steps) && s.repair.steps.length > 0) {
-      s.repair.steps.forEach((t, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(nm(t))}`, CONTENT_W - 4);
-        for (const l of lines) {
-          ctx.checkPageBreak(5);
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(9);
-          doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
-          ctx.y += 4.5;
-        }
-      });
+      numberedSteps(ctx, s.repair.steps, nm);
     }
+    safetyCallout(ctx, "If this feels unsafe", nm(s.repair.safety ?? ""));
+
     if (s.repair.disclaimer) {
       ctx.y += 2;
       doc.setFont("Montserrat", "italic");
@@ -659,10 +836,11 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       data.firstA,
-      asLines(s.intimacy.a).map(nm),
+      nmBlocks(s.intimacy.a),
       data.firstB,
-      asLines(s.intimacy.b).map(nm),
+      nmBlocks(s.intimacy.b),
     );
+
     if (s.intimacy.disclaimer) {
       doc.setFont("Montserrat", "italic");
       doc.setFontSize(8);
