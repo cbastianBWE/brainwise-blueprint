@@ -1483,13 +1483,16 @@ export default function PairedReport() {
                       return (
                         <div
                           key={f.itemNumber}
+                          id={`facet-${f.itemNumber}`}
                           onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
                           onMouseLeave={hideTip}
+                          className="pr-card"
                           style={{
                             border: `1px solid ${LINE}`, borderTop: `3px solid ${PSC[g.k]}`,
                             borderRadius: 10, padding: "11px 13px", background: "#fff", cursor: "help",
                           }}
                         >
+
                           {typeof a === "number" && typeof b === "number" && (
                             <PairGlyph a={a} b={b} onOpen={() => openDist(a, b, f.facetName)} />
                           )}
