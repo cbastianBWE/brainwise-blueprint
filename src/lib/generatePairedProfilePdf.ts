@@ -547,6 +547,16 @@ export async function generatePairedProfilePdf(
   const nm = data.nm;
   const s = data.sections;
 
+  // name-keyed facet domain index, used to colour facet captions
+  facetDomainByName = new Map();
+  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
+    const key = normFacetName(f.facetName ?? "");
+    if (key && f.domain && !facetDomainByName.has(key)) facetDomainByName.set(key, f.domain);
+  }
+  const nmBlocks = (v: Parameters<typeof asBlocks>[0]): ColItem[] =>
+    asBlocks(v).map((b) => ({ text: nm(b.text), facets: (b.facets ?? []).map(nm) }));
+
+
   // 1. pair in three
   if (sections.pairInThree && Array.isArray(s.pair_in_three) && s.pair_in_three.length > 0) {
     ctx.sectionHeading("Your pair in three");
