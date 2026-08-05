@@ -997,6 +997,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.within_person.a),
       data.firstB,
       nmBlocks(s.within_person.b),
+      { persons: true },
     );
   }
 
@@ -1009,7 +1010,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.needs.a_needs_from_b),
       `What ${data.firstB} needs from ${data.firstA}`,
       nmBlocks(s.needs.b_needs_from_a),
-      { bulleted: true },
+      { bulleted: true, persons: true },
     );
   }
 
@@ -1119,7 +1120,9 @@ export async function generatePairedProfilePdf(
     ctx.sectionHeading("Repair", 22, "The way back");
     if (s.repair.overview) paragraphs(ctx, nm(s.repair.overview));
     ctx.y += 2;
-    twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b));
+    twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b), {
+      persons: true,
+    });
     if (Array.isArray(s.repair.steps) && s.repair.steps.length > 0) {
       numberedSteps(ctx, s.repair.steps, nm);
     }
@@ -1150,6 +1153,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.intimacy.a),
       data.firstB,
       nmBlocks(s.intimacy.b),
+      { persons: true },
     );
 
     if (s.intimacy.disclaimer) {
