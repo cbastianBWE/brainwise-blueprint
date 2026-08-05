@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { facetDisplayLabel } from "./pairedSectionTypes";
 import type { OnePagerSection, OnePagerVoice } from "./pairedSectionTypes";
 
 type RGB = [number, number, number];
@@ -461,7 +462,8 @@ export async function generatePairedOnePagerPdf(
         let row: string[] = [];
         let cx = 4;
         for (const f of facets) {
-          const label = nm(f);
+          // display label only; the raw name still drives the colour lookup below
+          const label = facetDisplayLabel(nm(f), opts.mode);
           const w = doc.getTextWidth(label) + 4;
           if (row.length > 0 && cx + w > colW - 1) {
             chipRows.push(row);
@@ -469,6 +471,7 @@ export async function generatePairedOnePagerPdf(
             cx = 4;
           }
           row.push(label);
+          chipRaw.set(label, f);
           cx += w + 2;
         }
         if (row.length > 0) chipRows.push(row);
@@ -501,7 +504,7 @@ export async function generatePairedOnePagerPdf(
           doc.setFontSize(7);
           for (const label of m.chipRows[r]) {
             const w = doc.getTextWidth(label) + 4;
-            const c = opts.facetColor?.(label) ?? GRAY;
+            const c = opts.facetColor?.(chipRaw.get(label) ?? label) ?? GRAY;
             doc.setFillColor(c[0], c[1], c[2]);
             doc.setDrawColor(c[0], c[1], c[2]);
             doc.setLineWidth(0.2);
