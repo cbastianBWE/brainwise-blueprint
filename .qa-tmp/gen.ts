@@ -22,3 +22,4 @@ const data: any = {
   disclaimer: sent(2),
 };
 await generatePairedOnePagerPdf(data, { nameA: "Alex", nameB: "Sam", dateGenerated: "5 Aug 2026" });
+console.log("done");
