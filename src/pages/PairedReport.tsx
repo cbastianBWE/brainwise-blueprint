@@ -466,17 +466,89 @@ function Acc({ title, defaultOpen = false, children }: { title: string; defaultO
   );
 }
 
-/* ---------- section types ---------- */
-interface PairInThreeItem { headline: string; detail: string; action: string; }
-interface DrivingItem { item: number; why: string; actions?: string[]; action?: string; }
-interface DrivingFacetsSection { opening: string; strengths: DrivingItem[]; focus: DrivingItem[]; }
-interface WithinPersonSection { a: string | string[]; b: string | string[]; }
-interface NeedsSection { a_needs_from_b: string | string[]; b_needs_from_a: string | string[]; }
-interface CommunicationSection { general: string | string[]; under_pressure: string | string[]; avoid_conflict: string[]; }
-interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; per_person?: { a: { read: string; counter_move: string }; b: { read: string; counter_move: string } }; }
-interface RepairSection { overview: string; a: string | string[]; b: string | string[]; steps: string[]; disclaimer: string; }
-interface IntimacySection { overview: string; a: string[]; b: string[]; disclaimer: string; }
-interface CoachSection { why: { item: number; rationale: string }[]; debrief_prompts: string[]; }
+/* ---------- section types live in src/lib/pairedSectionTypes.ts ---------- */
+
+const POPPINS = 'Poppins, Montserrat, system-ui, sans-serif';
+
+/* ---------- facet index (name-keyed) ---------- */
+export interface FacetEntry {
+  itemNumber: number;
+  facetName: string;
+  domain?: string | null;
+  shape?: string | null;
+  a?: number | null;
+  b?: number | null;
+}
+
+function hexAlpha(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function bandWord(v: number | null | undefined): string {
+  if (typeof v !== "number") return "not scored";
+  if (v >= 67) return "high";
+  if (v <= 33) return "low";
+  return "middle";
+}
+
+/* ---------- facet chip ---------- */
+function FacetChip({
+  name, entry, firstA, firstB, delay,
+}: {
+  name: string;
+  entry?: FacetEntry;
+  firstA: string;
+  firstB: string;
+  delay: number;
+}) {
+  const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
+  const text = base ? (base === AMBER ? MUSTARD : base) : GRAY;
+  const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
+  const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
+  const tip = entry
+    ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
+    : null;
+
+  const jump = () => {
+    if (!entry) return;
+    const el = document.getElementById(`facet-${entry.itemNumber}`);
+    if (!el) return; // row filtered out of the visible map — silent no-op
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.remove("pr-pulse");
+    void el.offsetWidth;
+    el.classList.add("pr-pulse");
+    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+  };
+
+  return (
+    <span
+      className="pr-chip"
+      onClick={jump}
+      onMouseMove={tip ? (e) => showTip(e, tip) : undefined}
+      onMouseLeave={hideTip}
+      style={{
+        ["--pr-chip-delay" as string]: `${delay}ms`,
+        display: "inline-block",
+        borderRadius: 999,
+        fontFamily: "Montserrat, system-ui, sans-serif",
+        fontWeight: 600,
+        fontSize: 10.5,
+        padding: "3px 9px",
+        background: bg,
+        border: `1px solid ${border}`,
+        color: text,
+        cursor: entry ? "pointer" : "default",
+        whiteSpace: "nowrap",
+      } as React.CSSProperties}
+    >
+      {name}
+    </span>
+  );
+}
+
+
 
 function modeTitle(mode: string | null): string {
   if (mode === "work") return "Work Paired Report";
