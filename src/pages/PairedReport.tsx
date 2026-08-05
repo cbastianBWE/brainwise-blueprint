@@ -1256,7 +1256,7 @@ export default function PairedReport() {
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
-                  <h4 style={{ margin: "0 0 10px", color: NAVY }}>Avoiding communication conflict</h4>
+                  <h4 style={{ fontFamily: POPPINS, margin: "0 0 10px", color: NAVY }}>Avoiding communication conflict</h4>
                   <Sequence items={communication.avoid_conflict} blockKey="communication:avoid_conflict" />
                 </div>
               )}
@@ -1370,7 +1370,7 @@ export default function PairedReport() {
               const dim = activeShape && activeShape !== g.k;
               return (
                 <div key={g.k} style={{ marginBottom: 14, opacity: dim ? 0.3 : 1 }}>
-                  <h4 style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, margin: "0 0 8px", color: NAVY }}>
+                  <h4 style={{ fontFamily: POPPINS, display: "flex", alignItems: "center", gap: 8, fontSize: 14, margin: "0 0 8px", color: NAVY }}>
                     <span style={{ width: 11, height: 11, borderRadius: 3, display: "inline-block", background: PSC[g.k] }} />
                     {PAIR_SHAPE_TITLE[g.k]}
                   </h4>
