@@ -94,10 +94,115 @@ function modeTitle(mode: string): string {
   return "Paired Report";
 }
 
-function asLines(v: string | string[] | undefined): string[] {
+/* ---------- v19 bullet normalisation ----------
+   Sections may hold plain strings (pre-v19 reports) or { point, body, facets }
+   objects (v19+). Everything funnels through asLines / asBlocks so no object
+   ever reaches cleanMarkdown or nm(). */
+
+export interface PdfBlock {
+  text: string;
+  facets?: string[];
+}
+export type ColItem = string | PdfBlock;
+
+/** Facet domain lookup, keyed on the normalised facet name. Set per render. */
+let facetDomainByName: Map<string, string> = new Map();
+
+const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
+  Protection: NAVY,
+  Participation: TEAL,
+  Prediction: GRAY,
+  Purpose: PURPLE,
+  Pleasure: MUSTARD, // amber is illegible at 8pt; mustard is its text-safe pair
+};
+
+function facetColor(name: string): readonly [number, number, number] {
+  const dom = facetDomainByName.get(normFacetName(name));
+  return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+}
+
+function asLines(v: string | Bullet[] | undefined | null): string[] {
   if (!v) return [];
-  if (Array.isArray(v)) return v.filter(Boolean);
-  return [v];
+  if (Array.isArray(v)) return v.map(bulletToText).filter(Boolean);
+  return typeof v === "string" ? [v] : [];
+}
+
+function asBlocks(v: string | Bullet[] | undefined | null): PdfBlock[] {
+  if (!v) return [];
+  if (Array.isArray(v)) {
+    return v
+      .map((b) => ({ text: bulletToText(b), facets: bulletFacets(b) }))
+      .filter((b) => !!b.text);
+  }
+  return typeof v === "string" ? [{ text: v }] : [];
+}
+
+function blockText(item: ColItem): string {
+  return typeof item === "string" ? item : item.text;
+}
+function blockFacets(item: ColItem): string[] {
+  return typeof item === "string" ? [] : item.facets ?? [];
+}
+
+/** Bordered amber callout used for conflict.safety / repair.safety. */
+function safetyCallout(ctx: PdfContext, title: string, text: string): void {
+  const body = (text ?? "").trim();
+  if (!body) return;
+  const { doc } = ctx;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  const lines: string[] = doc.splitTextToSize(cleanMarkdown(body), CONTENT_W - 12);
+  const boxH = 6 + 4.5 + lines.length * 4.5 + 4;
+  ctx.ensureBlockSpace(boxH + 3);
+  const top = ctx.y;
+  doc.setDrawColor(AMBER[0], AMBER[1], AMBER[2]);
+  doc.setFillColor(255, 252, 245);
+  doc.roundedRect(MARGIN_L, top, CONTENT_W, boxH, 2, 2, "FD");
+  doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
+  doc.rect(MARGIN_L, top, 1.5, boxH, "F");
+
+  let y = top + 6;
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...MUSTARD);
+  doc.text(title, MARGIN_L + 5, y);
+  y += 4.5;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+  for (const l of lines) {
+    doc.text(l, MARGIN_L + 5, y);
+    y += 4.5;
+  }
+  ctx.y = top + boxH + 4;
+}
+
+/** Numbered sequence (repair steps, avoid-conflict) accepting both shapes. */
+function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => string): void {
+  const { doc } = ctx;
+  items.forEach((raw, i) => {
+    const text = nm(bulletToText(raw));
+    if (!text) return;
+    const lines: string[] = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(text)}`, CONTENT_W - 6);
+    for (const l of lines) {
+      ctx.checkPageBreak(5);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...BLACK);
+      doc.text(l, MARGIN_L + 3, ctx.y);
+      ctx.y += 4.5;
+    }
+    const fx = bulletFacets(raw);
+    if (fx.length > 0) {
+      ctx.checkPageBreak(4);
+      doc.setFont("Montserrat", "italic");
+      doc.setFontSize(8);
+      doc.setTextColor(...facetColor(fx[0]));
+      doc.text(fx.join(" · "), MARGIN_L + 6, ctx.y);
+      ctx.y += 4;
+    }
+    ctx.y += 1;
+  });
 }
 
 function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
@@ -118,6 +223,7 @@ function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
     ctx.y += 1;
   }
 }
+
 
 interface ColLine {
   text: string;
