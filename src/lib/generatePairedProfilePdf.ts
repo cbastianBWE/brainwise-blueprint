@@ -1081,6 +1081,7 @@ export async function generatePairedProfilePdf(
             facets: (s.conflict.per_person.b.facets ?? []).map(nm),
           },
         ],
+        { persons: true },
       );
     }
     safetyCallout(ctx, "If this feels unsafe", nm(s.conflict.safety ?? ""));
