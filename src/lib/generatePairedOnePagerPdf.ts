@@ -210,7 +210,7 @@ export async function generatePairedOnePagerPdf(
       const lines = doc.splitTextToSize(nm(t), CONTENT_W - labelW - 4);
       if (draw) {
         doc.setFont("Poppins", "bold");
-        doc.setFontSize(body - 0.4);
+        doc.setFontSize(body - 0.5);
         doc.setTextColor(...NAVY);
         doc.text(doc.splitTextToSize(label, labelW - 3), M, y);
         doc.setFont("Montserrat", "normal");
@@ -223,7 +223,7 @@ export async function generatePairedOnePagerPdf(
 
     /* first-person columns */
     heading("In your own words, to each other");
-    const gutter = 8;
+    const gutter = 11;
     const colW = (CONTENT_W - gutter) / 2;
     const drawVoice = (
       voice: OnePagerVoice | undefined,
@@ -248,13 +248,13 @@ export async function generatePairedOnePagerPdf(
         if (!t) continue;
         if (draw) {
           doc.setFont("Montserrat", "semibold");
-          doc.setFontSize(body - 2.4);
+          doc.setFontSize(body - 1.5);
           doc.setTextColor(...GRAY);
           doc.text(label.toUpperCase(), x + 4, yy, { charSpace: 0.2 });
         }
-        yy += lh - 1;
+        yy += lh - 0.6;
         doc.setFont("Montserrat", "normal");
-        doc.setFontSize(body - 0.6);
+        doc.setFontSize(body);
         // quoted speech: no name substitution here by design
         const lines = doc.splitTextToSize(`“${t}”`, colW - 5);
         if (draw) {
@@ -282,7 +282,7 @@ export async function generatePairedOnePagerPdf(
         let yy = y;
         const top = yy;
         doc.setFont("Poppins", "bold");
-        doc.setFontSize(body - 0.4);
+        doc.setFontSize(body);
         const pt = doc.splitTextToSize(nm(w.point ?? ""), colW - 5);
         if (draw) {
           doc.setTextColor(...MUSTARD);
@@ -290,7 +290,7 @@ export async function generatePairedOnePagerPdf(
         }
         yy += pt.length * lh;
         doc.setFont("Montserrat", "normal");
-        doc.setFontSize(body - 0.5);
+        doc.setFontSize(body);
         const bd = doc.splitTextToSize(nm(w.body ?? ""), colW - 5);
         if (draw) {
           doc.setTextColor(...BLACK);
@@ -306,37 +306,6 @@ export async function generatePairedOnePagerPdf(
       y = maxY + 1;
     }
 
-    /* talk about */
-    if (talkAbout.length > 0) {
-      heading("Talk about this together");
-      let rowY = y;
-      let rowMax = y;
-      talkAbout.forEach((t, i) => {
-        const x = i % 2 === 0 ? M : M + colW + gutter;
-        if (i % 2 === 0 && i > 0) {
-          rowY = rowMax + 1.6;
-          rowMax = rowY;
-        }
-        doc.setFont("Montserrat", "normal");
-        doc.setFontSize(body - 0.5);
-        const lines = doc.splitTextToSize(nm(t), colW - 8);
-        if (draw) {
-          doc.setFillColor(...PURPLE);
-          doc.circle(x + 2.2, rowY - 1.1, 2.2, "F");
-          doc.setFont("Poppins", "bold");
-          doc.setFontSize(body - 2.4);
-          doc.setTextColor(255, 255, 255);
-          doc.text(String(i + 1), x + 2.2, rowY - 0.2, { align: "center" });
-          doc.setFont("Montserrat", "normal");
-          doc.setFontSize(body - 0.5);
-          doc.setTextColor(...BLACK);
-          doc.text(lines, x + 6.4, rowY);
-        }
-        rowMax = Math.max(rowMax, rowY + lines.length * (lh - 0.2));
-      });
-      y = rowMax + 1;
-    }
-
     /* disclaimer */
     const disc = (data.disclaimer ?? "").trim();
     if (disc) {
@@ -348,13 +317,13 @@ export async function generatePairedOnePagerPdf(
       }
       y += 3.4;
       doc.setFont("Montserrat", "normal");
-      doc.setFontSize(6.6);
+      doc.setFontSize(7.5);
       const lines = doc.splitTextToSize(nm(disc), CONTENT_W);
       if (draw) {
         doc.setTextColor(...GRAY);
         doc.text(lines, M, y);
       }
-      y += lines.length * 3;
+      y += lines.length * 3.4;
     }
 
     return y;
