@@ -157,14 +157,17 @@ All colors MUST be HSL.
 
 /* ---------- Paired report v2: reveal + chip motion ---------- */
 @layer utilities {
+  /* Animate `translate`/`scale`, never `transform`: a filled animation on `transform`
+     would override the `.pr-card:hover` / `.pr-chip:hover` lift. */
   @keyframes pr-reveal {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; translate: 0 10px; }
+    to { opacity: 1; translate: 0 0; }
   }
   @keyframes pr-chip-in {
-    from { opacity: 0; transform: scale(.92); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; scale: .92; }
+    to { opacity: 1; scale: 1; }
   }
+
   @keyframes pr-pulse {
     0% { background-color: #ffffff; }
     35% { background-color: rgba(245,116,26,.16); }
