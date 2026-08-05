@@ -154,6 +154,27 @@ function blockFacets(item: ColItem): string[] {
   return typeof item === "string" ? [] : item.facets ?? [];
 }
 
+/** 8pt italic facet caption, coloured by the first facet's dimension. */
+function facetCaption(ctx: PdfContext, facets: string[], indent = 0): void {
+  if (!facets || facets.length === 0) return;
+  const { doc } = ctx;
+  doc.setFont("Montserrat", "italic");
+  doc.setFontSize(8);
+  const c = facetColor(facets[0]);
+  doc.setTextColor(c[0], c[1], c[2]);
+  const lines: string[] = doc.splitTextToSize(facets.join(" · "), CONTENT_W - indent);
+  for (const l of lines) {
+    ctx.checkPageBreak(4);
+    doc.text(l, MARGIN_L + indent, ctx.y);
+    ctx.y += 4;
+  }
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...BLACK);
+  ctx.y += 1;
+}
+
+
 /** Bordered amber callout used for conflict.safety / repair.safety. */
 function safetyCallout(ctx: PdfContext, title: string, text: string): void {
   const body = (text ?? "").trim();
