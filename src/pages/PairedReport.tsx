@@ -1379,25 +1379,23 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={repair.overview} style={{ maxWidth: "none" }} blockKey="repair:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={repair.a} blockKey="repair:a" />
+                  <Bullets text={repair.a} blockKey="repair:a" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={repair.b} blockKey="repair:b" />
+                  <Bullets text={repair.b} blockKey="repair:b" tone="b" />
                 </div>
               </div>
               {Array.isArray(repair.steps) && repair.steps.length > 0 && (
                 <div style={{ marginTop: 12, borderRadius: 10, padding: "13px 16px", fontSize: 15, background: "rgba(0,109,119,.07)", border: "1px solid rgba(0,109,119,.25)" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 6 }}>A repair sequence for you</div>
-                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
-                    {repair.steps.map((t, i) => (
-                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6 }}><HighlightableText blockKey={`repair:steps:${i}`} text={nm(t)} /></li>
-                    ))}
-                  </ol>
+                  <div style={{ fontWeight: 700, marginBottom: 10 }}>A repair sequence for you</div>
+                  <Sequence items={repair.steps} blockKey="repair:steps" connector />
                 </div>
               )}
+              <SafetyCallout text={repair.safety} blockKey="repair:safety" />
+
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {repair.disclaimer || (isRomantic ? ROMANTIC_DEFAULT_DISCLAIMER : NONROMANTIC_DEFAULT_DISCLAIMER)}
               </div>
