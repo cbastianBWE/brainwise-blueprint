@@ -128,7 +128,8 @@ export async function generatePairedOnePagerPdf(
    * so a dry run can measure the exact height before anything is drawn.
    */
   const layoutPageOne = (step: number, draw: boolean): number => {
-    const body = 9.5 - step * 0.35;
+    // 10pt is the ceiling for page one; the shrink guard steps down from there.
+    const body = 10 - step * 0.35;
     const lh = body * 0.4556;
     let y = BAND_H + 12;
 
@@ -336,6 +337,11 @@ export async function generatePairedOnePagerPdf(
     step += 1;
     end = layoutPageOne(step, false);
   }
+  if (step > 0) {
+    console.info(
+      `[paired one-pager] page one shrank ${step} step(s) to ${(10 - step * 0.35).toFixed(2)}pt body.`,
+    );
+  }
   if (end > BOTTOM) {
     console.warn(
       `[paired one-pager] page one overflows by ${(end - BOTTOM).toFixed(1)}mm at the smallest step; the generator's word caps need revisiting.`,
@@ -345,7 +351,7 @@ export async function generatePairedOnePagerPdf(
   layoutPageOne(step, true);
   footer();
 
-  /* ---------- page two ---------- */
+  /* ---------- page two onwards: flowing, paginated ---------- */
   if (preview.length > 0 || talkAbout.length > 0) {
     doc.addPage();
     header("YOUR FULL REPORT");
@@ -353,42 +359,59 @@ export async function generatePairedOnePagerPdf(
     const gutter = 11;
     const colW = (CONTENT_W - gutter) / 2;
 
-    /* talk about — moved off page one so page one can carry larger body type */
-    if (talkAbout.length > 0) {
+    /** Nothing is ever drawn below BOTTOM. Every block passes through here. */
+    const ensure = (h: number) => {
+      if (y + h > BOTTOM) {
+        footer();
+        doc.addPage();
+        header("YOUR FULL REPORT");
+        y = BAND_H + 12;
+      }
+    };
+
+    const blockTitle = (t: string) => {
+      ensure(14);
       doc.setFont("Poppins", "bold");
       doc.setFontSize(15);
       doc.setTextColor(...NAVY);
-      doc.text("Talk about this together", M, y);
+      doc.text(t, M, y);
       y += 2.5;
       doc.setDrawColor(...NAVY);
       doc.setLineWidth(0.3);
       doc.line(M, y, M + CONTENT_W, y);
       y += 6;
+    };
 
-      let qRowY = y;
-      let qRowMax = y;
-      talkAbout.forEach((t, i) => {
-        const x = i % 2 === 0 ? M : M + colW + gutter;
-        if (i % 2 === 0 && i > 0) {
-          qRowY = qRowMax + 2.6;
-          qRowMax = qRowY;
-        }
+    /* talk about — first block on page two */
+    if (talkAbout.length > 0) {
+      blockTitle("Talk about this together");
+
+      const qLines = talkAbout.map((t) => {
         doc.setFont("Montserrat", "normal");
         doc.setFontSize(9.5);
-        const lines = doc.splitTextToSize(nm(t), colW - 9);
-        doc.setFillColor(...PURPLE);
-        doc.circle(x + 2.4, qRowY - 1.2, 2.4, "F");
-        doc.setFont("Poppins", "bold");
-        doc.setFontSize(7.5);
-        doc.setTextColor(255, 255, 255);
-        doc.text(String(i + 1), x + 2.4, qRowY - 0.2, { align: "center" });
-        doc.setFont("Montserrat", "normal");
-        doc.setFontSize(9.5);
-        doc.setTextColor(...BLACK);
-        doc.text(lines, x + 7, qRowY);
-        qRowMax = Math.max(qRowMax, qRowY + lines.length * 4.3);
+        return doc.splitTextToSize(nm(t), colW - 9) as string[];
       });
-      y = qRowMax + 8;
+
+      for (let i = 0; i < talkAbout.length; i += 2) {
+        const rowH =
+          Math.max(qLines[i].length, qLines[i + 1]?.length ?? 0) * 4.3 + 2.6;
+        ensure(rowH);
+        for (let j = i; j < Math.min(i + 2, talkAbout.length); j++) {
+          const x = j % 2 === 0 ? M : M + colW + gutter;
+          doc.setFillColor(...PURPLE);
+          doc.circle(x + 2.4, y - 1.2, 2.4, "F");
+          doc.setFont("Poppins", "bold");
+          doc.setFontSize(7.5);
+          doc.setTextColor(255, 255, 255);
+          doc.text(String(j + 1), x + 2.4, y - 0.2, { align: "center" });
+          doc.setFont("Montserrat", "normal");
+          doc.setFontSize(9.5);
+          doc.setTextColor(...BLACK);
+          doc.text(qLines[j], x + 7, y);
+        }
+        y += rowH;
+      }
+      y += 6;
     }
 
     if (preview.length === 0) {
@@ -398,11 +421,7 @@ export async function generatePairedOnePagerPdf(
       return;
     }
 
-    doc.setFont("Poppins", "bold");
-    doc.setFontSize(15);
-    doc.setTextColor(...NAVY);
-    doc.text("What is in your full report", M, y);
-    y += 7;
+    blockTitle("What is in your full report");
     doc.setFont("Montserrat", "normal");
     doc.setFontSize(9);
     doc.setTextColor(...GRAY);
@@ -410,20 +429,47 @@ export async function generatePairedOnePagerPdf(
       "Page one is the short version. Your full report goes deeper on each of these, with the patterns behind them mapped question by question.",
       CONTENT_W,
     );
+    ensure(lead.length * 4.4 + 4);
     doc.text(lead, M, y);
     y += lead.length * 4.4 + 4;
 
-    let rowY = y;
-    let rowMax = y;
+    /* a preview entry is atomic: measured whole, then drawn whole */
+    type Measured = { head: string[]; body: string[]; chipRows: string[][]; h: number };
+    const measure = (p: (typeof preview)[number]): Measured => {
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(10);
+      const head = doc.splitTextToSize(nm(p.heading || p.section || ""), colW - 14) as string[];
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9.5);
+      const body = doc.splitTextToSize(nm(p.text ?? ""), colW - 5) as string[];
+      let h = Math.max(head.length * 4.6, 5.2) + body.length * 4.3 + 1.5;
 
-    preview.forEach((p, i) => {
-      const x = i % 2 === 0 ? M : M + colW + gutter;
-      if (i % 2 === 0 && i > 0) {
-        rowY = rowMax + 4;
-        rowMax = rowY;
+      const facets = Array.isArray(p.facets) ? p.facets.filter(Boolean) : [];
+      const chipRows: string[][] = [];
+      if (facets.length > 0) {
+        doc.setFont("Montserrat", "semibold");
+        doc.setFontSize(7);
+        let row: string[] = [];
+        let cx = 4;
+        for (const f of facets) {
+          const label = nm(f);
+          const w = doc.getTextWidth(label) + 4;
+          if (row.length > 0 && cx + w > colW - 1) {
+            chipRows.push(row);
+            row = [];
+            cx = 4;
+          }
+          row.push(label);
+          cx += w + 2;
+        }
+        if (row.length > 0) chipRows.push(row);
+        h += (chipRows.length - 1) * 5.4 + 3;
       }
-      const top = rowY;
-      let yy = rowY;
+      return { head, body, chipRows, h };
+    };
+
+    const drawEntry = (p: (typeof preview)[number], m: Measured, i: number, x: number, top: number) => {
+      let yy = top;
       doc.setFont("Poppins", "extrabold");
       doc.setFontSize(13);
       doc.setTextColor(...TEAL);
@@ -431,51 +477,56 @@ export async function generatePairedOnePagerPdf(
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
       doc.setTextColor(...NAVY);
-      const head = doc.splitTextToSize(nm(p.heading || p.section || ""), colW - 14);
-      doc.text(head, x + 12, yy);
-      yy += Math.max(head.length * 4.6, 5.2);
+      doc.text(m.head, x + 12, yy);
+      yy += Math.max(m.head.length * 4.6, 5.2);
       doc.setFont("Montserrat", "normal");
       doc.setFontSize(9.5);
       doc.setTextColor(...BLACK);
-      const body = doc.splitTextToSize(nm(p.text ?? ""), colW - 5);
-      doc.text(body, x + 4, yy);
-      yy += body.length * 4.3 + 1.5;
+      doc.text(m.body, x + 4, yy);
+      yy += m.body.length * 4.3 + 1.5;
 
-      /* facet chips — page two only */
-      const facets = Array.isArray(p.facets) ? p.facets.filter(Boolean) : [];
-      if (facets.length > 0) {
-        let cx = x + 4;
-        doc.setFont("Montserrat", "semibold");
-        doc.setFontSize(7);
-        for (const f of facets) {
-          const label = nm(f);
-          const w = doc.getTextWidth(label) + 4;
-          if (cx + w > x + colW - 1) {
-            cx = x + 4;
-            yy += 5.4;
+      if (m.chipRows.length > 0) {
+        for (let r = 0; r < m.chipRows.length; r++) {
+          let cx = x + 4;
+          doc.setFont("Montserrat", "semibold");
+          doc.setFontSize(7);
+          for (const label of m.chipRows[r]) {
+            const w = doc.getTextWidth(label) + 4;
+            const c = opts.facetColor?.(label) ?? GRAY;
+            doc.setFillColor(c[0], c[1], c[2]);
+            doc.setDrawColor(c[0], c[1], c[2]);
+            doc.setLineWidth(0.2);
+            doc.saveGraphicsState();
+            (doc as any).setGState(new (doc as any).GState({ opacity: 0.12 }));
+            doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "F");
+            doc.restoreGraphicsState();
+            doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "S");
+            doc.setTextColor(c === AMBER ? MUSTARD[0] : c[0], c === AMBER ? MUSTARD[1] : c[1], c === AMBER ? MUSTARD[2] : c[2]);
+            doc.text(label, cx + 2, yy);
+            cx += w + 2;
           }
-          const c = opts.facetColor?.(f) ?? GRAY;
-          doc.setFillColor(c[0], c[1], c[2]);
-          doc.setDrawColor(c[0], c[1], c[2]);
-          doc.setLineWidth(0.2);
-          doc.saveGraphicsState();
-          (doc as any).setGState(new (doc as any).GState({ opacity: 0.12 }));
-          doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "F");
-          doc.restoreGraphicsState();
-          doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "S");
-          doc.setTextColor(c === AMBER ? MUSTARD[0] : c[0], c === AMBER ? MUSTARD[1] : c[1], c === AMBER ? MUSTARD[2] : c[2]);
-          doc.text(label, cx + 2, yy);
-          cx += w + 2;
+          if (r < m.chipRows.length - 1) yy += 5.4;
         }
         yy += 3;
       }
 
       doc.setFillColor(...TEAL);
       doc.rect(x, top - 4, 1, Math.max(yy - top + 2, 6), "F");
-      rowMax = Math.max(rowMax, yy);
-    });
+    };
+
+    const measured = preview.map(measure);
+    for (let i = 0; i < preview.length; i += 2) {
+      const rowH = Math.max(measured[i].h, measured[i + 1]?.h ?? 0);
+      // +4 for the left rule's overshoot above the entry, +4 row gap
+      ensure(rowH + 8);
+      const top = y + 4;
+      drawEntry(preview[i], measured[i], i, M, top);
+      if (preview[i + 1]) drawEntry(preview[i + 1], measured[i + 1], i + 1, M + colW + gutter, top);
+      y = top + rowH + 4;
+    }
     footer();
   }
+
 
   const file = `${opts.nameA}_and_${opts.nameB}_paired-snapshot.pdf`.replace(/\s+/g, "_");
   doc.save(file);
