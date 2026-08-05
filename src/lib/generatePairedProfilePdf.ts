@@ -674,8 +674,20 @@ function twoColumn(
 function paragraphs(ctx: PdfContext, text: string): void {
   const paras = splitParas(text);
   for (let i = 0; i < paras.length; i++) {
-    ctx.bodyText(paras[i]);
-    if (i < paras.length - 1) ctx.y += 2;
+    bodyLines(ctx, paras[i]);
+    if (i < paras.length - 1) ctx.y += 1.5;
+  }
+}
+
+/** Render a list of blocks: cards for v19 object bullets, paragraphs for legacy strings. */
+function renderBlocks(
+  ctx: PdfContext,
+  blocks: ColItem[],
+  accent: readonly [number, number, number] = TEAL,
+): void {
+  for (const blk of blocks) {
+    if (isCardItem(blk)) bulletCard(ctx, toBlock(blk), { accent });
+    else paragraphs(ctx, blockText(blk));
   }
 }
 
