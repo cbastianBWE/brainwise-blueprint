@@ -364,6 +364,8 @@ export default function PairedOnePager({
             )}
 
               {preview.length > 0 && (
+              <>
+              <Head>What is in your full report</Head>
               <div className="grid gap-4 md:grid-cols-2 mt-4">
                 {preview.map((p, i) => (
                   <div key={i} style={{ borderLeft: `3px solid ${TEAL}`, paddingLeft: 12 }}>
@@ -394,6 +396,7 @@ export default function PairedOnePager({
                   </div>
                 ))}
               </div>
+              </>
               )}
             </TabsContent>
           )}

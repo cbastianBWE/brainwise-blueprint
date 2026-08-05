@@ -132,7 +132,9 @@ export function createPdfContext(doc: jsPDF): PdfContext {
 
   const sectionHeading = (title: string, firstContentHeight?: number, eyebrow?: string) => {
     state.currentSectionTitle = "";
-    const eyebrowH = eyebrow ? 3.5 : 0;
+    // 3.5mm of clear space between the eyebrow baseline and the 13pt heading's
+    // cap height (~3.3mm above its baseline), so the eyebrow reads as its own line.
+    const eyebrowH = eyebrow ? 6.8 : 0;
     const headingBlockH = 10 + eyebrowH;
     const reserveH =
       firstContentHeight != null
@@ -145,8 +147,16 @@ export function createPdfContext(doc: jsPDF): PdfContext {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(7);
       doc.setTextColor(...ORANGE);
-      doc.text(eyebrow.toUpperCase(), MARGIN_L, state.y, { charSpace: 0.6 });
-      state.y += 3.5;
+      // Draw glyph by glyph: jsPDF's charSpace also pads after the final glyph,
+      // which rendered as a stray trailing mark on every eyebrow.
+      let ex = MARGIN_L;
+      const label = eyebrow.trim().toUpperCase();
+      for (let i = 0; i < label.length; i++) {
+        const ch = label[i];
+        doc.text(ch, ex, state.y);
+        ex += doc.getTextWidth(ch) + 0.6;
+      }
+      state.y += 6.8;
     }
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
