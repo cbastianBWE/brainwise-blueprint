@@ -42,6 +42,8 @@ export interface PairedOnePagerPdfOpts {
   nm?: (s: string) => string;
   /** Dimension colour for a facet chip, when the facet resolves in the map. */
   facetColor?: (facet: string) => RGB | undefined;
+  /** relationship mode; drives displayed facet labels only, never lookups. */
+  mode?: string | null;
   /** "summary" renders page one only. Defaults to the complete document. */
   scope?: "summary" | "full";
 }
@@ -444,6 +446,9 @@ export async function generatePairedOnePagerPdf(
     y += lead.length * 4.4 + 4;
 
     /* a preview entry is atomic: measured whole, then drawn whole */
+    /** display label -> raw facet name, so colour lookups keep the real name */
+    const chipRaw = new Map<string, string>();
+
     type Measured = { head: string[]; body: string[]; chipRows: string[][]; h: number };
     const measure = (p: (typeof preview)[number]): Measured => {
       doc.setFont("Poppins", "bold");
