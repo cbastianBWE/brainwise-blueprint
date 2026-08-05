@@ -446,10 +446,10 @@ export async function generatePairedOnePagerPdf(
     y += lead.length * 4.4 + 4;
 
     /* a preview entry is atomic: measured whole, then drawn whole */
-    /** display label -> raw facet name, so colour lookups keep the real name */
-    const chipRaw = new Map<string, string>();
+    /** the raw facet name never leaves the chip build: colour is resolved here */
+    type Chip = { label: string; w: number; color: RGB };
 
-    type Measured = { head: string[]; body: string[]; chipRows: string[][]; h: number };
+    type Measured = { head: string[]; body: string[]; chipRows: Chip[][]; h: number };
     const measure = (p: (typeof preview)[number]): Measured => {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
