@@ -409,10 +409,8 @@ export async function generatePairedOnePagerPdf(
       let yy = rowY;
       doc.setFont("Poppins", "extrabold");
       doc.setFontSize(13);
-      if (i % 2 === 0 || true) {
-        doc.setTextColor(...TEAL);
-        doc.text(String(i + 1), x + 4, yy + 0.6);
-      }
+      doc.setTextColor(...TEAL);
+      doc.text(String(i + 1), x + 4, yy + 0.6);
       doc.setFont("Poppins", "bold");
       doc.setFontSize(9.5);
       doc.setTextColor(...NAVY);
