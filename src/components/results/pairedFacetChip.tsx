@@ -156,7 +156,7 @@ export function FacetChip({
     <span
       className="pr-chip"
       onClick={jump}
-      onMouseMove={tip ? (e) => showTip(e, tip) : undefined}
+      onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
       style={{
         ["--pr-chip-delay" as string]: `${delay}ms`,

@@ -171,7 +171,7 @@ function PairDistModal({
               <g key={lab}>
                 <line x1={x.toFixed(1)} y1={44} x2={x.toFixed(1)} y2={base} stroke={c} strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
                 <circle cx={x.toFixed(1)} cy={(base - 34).toFixed(1)} r={9} fill={c}
-                  onMouseMove={(e) => showTip(e, `${lab}: ${Math.round(v)}`)} onMouseLeave={hideTip}
+                  onMouseEnter={(e) => showTip(e, `${lab}: ${Math.round(v)}`)} onMouseLeave={hideTip}
                   style={{ cursor: "pointer" }} />
                 <text x={x.toFixed(1)} y={36} fontSize={12} fill={c} textAnchor="middle" fontWeight={600}>
                   {lab} {Math.round(v)}
@@ -234,7 +234,7 @@ function Radial({ dims, labA, labB }: { dims: { name: string; a: number; b: numb
           const [x, y] = pt(d[key], i);
           return (
             <circle key={`${key}${i}`} cx={x.toFixed(1)} cy={y.toFixed(1)} r={3.8} fill={color}
-              onMouseMove={(e) => showTip(e, `${d.name} ${lab}: ${Math.round(d[key])}`)}
+              onMouseEnter={(e) => showTip(e, `${d.name} ${lab}: ${Math.round(d[key])}`)}
               onMouseLeave={hideTip}
               style={{ cursor: "pointer" }} />
           );
@@ -263,7 +263,7 @@ function AgreementBar({ d, labA, labB }: { d: { name: string; a: number; b: numb
       <div style={{ fontSize: 13, fontWeight: 600, textAlign: "right", color: d.color }}>{d.name}</div>
       <div
         style={{ position: "relative", height: 16 }}
-        onMouseMove={(e) => showTip(e, `${d.name}: ${labA} ${Math.round(a)}, ${labB} ${Math.round(b)} (gap ${gap})`)}
+        onMouseEnter={(e) => showTip(e, `${d.name}: ${labA} ${Math.round(a)}, ${labB} ${Math.round(b)} (gap ${gap})`)}
         onMouseLeave={hideTip}
       >
         <div style={{ position: "absolute", top: 7, left: 0, right: 0, height: 2, background: LINE, borderRadius: 2 }} />
@@ -316,7 +316,7 @@ function DriverCard({
   const accent = kind === "strength" ? GREEN : PSC[shape];
   return (
     <div
-      onMouseMove={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
+      onMouseEnter={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
       onMouseLeave={hideTip}
       style={{
         background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
@@ -1436,7 +1436,7 @@ export default function PairedReport() {
                         <div
                           key={f.itemNumber}
                           id={`facet-${f.itemNumber}`}
-                          onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
+                          onMouseEnter={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
                           onMouseLeave={hideTip}
                           className="pr-card"
                           style={{
