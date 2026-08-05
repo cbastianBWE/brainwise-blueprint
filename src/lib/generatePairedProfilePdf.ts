@@ -110,8 +110,12 @@ function modeTitle(mode: string): string {
    ever reaches cleanMarkdown or nm(). */
 
 export interface PdfBlock {
+  /** bold lead sentence (v19+ object bullets only) */
+  point?: string;
   text: string;
   facets?: string[];
+  /** point began with "The move:" — green rule + THE MOVE label */
+  move?: boolean;
 }
 export type ColItem = string | PdfBlock;
 
@@ -131,6 +135,15 @@ function facetColor(name: string): readonly [number, number, number] {
   return (dom && PDF_DIM_COLOR[dom]) || GRAY;
 }
 
+/** jsPDF has no alpha on fills; blend toward white instead. */
+function tint(c: readonly [number, number, number], a: number): [number, number, number] {
+  return [
+    Math.round(255 + (c[0] - 255) * a),
+    Math.round(255 + (c[1] - 255) * a),
+    Math.round(255 + (c[2] - 255) * a),
+  ];
+}
+
 function asLines(v: string | Bullet[] | undefined | null): string[] {
   if (!v) return [];
   if (Array.isArray(v)) return v.map(bulletToText).filter(Boolean);
@@ -141,8 +154,21 @@ function asBlocks(v: string | Bullet[] | undefined | null): PdfBlock[] {
   if (!v) return [];
   if (Array.isArray(v)) {
     return v
-      .map((b) => ({ text: bulletToText(b), facets: bulletFacets(b) }))
-      .filter((b) => !!b.text);
+      .map((b) => {
+        if (typeof b === "string" || !isBulletObject(b)) {
+          return { text: bulletToText(b), facets: bulletFacets(b) } as PdfBlock;
+        }
+        const move = isMoveBullet(b);
+        const point = move ? stripMovePrefix(b.point ?? "") : (b.point ?? "").trim();
+        const body = (b.body ?? "").trim();
+        return {
+          point: point || undefined,
+          text: point ? body : bulletToText(b),
+          facets: bulletFacets(b),
+          move,
+        } as PdfBlock;
+      })
+      .filter((b) => !!(b.text || b.point));
   }
   return typeof v === "string" ? [{ text: v }] : [];
 }
@@ -153,27 +179,224 @@ function blockText(item: ColItem): string {
 function blockFacets(item: ColItem): string[] {
   return typeof item === "string" ? [] : item.facets ?? [];
 }
-
-/** 8pt italic facet caption, coloured by the first facet's dimension. */
-function facetCaption(ctx: PdfContext, facets: string[], indent = 0): void {
-  if (!facets || facets.length === 0) return;
-  const { doc } = ctx;
-  doc.setFont("Montserrat", "italic");
-  doc.setFontSize(8);
-  const c = facetColor(facets[0]);
-  doc.setTextColor(c[0], c[1], c[2]);
-  const lines: string[] = doc.splitTextToSize(facets.join(" · "), CONTENT_W - indent);
-  for (const l of lines) {
-    ctx.checkPageBreak(4);
-    doc.text(l, MARGIN_L + indent, ctx.y);
-    ctx.y += 4;
-  }
-  doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...BLACK);
-  ctx.y += 1;
+function isCardItem(item: ColItem): boolean {
+  return typeof item !== "string" && (!!item.point || (item.facets ?? []).length > 0);
+}
+function toBlock(item: ColItem): PdfBlock {
+  return typeof item === "string" ? { text: item } : item;
 }
 
+/* ---------- facet chips ---------- */
+
+const CHIP_H = 3.4;
+const CHIP_GAP_X = 1.5;
+const CHIP_GAP_Y = 1.2;
+const CHIP_PAD_X = 1.6;
+
+interface Chip {
+  label: string;
+  w: number;
+  color: readonly [number, number, number];
+}
+
+function chipLayout(
+  doc: jsPDF,
+  facets: string[] | undefined,
+  maxW: number,
+): { rows: Chip[][]; h: number } {
+  const list = (facets ?? []).filter((f) => typeof f === "string" && f.trim());
+  if (list.length === 0) return { rows: [], h: 0 };
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(6.5);
+  const rows: Chip[][] = [];
+  let row: Chip[] = [];
+  let rowW = 0;
+  for (const raw of list) {
+    const label = cleanMarkdown(raw).trim();
+    if (!label) continue;
+    const w = Math.min(maxW, doc.getTextWidth(label) + CHIP_PAD_X * 2 + 1.5);
+    if (row.length > 0 && rowW + CHIP_GAP_X + w > maxW) {
+      rows.push(row);
+      row = [];
+      rowW = 0;
+    }
+    row.push({ label, w, color: facetColor(raw) });
+    rowW += (row.length > 1 ? CHIP_GAP_X : 0) + w;
+  }
+  if (row.length > 0) rows.push(row);
+  const h = rows.length === 0 ? 0 : rows.length * CHIP_H + (rows.length - 1) * CHIP_GAP_Y;
+  return { rows, h };
+}
+
+function drawChipRows(doc: jsPDF, rows: Chip[][], x: number, top: number): void {
+  let y = top;
+  for (const row of rows) {
+    let cx = x;
+    for (const chip of row) {
+      const fill = tint(chip.color, 0.1);
+      const border = tint(chip.color, 0.3);
+      doc.setFillColor(fill[0], fill[1], fill[2]);
+      doc.setDrawColor(border[0], border[1], border[2]);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(cx, y, chip.w, CHIP_H, CHIP_H / 2, CHIP_H / 2, "FD");
+      doc.setFont("Montserrat", "semibold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(chip.color[0], chip.color[1], chip.color[2]);
+      doc.text(chip.label, cx + chip.w / 2, y + CHIP_H / 2 + 0.85, { align: "center" });
+      cx += chip.w + CHIP_GAP_X;
+    }
+    y += CHIP_H + CHIP_GAP_Y;
+  }
+}
+
+/** Pill chips for a facet list, wrapping within the available width. */
+function facetChips(
+  ctx: PdfContext,
+  facets: string[] | undefined,
+  opts: { indent?: number; maxWidth?: number } = {},
+): void {
+  const indent = opts.indent ?? 0;
+  const maxW = opts.maxWidth ?? CONTENT_W - indent;
+  const { rows, h } = chipLayout(ctx.doc, facets, maxW);
+  if (rows.length === 0) return;
+  ctx.ensureBlockSpace(h + 1);
+  drawChipRows(ctx.doc, rows, MARGIN_L + indent, ctx.y);
+  ctx.y += h + 1.5;
+  ctx.doc.setFont("Montserrat", "normal");
+  ctx.doc.setFontSize(BODY_SIZE);
+  ctx.doc.setTextColor(...BLACK);
+}
+
+/* ---------- bullet cards ---------- */
+
+const BODY_SIZE = 8.5;
+const LH_BODY = 4.1;
+const LH_POINT = 4.4;
+const CARD_PAD = 2.5;
+const CARD_GAP = 2;
+const CARD_RULE_W = 1.5;
+
+interface CardMeasure {
+  h: number;
+  pointLines: string[];
+  textLines: string[];
+  chips: { rows: Chip[][]; h: number };
+  innerW: number;
+  accent: readonly [number, number, number];
+  move: boolean;
+}
+
+function measureCard(
+  doc: jsPDF,
+  b: PdfBlock,
+  w: number,
+  accent: readonly [number, number, number],
+): CardMeasure {
+  const innerW = w - CARD_PAD * 2 - CARD_RULE_W;
+  const move = !!b.move;
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(9.5);
+  const pointLines: string[] = b.point
+    ? doc.splitTextToSize(cleanMarkdown(b.point), innerW)
+    : [];
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(BODY_SIZE);
+  const textLines: string[] = b.text ? doc.splitTextToSize(cleanMarkdown(b.text), innerW) : [];
+  const chips = chipLayout(doc, b.facets, innerW);
+  const h =
+    CARD_PAD * 2 +
+    (move ? 3.2 : 0) +
+    pointLines.length * LH_POINT +
+    textLines.length * LH_BODY +
+    (chips.h > 0 ? chips.h + 0.8 : 0);
+  return { h, pointLines, textLines, chips, innerW, accent: move ? GREEN : accent, move };
+}
+
+function drawCardAt(
+  doc: jsPDF,
+  m: CardMeasure,
+  x: number,
+  y: number,
+  w: number,
+  framed = true,
+): void {
+  if (framed) {
+    doc.setDrawColor(224, 222, 216);
+    doc.setLineWidth(0.15);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, y, w, m.h, 1.6, 1.6, "FD");
+    doc.setFillColor(m.accent[0], m.accent[1], m.accent[2]);
+    doc.rect(x, y, CARD_RULE_W, m.h, "F");
+  }
+  const tx = x + CARD_RULE_W + CARD_PAD;
+  let cy = y + CARD_PAD + 2.6;
+  if (m.move) {
+    doc.setFont("Montserrat", "semibold");
+    doc.setFontSize(6.5);
+    doc.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+    doc.text("THE MOVE", tx, cy, { charSpace: 0.5 });
+    cy += 3.2;
+  }
+  if (m.pointLines.length > 0) {
+    doc.setFont("Poppins", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...NAVY);
+    for (const l of m.pointLines) {
+      doc.text(l, tx, cy);
+      cy += LH_POINT;
+    }
+  }
+  if (m.textLines.length > 0) {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(BODY_SIZE);
+    doc.setTextColor(...BLACK);
+    for (const l of m.textLines) {
+      doc.text(l, tx, cy);
+      cy += LH_BODY;
+    }
+  }
+  if (m.chips.rows.length > 0) {
+    drawChipRows(doc, m.chips.rows, tx, cy - 2.6 + 0.8);
+  }
+}
+
+/** A single full-width (or indented) bullet card. */
+function bulletCard(
+  ctx: PdfContext,
+  block: PdfBlock,
+  opts: { indent?: number; width?: number; accent?: readonly [number, number, number] } = {},
+): void {
+  const indent = opts.indent ?? 0;
+  const w = opts.width ?? CONTENT_W - indent;
+  const m = measureCard(ctx.doc, block, w, opts.accent ?? TEAL);
+  const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
+  if (m.h > PAGE_AVAIL) {
+    // taller than a page: render unframed rather than loop forever
+    drawCardAt(ctx.doc, m, MARGIN_L + indent, ctx.y, w, false);
+    ctx.y += m.h + CARD_GAP;
+    return;
+  }
+  ctx.reserveBlockOrAllow(m.h + CARD_GAP);
+  drawCardAt(ctx.doc, m, MARGIN_L + indent, ctx.y, w);
+  ctx.y += m.h + CARD_GAP;
+}
+
+/** 8.5pt body paragraph at the tightened leading. */
+function bodyLines(ctx: PdfContext, text: string, indent = 0): void {
+  const { doc } = ctx;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(BODY_SIZE);
+  doc.setTextColor(...BLACK);
+  const lines: string[] = doc.splitTextToSize(cleanMarkdown(text), CONTENT_W - indent);
+  for (const l of lines) {
+    ctx.checkPageBreak(LH_BODY + 0.5);
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(BODY_SIZE);
+    doc.setTextColor(...BLACK);
+    doc.text(l, MARGIN_L + indent, ctx.y);
+    ctx.y += LH_BODY;
+  }
+}
 
 /** Bordered amber callout used for conflict.safety / repair.safety. */
 function safetyCallout(ctx: PdfContext, title: string, text: string): void {
@@ -181,9 +404,9 @@ function safetyCallout(ctx: PdfContext, title: string, text: string): void {
   if (!body) return;
   const { doc } = ctx;
   doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(BODY_SIZE);
   const lines: string[] = doc.splitTextToSize(cleanMarkdown(body), CONTENT_W - 12);
-  const boxH = 6 + 4.5 + lines.length * 4.5 + 4;
+  const boxH = 5.5 + 4.2 + lines.length * LH_BODY + 3.5;
   ctx.ensureBlockSpace(boxH + 3);
   const top = ctx.y;
   doc.setDrawColor(AMBER[0], AMBER[1], AMBER[2]);
@@ -192,64 +415,120 @@ function safetyCallout(ctx: PdfContext, title: string, text: string): void {
   doc.setFillColor(AMBER[0], AMBER[1], AMBER[2]);
   doc.rect(MARGIN_L, top, 1.5, boxH, "F");
 
-  let y = top + 6;
+  let y = top + 5.5;
   doc.setFont("Poppins", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...MUSTARD);
   doc.text(title, MARGIN_L + 5, y);
-  y += 4.5;
+  y += 4.2;
   doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(BODY_SIZE);
   doc.setTextColor(...BLACK);
   for (const l of lines) {
     doc.text(l, MARGIN_L + 5, y);
-    y += 4.5;
+    y += LH_BODY;
   }
-  ctx.y = top + boxH + 4;
+  ctx.y = top + boxH + 3;
 }
 
-/** Numbered sequence (repair steps, avoid-conflict) accepting both shapes. */
+/** Numbered sequence with teal numeral discs and a connector between them. */
 function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => string): void {
   const { doc } = ctx;
+  const DISC_R = 2.25;
+  const discX = MARGIN_L + DISC_R;
+  const textX = MARGIN_L + DISC_R * 2 + 3;
+  const textW = CONTENT_W - (textX - MARGIN_L);
+  let prevBottom: number | null = null;
+
   items.forEach((raw, i) => {
-    const text = nm(bulletToText(raw));
-    if (!text) return;
-    const lines: string[] = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(text)}`, CONTENT_W - 6);
-    for (const l of lines) {
-      ctx.checkPageBreak(5);
-      doc.setFont("Montserrat", "normal");
+    const isObj = typeof raw !== "string" && isBulletObject(raw);
+    const point = isObj ? nm((raw as { point?: string }).point ?? "").trim() : "";
+    const bodyRaw = isObj
+      ? nm((raw as { body?: string }).body ?? "").trim()
+      : nm(bulletToText(raw));
+    if (!point && !bodyRaw) return;
+
+    doc.setFont("Poppins", "bold");
+    doc.setFontSize(9);
+    const pointLines: string[] = point ? doc.splitTextToSize(cleanMarkdown(point), textW) : [];
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(BODY_SIZE);
+    const bodyL: string[] = bodyRaw ? doc.splitTextToSize(cleanMarkdown(bodyRaw), textW) : [];
+    const chips = chipLayout(doc, bulletFacets(raw), textW);
+    const blockH =
+      Math.max(DISC_R * 2, pointLines.length * LH_POINT + bodyL.length * LH_BODY) +
+      (chips.h > 0 ? chips.h + 1 : 0) +
+      2.5;
+
+    const before = ctx.y;
+    ctx.reserveBlockOrAllow(blockH);
+    if (ctx.y !== before) prevBottom = null;
+
+    const top = ctx.y;
+    // connector
+    if (prevBottom != null && prevBottom < top - 0.5) {
+      doc.setDrawColor(TEAL[0], TEAL[1], TEAL[2]);
+      doc.setLineWidth(0.3);
+      doc.line(discX, prevBottom, discX, top);
+    }
+    doc.setFillColor(TEAL[0], TEAL[1], TEAL[2]);
+    doc.circle(discX, top + DISC_R, DISC_R, "F");
+    doc.setFont("Poppins", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text(String(i + 1), discX, top + DISC_R + 1.1, { align: "center" });
+
+    let y = top + 3.2;
+    if (pointLines.length > 0) {
+      doc.setFont("Poppins", "bold");
       doc.setFontSize(9);
+      doc.setTextColor(...NAVY);
+      for (const l of pointLines) {
+        doc.text(l, textX, y);
+        y += LH_POINT;
+      }
+    }
+    if (bodyL.length > 0) {
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(BODY_SIZE);
       doc.setTextColor(...BLACK);
-      doc.text(l, MARGIN_L + 3, ctx.y);
-      ctx.y += 4.5;
+      for (const l of bodyL) {
+        doc.text(l, textX, y);
+        y += LH_BODY;
+      }
     }
-    const fx = bulletFacets(raw);
-    if (fx.length > 0) {
-      ctx.checkPageBreak(4);
-      doc.setFont("Montserrat", "italic");
-      doc.setFontSize(8);
-      doc.setTextColor(...facetColor(fx[0]));
-      doc.text(fx.join(" · "), MARGIN_L + 6, ctx.y);
-      ctx.y += 4;
+    if (chips.rows.length > 0) {
+      drawChipRows(doc, chips.rows, textX, y - 2.6 + 1);
+      y += chips.h + 1;
     }
-    ctx.y += 1;
+    prevBottom = top + DISC_R * 2;
+    ctx.y = Math.max(y, top + DISC_R * 2) + 2.5;
   });
 }
 
-function bulletList(ctx: PdfContext, items: string[], indent = 6): void {
+function bulletList(ctx: PdfContext, items: ColItem[], indent = 6): void {
   const { doc } = ctx;
-  doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...BLACK);
   for (const raw of items) {
     if (!raw) continue;
-    const lines = doc.splitTextToSize(cleanMarkdown(raw), CONTENT_W - indent - 4);
-    ctx.ensureBlockSpace(Math.min(20, lines.length * 4.5 + 2));
+    if (isCardItem(raw)) {
+      bulletCard(ctx, toBlock(raw), { indent, width: CONTENT_W - indent });
+      continue;
+    }
+    const txt = blockText(raw);
+    if (!txt) continue;
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(BODY_SIZE);
+    doc.setTextColor(...BLACK);
+    const lines = doc.splitTextToSize(cleanMarkdown(txt), CONTENT_W - indent - 4);
+    ctx.ensureBlockSpace(Math.min(20, lines.length * LH_BODY + 2));
     for (let i = 0; i < lines.length; i++) {
-      ctx.checkPageBreak(5);
+      ctx.checkPageBreak(LH_BODY + 0.5);
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(BODY_SIZE);
+      doc.setTextColor(...BLACK);
       if (i === 0) doc.text("•", MARGIN_L + indent - 4, ctx.y);
       doc.text(lines[i], MARGIN_L + indent, ctx.y);
-      ctx.y += 4.5;
+      ctx.y += LH_BODY;
     }
     ctx.y += 1;
   }
@@ -269,23 +548,73 @@ function twoColumn(
   leftBody: ColItem[],
   rightTitle: string,
   rightBody: ColItem[],
-  opts: { bulleted?: boolean } = {},
+  opts: {
+    bulleted?: boolean;
+    /** person legend dots drawn before each column title */
+    persons?: boolean;
+  } = {},
 ): void {
   const { doc } = ctx;
   const bulleted = opts.bulleted ?? false;
   const colGap = 6;
   const colW = (CONTENT_W - colGap) / 2;
-  const lineH = 4.5;
+  const lineH = LH_BODY;
   const leftX = MARGIN_L;
   const rightX = MARGIN_L + colW + colGap;
+  const persons = opts.persons ?? false;
+  const titleIndent = persons ? 5 : 0;
 
+  const drawTitles = (y: number): number => {
+    if (persons) {
+      doc.setFillColor(...NAVY);
+      doc.circle(leftX + 1.1, y - 1.1, 1.1, "F");
+      doc.setFillColor(...MUSTARD);
+      doc.circle(rightX + 1.1, y - 1.1, 1.1, "F");
+    }
+    doc.setFont("Poppins", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...NAVY);
+    doc.text(leftTitle, leftX + titleIndent, y);
+    doc.text(rightTitle, rightX + titleIndent, y);
+    return y + 4.5;
+  };
+
+  /* ---- card mode: object bullets on either side ---- */
+  const anyCards = [...leftBody, ...rightBody].some(isCardItem);
+  if (anyCards) {
+    const accentL = persons ? NAVY : TEAL;
+    const accentR = persons ? MUSTARD : TEAL;
+    ctx.ensureBlockSpace(4.5 + 14);
+    let y = drawTitles(ctx.y);
+    const n = Math.max(leftBody.length, rightBody.length);
+    for (let i = 0; i < n; i++) {
+      const l = leftBody[i] ? measureCard(doc, toBlock(leftBody[i]), colW, accentL) : null;
+      const r = rightBody[i] ? measureCard(doc, toBlock(rightBody[i]), colW, accentR) : null;
+      const rowH = Math.max(l?.h ?? 0, r?.h ?? 0);
+      if (rowH === 0) continue;
+      if (y + rowH > PAGE_H - MARGIN_B && rowH <= PAGE_H - MARGIN_T - MARGIN_B) {
+        ctx.y = y;
+        ctx.addFooter();
+        doc.addPage();
+        ctx.renderContinuationHeader();
+        y = drawTitles(MARGIN_T);
+      }
+      if (l) drawCardAt(doc, l, leftX, y, colW);
+      if (r) drawCardAt(doc, r, rightX, y, colW);
+      y += rowH + CARD_GAP;
+    }
+    ctx.y = y + 2;
+    return;
+  }
+
+  /* ---- legacy plain-string mode ---- */
   doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(BODY_SIZE);
   const bulletW = doc.getTextWidth("• ");
 
   const wrapCol = (body: ColItem[], x: number): ColLine[] => {
     doc.setFont("Montserrat", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(BODY_SIZE);
     const out: ColLine[] = [];
     body.forEach((item, idx) => {
       const clean = cleanMarkdown(blockText(item));
@@ -299,52 +628,26 @@ function twoColumn(
         const wrapped: string[] = doc.splitTextToSize(clean, colW - 5);
         wrapped.forEach((ln) => out.push({ text: ln, x }));
       }
-      const fx = blockFacets(item);
-      if (fx.length > 0) {
-        doc.setFont("Montserrat", "italic");
-        doc.setFontSize(8);
-        const fLines: string[] = doc.splitTextToSize(fx.join(" · "), colW - 5);
-        fLines.forEach((ln) => out.push({ text: ln, x, facetColor: facetColor(fx[0]) }));
-        doc.setFont("Montserrat", "normal");
-        doc.setFontSize(9);
-      }
       if (!bulleted && idx < body.length - 1) out.push({ text: "", x });
     });
     return out;
   };
 
-  const drawTitles = (y: number): number => {
-    doc.setFont("Poppins", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...NAVY);
-    doc.text(leftTitle, leftX, y);
-    doc.text(rightTitle, rightX, y);
-    return y + 5;
-  };
-
   const leftLines = wrapCol(leftBody, leftX);
   const rightLines = wrapCol(rightBody, rightX);
 
-  ctx.ensureBlockSpace(5 + lineH * 3);
+  ctx.ensureBlockSpace(4.5 + lineH * 3);
   let y = drawTitles(ctx.y);
   const bodyStyle = () => {
     doc.setFont("Montserrat", "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(BODY_SIZE);
     doc.setTextColor(...BLACK);
   };
   bodyStyle();
 
   const drawLine = (l: ColLine | undefined, yy: number) => {
     if (!l || !l.text) return;
-    if (l.facetColor) {
-      doc.setFont("Montserrat", "italic");
-      doc.setFontSize(8);
-      doc.setTextColor(l.facetColor[0], l.facetColor[1], l.facetColor[2]);
-      doc.text(l.text, l.x, yy);
-      bodyStyle();
-    } else {
-      doc.text(l.text, l.x, yy);
-    }
+    doc.text(l.text, l.x, yy);
   };
 
   const n = Math.max(leftLines.length, rightLines.length);
