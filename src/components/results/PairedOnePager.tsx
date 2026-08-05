@@ -323,10 +323,12 @@ export default function PairedOnePager({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <Eyebrow>BrainWise · Paired Profile · Page two of two</Eyebrow>
-                  <p style={{ fontSize: 13, lineHeight: 1.55, color: GRAY, margin: 0 }}>
-                    Page one is the short version. Your full report goes deeper on each of these,
-                    with the patterns behind them mapped question by question.
-                  </p>
+                  {preview.length > 0 && (
+                    <p style={{ fontSize: 13.5, lineHeight: 1.55, color: GRAY, margin: 0 }}>
+                      Page one is the short version. Your full report goes deeper on each of these,
+                      with the patterns behind them mapped question by question.
+                    </p>
+                  )}
                 </div>
                 <DownloadButton />
               </div>
@@ -392,6 +394,7 @@ export default function PairedOnePager({
                   </div>
                 ))}
               </div>
+              )}
             </TabsContent>
           )}
         </Tabs>
