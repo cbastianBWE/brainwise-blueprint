@@ -1321,14 +1321,11 @@ export default function PairedReport() {
               </div>
               {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
                 <div>
-                  <h4 style={{ margin: "0 0 8px", color: NAVY }}>Avoiding communication conflict</h4>
-                  <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
-                    {communication.avoid_conflict.map((t, i) => (
-                      <li key={i} style={{ margin: "4px 0", lineHeight: 1.6, fontSize: 16 }}>{nm(t)}</li>
-                    ))}
-                  </ol>
+                  <h4 style={{ margin: "0 0 10px", color: NAVY }}>Avoiding communication conflict</h4>
+                  <Sequence items={communication.avoid_conflict} blockKey="communication:avoid_conflict" />
                 </div>
               )}
+
             </div>
           </>
         )}
