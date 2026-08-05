@@ -685,9 +685,10 @@ export async function generatePairedProfilePdf(
     doc.text("In general", MARGIN_L, ctx.y);
     ctx.y += 5;
     for (const blk of nmBlocks(s.communication.general)) {
-      paragraphs(ctx, blk.text);
-      facetCaption(ctx, blk.facets ?? []);
+      paragraphs(ctx, blockText(blk));
+      facetCaption(ctx, blockFacets(blk));
     }
+
 
     ctx.y += 3;
     ctx.checkPageBreak(6);
