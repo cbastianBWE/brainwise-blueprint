@@ -1294,15 +1294,16 @@ export default function PairedReport() {
             <h2 style={sectionLabel}>What each of you needs from the other</h2>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>What {firstA} needs from {firstB}</div>
-                  <Bullets text={needs.a_needs_from_b} blockKey="needs:a_from_b" />
+                  <Bullets text={needs.a_needs_from_b} blockKey="needs:a_from_b" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>What {firstB} needs from {firstA}</div>
-                  <Bullets text={needs.b_needs_from_a} blockKey="needs:b_from_a" />
+                  <Bullets text={needs.b_needs_from_a} blockKey="needs:b_from_a" tone="b" />
                 </div>
               </div>
+
             </div>
           </>
         )}
