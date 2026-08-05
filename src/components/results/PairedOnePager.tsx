@@ -252,7 +252,11 @@ export default function PairedOnePager({
                   </span>
                 </div>
               </div>
-              <DownloadButton />
+              <DownloadButton
+                scope="summary"
+                label="One-page PDF"
+                title="Download just the one-page summary"
+              />
             </div>
 
             {data.opening && (
