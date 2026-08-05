@@ -147,11 +147,6 @@ function tint(c: readonly [number, number, number], a: number): [number, number,
   ];
 }
 
-function asLines(v: string | Bullet[] | undefined | null): string[] {
-  if (!v) return [];
-  if (Array.isArray(v)) return v.map(bulletToText).filter(Boolean);
-  return typeof v === "string" ? [v] : [];
-}
 
 function asBlocks(v: string | Bullet[] | undefined | null): PdfBlock[] {
   if (!v) return [];
@@ -178,9 +173,6 @@ function asBlocks(v: string | Bullet[] | undefined | null): PdfBlock[] {
 
 function blockText(item: ColItem): string {
   return typeof item === "string" ? item : item.text;
-}
-function blockFacets(item: ColItem): string[] {
-  return typeof item === "string" ? [] : item.facets ?? [];
 }
 function isCardItem(item: ColItem): boolean {
   return typeof item !== "string" && (!!item.point || (item.facets ?? []).length > 0);
@@ -253,22 +245,6 @@ function drawChipRows(doc: jsPDF, rows: Chip[][], x: number, top: number): void 
 }
 
 /** Pill chips for a facet list, wrapping within the available width. */
-function facetChips(
-  ctx: PdfContext,
-  facets: string[] | undefined,
-  opts: { indent?: number; maxWidth?: number } = {},
-): void {
-  const indent = opts.indent ?? 0;
-  const maxW = opts.maxWidth ?? CONTENT_W - indent;
-  const { rows, h } = chipLayout(ctx.doc, facets, maxW);
-  if (rows.length === 0) return;
-  ctx.ensureBlockSpace(h + 1);
-  drawChipRows(ctx.doc, rows, MARGIN_L + indent, ctx.y);
-  ctx.y += h + 1.5;
-  ctx.doc.setFont("Montserrat", "normal");
-  ctx.doc.setFontSize(BODY_SIZE);
-  ctx.doc.setTextColor(...BLACK);
-}
 
 /* ---------- bullet cards ---------- */
 
@@ -509,33 +485,6 @@ function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => st
   });
 }
 
-function bulletList(ctx: PdfContext, items: ColItem[], indent = 6): void {
-  const { doc } = ctx;
-  for (const raw of items) {
-    if (!raw) continue;
-    if (isCardItem(raw)) {
-      bulletCard(ctx, toBlock(raw), { indent, width: CONTENT_W - indent });
-      continue;
-    }
-    const txt = blockText(raw);
-    if (!txt) continue;
-    doc.setFont("Montserrat", "normal");
-    doc.setFontSize(BODY_SIZE);
-    doc.setTextColor(...BLACK);
-    const lines = doc.splitTextToSize(cleanMarkdown(txt), CONTENT_W - indent - 4);
-    ctx.ensureBlockSpace(Math.min(20, lines.length * LH_BODY + 2));
-    for (let i = 0; i < lines.length; i++) {
-      ctx.checkPageBreak(LH_BODY + 0.5);
-      doc.setFont("Montserrat", "normal");
-      doc.setFontSize(BODY_SIZE);
-      doc.setTextColor(...BLACK);
-      if (i === 0) doc.text("•", MARGIN_L + indent - 4, ctx.y);
-      doc.text(lines[i], MARGIN_L + indent, ctx.y);
-      ctx.y += LH_BODY;
-    }
-    ctx.y += 1;
-  }
-}
 
 
 interface ColLine {
