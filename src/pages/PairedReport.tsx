@@ -1412,19 +1412,16 @@ export default function PairedReport() {
             <div style={cardStyle}>
               <div style={{ marginBottom: 10 }}><Paras text={intimacy.overview} style={{ maxWidth: "none" }} blockKey="intimacy:overview" /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
-                    {(intimacy.a ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}><HighlightableText blockKey={`intimacy:a:${i}`} text={nm(t)} /></li>)}
-                  </ul>
+                  <Bullets text={intimacy.a} blockKey="intimacy:a" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <ul style={{ margin: 0, paddingLeft: 22, listStyleType: "disc", fontSize: 16, lineHeight: 1.6 }}>
-                    {(intimacy.b ?? []).map((t, i) => <li key={i} style={{ margin: "4px 0" }}><HighlightableText blockKey={`intimacy:b:${i}`} text={nm(t)} /></li>)}
-                  </ul>
+                  <Bullets text={intimacy.b} blockKey="intimacy:b" tone="b" />
                 </div>
               </div>
+
               <div style={{ fontSize: 13, color: GRAY, fontStyle: "italic", marginTop: 10 }}>
                 {intimacy.disclaimer || ROMANTIC_DEFAULT_DISCLAIMER}
               </div>
