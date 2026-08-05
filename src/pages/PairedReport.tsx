@@ -1274,15 +1274,16 @@ export default function PairedReport() {
             <h2 style={sectionLabel}>What is going on inside each of you</h2>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
-                  <Bullets text={within.a} blockKey="within:a" />
+                  <Bullets text={within.a} blockKey="within:a" tone="a" />
                 </div>
-                <div style={pbox}>
+                <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                   <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
-                  <Bullets text={within.b} blockKey="within:b" />
+                  <Bullets text={within.b} blockKey="within:b" tone="b" />
                 </div>
               </div>
+
             </div>
           </>
         )}
