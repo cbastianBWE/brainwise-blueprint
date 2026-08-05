@@ -115,21 +115,22 @@ export default function PairedOnePager({
   dateGenerated,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [downloading, setDownloading] = useState<null | "summary" | "full">(null);
 
   const preview = Array.isArray(data.report_preview) ? data.report_preview.filter(Boolean) : [];
   const talkAbout = Array.isArray(data.talk_about) ? data.talk_about.filter(Boolean) : [];
   const watch = Array.isArray(data.watch) ? data.watch.filter(Boolean) : [];
   const hasPage2 = preview.length > 0 || talkAbout.length > 0;
 
-  const download = async () => {
-    setDownloading(true);
+  const download = async (scope: "summary" | "full") => {
+    setDownloading(scope);
     try {
       await generatePairedOnePagerPdf(data, {
         nameA: firstA,
         nameB: firstB,
         dateGenerated,
         nm,
+        scope,
         facetColor: (f) => {
           const domain = lookupFacet(f)?.domain;
           const hex = domain ? DIM_COLOR[domain] : undefined;
@@ -137,18 +138,31 @@ export default function PairedOnePager({
         },
       });
     } finally {
-      setDownloading(false);
+      setDownloading(null);
     }
   };
 
-  const DownloadButton = () => (
-    <Button size="sm" onClick={download} disabled={downloading}>
-      {downloading ? (
+  const DownloadButton = ({
+    scope,
+    label,
+    title,
+  }: {
+    scope: "summary" | "full";
+    label: string;
+    title: string;
+  }) => (
+    <Button
+      size="sm"
+      title={title}
+      onClick={() => download(scope)}
+      disabled={downloading !== null}
+    >
+      {downloading === scope ? (
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
       ) : (
         <Download className="mr-2 h-4 w-4" />
       )}
-      PDF
+      {label}
     </Button>
   );
 
