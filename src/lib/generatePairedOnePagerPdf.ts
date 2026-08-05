@@ -41,6 +41,8 @@ export interface PairedOnePagerPdfOpts {
   nm?: (s: string) => string;
   /** Dimension colour for a facet chip, when the facet resolves in the map. */
   facetColor?: (facet: string) => RGB | undefined;
+  /** "summary" renders page one only. Defaults to the complete document. */
+  scope?: "summary" | "full";
 }
 
 export async function generatePairedOnePagerPdf(
@@ -351,6 +353,14 @@ export async function generatePairedOnePagerPdf(
   layoutPageOne(step, true);
   footer();
 
+  const baseName = `${opts.nameA}_and_${opts.nameB}`.replace(/\s+/g, "_");
+  const fullFile = `${baseName}_paired-snapshot.pdf`;
+
+  if (opts.scope === "summary") {
+    doc.save(`${baseName}_paired-snapshot_one-page.pdf`);
+    return;
+  }
+
   /* ---------- page two onwards: flowing, paginated ---------- */
   if (preview.length > 0 || talkAbout.length > 0) {
     doc.addPage();
@@ -416,8 +426,7 @@ export async function generatePairedOnePagerPdf(
 
     if (preview.length === 0) {
       footer();
-      const only = `${opts.nameA}_and_${opts.nameB}_paired-snapshot.pdf`.replace(/\s+/g, "_");
-      doc.save(only);
+      doc.save(fullFile);
       return;
     }
 
@@ -527,7 +536,5 @@ export async function generatePairedOnePagerPdf(
     footer();
   }
 
-
-  const file = `${opts.nameA}_and_${opts.nameB}_paired-snapshot.pdf`.replace(/\s+/g, "_");
-  doc.save(file);
+  doc.save(fullFile);
 }
