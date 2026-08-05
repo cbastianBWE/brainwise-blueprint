@@ -1340,27 +1340,28 @@ export default function PairedReport() {
             <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ color: GRAY, maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={cardStyle}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                <div style={pbox}>
+                <div style={pbox} className="pr-card">
                   <div style={boxLabel}>Mitigate the unhealthy kind</div>
                   <Bullets text={conflict.mitigate} blockKey="conflict:mitigate" />
                 </div>
-                <div style={pbox}>
+                <div style={pbox} className="pr-card">
                   <div style={boxLabel}>Promote the healthy kind</div>
                   <Bullets text={conflict.promote_healthy} blockKey="conflict:promote" />
                 </div>
               </div>
+              <SafetyCallout text={conflict.safety} blockKey="conflict:safety" />
             </div>
             {conflict.per_person && (
               <div style={cardStyle}>
                 <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 10, color: GRAY }}>Where each of you may be vulnerable in conflict</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="two-grid">
-                  <div style={pbox}>
+                  <div style={{ ...pbox, ...personDim("a") }} className="pr-card">
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_A }}>{nameA}</div>
                     <Paras text={conflict.per_person.a.read} blockKey="conflict:per_person:a:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
                     <Paras text={conflict.per_person.a.counter_move} blockKey="conflict:per_person:a:counter" />
                   </div>
-                  <div style={pbox}>
+                  <div style={{ ...pbox, ...personDim("b") }} className="pr-card">
                     <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6, color: COLOR_B }}>{nameB}</div>
                     <Paras text={conflict.per_person.b.read} blockKey="conflict:per_person:b:read" />
                     <div style={{ ...boxLabel, marginTop: 10 }}>What helps most</div>
@@ -1369,6 +1370,7 @@ export default function PairedReport() {
                 </div>
               </div>
             )}
+
           </>
         )}
 
