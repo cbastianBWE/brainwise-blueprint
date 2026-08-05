@@ -61,7 +61,7 @@ export interface PdfContext {
   checkPageBreak: (needed: number) => void;
   ensureBlockSpace: (needed?: number) => void;
   reserveBlockOrAllow: (totalH: number) => void;
-  sectionHeading: (title: string, firstContentHeight?: number) => void;
+  sectionHeading: (title: string, firstContentHeight?: number, eyebrow?: string) => void;
   bodyText: (text: string, indent?: number) => void;
   setCurrentSection: (title: string) => void;
 }
@@ -130,9 +130,10 @@ export function createPdfContext(doc: jsPDF): PdfContext {
 
   const atTopOfPage = () => state.y <= MARGIN_T + 5;
 
-  const sectionHeading = (title: string, firstContentHeight?: number) => {
+  const sectionHeading = (title: string, firstContentHeight?: number, eyebrow?: string) => {
     state.currentSectionTitle = "";
-    const headingBlockH = 10;
+    const eyebrowH = eyebrow ? 3.5 : 0;
+    const headingBlockH = 10 + eyebrowH;
     const reserveH =
       firstContentHeight != null
         ? Math.max(MIN_BLOCK_SPACE, headingBlockH + firstContentHeight)
@@ -140,6 +141,13 @@ export function createPdfContext(doc: jsPDF): PdfContext {
     ensureBlockSpace(reserveH);
     state.currentSectionTitle = title;
     if (!atTopOfPage()) state.y += 4;
+    if (eyebrow) {
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(...ORANGE);
+      doc.text(eyebrow.toUpperCase(), MARGIN_L, state.y, { charSpace: 0.6 });
+      state.y += 3.5;
+    }
     doc.setFontSize(13);
     doc.setTextColor(...NAVY);
     doc.setFont("Poppins", "bold");
