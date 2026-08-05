@@ -714,9 +714,9 @@ export async function generatePairedProfilePdf(
     twoColumn(
       ctx,
       "Mitigate",
-      asLines(s.conflict.mitigate).map(nm),
+      nmBlocks(s.conflict.mitigate),
       "Promote healthy",
-      asLines(s.conflict.promote_healthy).map(nm),
+      nmBlocks(s.conflict.promote_healthy),
       { bulleted: true },
     );
     if (s.conflict.per_person) {
@@ -724,12 +724,26 @@ export async function generatePairedProfilePdf(
       twoColumn(
         ctx,
         `${data.firstA}: read + counter-move`,
-        [nm(s.conflict.per_person.a.read), nm(s.conflict.per_person.a.counter_move)],
+        [
+          { text: nm(s.conflict.per_person.a.read) },
+          {
+            text: nm(s.conflict.per_person.a.counter_move),
+            facets: (s.conflict.per_person.a.facets ?? []).map(nm),
+          },
+        ],
         `${data.firstB}: read + counter-move`,
-        [nm(s.conflict.per_person.b.read), nm(s.conflict.per_person.b.counter_move)],
+        [
+          { text: nm(s.conflict.per_person.b.read) },
+          {
+            text: nm(s.conflict.per_person.b.counter_move),
+            facets: (s.conflict.per_person.b.facets ?? []).map(nm),
+          },
+        ],
       );
     }
+    safetyCallout(ctx, "If this feels unsafe", nm(s.conflict.safety ?? ""));
   }
+
 
   // 9b. leader actions (work mode only)
   if (
