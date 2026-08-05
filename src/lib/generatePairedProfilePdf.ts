@@ -697,7 +697,11 @@ export async function generatePairedProfilePdf(
     doc.setTextColor(...NAVY);
     doc.text("Under pressure", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, nm(line));
+    for (const blk of nmBlocks(s.communication.under_pressure)) {
+      paragraphs(ctx, blockText(blk));
+      facetCaption(ctx, blockFacets(blk));
+    }
+
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
       ctx.checkPageBreak(6);
