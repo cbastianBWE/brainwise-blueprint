@@ -128,9 +128,10 @@ export async function generatePairedOnePagerPdf(
    * so a dry run can measure the exact height before anything is drawn.
    */
   const layoutPageOne = (step: number, draw: boolean): number => {
-    const body = 9 - step * 0.3;
-    const lh = 4.1 - step * 0.12;
+    const body = 9.5 - step * 0.35;
+    const lh = body * 0.4556;
     let y = BAND_H + 12;
+
 
     const heading = (t: string) => {
       y += 3.2;
