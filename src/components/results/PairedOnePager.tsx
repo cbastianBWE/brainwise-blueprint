@@ -137,7 +137,10 @@ export default function PairedOnePager({
         scope,
         facetColor: (f) => {
           const domain = lookupFacet(f)?.domain;
-          const hex = domain ? DIM_COLOR[domain] : undefined;
+          if (!domain) return undefined;
+          // Amber is illegible as 7pt text on a pale fill. Mustard is its text-safe pair.
+          // Print only; the on-screen chip keeps amber and already darkens its own label.
+          const hex = domain === "Pleasure" ? MUSTARD : DIM_COLOR[domain];
           return hex ? hexToRgb(hex) : undefined;
         },
       });

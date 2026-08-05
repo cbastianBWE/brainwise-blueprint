@@ -446,10 +446,10 @@ export async function generatePairedOnePagerPdf(
     y += lead.length * 4.4 + 4;
 
     /* a preview entry is atomic: measured whole, then drawn whole */
-    /** display label -> raw facet name, so colour lookups keep the real name */
-    const chipRaw = new Map<string, string>();
+    /** the raw facet name never leaves the chip build: colour is resolved here */
+    type Chip = { label: string; w: number; color: RGB };
 
-    type Measured = { head: string[]; body: string[]; chipRows: string[][]; h: number };
+    type Measured = { head: string[]; body: string[]; chipRows: Chip[][]; h: number };
     const measure = (p: (typeof preview)[number]): Measured => {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
@@ -460,23 +460,23 @@ export async function generatePairedOnePagerPdf(
       let h = Math.max(head.length * 4.6, 5.2) + body.length * 4.3 + 1.5;
 
       const facets = Array.isArray(p.facets) ? p.facets.filter(Boolean) : [];
-      const chipRows: string[][] = [];
+      const chipRows: Chip[][] = [];
       if (facets.length > 0) {
         doc.setFont("Montserrat", "semibold");
         doc.setFontSize(7);
-        let row: string[] = [];
+        let row: Chip[] = [];
         let cx = 4;
         for (const f of facets) {
-          // display label only; the raw name still drives the colour lookup below
+          // colour resolves from the raw name here; only the display label is carried on
           const label = facetDisplayLabel(nm(f), opts.mode);
+          const color = opts.facetColor?.(f) ?? GRAY;
           const w = doc.getTextWidth(label) + 4;
           if (row.length > 0 && cx + w > colW - 1) {
             chipRows.push(row);
             row = [];
             cx = 4;
           }
-          row.push(label);
-          chipRaw.set(label, f);
+          row.push({ label, w, color });
           cx += w + 2;
         }
         if (row.length > 0) chipRows.push(row);
@@ -507,9 +507,8 @@ export async function generatePairedOnePagerPdf(
           let cx = x + 4;
           doc.setFont("Montserrat", "semibold");
           doc.setFontSize(7);
-          for (const label of m.chipRows[r]) {
-            const w = doc.getTextWidth(label) + 4;
-            const c = opts.facetColor?.(chipRaw.get(label) ?? label) ?? GRAY;
+          for (const chip of m.chipRows[r]) {
+            const { label, w, color: c } = chip;
             doc.setFillColor(c[0], c[1], c[2]);
             doc.setDrawColor(c[0], c[1], c[2]);
             doc.setLineWidth(0.2);
@@ -518,7 +517,9 @@ export async function generatePairedOnePagerPdf(
             doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "F");
             doc.restoreGraphicsState();
             doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "S");
-            doc.setTextColor(c === AMBER ? MUSTARD[0] : c[0], c === AMBER ? MUSTARD[1] : c[1], c === AMBER ? MUSTARD[2] : c[2]);
+            // safety net: amber is illegible at 7pt, so swap in its text-safe pair
+            const isAmber = c[0] === AMBER[0] && c[1] === AMBER[1] && c[2] === AMBER[2];
+            doc.setTextColor(...(isAmber ? MUSTARD : c));
             doc.text(label, cx + 2, yy);
             cx += w + 2;
           }

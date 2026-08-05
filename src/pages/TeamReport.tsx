@@ -14,6 +14,7 @@ import LeadershipModal, { type LeadershipItem } from "@/components/results/Leade
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
+import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
 
 
 /* ---------- palette ---------- */
@@ -710,7 +711,7 @@ export default function TeamReport() {
       kind: "strength" as const,
       shape: shapeKey(f.shape),
       label: "Start here · your strength",
-      name: f.facetName,
+      name: facetDisplayLabel(f.facetName, "work"),
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
@@ -729,7 +730,7 @@ export default function TeamReport() {
       rank: idx + 1,
       shape: shapeKey(f.shape),
       label,
-      name: f.facetName,
+      name: facetDisplayLabel(f.facetName, "work"),
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
@@ -997,7 +998,7 @@ export default function TeamReport() {
                   <tbody>
                     {(leader.rows ?? []).map((r, i) => {
                       const f = facetLookup(r.item);
-                      const driverName = f?.facetName ?? `Item ${r.item}`;
+                      const driverName = f?.facetName ? facetDisplayLabel(f.facetName, "work") : `Item ${r.item}`;
                       return (
                         <tr key={i} className="leader-row">
                           <td style={tdStyle} data-label="Driver"><b style={{ color: NAVY, fontSize: 16 }}>{driverName}</b></td>
@@ -1053,10 +1054,10 @@ export default function TeamReport() {
                             <DistGlyph
                               scores={scores}
                               color={GC[g.k]}
-                              onOpen={() => openDist(scores, GC[g.k], f.facetName)}
+                              onOpen={() => openDist(scores, GC[g.k], facetDisplayLabel(f.facetName, "work"))}
                             />
                           )}
-                          <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 6 }}>{f.facetName}</div>
+                          <div style={{ fontWeight: 700, color: NAVY, fontSize: 14, marginTop: 6 }}>{facetDisplayLabel(f.facetName, "work")}</div>
                         </div>
                       );
                     })}
@@ -1086,7 +1087,7 @@ export default function TeamReport() {
                     const f = facetLookup(w.item);
                     return (
                       <li key={i} style={{ marginBottom: 8 }}>
-                        <b style={{ color: NAVY }}>{f?.facetName ?? `Item ${w.item}`}:</b> <HighlightableText blockKey={`coach:why:${i}`} text={w.rationale} />
+                        <b style={{ color: NAVY }}>{f?.facetName ? facetDisplayLabel(f.facetName, "work") : `Item ${w.item}`}:</b> <HighlightableText blockKey={`coach:why:${i}`} text={w.rationale} />
                       </li>
                     );
                   })}
