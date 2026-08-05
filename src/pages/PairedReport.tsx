@@ -517,14 +517,15 @@ export default function PairedReport() {
     [firstA, firstB],
   );
 
-  /* paragraph splitter */
-  /* ---------- scroll reveal (one shared observer, once per element) ---------- */
+  /* ---------- scroll reveal (one shared observer, once per element, idempotent) ---------- */
   const [observer] = useState<IntersectionObserver | null>(() => {
     if (typeof IntersectionObserver === "undefined") return null;
     return new IntersectionObserver(
       (entries, obs) => {
         for (const e of entries) {
           if (e.isIntersecting) {
+            const k = (e.target as HTMLElement).dataset.prRevealKey;
+            if (k) REVEALED.add(k);
             e.target.classList.add("pr-in");
             obs.unobserve(e.target);
           }
@@ -534,21 +535,36 @@ export default function PairedReport() {
     );
   });
   useEffect(() => () => observer?.disconnect(), [observer]);
+
+  /** Stable per-key ref callbacks so a re-render never detaches/reattaches the node. */
+  const revealRefCache = useRef(new Map<string, (el: HTMLElement | null) => void>());
   const revealRef = useCallback(
-    (el: HTMLElement | null) => {
-      if (!el) return;
-      if (!observer) { el.classList.add("pr-in"); return; }
-      if (el.classList.contains("pr-in")) return;
-      observer.observe(el);
+    (key: string) => {
+      const cache = revealRefCache.current;
+      const existing = cache.get(key);
+      if (existing) return existing;
+      const fn = (el: HTMLElement | null) => {
+        if (!el) return;
+        el.dataset.prRevealKey = key;
+        if (el.classList.contains("pr-in")) return;
+        if (!observer || REVEALED.has(key)) { el.classList.add("pr-in"); return; }
+        observer.observe(el);
+      };
+      cache.set(key, fn);
+      return fn;
     },
     [observer],
   );
 
-  const revealProps = (delayIndex = 0) => ({
-    ref: revealRef,
-    className: "pr-anim",
-    style: { ["--pr-delay" as string]: `${Math.min(delayIndex * 40, 240)}ms` } as React.CSSProperties,
-  });
+  const revealProps = useCallback(
+    (delayIndex = 0, key = "") => ({
+      ref: revealRef(key),
+      className: "pr-anim",
+      style: { ["--pr-delay" as string]: `${Math.min(delayIndex * 40, 240)}ms` } as React.CSSProperties,
+    }),
+    [revealRef],
+  );
+
 
   /* ---------- person filter ---------- */
   const [personFilter, setPersonFilter] = useState<"both" | "a" | "b">("both");
