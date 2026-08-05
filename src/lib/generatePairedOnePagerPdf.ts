@@ -429,30 +429,30 @@ export async function generatePairedOnePagerPdf(
       doc.setTextColor(...TEAL);
       doc.text(String(i + 1), x + 4, yy + 0.6);
       doc.setFont("Poppins", "bold");
-      doc.setFontSize(9.5);
+      doc.setFontSize(10);
       doc.setTextColor(...NAVY);
       const head = doc.splitTextToSize(nm(p.heading || p.section || ""), colW - 14);
       doc.text(head, x + 12, yy);
-      yy += Math.max(head.length * 4.4, 5);
+      yy += Math.max(head.length * 4.6, 5.2);
       doc.setFont("Montserrat", "normal");
-      doc.setFontSize(8.6);
+      doc.setFontSize(9.5);
       doc.setTextColor(...BLACK);
       const body = doc.splitTextToSize(nm(p.text ?? ""), colW - 5);
       doc.text(body, x + 4, yy);
-      yy += body.length * 3.9 + 1.5;
+      yy += body.length * 4.3 + 1.5;
 
       /* facet chips — page two only */
       const facets = Array.isArray(p.facets) ? p.facets.filter(Boolean) : [];
       if (facets.length > 0) {
         let cx = x + 4;
         doc.setFont("Montserrat", "semibold");
-        doc.setFontSize(6.6);
+        doc.setFontSize(7);
         for (const f of facets) {
           const label = nm(f);
           const w = doc.getTextWidth(label) + 4;
           if (cx + w > x + colW - 1) {
             cx = x + 4;
-            yy += 5;
+            yy += 5.4;
           }
           const c = opts.facetColor?.(f) ?? GRAY;
           doc.setFillColor(c[0], c[1], c[2]);
@@ -460,9 +460,9 @@ export async function generatePairedOnePagerPdf(
           doc.setLineWidth(0.2);
           doc.saveGraphicsState();
           (doc as any).setGState(new (doc as any).GState({ opacity: 0.12 }));
-          doc.roundedRect(cx, yy - 3, w, 4.4, 2.2, 2.2, "F");
+          doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "F");
           doc.restoreGraphicsState();
-          doc.roundedRect(cx, yy - 3, w, 4.4, 2.2, 2.2, "S");
+          doc.roundedRect(cx, yy - 3.2, w, 4.8, 2.4, 2.4, "S");
           doc.setTextColor(c === AMBER ? MUSTARD[0] : c[0], c === AMBER ? MUSTARD[1] : c[1], c === AMBER ? MUSTARD[2] : c[2]);
           doc.text(label, cx + 2, yy);
           cx += w + 2;
