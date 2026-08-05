@@ -1451,7 +1451,7 @@ export default function PairedReport() {
                         >
 
                           {typeof a === "number" && typeof b === "number" && (
-                            <PairGlyph a={a} b={b} onOpen={() => openDist(a, b, f.facetName)} />
+                            <PairGlyph a={a} b={b} onOpen={() => openDist(a, b, facetDisplayLabel(f.facetName, mode))} />
                           )}
                           <div style={{ fontWeight: 600, fontSize: 13, marginTop: 4 }}>{facetDisplayLabel(f.facetName, mode)}</div>
                         </div>

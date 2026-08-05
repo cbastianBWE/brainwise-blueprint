@@ -98,6 +98,8 @@ interface Props {
   firstB: string;
   /** Person A / Person B substitution used everywhere except the voice columns. */
   nm: (s: string) => string;
+  /** relationship mode — display labels only, never lookups */
+  mode?: string | null;
   lookupFacet: (name: string) => FacetEntry | undefined;
   dateGenerated?: string;
 }
@@ -111,6 +113,7 @@ export default function PairedOnePager({
   firstA,
   firstB,
   nm,
+  mode,
   lookupFacet,
   dateGenerated,
 }: Props) {
@@ -130,6 +133,7 @@ export default function PairedOnePager({
         nameB: firstB,
         dateGenerated,
         nm,
+        mode,
         scope,
         facetColor: (f) => {
           const domain = lookupFacet(f)?.domain;
@@ -407,6 +411,7 @@ export default function PairedOnePager({
                             key={`${f}-${j}`}
                             name={nm(f)}
                             entry={lookupFacet(f)}
+                            mode={mode}
                             firstA={firstA}
                             firstB={firstB}
                             delay={0}
