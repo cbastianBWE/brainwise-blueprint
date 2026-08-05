@@ -61,7 +61,7 @@ export interface PdfContext {
   checkPageBreak: (needed: number) => void;
   ensureBlockSpace: (needed?: number) => void;
   reserveBlockOrAllow: (totalH: number) => void;
-  sectionHeading: (title: string, firstContentHeight?: number) => void;
+  sectionHeading: (title: string, firstContentHeight?: number, eyebrow?: string) => void;
   bodyText: (text: string, indent?: number) => void;
   setCurrentSection: (title: string) => void;
 }
