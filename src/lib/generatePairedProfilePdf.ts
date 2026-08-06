@@ -918,7 +918,9 @@ export async function generatePairedProfilePdf(
 
     if (s.repair.disclaimer) {
       ctx.y += 2;
-      doc.setFont("Montserrat", "italic");
+      // Montserrat has no registered italic face; jsPDF would silently fall back to
+      // Times italic (a serif) here. Grey 8pt normal carries the de-emphasis instead.
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...MUTED);
       const dl = doc.splitTextToSize(nm(s.repair.disclaimer), CONTENT_W);
@@ -946,7 +948,9 @@ export async function generatePairedProfilePdf(
     );
 
     if (s.intimacy.disclaimer) {
-      doc.setFont("Montserrat", "italic");
+      // Montserrat has no registered italic face; jsPDF would silently fall back to
+      // Times italic (a serif) here. Grey 8pt normal carries the de-emphasis instead.
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...MUTED);
       const dl = doc.splitTextToSize(nm(s.intimacy.disclaimer), CONTENT_W);
