@@ -358,9 +358,9 @@ function drawDomainsRadial(ctx: PdfContext, data: TeamPdfData): void {
   if (order.length === 0) return;
   const { doc } = ctx;
   const cx = PAGE_W / 2;
-  const cy = ctx.y + 42;
   const R = 30;
   ctx.checkPageBreak(90);
+  const cy = ctx.y + 42;
 
   doc.setDrawColor(220, 220, 220);
   doc.setLineWidth(0.2);
@@ -545,12 +545,7 @@ export async function generateTeamProfilePdf(
   if (sections.shapeLegend) {
     ctx.sectionHeading("How to read the shapes", SECTION_RESERVE, "How to read this");
     for (const k of TEAM_SHAPES) {
-      ctx.ensureBlockSpace(14);
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text(TEAM_SHAPE_TITLE[k], MARGIN_L, ctx.y);
-      ctx.y += 4.5;
+      subheading(ctx, TEAM_SHAPE_TITLE[k], 10);
       ctx.bodyText(TEAM_SHAPE_DESC[k]);
       ctx.y += 2;
     }
@@ -566,7 +561,7 @@ export async function generateTeamProfilePdf(
       sections.drivingFacetCharts &&
       drivingSet.some((f) => (data.scoresByItem.get(f.itemNumber) ?? []).length > 0);
     if (withScores) {
-      drawTeamDistScale(ctx, { n: data.memberCount });
+      drawTeamDistScale(ctx, { n: data.memberCount, x: MARGIN_L + 4, width: CONTENT_W - 8 });
       ctx.y += 2;
     }
     const scoresFor = (f: TeamFacetForPdf) =>
@@ -648,16 +643,20 @@ export async function generateTeamProfilePdf(
         // measure in the font it is drawn in, not whatever was left live
         doc.setFont("Montserrat", "normal");
         doc.setFontSize(9);
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(b.text)}`, CONTENT_W - 6);
+        const ordW = doc.getTextWidth(`${i + 1}. `);
+        const lines: string[] = doc.splitTextToSize(
+          `${i + 1}. ${cleanMarkdown(b.text)}`,
+          CONTENT_W - 6 - ordW,
+        );
 
-        for (const l of lines) {
+        lines.forEach((l, li) => {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
           doc.setFontSize(9);
           doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
+          doc.text(l, MARGIN_L + 3 + (li === 0 ? 0 : ordW), ctx.y);
           ctx.y += 4.5;
-        }
+        });
       });
     }
   }
@@ -813,12 +812,7 @@ export async function generateTeamProfilePdf(
     for (const k of TEAM_SHAPES) {
       const items = buckets[k];
       if (items.length === 0) continue;
-      ctx.ensureBlockSpace(12);
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text(TEAM_SHAPE_TITLE[k], MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, TEAM_SHAPE_TITLE[k], sections.fullMapCharts ? 14 : 5);
       if (sections.fullMapCharts) {
         for (const f of items) {
           drawTeamDistRow(ctx, {
@@ -874,16 +868,20 @@ export async function generateTeamProfilePdf(
       s.coach.debrief_prompts.forEach((p, i) => {
         doc.setFont("Montserrat", "normal");
         doc.setFontSize(9);
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(p)}`, CONTENT_W - 4);
+        const ordW = doc.getTextWidth(`${i + 1}. `);
+        const lines: string[] = doc.splitTextToSize(
+          `${i + 1}. ${cleanMarkdown(p)}`,
+          CONTENT_W - 4 - ordW,
+        );
 
-        for (const l of lines) {
+        lines.forEach((l, li) => {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
           doc.setFontSize(9);
           doc.setTextColor(...BLACK);
-          doc.text(l, MARGIN_L + 3, ctx.y);
+          doc.text(l, MARGIN_L + 3 + (li === 0 ? 0 : ordW), ctx.y);
           ctx.y += 4.5;
-        }
+        });
       });
     }
   }
