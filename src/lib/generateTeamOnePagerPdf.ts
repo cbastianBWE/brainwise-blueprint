@@ -429,10 +429,19 @@ export async function generateTeamOnePagerPdf(
         numberedList(talkAbout, 2);
       }
 
-      if (str(d.disclaimer)) disclaimerBlock(str(d.disclaimer));
+      const preview = (Array.isArray(d.report_preview) ? d.report_preview : []).filter(Boolean);
+
+      /* The disclaimer only breaks to its own page when nothing follows it. If
+       * the preview page is coming anyway, that page carries the disclaimer —
+       * otherwise dense sheets produce an orphan page holding just fine print. */
+      const disclaimerFitsHere =
+        str(d.disclaimer) &&
+        y + (Math.ceil(str(d.disclaimer).length / 150) + 1) * 3.1 * Math.max(k, 0.9) + 5 <= DISCLAIMER_BOTTOM;
+      if (str(d.disclaimer) && (preview.length === 0 || disclaimerFitsHere)) {
+        disclaimerBlock(str(d.disclaimer));
+      }
 
       /* the report preview always starts its own page, like the paired snapshot */
-      const preview = (Array.isArray(d.report_preview) ? d.report_preview : []).filter(Boolean);
       if (preview.length > 0) {
         page += 1;
         goto(page);
@@ -456,6 +465,7 @@ export async function generateTeamOnePagerPdf(
           facets: Array.isArray(p.facets) ? p.facets.filter(Boolean) : [],
         }));
         cardGrid(blocks, 2, TEAL);
+        if (str(d.disclaimer) && !disclaimerFitsHere) disclaimerBlock(str(d.disclaimer));
       }
     } else {
       const d = args.data;
