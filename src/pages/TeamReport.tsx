@@ -1103,19 +1103,37 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>In general</div>
-                <IdeaBullets items={communication.general} blockKey="communication:general" />
+                <IdeaBullets items={communication.general} blockKey="communication:general" lookupFacet={lookupFacetByName} />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Under pressure</div>
-                <IdeaBullets items={communication.under_pressure} blockKey="communication:under_pressure" />
+                <IdeaBullets items={communication.under_pressure} blockKey="communication:under_pressure" lookupFacet={lookupFacetByName} />
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
                 <ol style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "decimal" }}>
-                  {communication.avoid_conflict.map((t, i) => <li key={i} style={{ marginBottom: 6 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={t} /></li>)}
+                  {communication.avoid_conflict.map((t, i) => {
+                    const obj = isBulletObject(t);
+                    const point = obj ? (t.point ?? "").trim() : bulletToText(t);
+                    const body = obj ? (t.body ?? "").trim() : "";
+                    const facets = bulletFacets(t);
+                    return (
+                      <li key={i} style={{ marginBottom: 8 }}>
+                        {obj && point
+                          ? <div style={{ fontWeight: 800, color: NAVY, lineHeight: 1.4 }}>{point}</div>
+                          : null}
+                        {obj
+                          ? (body ? <div style={{ marginTop: 3 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={body} /></div> : null)
+                          : <HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={point} />}
+                        <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
+                      </li>
+                    );
+                  })}
                 </ol>
+              </div>
+            )}
               </div>
             )}
           </div>
