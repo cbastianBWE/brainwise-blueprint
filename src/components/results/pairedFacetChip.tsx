@@ -176,21 +176,16 @@ export function FacetChip({
     ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
     : null;
 
+  const canJump = useFacetAnchorExists(entry?.itemNumber);
+
   const jump = () => {
-    if (!entry) return;
-    const el = document.getElementById(`facet-${entry.itemNumber}`);
-    if (!el) return; // row filtered out of the visible map — silent no-op
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.remove("pr-pulse");
-    void el.offsetWidth;
-    el.classList.add("pr-pulse");
-    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+    jumpToFacet(entry?.itemNumber);
   };
 
   return (
     <span
       className="pr-chip"
-      onClick={jump}
+      onClick={canJump ? jump : undefined}
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
       style={{
@@ -204,7 +199,7 @@ export function FacetChip({
         background: bg,
         border: `1px solid ${border}`,
         color: text,
-        cursor: entry ? "pointer" : "default",
+        cursor: canJump ? "pointer" : "default",
         whiteSpace: "nowrap",
       } as React.CSSProperties}
     >
