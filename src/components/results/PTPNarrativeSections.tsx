@@ -1312,7 +1312,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
             const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";
             const key = `response-${r.itemNumber}`;
             const isExpanded = allFacetsExpanded.has(key);
-            const interpretation = allFacetInsights.find((f) => f.name === r.facetName);
+            const interpretation = getFacetInsight(r.itemNumber, r.facetName);
             const isLast = idx === assessmentResponses.length - 1;
             return (
               <div
