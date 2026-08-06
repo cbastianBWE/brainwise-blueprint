@@ -1172,25 +1172,12 @@ export default function TeamReport() {
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
-                <ol style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "decimal" }}>
-                  {communication.avoid_conflict.map((t, i) => {
-                    const obj = isBulletObject(t);
-                    const point = obj ? (t.point ?? "").trim() : bulletToText(t);
-                    const body = obj ? (t.body ?? "").trim() : "";
-                    const facets = bulletFacets(t);
-                    return (
-                      <li key={i} style={{ marginBottom: 8 }}>
-                        {obj && point
-                          ? <div style={{ fontWeight: 800, color: NAVY, lineHeight: 1.4 }}>{point}</div>
-                          : null}
-                        {obj
-                          ? (body ? <div style={{ marginTop: 3 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={body} /></div> : null)
-                          : <HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={point} />}
-                        <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
-                      </li>
-                    );
-                  })}
-                </ol>
+                <IdeaBullets
+                  items={communication.avoid_conflict}
+                  blockKey="communication:avoid_conflict"
+                  lookupFacet={lookupFacetByName}
+                  ordered
+                />
               </div>
             )}
           </div>

@@ -86,7 +86,7 @@ function shapeKey(shape: string | null | undefined): TeamShapeKey {
 
 /* ---------- v14 bullet normalisation ----------
    Sections may hold plain strings (pre-v14 profiles) or { point, body, facets }
-   objects (v14+, generator currently at v16). Everything funnels through asLines / asBlocks so no object
+   objects (v14+, generator currently at v17). Everything funnels through asLines / asBlocks so no object
    ever reaches cleanMarkdown. Ported from generatePairedProfilePdf.ts. */
 
 export interface PdfBlock {
@@ -290,7 +290,7 @@ function drawCardAt(doc: jsPDF, m: CardMeasure, x: number, y: number, w: number,
   }
 }
 
-/** Accent rule colour: the first facet's PTP dimension, else the section accent. */
+/** Accent rule color: the first facet's PTP dimension, else the section accent. */
 function blockAccent(b: PdfBlock, fallback: readonly [number, number, number]) {
   for (const f of b.facets ?? []) {
     const dom = facetDomainByName.get(normFacetName(f));
@@ -610,7 +610,7 @@ export async function generateTeamProfilePdf(
   const ctx = createPdfContext(doc);
   const s = data.sections;
 
-  /* Chip colour comes only from the facet's PTP dimension, keyed on the
+  /* Chip color comes only from the facet's PTP dimension, keyed on the
      normalised facet name (chips carry names, everything else carries items). */
   facetDomainByName = new Map<string, string>();
   for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
@@ -742,10 +742,14 @@ export async function generateTeamProfilePdf(
       doc.setTextColor(...NAVY);
       doc.text("Avoiding conflict", MARGIN_L, ctx.y);
       ctx.y += 5;
-      s.communication.avoid_conflict.forEach((t, i) => {
+      // number from the count of entries actually rendered, so a dropped block
+      // does not leave a gap in the sequence (1, 3, 4)
+      let n = 0;
+      s.communication.avoid_conflict.forEach((t) => {
         const blocks = asBlocks([t]);
         const b = blocks[0];
         if (!b) return;
+        const i = n++;
         if (b.point || (b.facets ?? []).length > 0) {
           // the ordinal rides the point when there is one, otherwise the text,
           // so a bullet with facets but no point keeps its number

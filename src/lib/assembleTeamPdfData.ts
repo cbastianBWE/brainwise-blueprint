@@ -18,7 +18,7 @@ export interface TeamPdfSectionData {
     focus?: Array<{ item: number; why: string; actions?: string[]; action?: string }>;
   };
   /* v14+ of generate-team-narrative emits structured bullets (generator is at
-     v16); older profiles still hold plain strings and must keep rendering. */
+     v17); older profiles still hold plain strings and must keep rendering. */
   communication?: {
     general: string | Bullet[];
     under_pressure: string | Bullet[];
