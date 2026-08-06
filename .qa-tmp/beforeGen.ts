@@ -446,7 +446,7 @@ export async function generateTeamProfilePdfBefore(
   sections: TeamPdfSections,
 ): Promise<void> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const { registerPdfFonts } = await import("./pdfFonts");
+  const { registerPdfFonts } = await import("../src/lib/pdfFonts");
   registerPdfFonts(doc);
 
   const todayLong = new Date().toLocaleDateString("en-US", {
