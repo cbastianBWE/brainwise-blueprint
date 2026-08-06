@@ -292,40 +292,88 @@ export async function assemblePtpPdfData(params: {
     // result row plus (for split-pair Combined) the additional personal result row.
     // Used by BOTH C1 (elevated/suppressed driving facets) and C2 (per-response insights).
     const resultIdsForInterp: string[] = [assessmentResultId];
+    const assessmentIdByResultId = new Map<string, string>([[assessmentResultId, result.assessment_id]]);
     if (params.additionalAssessmentId) {
       const { data: additionalResultRow } = await supabase
         .from("assessment_results")
         .select("id")
         .eq("assessment_id", params.additionalAssessmentId)
         .maybeSingle();
-      if (additionalResultRow?.id) resultIdsForInterp.push(additionalResultRow.id);
+      if (additionalResultRow?.id) {
+        resultIdsForInterp.push(additionalResultRow.id);
+        assessmentIdByResultId.set(additionalResultRow.id, params.additionalAssessmentId);
+      }
     }
 
     const { data: allFacetsRows } = await supabase
       .from("facet_interpretations")
-      .select("facet_data")
+      .select("assessment_result_id, facet_data")
       .in("assessment_result_id", resultIdsForInterp)
       .eq("section_type", "facet_insights_all");
 
-    const interpretationMap = new Map<string, {
+    type StoredInterpretation = {
       positive_self: string[];
       negative_self: string[];
       positive_others: string[];
       negative_others: string[];
-    }>();
+    };
+    const normalize = (fi: any): StoredInterpretation => ({
+      positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
+      negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
+      positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
+      negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
+    });
+
+    // The stored facet_data array is keyed by POSITION, not by name: the
+    // generator persists the name the model echoes back, which drifts (dropped
+    // "(personal)"/"(professional)" suffixes). Stripping the suffix on both
+    // sides is not a fix either — on a combined 89-item sitting the two halves
+    // of a facet collapse to the same string. So key by item number, zipping
+    // the array against the assessment's items ordered by item_number. If the
+    // lengths disagree we do not zip (a shifted zip mis-attaches everything
+    // after the divergence); we warn and rely on the name map instead.
+    const interpretationMap = new Map<string, StoredInterpretation>();
+    const interpretationByItem = new Map<number, StoredInterpretation>();
     for (const row of allFacetsRows ?? []) {
       const arr = Array.isArray((row as any).facet_data) ? (row as any).facet_data as any[] : [];
       for (const fi of arr) {
         if (fi && typeof fi.name === "string" && !interpretationMap.has(fi.name)) {
-          interpretationMap.set(fi.name, {
-            positive_self: Array.isArray(fi.positive_self) ? fi.positive_self : [],
-            negative_self: Array.isArray(fi.negative_self) ? fi.negative_self : [],
-            positive_others: Array.isArray(fi.positive_others) ? fi.positive_others : [],
-            negative_others: Array.isArray(fi.negative_others) ? fi.negative_others : [],
-          });
+          interpretationMap.set(fi.name, normalize(fi));
         }
       }
+
+      const rowAssessmentId = assessmentIdByResultId.get((row as any).assessment_result_id);
+      if (!rowAssessmentId || arr.length === 0) continue;
+      const { data: rowResponses } = await supabase
+        .from("assessment_responses")
+        .select("item_id")
+        .eq("assessment_id", rowAssessmentId);
+      const rowItemIds = (rowResponses ?? []).map((r: any) => r.item_id);
+      if (!rowItemIds.length) continue;
+      const { data: rowItems } = await supabase
+        .from("items_presentation")
+        .select("item_id, item_number")
+        .in("item_id", rowItemIds);
+      const rowItemNumbers = (rowItems ?? [])
+        .map((i: any) => i.item_number ?? 0)
+        .filter((n: number) => n > 0)
+        .sort((a: number, b: number) => a - b);
+      if (rowItemNumbers.length !== arr.length) {
+        console.warn(
+          `[pdf][all-facets] stored insight count (${arr.length}) does not match item count (${rowItemNumbers.length}); falling back to name matching`,
+        );
+        continue;
+      }
+      rowItemNumbers.forEach((n: number, i: number) => {
+        if (!interpretationByItem.has(n) && arr[i]) interpretationByItem.set(n, normalize(arr[i]));
+      });
     }
+
+    const lookupInterpretation = (itemNumber: number | null | undefined, facetName: string) =>
+      (itemNumber ? interpretationByItem.get(itemNumber) : undefined) ??
+      interpretationMap.get(facetName) ??
+      null;
+
 
 
     if (contextTab) {
@@ -385,7 +433,7 @@ export async function assemblePtpPdfData(params: {
           itemText: s.itemText,
           score: Math.round(s.value),
           dimensionId: s.dimensionId,
-          interpretation: interpretationMap.get(s.facetName) ?? null,
+          interpretation: lookupInterpretation(s.itemNumber, s.facetName),
         });
 
         const selection = selectDrivingFacets(filteredItems);
@@ -441,7 +489,7 @@ export async function assemblePtpPdfData(params: {
     if (assessmentResponses.length > 0) {
       assessmentResponses = assessmentResponses.map((r) => ({
         ...r,
-        interpretation: interpretationMap.get(r.facetName) ?? null,
+        interpretation: lookupInterpretation(r.itemNumber, r.facetName),
       }));
     }
 

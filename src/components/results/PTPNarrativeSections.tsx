@@ -109,8 +109,61 @@ export interface PTPNarrativeSectionsProps {
 }
 
 /* =========================================================================
+   facet_insights_all keying
+
+   The stored facet_data array is keyed by POSITION, not by name: the
+   generator stores the name the model echoes back, which occasionally drifts
+   (dropped "(personal)"/"(professional)" suffixes), so a name match silently
+   misses. Stripping the suffix on both sides is not a fix either — on a
+   combined 89-item sitting the professional and personal halves of a facet
+   collapse to the same string and the match becomes ambiguous.
+
+   Item number is stable on both sides, so we zip the stored array against the
+   assessment's items ordered by item_number and key the map by item number.
+   If the lengths disagree we do NOT zip — a shifted zip would attach the wrong
+   text to every facet after the divergence — we warn and let the caller fall
+   back to name matching.
+   ========================================================================= */
+async function orderedItemNumbers(assessmentId: string): Promise<number[]> {
+  const { data: responses } = await supabase
+    .from("assessment_responses")
+    .select("item_id")
+    .eq("assessment_id", assessmentId);
+  const itemIds = (responses ?? []).map((r) => r.item_id);
+  if (!itemIds.length) return [];
+  const { data: items } = await supabase
+    .from("items_presentation")
+    .select("item_id, item_number")
+    .in("item_id", itemIds);
+  return (items ?? [])
+    .map((i) => i.item_number ?? 0)
+    .filter((n) => n > 0)
+    .sort((a, b) => a - b);
+}
+
+function zipInsightsByItem(
+  halves: Array<{ insights: FacetInterpretation[]; itemNumbers: number[] }>,
+): Map<number, FacetInterpretation> {
+  const map = new Map<number, FacetInterpretation>();
+  for (const half of halves) {
+    if (!half.insights.length) continue;
+    if (half.insights.length !== half.itemNumbers.length) {
+      console.warn(
+        `[all-facets] stored insight count (${half.insights.length}) does not match item count (${half.itemNumbers.length}); falling back to name matching`,
+      );
+      continue;
+    }
+    half.itemNumbers.forEach((n, i) => {
+      if (!map.has(n)) map.set(n, half.insights[i]);
+    });
+  }
+  return map;
+}
+
+/* =========================================================================
    Shared data hook
    ========================================================================= */
+
 
 function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   const {
@@ -142,7 +195,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     anchorHigh: string;
   }[]>([]);
   const [allFacetInsights, setAllFacetInsights] = useState<FacetInterpretation[]>([]);
+  const [facetInsightsByItem, setFacetInsightsByItem] = useState<Map<number, FacetInterpretation>>(new Map());
   const [loadingAllFacetInsights, setLoadingAllFacetInsights] = useState(false);
+
   const [allFacetsExpanded, setAllFacetsExpanded] = useState<Set<string>>(new Set());
   const [sectionRefreshKey, setSectionRefreshKey] = useState(0);
 
@@ -443,11 +498,25 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         ? primaryLoaded.length >= (storedTotal ?? 0) && additionalLoaded.length > 0
         : storedTotal !== null && loaded.length >= storedTotal;
 
+      // Key the loaded array by item number (see zipInsightsByItem above).
+      const primaryItems = await orderedItemNumbers(assessmentId);
+      const additionalItems = isCombinedSplitPair
+        ? await orderedItemNumbers(additionalAssessmentId!)
+        : [];
+      if (cancelled) return;
+      const buildMap = (primary: FacetInterpretation[], additional: FacetInterpretation[]) =>
+        zipInsightsByItem([
+          { insights: primary, itemNumbers: primaryItems },
+          { insights: additional, itemNumbers: additionalItems },
+        ]);
+
       if (loaded.length > 0) {
         setAllFacetInsights(loaded);
+        setFacetInsightsByItem(buildMap(primaryLoaded, additionalLoaded));
         if (isComplete) return; // Full data — done
         // Partial — fall through to poll for completion of primary row
       }
+
 
       // 3. Wait for accordion to open before triggering generation
       if (!responsesExpanded) return;
@@ -500,7 +569,11 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           ? (polled!.facet_data as unknown as FacetInterpretation[])
           : [];
 
-        if (polledArr.length > 0) setAllFacetInsights(polledArr);
+        if (polledArr.length > 0) {
+          setAllFacetInsights([...polledArr, ...additionalLoaded]);
+          setFacetInsightsByItem(buildMap(polledArr, additionalLoaded));
+        }
+
 
         if (polledTotal !== null && polledArr.length >= polledTotal) {
           if (pollInterval) clearInterval(pollInterval);
@@ -531,6 +604,12 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     responsesExpanded,
     setResponsesExpanded,
     allFacetInsights,
+    // Resolve by item number first (stable); name match only as a fallback for
+    // the case where the stored array length disagreed with the item count.
+    getFacetInsight: (itemNumber: number | null | undefined, name: string) =>
+      (itemNumber ? facetInsightsByItem.get(itemNumber) : undefined) ??
+      allFacetInsights.find((f) => f.name === name),
+
     loadingAllFacetInsights,
     allFacetsExpanded,
     setAllFacetsExpanded,
@@ -928,7 +1007,7 @@ function FacetList({
   prefix: string;
   data: ReturnType<typeof usePTPNarrativeData>;
 }) {
-  const { expandedFacets, setExpandedFacets, allFacetInsights, loadingAllFacetInsights } = data;
+  const { expandedFacets, setExpandedFacets, getFacetInsight, loadingAllFacetInsights } = data;
 
   const toggleFacet = (key: string) => {
     setExpandedFacets((prev) => {
@@ -939,8 +1018,6 @@ function FacetList({
     });
   };
 
-  const getFacetInterpretation = (facetName: string) =>
-    allFacetInsights.find((f) => f.name === facetName);
 
   return (
     <div className="space-y-2">
@@ -948,7 +1025,7 @@ function FacetList({
         const facetName = facet.facet_name;
         const key = `${prefix}-${idx}`;
         const isExpanded = expandedFacets.has(key);
-        const interpretation = getFacetInterpretation(facetName);
+        const interpretation = getFacetInsight(facet.item_number, facetName);
         const color = PTP_DIMENSION_COLORS[facet.dimension_id] ?? "#021F36";
         const score = Math.round(facet.value);
         const anchorResp = data.assessmentResponses.find(r => r.itemNumber === facet.item_number);
@@ -1160,7 +1237,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
     responsesExpanded,
     setResponsesExpanded,
     assessmentResponses,
-    allFacetInsights,
+    getFacetInsight,
     loadingAllFacetInsights,
     allFacetsExpanded,
     setAllFacetsExpanded,
@@ -1235,7 +1312,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
             const color = PTP_DIMENSION_COLORS[r.dimensionId] ?? "#021F36";
             const key = `response-${r.itemNumber}`;
             const isExpanded = allFacetsExpanded.has(key);
-            const interpretation = allFacetInsights.find((f) => f.name === r.facetName);
+            const interpretation = getFacetInsight(r.itemNumber, r.facetName);
             const isLast = idx === assessmentResponses.length - 1;
             return (
               <div
@@ -1294,9 +1371,12 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                         <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {r.anchorHigh}
                       </p>
                     </div>
-                    {loadingAllFacetInsights || !interpretation ? (
+                    {loadingAllFacetInsights ? (
                       <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
+                    ) : !interpretation ? (
+                      <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Insight text is not available for this facet.</p>
                     ) : (
+
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h5 style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: "var(--fg-1)" }}>Impact on self</h5>
