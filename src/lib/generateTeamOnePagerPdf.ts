@@ -119,8 +119,14 @@ export async function generateTeamOnePagerPdf(
   const M = 14;
   const CONTENT_W = PAGE_W - M * 2;
   const BAND_H = 50;
-  /** Single footer boundary. Nothing is drawn below this, on any page. */
+  /** Flow boundary for every normal block: content blocks break to a new page
+   *  rather than cross this line. The single documented exception is the
+   *  disclaimer, which may run down to DISCLAIMER_BOTTOM (below). */
   const BOTTOM = PAGE_H - 16;
+  /** The disclaimer is fine print and is allowed into the bottom margin rather
+   *  than strand itself on an otherwise empty page. It still clears the footer
+   *  text baseline at PAGE_H - 8. */
+  const DISCLAIMER_BOTTOM = PAGE_H - 12;
   const CONT_TOP = 22;
   const GUTTER = 10;
   const COL_W = (CONTENT_W - GUTTER) / 2;
