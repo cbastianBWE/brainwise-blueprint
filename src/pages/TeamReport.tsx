@@ -146,7 +146,7 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
   );
 }
 function IdeaBullets({
-  items, style, blockKey, lookupFacet,
+  items, style, blockKey, lookupFacet, fallbackAccent,
 }: {
   items: unknown;
   style?: React.CSSProperties;
