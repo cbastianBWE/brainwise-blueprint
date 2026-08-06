@@ -143,21 +143,171 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
     </>
   );
 }
-function IdeaBullets({ items, style, blockKey }: { items: string | string[]; style?: React.CSSProperties; blockKey?: string }) {
+function IdeaBullets({
+  items, style, blockKey, lookupFacet,
+}: {
+  items: string | Bullet[];
+  style?: React.CSSProperties;
+  blockKey?: string;
+  lookupFacet?: (name: string) => TeamFacetEntry | undefined;
+}) {
   if (Array.isArray(items)) {
     const list = items.filter(Boolean);
     if (!list.length) return null;
+    // Pre-v15 profiles: every element is a plain string, render exactly as before.
+    if (!list.some(isBulletObject)) {
+      return (
+        <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
+          {list.map((b, i) => {
+            const s = bulletToText(b);
+            if (!s) return null;
+            return (
+              <li key={i} style={{ margin: "4px 0" }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
     return (
-      <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
-        {list.map((s, i) => (
-          <li key={i} style={{ margin: "4px 0" }}>
-            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
-          </li>
-        ))}
-      </ul>
+      <div style={{ display: "grid", gap: 10, ...style }}>
+        {list.map((b, i) => {
+          if (!isBulletObject(b)) {
+            const s = bulletToText(b);
+            if (!s) return null;
+            return (
+              <div key={i} style={{ color: GRAY, fontSize: 16, lineHeight: 1.6 }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+              </div>
+            );
+          }
+          const point = (b.point ?? "").trim();
+          const body = (b.body ?? "").trim();
+          const facets = bulletFacets(b);
+          const accent = accentForFacets(facets, lookupFacet);
+          return (
+            <div
+              key={i}
+              style={{
+                background: CARD_BG,
+                border: `1px solid ${LINE}`,
+                borderLeft: `4px solid ${accent}`,
+                borderRadius: 12,
+                padding: "12px 13px",
+              }}
+            >
+              {point && (
+                <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>{point}</div>
+              )}
+              {body && (
+                <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={body} /> : body}
+                </div>
+              )}
+              <TeamChipRow facets={facets} lookupFacet={lookupFacet} />
+            </div>
+          );
+        })}
+      </div>
     );
   }
   return <Paras text={items} style={style} blockKey={blockKey} />;
+}
+
+/* ---------- name-keyed facet index (chips carry facet names, not item numbers) ---------- */
+export interface TeamFacetEntry {
+  itemNumber: number;
+  facetName: string;
+  domain?: string | null;
+  shape?: string | null;
+  stats?: { n: number; mean: number; min: number; max: number; range: number } | null;
+}
+
+function accentForFacets(
+  facets: string[],
+  lookupFacet?: (name: string) => TeamFacetEntry | undefined,
+): string {
+  for (const f of facets) {
+    const dom = lookupFacet?.(f)?.domain;
+    if (dom && DIM_COLOR[dom]) return DIM_COLOR[dom];
+  }
+  return TEAL;
+}
+
+function TeamFacetChip({
+  name, entry, delay,
+}: { name: string; entry?: TeamFacetEntry; delay: number }) {
+  const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
+  // amber is illegible as small text; the paired chip pairs it with mustard
+  const text = base ? (base === AMBER ? CHIP_MUSTARD : base) : GRAY;
+  const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
+  const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
+
+  const tip = entry ? teamChipTip(entry) : null;
+
+  const jump = () => {
+    if (!entry) return;
+    const el = document.getElementById(`facet-${entry.itemNumber}`);
+    if (!el) return; // row filtered out of the visible map — silent no-op
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.remove("pr-pulse");
+    void el.offsetWidth;
+    el.classList.add("pr-pulse");
+    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+  };
+
+  return (
+    <span
+      className="pr-chip"
+      onClick={jump}
+      onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
+      onMouseLeave={hideTip}
+      style={{
+        ["--pr-chip-delay" as string]: `${delay}ms`,
+        display: "inline-block",
+        borderRadius: 999,
+        fontWeight: 600,
+        fontSize: 10.5,
+        padding: "3px 9px",
+        background: bg,
+        border: `1px solid ${border}`,
+        color: text,
+        cursor: entry ? "pointer" : "default",
+        whiteSpace: "nowrap",
+      } as React.CSSProperties}
+    >
+      {facetDisplayLabel(name, "work")}
+    </span>
+  );
+}
+
+/** Team-shaped tooltip: the shape, the spread, and the camps when the data has them. */
+function teamChipTip(entry: TeamFacetEntry): string {
+  const parts: string[] = [];
+  const shape = (entry.shape ?? "").trim();
+  if (shape) parts.push(shape.replace(/\.$/, "") + ".");
+  const st = entry.stats;
+  if (st && typeof st.n === "number") {
+    const high = 0, low = 0;
+    void high; void low;
+    parts.push(`${st.n} members, ${agreementDesc(st.range ?? (st.max - st.min))}`);
+    parts.push(`team average ${Math.round(st.mean)}, from ${Math.round(st.min)} to ${Math.round(st.max)}.`);
+  }
+  return parts.join(" ").trim();
+}
+
+function TeamChipRow({
+  facets, lookupFacet,
+}: { facets: string[]; lookupFacet?: (name: string) => TeamFacetEntry | undefined }) {
+  if (!facets || facets.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+      {facets.map((f, i) => (
+        <TeamFacetChip key={`${f}-${i}`} name={f} entry={lookupFacet?.(f)} delay={i * 25} />
+      ))}
+    </div>
+  );
 }
 
 
