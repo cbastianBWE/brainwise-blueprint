@@ -995,6 +995,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.within_person.a),
       data.firstB,
       nmBlocks(s.within_person.b),
+      fs,
       { persons: true },
     );
   }
@@ -1008,6 +1009,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.needs.a_needs_from_b),
       `What ${data.firstB} needs from ${data.firstA}`,
       nmBlocks(s.needs.b_needs_from_a),
+      fs,
       { bulleted: true, persons: true },
     );
   }
@@ -1022,7 +1024,7 @@ export async function generatePairedProfilePdf(
     ctx.checkPageBreak(6);
     doc.text("In general", MARGIN_L, ctx.y);
     ctx.y += 5;
-    renderBlocks(ctx, nmBlocks(s.communication.general));
+    renderBlocks(ctx, nmBlocks(s.communication.general), fs);
 
     ctx.y += 2;
     ctx.checkPageBreak(6);
@@ -1031,7 +1033,7 @@ export async function generatePairedProfilePdf(
     doc.setTextColor(...NAVY);
     doc.text("Under pressure", MARGIN_L, ctx.y);
     ctx.y += 5;
-    renderBlocks(ctx, nmBlocks(s.communication.under_pressure));
+    renderBlocks(ctx, nmBlocks(s.communication.under_pressure), fs);
 
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
@@ -1041,7 +1043,7 @@ export async function generatePairedProfilePdf(
       doc.setTextColor(...NAVY);
       doc.text("Avoiding conflict", MARGIN_L, ctx.y);
       ctx.y += 5;
-      numberedSteps(ctx, s.communication.avoid_conflict, nm);
+      numberedSteps(ctx, s.communication.avoid_conflict, nm, fs);
 
     }
   }
@@ -1057,6 +1059,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.conflict.mitigate),
       "Promote healthy",
       nmBlocks(s.conflict.promote_healthy),
+      fs,
       { bulleted: true },
     );
     if (s.conflict.per_person) {
@@ -1119,11 +1122,11 @@ export async function generatePairedProfilePdf(
     ctx.sectionHeading("Repair", 22, "The way back");
     if (s.repair.overview) paragraphs(ctx, nm(s.repair.overview));
     ctx.y += 2;
-    twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b), {
+    twoColumn(ctx, data.firstA, nmBlocks(s.repair.a), data.firstB, nmBlocks(s.repair.b), fs, {
       persons: true,
     });
     if (Array.isArray(s.repair.steps) && s.repair.steps.length > 0) {
-      numberedSteps(ctx, s.repair.steps, nm);
+      numberedSteps(ctx, s.repair.steps, nm, fs);
     }
     safetyCallout(ctx, "If this feels unsafe", nm(s.repair.safety ?? ""));
 
@@ -1152,6 +1155,7 @@ export async function generatePairedProfilePdf(
       nmBlocks(s.intimacy.a),
       data.firstB,
       nmBlocks(s.intimacy.b),
+      fs,
       { persons: true },
     );
 
