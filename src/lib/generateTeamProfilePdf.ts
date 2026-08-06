@@ -643,6 +643,7 @@ export async function generateTeamProfilePdf(
           ctx.y += 4.5;
         }
       }
+      chipsUnder(ctx, it.facets, 6);
       ctx.y += 4;
     });
   }
