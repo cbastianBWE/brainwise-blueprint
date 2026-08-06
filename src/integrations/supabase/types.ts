@@ -15002,6 +15002,33 @@ export type Database = {
           },
         ]
       }
+      team_profile_b2a0fc06_pre_polarity_regen_backup: {
+        Row: {
+          backed_up_at: string
+          backup_id: number
+          payload: Json
+          record_id: string
+          record_kind: string
+          repair_note: string | null
+        }
+        Insert: {
+          backed_up_at?: string
+          backup_id?: never
+          payload: Json
+          record_id: string
+          record_kind: string
+          repair_note?: string | null
+        }
+        Update: {
+          backed_up_at?: string
+          backup_id?: never
+          payload?: Json
+          record_id?: string
+          record_kind?: string
+          repair_note?: string | null
+        }
+        Relationships: []
+      }
       team_profile_sections: {
         Row: {
           content: string | null
