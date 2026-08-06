@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +26,7 @@ interface Props {
   /** Optional name substitution (paired reports pass nm). */
   transform?: (s: string) => string;
   /** Optional facet-chip renderer; the team report passes its TeamChipRow. */
-  renderFacets?: (facets: string[]) => React.ReactNode;
+  renderFacets?: (facets: string[]) => ReactNode;
 }
 
 /**
