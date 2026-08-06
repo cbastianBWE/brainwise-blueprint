@@ -108,7 +108,7 @@ function modeTitle(mode: string): string {
   return "Paired Report";
 }
 
-/* ---------- v19 bullet normalisation ----------
+/* ---------- v19 bullet normalization ----------
    Sections may hold plain strings (pre-v19 reports) or { point, body, facets }
    objects (v19+). Everything funnels through asLines / asBlocks so no object
    ever reaches cleanMarkdown or nm(). */
@@ -123,7 +123,7 @@ export interface PdfBlock {
 }
 export type ColItem = string | PdfBlock;
 
-/** Facet domain lookup, keyed on the normalised facet name. Set per render. */
+/** Facet domain lookup, keyed on the normalized facet name. Set per render. */
 let facetDomainByName: Map<string, string> = new Map();
 
 /** Relationship mode for this render; display labels only, never lookups. */
@@ -498,7 +498,7 @@ function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => st
 interface ColLine {
   text: string;
   x: number;
-  /** facet caption line: 8pt italic, coloured by the facet's dimension */
+  /** facet caption line: 8pt italic, colored by the facet's dimension */
   facetColor?: readonly [number, number, number];
 }
 
@@ -843,7 +843,7 @@ export async function generatePairedProfilePdf(
   const nm = data.nm;
   const s = data.sections;
 
-  // name-keyed facet domain index, used to colour facet captions
+  // name-keyed facet domain index, used to color facet captions
   renderMode = data.mode ?? null;
   facetDomainByName = new Map();
   for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {

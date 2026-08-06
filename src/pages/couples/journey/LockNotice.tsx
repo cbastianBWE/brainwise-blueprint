@@ -4,7 +4,7 @@
  * The RPC still returns `reason` (machine key plus payload) because the runner
  * and `relationship_session_start` branch on it. Nothing here reads it — the
  * display path uses `reason_code` and `reason_detail` only. A raw code in
- * front of a participant is a defect, so an unrecognised code falls back to
+ * front of a participant is a defect, so an unrecognized code falls back to
  * "Not open yet." rather than printing whatever it was handed.
  */
 

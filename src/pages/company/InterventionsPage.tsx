@@ -58,7 +58,7 @@ const INSTRUMENT_LABEL: Record<string, string> = {
   "INST-002L": "Executive Perspective NAI",
 };
 
-// Friendly dimension names — fall back to the raw ID if the dimension isn't recognised
+// Friendly dimension names — fall back to the raw ID if the dimension isn't recognized
 const DIM_NAMES: Record<string, string> = {
   "DIM-NAI-01": "Certainty",
   "DIM-NAI-02": "Agency",

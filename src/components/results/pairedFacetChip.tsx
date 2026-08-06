@@ -166,7 +166,7 @@ export interface ChipOverlayProps {
   onCloseOverlay?: () => void;
 }
 
-/** Shared jump behaviour for every facet chip in the system. */
+/** Shared jump behavior for every facet chip in the system. */
 export function useChipJump(
   itemNumber: number | null | undefined,
   { inOverlay, onCloseOverlay }: ChipOverlayProps = {},

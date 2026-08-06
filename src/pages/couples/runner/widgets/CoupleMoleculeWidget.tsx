@@ -9,7 +9,7 @@ import { allowedModes } from "../coupleShared";
 /**
  * couple_molecule — 5.7. Reworked from the single-person coaching molecule
  * (lifes-tools-dialogue-personal-molecule), which is left untouched.
- * Two people at the centre instead of one. Capture only: the reveal is a later step.
+ * Two people at the center instead of one. Capture only: the reveal is a later step.
  */
 
 export interface MoleculeNode {

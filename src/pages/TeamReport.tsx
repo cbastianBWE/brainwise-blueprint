@@ -829,7 +829,7 @@ export default function TeamReport() {
 
   /* Name-keyed facet index. Bullet `facets` arrays carry facet NAMES, and every
      other lookup in this report keys on itemNumber, so chips need their own map.
-     Keyed on the normalised name; the raw name is kept on the entry. */
+     Keyed on the normalized name; the raw name is kept on the entry. */
   const facetByName = useMemo(() => {
     const m = new Map<string, TeamFacetEntry>();
     const st = profile?.structured;

@@ -101,7 +101,7 @@ export function JointSessionWidget({
   );
 
   const rule = step.practitionerRule;
-  // Required only when the catalogue arms it AND the server says the condition
+  // Required only when the catalog arms it AND the server says the condition
   // held for this couple. Otherwise it is a recommendation, nothing more.
   const held = !!rule?.required_if && !!practitionerRequired;
   const PractitionerNotice = () =>

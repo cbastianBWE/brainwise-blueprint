@@ -84,7 +84,7 @@ function shapeKey(shape: string | null | undefined): TeamShapeKey {
   return "together";
 }
 
-/* ---------- v14 bullet normalisation ----------
+/* ---------- v14 bullet normalization ----------
    Sections may hold plain strings (pre-v14 profiles) or { point, body, facets }
    objects (v14+, generator currently at v17). Everything funnels through asLines / asBlocks so no object
    ever reaches cleanMarkdown. Ported from generatePairedProfilePdf.ts. */
@@ -96,7 +96,7 @@ export interface PdfBlock {
   facets?: string[];
 }
 
-/** Facet domain lookup, keyed on the normalised facet name. Set per render. */
+/** Facet domain lookup, keyed on the normalized facet name. Set per render. */
 let facetDomainByName: Map<string, string> = new Map();
 
 const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
@@ -611,7 +611,7 @@ export async function generateTeamProfilePdf(
   const s = data.sections;
 
   /* Chip color comes only from the facet's PTP dimension, keyed on the
-     normalised facet name (chips carry names, everything else carries items). */
+     normalized facet name (chips carry names, everything else carries items). */
   facetDomainByName = new Map<string, string>();
   for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
     if (!f?.facetName || !f.domain) continue;

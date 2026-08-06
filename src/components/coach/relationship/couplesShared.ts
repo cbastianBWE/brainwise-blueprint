@@ -57,7 +57,7 @@ export const SEVERITY_LABEL: Record<string, string> = {
   ordinary: "Ordinary",
 };
 
-/** Quiet, token-driven severity styling. Never hardcode raw colours. */
+/** Quiet, token-driven severity styling. Never hardcode raw colors. */
 export function severityClasses(sev: string | null): string {
   switch (sev) {
     case "crisis":

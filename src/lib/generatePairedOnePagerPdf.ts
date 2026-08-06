@@ -41,7 +41,7 @@ export interface PairedOnePagerPdfOpts {
   dateGenerated?: string;
   /** Person A / Person B substitution. Never applied to the first-person columns. */
   nm?: (s: string) => string;
-  /** Dimension colour for a facet chip, when the facet resolves in the map. */
+  /** Dimension color for a facet chip, when the facet resolves in the map. */
   facetColor?: (facet: string) => RGB | undefined;
 
   /** "summary" renders page one only. Defaults to the complete document. */
@@ -446,7 +446,7 @@ export async function generatePairedOnePagerPdf(
     y += lead.length * 4.4 + 4;
 
     /* a preview entry is atomic: measured whole, then drawn whole */
-    /** the raw facet name never leaves the chip build: colour is resolved here */
+    /** the raw facet name never leaves the chip build: color is resolved here */
     type Chip = { label: string; w: number; color: RGB };
 
     type Measured = { head: string[]; body: string[]; chipRows: Chip[][]; h: number };
@@ -467,7 +467,7 @@ export async function generatePairedOnePagerPdf(
         let row: Chip[] = [];
         let cx = 4;
         for (const f of facets) {
-          // colour resolves from the raw name here; only the display label is carried on
+          // color resolves from the raw name here; only the display label is carried on
           const label = facetDisplayLabel(nm(f), opts.mode);
           const color = opts.facetColor?.(f) ?? GRAY;
           const w = doc.getTextWidth(label) + 4;

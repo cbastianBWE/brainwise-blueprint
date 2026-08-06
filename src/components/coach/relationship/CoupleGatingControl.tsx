@@ -110,7 +110,7 @@ export default function CoupleGatingControl({
           {areas === null ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           ) : areas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No gated areas in the catalogue yet.</p>
+            <p className="text-sm text-muted-foreground">No gated areas in the catalog yet.</p>
           ) : (
             areas.map((a) => (
               <div
