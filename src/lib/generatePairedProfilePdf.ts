@@ -123,14 +123,12 @@ export interface PdfBlock {
 }
 export type ColItem = string | PdfBlock;
 
-/** Facet domain lookup, keyed on the normalized facet name. Set per render. */
-let facetDomainByName: Map<string, string> = new Map();
-
-/** Relationship mode for this render; display labels only, never lookups. */
-let renderMode: string | null = null;
-/** The label to print for a facet. Lookups keep using the raw name. */
-function facetLabel(name: string): string {
-  return facetDisplayLabel(name, renderMode);
+/** Per-invocation facet styling. Built inside the generate call and threaded
+ *  down, so no module-level mutable state is shared between renders. */
+export interface FacetStyler {
+  /** The label to print for a facet. Lookups keep using the raw name. */
+  label: (name: string) => string;
+  color: (name: string) => readonly [number, number, number];
 }
 
 const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
@@ -141,9 +139,22 @@ const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
   Pleasure: MUSTARD, // amber is illegible at 8pt; mustard is its text-safe pair
 };
 
-function facetColor(name: string): readonly [number, number, number] {
-  const dom = facetDomainByName.get(normFacetName(name));
-  return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+function makeFacetStyler(
+  facets: { facetName?: string | null; domain?: string | null }[],
+  mode: string | null,
+): FacetStyler {
+  const domainByName = new Map<string, string>();
+  for (const f of facets) {
+    const key = normFacetName(f.facetName ?? "");
+    if (key && f.domain && !domainByName.has(key)) domainByName.set(key, f.domain);
+  }
+  return {
+    label: (name: string) => facetDisplayLabel(name, mode),
+    color: (name: string) => {
+      const dom = domainByName.get(normFacetName(name));
+      return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+    },
+  };
 }
 
 /** jsPDF has no alpha on fills; blend toward white instead. */
@@ -206,6 +217,7 @@ function chipLayout(
   doc: jsPDF,
   facets: string[] | undefined,
   maxW: number,
+  fs: FacetStyler,
 ): { rows: Chip[][]; h: number } {
   const list = (facets ?? []).filter((f) => typeof f === "string" && f.trim());
   if (list.length === 0) return { rows: [], h: 0 };
@@ -215,7 +227,7 @@ function chipLayout(
   let row: Chip[] = [];
   let rowW = 0;
   for (const raw of list) {
-    const label = facetLabel(cleanMarkdown(raw).trim());
+    const label = fs.label(cleanMarkdown(raw).trim());
     if (!label) continue;
     const w = Math.min(maxW, doc.getTextWidth(label) + CHIP_PAD_X * 2 + 1.5);
     if (row.length > 0 && rowW + CHIP_GAP_X + w > maxW) {
@@ -223,7 +235,7 @@ function chipLayout(
       row = [];
       rowW = 0;
     }
-    row.push({ label, w, color: facetColor(raw) });
+    row.push({ label, w, color: fs.color(raw) });
     rowW += (row.length > 1 ? CHIP_GAP_X : 0) + w;
   }
   if (row.length > 0) rows.push(row);
@@ -278,6 +290,7 @@ function measureCard(
   b: PdfBlock,
   w: number,
   accent: readonly [number, number, number],
+  fs: FacetStyler,
 ): CardMeasure {
   const innerW = w - CARD_PAD * 2 - CARD_RULE_W;
   const move = !!b.move;
@@ -289,7 +302,7 @@ function measureCard(
   doc.setFont("Montserrat", "normal");
   doc.setFontSize(BODY_SIZE);
   const textLines: string[] = b.text ? doc.splitTextToSize(cleanMarkdown(b.text), innerW) : [];
-  const chips = chipLayout(doc, b.facets, innerW);
+  const chips = chipLayout(doc, b.facets, innerW, fs);
   const h =
     CARD_PAD * 2 +
     (move ? 3.2 : 0) +
@@ -351,11 +364,12 @@ function drawCardAt(
 function bulletCard(
   ctx: PdfContext,
   block: PdfBlock,
+  fs: FacetStyler,
   opts: { indent?: number; width?: number; accent?: readonly [number, number, number] } = {},
 ): void {
   const indent = opts.indent ?? 0;
   const w = opts.width ?? CONTENT_W - indent;
-  const m = measureCard(ctx.doc, block, w, opts.accent ?? TEAL);
+  const m = measureCard(ctx.doc, block, w, opts.accent ?? TEAL, fs);
   const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
   if (m.h > PAGE_AVAIL) {
     // taller than a page: render unframed rather than loop forever
@@ -419,7 +433,7 @@ function safetyCallout(ctx: PdfContext, title: string, text: string): void {
 }
 
 /** Numbered sequence with teal numeral discs and a connector between them. */
-function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => string): void {
+function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => string, fs: FacetStyler): void {
   const { doc } = ctx;
   const DISC_R = 2.25;
   const discX = MARGIN_L + DISC_R;
@@ -441,7 +455,7 @@ function numberedSteps(ctx: PdfContext, items: StepItem[], nm: (s: string) => st
     doc.setFont("Montserrat", "normal");
     doc.setFontSize(BODY_SIZE);
     const bodyL: string[] = bodyRaw ? doc.splitTextToSize(cleanMarkdown(bodyRaw), textW) : [];
-    const chips = chipLayout(doc, bulletFacets(raw), textW);
+    const chips = chipLayout(doc, bulletFacets(raw), textW, fs);
     const blockH =
       Math.max(DISC_R * 2, pointLines.length * LH_POINT + bodyL.length * LH_BODY) +
       (chips.h > 0 ? chips.h + 1 : 0) +
@@ -508,6 +522,7 @@ function twoColumn(
   leftBody: ColItem[],
   rightTitle: string,
   rightBody: ColItem[],
+  fs: FacetStyler,
   opts: {
     bulleted?: boolean;
     /** person legend dots drawn before each column title */
@@ -548,8 +563,8 @@ function twoColumn(
     let y = drawTitles(ctx.y);
     const n = Math.max(leftBody.length, rightBody.length);
     for (let i = 0; i < n; i++) {
-      const l = leftBody[i] ? measureCard(doc, toBlock(leftBody[i]), colW, accentL) : null;
-      const r = rightBody[i] ? measureCard(doc, toBlock(rightBody[i]), colW, accentR) : null;
+      const l = leftBody[i] ? measureCard(doc, toBlock(leftBody[i]), colW, accentL, fs) : null;
+      const r = rightBody[i] ? measureCard(doc, toBlock(rightBody[i]), colW, accentR, fs) : null;
       const rowH = Math.max(l?.h ?? 0, r?.h ?? 0);
       if (rowH === 0) continue;
       if (y + rowH > PAGE_H - MARGIN_B && rowH <= PAGE_H - MARGIN_T - MARGIN_B) {
@@ -640,10 +655,11 @@ function paragraphs(ctx: PdfContext, text: string): void {
 function renderBlocks(
   ctx: PdfContext,
   blocks: ColItem[],
+  fs: FacetStyler,
   accent: readonly [number, number, number] = TEAL,
 ): void {
   for (const blk of blocks) {
-    if (isCardItem(blk)) bulletCard(ctx, toBlock(blk), { accent });
+    if (isCardItem(blk)) bulletCard(ctx, toBlock(blk), fs, { accent });
     else paragraphs(ctx, blockText(blk));
   }
 }
@@ -844,14 +860,21 @@ export async function generatePairedProfilePdf(
   const s = data.sections;
 
   // name-keyed facet domain index, used to color facet captions
-  renderMode = data.mode ?? null;
-  facetDomainByName = new Map();
-  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
-    const key = normFacetName(f.facetName ?? "");
-    if (key && f.domain && !facetDomainByName.has(key)) facetDomainByName.set(key, f.domain);
-  }
+  const fs = makeFacetStyler(
+    [...data.fullMap, ...data.strengths, ...data.focusAreas],
+    data.mode ?? null,
+  );
+  const facetLabel = fs.label;
+  const facetColor = fs.color;
+  // Carry point and move through: text holds only the BODY when a point exists,
+  // so dropping point here would lose the lead sentence entirely.
   const nmBlocks = (v: Parameters<typeof asBlocks>[0]): ColItem[] =>
-    asBlocks(v).map((b) => ({ text: nm(b.text), facets: (b.facets ?? []).map(nm) }));
+    asBlocks(v).map((b) => ({
+      point: b.point ? nm(b.point) : undefined,
+      text: nm(b.text),
+      facets: (b.facets ?? []).map(nm),
+      move: b.move,
+    }));
 
 
   // 1. pair in three
@@ -1226,7 +1249,7 @@ export async function generatePairedProfilePdf(
         doc.setFontSize(8.5);
         const readL: string[] = read ? doc.splitTextToSize(read, innerW) : [];
         const whyL: string[] = why ? doc.splitTextToSize(why, innerW) : [];
-        const chips = chipLayout(doc, [facet], innerW);
+        const chips = chipLayout(doc, [facet], innerW, fs);
 
         const cardH =
           CARD_PAD +
