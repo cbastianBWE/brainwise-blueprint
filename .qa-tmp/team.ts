@@ -25,7 +25,8 @@ async function run(p: any, label: string) {
   };
 
   const draws: Draw[] = [];
-  const API: any = (jsPDF as any).API;
+  const API: any = (jsPDF as any).API ?? (jsPDF as any).prototype;
+  if (typeof API.text !== "function") { const jp: any = (jsPDF as any).jsPDF ?? jsPDF; Object.assign(API, {}); }
   const origText = API.text;
   let captured: any = null;
   API.text = function (txt: any, x: number, y: number, ...rest: any[]) {
