@@ -31,7 +31,8 @@ async function run(profileId: string, label: string) {
   for (const r of secRows) {
     sections[r.section_type] = typeof r.content === "string" ? JSON.parse(r.content) : r.content;
   }
-  const items = await q(`items_presentation?instrument_id=eq.INST-001&select=item_number,item_text`);
+  let items: any[] = [];
+  try { items = await q(`items_presentation?instrument_id=eq.INST-001&select=item_number,item_text`); } catch { items = []; }
   const itemText = new Map<number, string>();
   for (const it of items) if (it.item_number != null) itemText.set(it.item_number, it.item_text);
   const dist = await rpc("bw_team_profile_distribution", { p_profile: profileId });
