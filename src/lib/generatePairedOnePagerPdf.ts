@@ -299,7 +299,7 @@ export async function generatePairedOnePagerPdf(
         doc.setFontSize(body);
         const pt = doc.splitTextToSize(nm(w.point ?? ""), colW - 5);
         if (draw) {
-          doc.setTextColor(...(isProtective ? PURPLE : MUSTARD));
+          doc.setTextColor(...((isProtective ? PURPLE : MUSTARD) as [number, number, number]));
           doc.text(pt, x + 4, yy);
         }
         yy += pt.length * lh;
@@ -312,7 +312,7 @@ export async function generatePairedOnePagerPdf(
         }
         yy += bd.length * (lh - 0.2);
         if (draw) {
-          doc.setFillColor(...(isProtective ? PURPLE : AMBER));
+          doc.setFillColor(...((isProtective ? PURPLE : AMBER) as [number, number, number]));
           doc.rect(x, top - lh + 1.2, 1, yy - top, "F");
         }
         maxY = Math.max(maxY, yy);
