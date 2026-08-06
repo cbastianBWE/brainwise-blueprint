@@ -85,7 +85,8 @@ export function useTipController() {
   const [tip, setTip] = useState<Tip>(null);
   useEffect(() => {
     TipCtx.current = setTip;
-    return () => { TipCtx.current = null; };
+    // only clear if a newer consumer has not already claimed the slot
+    return () => { if (TipCtx.current === setTip) TipCtx.current = null; };
   }, []);
   return tip;
 }
