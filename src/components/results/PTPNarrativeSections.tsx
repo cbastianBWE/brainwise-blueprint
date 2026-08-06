@@ -569,7 +569,11 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
           ? (polled!.facet_data as unknown as FacetInterpretation[])
           : [];
 
-        if (polledArr.length > 0) setAllFacetInsights(polledArr);
+        if (polledArr.length > 0) {
+          setAllFacetInsights([...polledArr, ...additionalLoaded]);
+          setFacetInsightsByItem(buildMap(polledArr, additionalLoaded));
+        }
+
 
         if (polledTotal !== null && polledArr.length >= polledTotal) {
           if (pollInterval) clearInterval(pollInterval);
