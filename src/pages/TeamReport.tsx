@@ -803,6 +803,38 @@ export default function TeamReport() {
   const leadership = sections["leadership"] as LeadershipItem[] | undefined;
   const hasLeadership = Array.isArray(leadership) && leadership.length > 0;
 
+  /* Name-keyed facet index. Bullet `facets` arrays carry facet NAMES, and every
+     other lookup in this report keys on itemNumber, so chips need their own map.
+     Keyed on the normalised name; the raw name is kept on the entry. */
+  const facetByName = useMemo(() => {
+    const m = new Map<string, TeamFacetEntry>();
+    const st = profile?.structured;
+    const all: TeamFacetResult[] = [
+      ...(st?.strengths ?? []),
+      ...(st?.focusAreas ?? []),
+      ...(st?.fullMap ?? []),
+      ...(st?.facets ?? []),
+    ];
+    for (const f of all) {
+      if (!f?.facetName) continue;
+      const key = normFacetName(f.facetName);
+      if (m.has(key)) continue;
+      m.set(key, {
+        itemNumber: f.itemNumber,
+        facetName: f.facetName,
+        domain: f.domain ?? null,
+        shape: f.shape ?? null,
+        stats: f.stats ?? null,
+      });
+    }
+    return m;
+  }, [profile]);
+
+  const lookupFacetByName = useCallback(
+    (name: string) => facetByName.get(normFacetName(name)),
+    [facetByName],
+  );
+
   const facetLookup = (item: number): TeamFacetResult | undefined =>
     profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
     profile?.structured?.strengths?.find((f) => f.itemNumber === item) ??
