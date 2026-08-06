@@ -578,31 +578,22 @@ export async function generateTeamProfilePdf(
   // 6. communication
   if (sections.communication && s.communication) {
     ctx.sectionHeading("Communication", undefined, "The mechanics");
-    doc.setFont("Poppins", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...NAVY);
-    ctx.checkPageBreak(6);
-    doc.text("In general", MARGIN_L, ctx.y);
-    ctx.y += 5;
     const genBlocks = asBlocks(s.communication.general);
+    subheading(ctx, "In general", firstCardH(ctx, genBlocks, fs, TEAL));
     if (hasCards(genBlocks)) bulletCards(ctx, genBlocks, fs, { accent: TEAL });
     else for (const line of asLines(s.communication.general)) paragraphs(ctx, line);
     ctx.y += 3;
-    doc.setFont("Poppins", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...NAVY);
-    doc.text("Under pressure", MARGIN_L, ctx.y);
-    ctx.y += 5;
     const upBlocks = asBlocks(s.communication.under_pressure);
+    subheading(ctx, "Under pressure", firstCardH(ctx, upBlocks, fs, TEAL));
     if (hasCards(upBlocks)) bulletCards(ctx, upBlocks, fs, { accent: TEAL });
     else for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, line);
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text("Avoiding conflict", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(
+        ctx,
+        "Avoiding conflict",
+        firstCardH(ctx, asBlocks([s.communication.avoid_conflict[0]]), fs, TEAL, CONTENT_W - 3),
+      );
       // number from the count of entries actually rendered, so a dropped block
       // does not leave a gap in the sequence (1, 3, 4)
       let n = 0;
@@ -623,7 +614,11 @@ export async function generateTeamProfilePdf(
           });
           return;
         }
+        // measure in the font it is drawn in, not whatever was left live
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9);
         const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(b.text)}`, CONTENT_W - 6);
+
         for (const l of lines) {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
