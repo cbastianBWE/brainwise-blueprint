@@ -604,6 +604,12 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     responsesExpanded,
     setResponsesExpanded,
     allFacetInsights,
+    // Resolve by item number first (stable); name match only as a fallback for
+    // the case where the stored array length disagreed with the item count.
+    getFacetInsight: (itemNumber: number | null | undefined, name: string) =>
+      (itemNumber ? facetInsightsByItem.get(itemNumber) : undefined) ??
+      allFacetInsights.find((f) => f.name === name),
+
     loadingAllFacetInsights,
     allFacetsExpanded,
     setAllFacetsExpanded,
