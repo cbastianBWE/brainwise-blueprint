@@ -375,7 +375,15 @@ export async function generateTeamOnePagerPdf(
           doc.setFontSize(body);
           const lines = doc.splitTextToSize(str(row.line?.text), textW) as string[];
           const chips = chipLayout(doc, row.line?.facets, textW, fs);
-          const h = lines.length * lh + (chips.h > 0 ? chips.h + 1.6 : 0) + 1.4;
+          // chips hang 1.6mm below the last text baseline; the row must then
+          // clear the whole chip block plus an even gap, or the next row's
+          // separator is drawn straight through the chip labels
+          const chipLead = 1.6;
+          const chipTrail = 3.8 * k;
+          const h =
+            lines.length * lh +
+            (chips.h > 0 ? chips.h + chipLead + chipTrail - lh : 0) +
+            1.4;
           ensure(h + 1.4);
           if (i > 0 && draw) {
             doc.setDrawColor(220, 224, 228);
@@ -395,8 +403,9 @@ export async function generateTeamOnePagerPdf(
           }
           let rowBottom = y + lines.length * lh;
           if (chips.h > 0) {
-            if (draw) drawChipRows(doc, chips.rows, M + labelW, rowBottom - lh + 1.6);
-            rowBottom += chips.h - lh + 2.4;
+            const chipTop = rowBottom - lh + chipLead;
+            if (draw) drawChipRows(doc, chips.rows, M + labelW, chipTop);
+            rowBottom = chipTop + chips.h + chipTrail;
           }
           y = rowBottom + 1.4;
         });
