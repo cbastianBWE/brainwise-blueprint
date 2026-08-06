@@ -640,7 +640,7 @@ export async function generateTeamProfilePdf(
 
   // 1. team in three
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
-    ctx.sectionHeading("Your team in three");
+    ctx.sectionHeading("Your team in three", undefined, "The shape");
     s.team_in_three.slice(0, 3).forEach((it, i) => {
       ctx.ensureBlockSpace(20);
       doc.setFont("Poppins", "bold");
@@ -662,20 +662,20 @@ export async function generateTeamProfilePdf(
           ctx.y += 4.5;
         }
       }
-      chipsUnder(ctx, it.facets, 6);
+      chipsUnder(ctx, it.facets, fs, 6);
       ctx.y += 4;
     });
   }
 
   // 2. domains
   if (sections.domains && Object.keys(data.domains).length > 0) {
-    ctx.sectionHeading("Three domains, at a glance");
+    ctx.sectionHeading("Three domains, at a glance", undefined, "The scores");
     drawDomainsRadial(ctx, data);
   }
 
   // 3. shape legend
   if (sections.shapeLegend) {
-    ctx.sectionHeading("How to read the shapes");
+    ctx.sectionHeading("How to read the shapes", undefined, "How to read this");
     for (const k of TEAM_SHAPES) {
       ctx.ensureBlockSpace(14);
       doc.setFont("Poppins", "bold");
@@ -690,7 +690,7 @@ export async function generateTeamProfilePdf(
 
   // 4. driving
   if (sections.driving && s.driving_facets) {
-    ctx.sectionHeading("Driving facets");
+    ctx.sectionHeading("Driving facets", undefined, "What drives it");
     if (s.driving_facets.opening) paragraphs(ctx, s.driving_facets.opening);
     ctx.y += 2;
     const strengthSrc = s.driving_facets.strengths ?? [];
@@ -721,7 +721,7 @@ export async function generateTeamProfilePdf(
   if (sections.drivingFacetCharts) {
     const set: TeamFacetForPdf[] = [...data.strengths, ...data.focusAreas];
     if (set.length > 0) {
-      ctx.sectionHeading("Driving facets — team distribution");
+      ctx.sectionHeading("Driving facets — team distribution", undefined, "The spread");
       for (const f of set) {
         const scores = data.scoresByItem.get(f.itemNumber) ?? [];
         drawTeamDistRow(ctx, {
@@ -735,7 +735,7 @@ export async function generateTeamProfilePdf(
 
   // 6. communication
   if (sections.communication && s.communication) {
-    ctx.sectionHeading("Communication");
+    ctx.sectionHeading("Communication", undefined, "The mechanics");
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
@@ -743,7 +743,7 @@ export async function generateTeamProfilePdf(
     doc.text("In general", MARGIN_L, ctx.y);
     ctx.y += 5;
     const genBlocks = asBlocks(s.communication.general);
-    if (hasCards(genBlocks)) bulletCards(ctx, genBlocks, { accent: TEAL });
+    if (hasCards(genBlocks)) bulletCards(ctx, genBlocks, fs, { accent: TEAL });
     else for (const line of asLines(s.communication.general)) paragraphs(ctx, line);
     ctx.y += 3;
     doc.setFont("Poppins", "bold");
@@ -752,7 +752,7 @@ export async function generateTeamProfilePdf(
     doc.text("Under pressure", MARGIN_L, ctx.y);
     ctx.y += 5;
     const upBlocks = asBlocks(s.communication.under_pressure);
-    if (hasCards(upBlocks)) bulletCards(ctx, upBlocks, { accent: TEAL });
+    if (hasCards(upBlocks)) bulletCards(ctx, upBlocks, fs, { accent: TEAL });
     else for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, line);
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
@@ -774,7 +774,7 @@ export async function generateTeamProfilePdf(
           // so a bullet with facets but no point keeps its number
           bulletCards(ctx, [b.point
             ? { ...b, point: `${i + 1}. ${b.point}` }
-            : { ...b, text: `${i + 1}. ${b.text}` }], {
+            : { ...b, text: `${i + 1}. ${b.text}` }], fs, {
             indent: 3,
             width: CONTENT_W - 3,
             accent: TEAL,
@@ -796,7 +796,7 @@ export async function generateTeamProfilePdf(
 
   // 7. conflict
   if (sections.conflict && s.conflict) {
-    ctx.sectionHeading("Conflict");
+    ctx.sectionHeading("Conflict", undefined, "The pattern");
     if (s.conflict.summary) paragraphs(ctx, s.conflict.summary);
     ctx.y += 2;
     const mit = asBlocks(s.conflict.mitigate);
@@ -809,7 +809,7 @@ export async function generateTeamProfilePdf(
       ctx.checkPageBreak(6);
       doc.text("Mitigate", MARGIN_L, ctx.y);
       ctx.y += 5;
-      bulletCards(ctx, mit, { accent: TEAL });
+      bulletCards(ctx, mit, fs, { accent: TEAL });
       ctx.y += 2;
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
@@ -817,7 +817,7 @@ export async function generateTeamProfilePdf(
       ctx.checkPageBreak(6);
       doc.text("Promote healthy", MARGIN_L, ctx.y);
       ctx.y += 5;
-      bulletCards(ctx, pro, { accent: MUSTARD });
+      bulletCards(ctx, pro, fs, { accent: MUSTARD });
     } else {
       twoColumn(
         ctx,
@@ -832,7 +832,7 @@ export async function generateTeamProfilePdf(
 
   // 7b. leadership snapshot (three headlines + moves)
   if (sections.leadership && Array.isArray(s.leadership) && s.leadership.length > 0) {
-    ctx.sectionHeading("For the leader");
+    ctx.sectionHeading("For the leader", undefined, "For the leader");
     for (let i = 0; i < Math.min(3, s.leadership.length); i++) {
       const it = s.leadership[i];
       ctx.ensureBlockSpace(20);
@@ -849,14 +849,14 @@ export async function generateTeamProfilePdf(
         doc.text(it.action, MARGIN_L, ctx.y);
         ctx.y += 5;
       }
-      chipsUnder(ctx, it.facets);
+      chipsUnder(ctx, it.facets, fs);
       ctx.y += 2;
     }
   }
 
   // 8. leader brief (privileged)
   if (sections.leaderBrief && s.leader_brief) {
-    ctx.sectionHeading("For the leader: the moves");
+    ctx.sectionHeading("For the leader: the moves", undefined, "The moves");
     const rows = s.leader_brief.rows ?? [];
     const cols = [
       { key: "driver", label: "Driver", w: 40 },
@@ -925,7 +925,7 @@ export async function generateTeamProfilePdf(
 
   // 9. full map (+ chart mode)
   if (sections.fullMap || sections.fullMapCharts) {
-    ctx.sectionHeading("The full map");
+    ctx.sectionHeading("The full map", undefined, "Every facet");
     const buckets: Record<TeamShapeKey, TeamFacetForPdf[]> = {
       allHigh: [], allLow: [], two: [], even: [], together: [],
     };
@@ -964,7 +964,7 @@ export async function generateTeamProfilePdf(
 
   // 10. coach (privileged)
   if (sections.coach && s.coach) {
-    ctx.sectionHeading("For the practitioner, org admin & super admin");
+    ctx.sectionHeading("For the practitioner, org admin & super admin", undefined, "Behind the scenes");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
       doc.setFont("Poppins", "bold");
       doc.setFontSize(10);
