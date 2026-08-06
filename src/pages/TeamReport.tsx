@@ -289,8 +289,6 @@ function teamChipTip(entry: TeamFacetEntry): string {
   if (shape) parts.push(shape.replace(/\.$/, "") + ".");
   const st = entry.stats;
   if (st && typeof st.n === "number") {
-    const high = 0, low = 0;
-    void high; void low;
     parts.push(`${st.n} members, ${agreementDesc(st.range ?? (st.max - st.min))}`);
     parts.push(`team average ${Math.round(st.mean)}, from ${Math.round(st.min)} to ${Math.round(st.max)}.`);
   }
