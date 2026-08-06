@@ -10168,6 +10168,9 @@ export type Database = {
       }
       paired_profiles: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           computed_at: string
           generated_by: string
           generated_by_role: string
@@ -10182,6 +10185,9 @@ export type Database = {
           structured: Json
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           computed_at?: string
           generated_by: string
           generated_by_role: string
@@ -10196,6 +10202,9 @@ export type Database = {
           structured: Json
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           computed_at?: string
           generated_by?: string
           generated_by_role?: string
@@ -10210,6 +10219,34 @@ export type Database = {
           structured?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "paired_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "paired_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paired_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "paired_profiles_organization_id_fkey"
             columns: ["organization_id"]
@@ -14945,6 +14982,9 @@ export type Database = {
       }
       team_profiles: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          archived_by: string | null
           computed_at: string
           generated_by: string
           generated_by_role: string
@@ -14960,6 +15000,9 @@ export type Database = {
           team_id: string | null
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           computed_at?: string
           generated_by: string
           generated_by_role: string
@@ -14975,6 +15018,9 @@ export type Database = {
           team_id?: string | null
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           computed_at?: string
           generated_by?: string
           generated_by_role?: string
@@ -14990,6 +15036,34 @@ export type Database = {
           team_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "team_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "team_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_profiles_archived_by_fkey"
+            columns: ["archived_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "team_profiles_organization_id_fkey"
             columns: ["organization_id"]
@@ -17371,6 +17445,10 @@ export type Database = {
         Args: { p_audience: string; p_subject_ids: string[] }
         Returns: boolean
       }
+      bw_archive_report: {
+        Args: { p_id: string; p_kind: string; p_reason: string }
+        Returns: Json
+      }
       bw_can_generate_paired: {
         Args: { p_a: string; p_b: string; p_caller: string; p_mode: string }
         Returns: boolean
@@ -17542,6 +17620,10 @@ export type Database = {
           entitlement_tier: string
           tier: string
         }[]
+      }
+      bw_restore_report: {
+        Args: { p_id: string; p_kind: string }
+        Returns: Json
       }
       bw_set_coach_comp: {
         Args: { p_coach: string; p_comped: boolean; p_reason?: string }
