@@ -81,8 +81,11 @@ function shapeKey(shape: string | null | undefined): ShapeKey {
   }
 }
 
-/* ---------- section types ---------- */
-interface TeamInThreeItem { headline: string; detail: string; action: string; }
+/* ---------- section types ----------
+   v15 of generate-team-narrative emits structured bullets
+   ({ point, body, facets }) where earlier versions emitted plain strings.
+   Older profiles are never regenerated, so every renderer accepts both. */
+interface TeamInThreeItem { headline: string; detail: string; action: string; facets?: string[]; }
 interface DrivingItem {
   item: number;
   why: string;
@@ -95,11 +98,11 @@ interface DrivingFacetsSection {
   focus: DrivingItem[];
 }
 interface CommunicationSection {
-  general: string | string[];
-  under_pressure: string | string[];
-  avoid_conflict: string[];
+  general: string | Bullet[];
+  under_pressure: string | Bullet[];
+  avoid_conflict: Bullet[];
 }
-interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; }
+interface ConflictSection { summary: string; mitigate: string | Bullet[]; promote_healthy: string | Bullet[]; }
 interface LeaderBriefRow { item: number; risk_to_work: string; the_move: string; potential_owner: string; }
 interface LeaderBriefSection { rows: LeaderBriefRow[]; lean_on: string; }
 interface CoachSection {
