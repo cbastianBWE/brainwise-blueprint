@@ -17,6 +17,7 @@ export interface PairedFacetForPdf {
   facetName: string;
   domain?: string | null;
   shape: string;
+  label?: string | null;
   driverScore?: number | null;
   stats?: { a: number; b: number } | null;
 }
