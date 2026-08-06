@@ -32,6 +32,8 @@ import {
   measureCard,
   drawCardAt,
   CARD_GAP,
+  CARD_PAD,
+  CARD_RULE_W,
   type CardMetrics,
   type FacetStyler,
   type PdfBlock,
@@ -501,6 +503,13 @@ export async function generateTeamProfilePdf(
   // The team report always covers the full instrument, so workplace wording is right.
   const fs = makeFacetStyler([...data.fullMap, ...data.strengths, ...data.focusAreas], "work");
 
+  /* item number -> facet name. Built unconditionally: both the leader brief's
+     Driver column and the practitioner cards key on it. */
+  const facetByItem = new Map<number, string>();
+  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
+    if (!facetByItem.has(f.itemNumber)) facetByItem.set(f.itemNumber, f.facetName);
+  }
+
   // 1. team in three
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
     ctx.sectionHeading("Your team in three", SECTION_RESERVE, "The shape");
@@ -736,11 +745,8 @@ export async function generateTeamProfilePdf(
     ctx.y += 3;
 
     // the Driver column names the facet, exactly as the screen does; the raw
-    // instrument question stays in the practitioner section, where it is the point
-    const facetByItem = new Map<number, string>();
-    for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
-      if (!facetByItem.has(f.itemNumber)) facetByItem.set(f.itemNumber, f.facetName);
-    }
+    // instrument question also appears in the practitioner section, but there it
+    // is supporting detail under the facet name, not the heading
     for (const r of rows) {
       const facetName = facetByItem.get(r.item);
       const driver = facetName ? facetDisplayLabel(facetName, "work") : `Item ${r.item}`;
@@ -834,35 +840,139 @@ export async function generateTeamProfilePdf(
     }
   }
 
-  // 10. coach (privileged)
+  // 10. coach (privileged) — practitioner-only, always starts on a fresh page
   if (sections.coach && s.coach) {
-    ctx.sectionHeading("For the practitioner, org admin & super admin", SECTION_RESERVE, "Behind the scenes");
+    ctx.addFooter();
+    doc.addPage();
+    ctx.y = MARGIN_T;
+    ctx.sectionHeading("For the practitioner, org admin & super admin", 22, "Behind the scenes");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
-      subheading(ctx, "Why these matter", 16);
+      const LBL_H = 3.2;
+      const innerX = MARGIN_L + CARD_RULE_W + CARD_PAD;
+      const innerW = CONTENT_W - CARD_RULE_W - CARD_PAD * 2;
+
+      /** Measure one practitioner card. Font state is set immediately before
+       *  every split, because jsPDF measures in whatever font is live. */
+      const layoutCard = (w: { item: number; rationale: string }) => {
+        const question = cleanMarkdown(data.itemText.get(w.item) ?? `Item ${w.item}`);
+        const facet = facetByItem.get(w.item) ?? `Item ${w.item}`;
+        const anchors = data.anchorsByItem.get(w.item);
+        const low = anchors?.low?.trim();
+        const high = anchors?.high?.trim();
+        const scale = low && high ? `0 = "${low}" · 100 = "${high}"` : "";
+
+        const paras = splitParas(cleanMarkdown(w.rationale));
+        const read = paras.length > 1 ? paras[0] : "";
+        const why = paras.length > 1 ? paras.slice(1).join(" ") : (paras[0] ?? "");
+
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(10);
+        const titleL: string[] = doc.splitTextToSize(fs.label(cleanMarkdown(facet)), innerW);
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(8);
+        const qL: string[] = doc.splitTextToSize(question, innerW);
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(8);
+        const scaleL: string[] = scale ? doc.splitTextToSize(scale, innerW) : [];
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(BODY_SIZE);
+        const readL: string[] = read ? doc.splitTextToSize(read, innerW) : [];
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(BODY_SIZE);
+        const whyL: string[] = why ? doc.splitTextToSize(why, innerW) : [];
+        const chips = chipLayout(doc, [facet], innerW, fs);
+
+        const cardH =
+          CARD_PAD +
+          titleL.length * 4.8 +
+          1.2 +
+          LBL_H + qL.length * 3.7 + 1.6 +
+          (scaleL.length > 0 ? LBL_H + scaleL.length * 3.7 + 1.6 : 0) +
+          (readL.length > 0 ? LBL_H + readL.length * LH_BODY + 1.6 : 0) +
+          (whyL.length > 0 ? LBL_H + whyL.length * LH_BODY + 1.6 : 0) +
+          (chips.h > 0 ? chips.h + 0.5 : 0) +
+          CARD_PAD;
+
+        return { facet, titleL, qL, scaleL, readL, whyL, chips, cardH };
+      };
+
+      // reserve the real height of the first card, so the subheading is never
+      // the last ink on a page
+      const first = layoutCard(s.coach.why[0] as { item: number; rationale: string });
+      const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
+      subheading(ctx, "Why these matter", Math.min(first.cardH + CARD_GAP, PAGE_AVAIL - 12));
+
       for (const w of s.coach.why) {
-        const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
-        // measure first, then reserve the whole quote plus the first line of the
-        // rationale, so a three-line question can never split from its body
-        doc.setFont("Montserrat", "semibold");
-        doc.setFontSize(8.5);
-        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
-        ctx.ensureBlockSpace(ql.length * 4 + 9);
-        doc.setFont("Montserrat", "semibold");
-        doc.setFontSize(8.5);
-        doc.setTextColor(...MUTED);
-        for (const l of ql) {
-          ctx.checkPageBreak(5);
-          doc.setFont("Montserrat", "semibold");
-          doc.setFontSize(8.5);
-          doc.setTextColor(...MUTED);
-          doc.text(l, MARGIN_L, ctx.y);
-          ctx.y += 4;
+        const { facet, titleL, qL, scaleL, readL, whyL, chips, cardH } = layoutCard(w);
+        const accent = fs.color(facet);
+
+        ctx.ensureBlockSpace(cardH + CARD_GAP);
+        const top = ctx.y;
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 228, 232);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(MARGIN_L, top, CONTENT_W, cardH, 1.6, 1.6, "FD");
+        doc.setFillColor(accent[0], accent[1], accent[2]);
+        doc.rect(MARGIN_L, top, CARD_RULE_W, cardH, "F");
+
+        let y = top + CARD_PAD + 3.4;
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(...NAVY);
+        for (const l of titleL) {
+          doc.text(l, innerX, y);
+          y += 4.8;
         }
-        ctx.y += 0.5;
-        paragraphs(ctx, w.rationale);
-        ctx.y += 2;
+        y += 1.2;
+
+        const label = (t: string) => {
+          doc.setFont("Montserrat", "semibold");
+          doc.setFontSize(6.5);
+          doc.setTextColor(...MUTED);
+          doc.text(t, innerX, y);
+          y += LBL_H;
+        };
+        const muted8 = (lines: string[]) => {
+          doc.setFont("Montserrat", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(...MUTED);
+          for (const l of lines) {
+            doc.text(l, innerX, y);
+            y += 3.7;
+          }
+          y += 1.6;
+        };
+        const body = (lines: string[]) => {
+          doc.setFont("Montserrat", "normal");
+          doc.setFontSize(BODY_SIZE);
+          doc.setTextColor(...BLACK);
+          for (const l of lines) {
+            doc.text(l, innerX, y);
+            y += LH_BODY;
+          }
+          y += 1.6;
+        };
+
+        label("THE ITEM");
+        muted8(qL);
+        if (scaleL.length > 0) {
+          label("THE SCALE");
+          muted8(scaleL);
+        }
+        if (readL.length > 0) {
+          label("THE READ");
+          body(readL);
+        }
+        if (whyL.length > 0) {
+          label("WHY FLAGGED");
+          body(whyL);
+        }
+        if (chips.h > 0) drawChipRows(doc, chips.rows, innerX, y - 2.6);
+
+        ctx.y = top + cardH + CARD_GAP;
       }
     }
+
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
       subheading(ctx, "Debrief prompts", 10);
       s.coach.debrief_prompts.forEach((p, i) => {

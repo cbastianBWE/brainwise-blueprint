@@ -6515,6 +6515,66 @@ export type Database = {
           },
         ]
       }
+      facet_interpretations_pre_name_repair_backup: {
+        Row: {
+          assessment_result_id: string | null
+          backed_up_at: string
+          facet_data: Json | null
+          generated_at: string | null
+          id: string
+          repair_note: string | null
+          section_type: string | null
+        }
+        Insert: {
+          assessment_result_id?: string | null
+          backed_up_at?: string
+          facet_data?: Json | null
+          generated_at?: string | null
+          id: string
+          repair_note?: string | null
+          section_type?: string | null
+        }
+        Update: {
+          assessment_result_id?: string | null
+          backed_up_at?: string
+          facet_data?: Json | null
+          generated_at?: string | null
+          id?: string
+          repair_note?: string | null
+          section_type?: string | null
+        }
+        Relationships: []
+      }
+      facet_interpretations_pre_polarity_regen_backup: {
+        Row: {
+          assessment_result_id: string | null
+          backed_up_at: string | null
+          facet_data: Json | null
+          generated_at: string | null
+          id: string | null
+          repair_note: string | null
+          section_type: string | null
+        }
+        Insert: {
+          assessment_result_id?: string | null
+          backed_up_at?: string | null
+          facet_data?: Json | null
+          generated_at?: string | null
+          id?: string | null
+          repair_note?: string | null
+          section_type?: string | null
+        }
+        Update: {
+          assessment_result_id?: string | null
+          backed_up_at?: string | null
+          facet_data?: Json | null
+          generated_at?: string | null
+          id?: string | null
+          repair_note?: string | null
+          section_type?: string | null
+        }
+        Relationships: []
+      }
       feedback_templates: {
         Row: {
           created_at: string
@@ -10872,6 +10932,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ptp_combined_reports_pre_reversal_backup: {
+        Row: {
+          captured_at: string
+          dimension_scores: Json | null
+          id: string
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          captured_at?: string
+          dimension_scores?: Json | null
+          id: string
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          captured_at?: string
+          dimension_scores?: Json | null
+          id?: string
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       ptp_facet_types: {
         Row: {

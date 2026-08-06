@@ -41,6 +41,7 @@ import {
   showTip,
   hideTip,
   type ChipOverlayProps,
+  questionTipText,
 } from "@/components/results/pairedFacetChip";
 
 
@@ -671,7 +672,7 @@ function tierFromDriver(score: number | null | undefined): number {
 
 /* ---------- driver card ---------- */
 function DriverCard({
-  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, driverScore, blockKey, onOpenDist,
+  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, anchors, scores, driverScore, blockKey, onOpenDist,
 }: {
   idx: number;
   /** anchors the card so facet chips can jump to a promoted driver */
@@ -684,6 +685,7 @@ function DriverCard({
   why: string;
   actions: string[];
   question: string;
+  anchors?: { low: string; high: string } | null;
   scores: number[];
   /** raw 0..1 driver strength; drives the pip meter, matching the paired report */
   driverScore?: number | null;
@@ -699,7 +701,7 @@ function DriverCard({
     <div
       id={itemNumber != null ? `driver-${itemNumber}` : undefined}
       className="pr-card"
-      onMouseMove={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
+      onMouseMove={question ? (e) => showTip(e, questionTipText(question, anchors)) : undefined}
       onMouseLeave={hideTip}
       style={{
         background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
@@ -847,6 +849,7 @@ export default function TeamReport() {
   /* distributions */
   const [scoresByItem, setScoresByItem] = useState<Map<number, number[]>>(new Map());
   const [questionByItem, setQuestionByItem] = useState<Map<number, string>>(new Map());
+  const [anchorsByItem, setAnchorsByItem] = useState<Map<number, { low: string; high: string }>>(new Map());
 
   useEffect(() => {
     if (!teamProfileId) return;
@@ -863,10 +866,12 @@ export default function TeamReport() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("items_presentation").select("item_number,item_text").eq("instrument_id", "INST-001");
+      const { data } = await supabase.from("items_presentation").select("item_number,item_text,anchor_low,anchor_high").eq("instrument_id", "INST-001");
       if (cancelled) return;
-      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string }>;
-      setQuestionByItem(new Map(rows.filter((r) => r.item_number != null).map((r) => [r.item_number as number, r.item_text])));
+      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string; anchor_low: string | null; anchor_high: string | null }>;
+      const withNum = rows.filter((r) => r.item_number != null);
+      setQuestionByItem(new Map(withNum.map((r) => [r.item_number as number, r.item_text])));
+      setAnchorsByItem(new Map(withNum.map((r) => [r.item_number as number, { low: r.anchor_low ?? "", high: r.anchor_high ?? "" }])));
     })();
     return () => { cancelled = true; };
   }, []);
@@ -1091,6 +1096,7 @@ export default function TeamReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
       blockKey: `driving:strength:${i}:why`,
@@ -1114,6 +1120,7 @@ export default function TeamReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
       blockKey: `driving:focus:${idx}:why`,
@@ -1327,7 +1334,7 @@ export default function TeamReport() {
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <SectionHead eyebrow="The drivers">What is driving your team</SectionHead>
             <p style={{ color: GRAY, margin: "0 0 18px", fontSize: 16, lineHeight: 1.6 }}>
-              We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered.
+              We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered and the scale it was answered on.
             </p>
             {driving?.opening && <div style={{ marginBottom: 14 }}><Paras text={driving.opening} style={{ maxWidth: "none" }} blockKey="driving:opening" /></div>}
             {[...strengthDrivers, ...focusDrivers].map((d, i) => (
@@ -1434,7 +1441,7 @@ export default function TeamReport() {
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
             <SectionHead eyebrow="The full map">Every pattern we found</SectionHead>
-            <p style={{ color: MUTED, margin: "0 0 18px" }}>The full map, grouped by the five shapes above. The picture on each is the team&apos;s real spread. Hover any trait to see the question the team answered.</p>
+            <p style={{ color: MUTED, margin: "0 0 18px" }}>The full map, grouped by the five shapes above. The picture on each is the team&apos;s real spread. Hover any trait to see the question the team answered and the scale it was answered on.</p>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
               return (
@@ -1451,7 +1458,7 @@ export default function TeamReport() {
                         <div
                           key={f.itemNumber}
                           id={`facet-${f.itemNumber}`}
-                          onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
+                          onMouseMove={q ? (e) => showTip(e, questionTipText(q, anchorsByItem.get(f.itemNumber))) : undefined}
                           onMouseLeave={hideTip}
                           style={{
                             background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,

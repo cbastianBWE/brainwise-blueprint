@@ -5,7 +5,7 @@
  * same chip (color, tooltip, facet jump) instead of growing a second one.
  * Chip color comes only from the locked PTP dimension namespace.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
 
 /* ---------- palette (brand-only) ---------- */
@@ -101,15 +101,40 @@ export function hideTip() { TipCtx.current?.(null); }
 
 /** The floating tooltip surface. Identical on the paired and team reports. */
 export function TipLayer({ tip }: { tip: Tip }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [top, setTop] = useState(0);
+  useLayoutEffect(() => {
+    if (!tip) return;
+    const h = ref.current?.offsetHeight ?? 0;
+    // flip above the cursor when the tip would run off the bottom of the viewport
+    const below = tip.y;
+    setTop(below + h > window.innerHeight - 8 ? Math.max(8, tip.y - 28 - h) : below);
+  }, [tip]);
   if (!tip) return null;
   return (
-    <div style={{
+    <div ref={ref} style={{
       position: "fixed", pointerEvents: "none", background: NAVY, color: "#fff",
       fontSize: 12, lineHeight: 1.4, padding: "8px 11px", borderRadius: 8,
-      zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
+      whiteSpace: "pre-line",
+      zIndex: 9999, maxWidth: 300, left: tip.x, top,
     }}>{tip.text}</div>
   );
 }
+
+/** Shared hover text for a facet's source item: the stem, then the scale it was
+ *  answered on. Anchors are the ground truth for direction, so both are shown.
+ *  Falls back to the question alone when either anchor is missing. */
+export function questionTipText(
+  question: string,
+  anchors?: { low?: string | null; high?: string | null } | null,
+): string {
+  const line = `Question answered: ${question}`;
+  const low = anchors?.low?.trim();
+  const high = anchors?.high?.trim();
+  if (!low || !high) return line;
+  return `${line}\nScale: 0 = "${low}" · 100 = "${high}"`;
+}
+
 
 /* ---------- small helpers ---------- */
 export function hexAlpha(hex: string, alpha: number): string {

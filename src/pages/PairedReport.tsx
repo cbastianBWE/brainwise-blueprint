@@ -56,6 +56,7 @@ import {
   TipLayer,
   type PairShapeKey,
   type FacetEntry,
+  questionTipText,
 } from "@/components/results/pairedFacetChip";
 
 
@@ -313,20 +314,21 @@ interface DriverCardProps {
   why: string;
   actions: string[];
   question: string;
+  anchors?: { low: string; high: string } | null;
   a?: number;
   b?: number;
   tier: number;
   onOpenDist: (a: number, b: number, title: string) => void;
 }
 function DriverCard({
-  itemNumber, kind, rank, shape, label, name, why, actions, question, a, b, tier, onOpenDist,
+  itemNumber, kind, rank, shape, label, name, why, actions, question, anchors, a, b, tier, onOpenDist,
 }: DriverCardProps) {
   const [open, setOpen] = useState(false);
   const accent = kind === "strength" ? GREEN : kind === "protective" ? PURPLE : PSC[shape];
   return (
     <div
       id={itemNumber != null ? `driver-${itemNumber}` : undefined}
-      onMouseEnter={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
+      onMouseEnter={question ? (e) => showTip(e, questionTipText(question, anchors)) : undefined}
       onMouseLeave={hideTip}
       style={{
         background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
@@ -733,13 +735,16 @@ export default function PairedReport() {
 
   /* question text */
   const [questionByItem, setQuestionByItem] = useState<Map<number, string>>(new Map());
+  const [anchorsByItem, setAnchorsByItem] = useState<Map<number, { low: string; high: string }>>(new Map());
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("items_presentation").select("item_number,item_text").eq("instrument_id", "INST-001");
+      const { data } = await supabase.from("items_presentation").select("item_number,item_text,anchor_low,anchor_high").eq("instrument_id", "INST-001");
       if (cancelled) return;
-      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string }>;
-      setQuestionByItem(new Map(rows.filter((r) => r.item_number != null).map((r) => [r.item_number as number, r.item_text])));
+      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string; anchor_low: string | null; anchor_high: string | null }>;
+      const withNum = rows.filter((r) => r.item_number != null);
+      setQuestionByItem(new Map(withNum.map((r) => [r.item_number as number, r.item_text])));
+      setAnchorsByItem(new Map(withNum.map((r) => [r.item_number as number, { low: r.anchor_low ?? "", high: r.anchor_high ?? "" }])));
     })();
     return () => { cancelled = true; };
   }, []);
@@ -996,6 +1001,7 @@ export default function PairedReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       a: f.stats?.a,
       b: f.stats?.b,
       tier: tierFromDriver(f.driverScore),
@@ -1019,6 +1025,7 @@ export default function PairedReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       a: f.stats?.a,
       b: f.stats?.b,
       tier: tierFromDriver(f.driverScore),
@@ -1044,6 +1051,7 @@ export default function PairedReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       a: f.stats?.a,
       b: f.stats?.b,
       tier: tierFromDriver(f.driverScore),
@@ -1510,7 +1518,7 @@ export default function PairedReport() {
                         <div
                           key={f.itemNumber}
                           id={`facet-${f.itemNumber}`}
-                          onMouseEnter={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
+                          onMouseEnter={q ? (e) => showTip(e, questionTipText(q, anchorsByItem.get(f.itemNumber))) : undefined}
                           onMouseLeave={hideTip}
                           className="pr-card"
                           style={{
