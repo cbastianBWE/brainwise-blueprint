@@ -100,6 +100,12 @@ async function run(p: any, label: string) {
   void lean;
   const leanLines = draws.filter((d) => d.font.startsWith("Montserrat") && d.size === 9 && d.right > 190);
   console.log("wide 9pt lines (lean-on candidates):", leanLines.length, leanLines.map((d) => d.right.toFixed(1)).join(","));
+  const body = draws.filter((d) => !/^Page \d+ of|^AUGUST|BRAINWISE/i.test(d.text));
+  const wb = body.reduce((a, b) => (b.right > a.right ? b : a), body[0]);
+  console.log("widest BODY line:", wb.right.toFixed(2) + "mm", wb.font, wb.size, JSON.stringify(wb.text.slice(0, 80)));
+  const lead = draws.filter((d) => d.font === "Poppins/bold" && d.size === 9);
+  const wl = lead.reduce((a, b) => (b.right > a.right ? b : a), lead[0]);
+  console.log("leadership action lines:", lead.length, "widest:", wl?.right.toFixed(2) + "mm", JSON.stringify(wl?.text.slice(0, 80)));
   const shapeHeads = draws.filter((d) => /Nobody down there|Nobody up here|Two groups|Even spread|Together/.test(d.text));
   console.log("full-map group headings:", shapeHeads.map((d) => `p${d.page}:${d.text}`).join(" | "));
   return { pages, over: over.length };
