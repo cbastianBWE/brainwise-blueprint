@@ -1371,9 +1371,12 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
                         <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>High end:</span> {r.anchorHigh}
                       </p>
                     </div>
-                    {loadingAllFacetInsights || !interpretation ? (
+                    {loadingAllFacetInsights ? (
                       <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Generating insights...</p>
+                    ) : !interpretation ? (
+                      <p style={{ fontSize: 14, color: "var(--fg-3)", margin: 0 }}>Insight text is not available for this facet.</p>
                     ) : (
+
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <h5 style={{ fontWeight: 600, fontSize: 14, marginBottom: 8, color: "var(--fg-1)" }}>Impact on self</h5>
