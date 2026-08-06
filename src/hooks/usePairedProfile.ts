@@ -25,6 +25,7 @@ export interface PairedProfileRow {
     dimensions?: Record<string, { a: number; b: number; facetCount?: number }>;
     strengths?: PairedFacetResult[];
     focusAreas?: PairedFacetResult[];
+    protective?: PairedFacetResult[];
     fullMap?: PairedFacetResult[];
     facets?: PairedFacetResult[];
   } | null;

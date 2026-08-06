@@ -47,6 +47,7 @@ export interface PairedPdfData {
   dimensions: Record<string, { a: number; b: number }>;
   strengths: PairedFacetForPdf[];
   focusAreas: PairedFacetForPdf[];
+  protective: PairedFacetForPdf[];
   fullMap: PairedFacetForPdf[];
   itemText: Map<number, string>;
   sections: PairedPdfSectionData;
@@ -71,6 +72,7 @@ export async function assemblePairedPdfData(params: {
       dimensions?: Record<string, { a: number; b: number }>;
       strengths?: PairedFacetForPdf[];
       focusAreas?: PairedFacetForPdf[];
+      protective?: PairedFacetForPdf[];
       fullMap?: PairedFacetForPdf[];
       facets?: PairedFacetForPdf[];
     } : never;
@@ -133,6 +135,7 @@ export async function assemblePairedPdfData(params: {
     dimensions: p.structured?.dimensions ?? {},
     strengths: p.structured?.strengths ?? [],
     focusAreas: p.structured?.focusAreas ?? [],
+    protective: p.structured?.protective ?? [],
     fullMap: p.structured?.fullMap ?? p.structured?.facets ?? [],
     itemText,
     sections: sections as PairedPdfSectionData,

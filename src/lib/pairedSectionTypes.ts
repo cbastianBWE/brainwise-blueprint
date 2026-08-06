@@ -37,6 +37,7 @@ export interface DrivingFacetsSection {
   opening?: string;
   strengths?: DrivingItem[];
   focus?: DrivingItem[];
+  protective?: DrivingItem[];
 }
 
 export interface WithinPersonSection {
