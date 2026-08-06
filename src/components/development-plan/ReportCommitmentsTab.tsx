@@ -43,16 +43,19 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
   const [shared, setShared] = useState<Record<string, Shared[]>>({});
   const [mine, setMine] = useState<Record<string, Mine[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
-      const rpc = supabase.rpc as unknown as RpcFn;
-      const repData = await safe<ReportRow>(rpc("bw_list_my_reports"));
+      const repData = await safe<ReportRow>((supabase.rpc as unknown as RpcFn)("bw_list_my_reports"));
       const reps = repData.filter((r) => r.kind === kind);
       setReports(reps);
 
-      const mineData = await safe<Mine>(rpc("dp_list_my_report_commitments", { p_kind: kind }));
+      const mineData = await safe<Mine>(
+        (supabase.rpc as unknown as RpcFn)("dp_list_my_report_commitments", { p_kind: kind }),
+      );
       const mineByReport: Record<string, Mine[]> = {};
       mineData.forEach((m) => {
         (mineByReport[m.source_report_id] ??= []).push(m);
@@ -62,11 +65,15 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
       const sharedByReport: Record<string, Shared[]> = {};
       await Promise.all(
         reps.map(async (r) => {
-          const data = await safe<Shared>(rpc("report_list_commitments", { p_report_id: r.report_id, p_kind: kind }));
+          const data = await safe<Shared>(
+            (supabase.rpc as unknown as RpcFn)("report_list_commitments", { p_report_id: r.report_id, p_kind: kind }),
+          );
           sharedByReport[r.report_id] = data;
         }),
       );
       setShared(sharedByReport);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -75,11 +82,16 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
   useEffect(() => { load(); }, [load]);
 
   const archive = async (id: string) => {
-    const rpc = supabase.rpc as unknown as RpcFn;
-    const { error } = await rpc("report_archive_commitment", { p_commitment_id: id });
-    if (error) { toast.error("Couldn't remove that commitment."); return; }
-    toast.success("Commitment removed.");
-    load();
+    try {
+      const { error } = await (supabase.rpc as unknown as RpcFn)("report_archive_commitment", {
+        p_commitment_id: id,
+      });
+      if (error) { toast.error("Couldn't remove that commitment."); return; }
+      toast.success("Commitment removed.");
+      load();
+    } catch {
+      toast.error("Couldn't remove that commitment.");
+    }
   };
 
   if (loading) {
