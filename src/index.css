@@ -190,7 +190,8 @@ All colors MUST be HSL.
     animation: pr-chip-in 140ms ease-out both;
     animation-delay: var(--pr-chip-delay, 0ms);
   }
-  .pr-chip:hover { transform: translateY(-1px); }
+  /* only chips that can actually move the page get the hover lift */
+  .pr-chip-jump:hover { transform: translateY(-1px); }
   .pr-card { transition: transform 140ms ease, box-shadow 140ms ease, opacity 240ms ease, filter 240ms ease; }
   .pr-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
   .pr-pulse { animation: pr-pulse 900ms ease-out 1; }

@@ -91,7 +91,7 @@ function detectCoElevations(
   const mappings = [
     { naiId: "DIM-NAI-01", naiName: "Certainty", ptpId: "DIM-PTP-03", ptpName: "Prediction",
       label: "Certainty–Prediction co-elevation",
-      description: "Both instruments show ambiguity intolerance. NAI Certainty measures AI-context uncertainty aversion; PTP Prediction measures the same drive in general behaviour. Co-elevation means the workforce resists uncertainty systemically, not just in AI adoption contexts." },
+      description: "Both instruments show ambiguity intolerance. NAI Certainty measures AI-context uncertainty aversion; PTP Prediction measures the same drive in general behavior. Co-elevation means the workforce resists uncertainty systemically, not just in AI adoption contexts." },
     { naiId: "DIM-NAI-02", naiName: "Agency", ptpId: "DIM-PTP-02", ptpName: "Participation",
       label: "Agency–Participation co-elevation",
       description: "NAI Agency measures the need for control and influence in AI adoption; PTP Participation measures social belonging and status needs. Co-elevation indicates a workforce where loss of control in AI contexts compounds social threat — people feel both disempowered and relationally threatened simultaneously." },
@@ -100,7 +100,7 @@ function detectCoElevations(
       description: "NAI Fairness measures perceived equity in AI implementation; PTP Participation measures social belonging and recognition. Co-elevation means unfairness concerns are amplifying social threat — people are not just perceiving AI as unfair, they are interpreting it as a signal of exclusion or diminished standing." },
     { naiId: "DIM-NAI-04", naiName: "Ego Stability", ptpId: "DIM-PTP-01", ptpName: "Protection",
       label: "Ego Stability–Protection co-elevation",
-      description: "NAI Ego Stability measures identity threat from AI (fear of replacement, status loss); PTP Protection measures safety and security sensitivity. Co-elevation means AI adoption is triggering both identity-level and safety-level threat responses simultaneously — the most destabilising pattern for change initiatives." },
+      description: "NAI Ego Stability measures identity threat from AI (fear of replacement, status loss); PTP Protection measures safety and security sensitivity. Co-elevation means AI adoption is triggering both identity-level and safety-level threat responses simultaneously — the most destabilizing pattern for change initiatives." },
     { naiId: "DIM-NAI-05", naiName: "Saturation", ptpId: "DIM-PTP-03", ptpName: "Prediction",
       label: "Saturation–Prediction co-elevation",
       description: "NAI Saturation measures cognitive overload capacity; PTP Prediction measures ambiguity and uncertainty tolerance. Co-elevation means the workforce is both overwhelmed and uncertainty-averse — a combination that makes any complex or ambiguous change initiative extremely high-risk." },

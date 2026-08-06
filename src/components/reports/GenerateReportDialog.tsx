@@ -322,7 +322,7 @@ export default function GenerateReportDialog({ open, onOpenChange, allowedModes,
         return;
       }
 
-      // Super admin / free path — preserve original behaviour exactly
+      // Super admin / free path — preserve original behavior exactly
       if (result?.requires_payment === false) {
         if (kind === "team") {
           const { data, error } = await supabase.functions.invoke("generate-team-profile", {

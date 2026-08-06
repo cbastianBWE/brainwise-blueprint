@@ -6,7 +6,7 @@ import { substituteStep, type CoupleContext, type CoupleStep } from "../coupleSh
 
 /**
  * Renders another activity's steps inline, through this same couples registry,
- * so a reused step gets couples behaviour. Answers nest under this step's key.
+ * so a reused step gets couples behavior. Answers nest under this step's key.
  */
 export function ReusedStepsWidget({
   step,

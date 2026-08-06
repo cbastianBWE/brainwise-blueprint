@@ -9,6 +9,7 @@
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import type { PdfData } from "./generateResultsPdf";
+import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
 import { PTP_ITEM_FACET_NAMES } from "./ptpFacetNames";
 import type { NaiPdfData } from "./generateNaiPdf";
 import type { AirsaPdfData } from "./generateAirsaPdf";
@@ -498,10 +499,16 @@ export async function assemblePtpPdfData(params: {
         const value = r.is_reverse_scored ? 100 - raw : raw;
         return {
           itemNumber: item?.item_number ?? 0,
-          facetName:
+          // "work" mode: the individual PTP report covers the full instrument
+          // including its professional items, so the workplace wording is
+          // correct here. Only the relational reports need the "community"
+          // rewording. Every mode strips the trailing (personal)/(professional).
+          facetName: facetDisplayLabel(
             PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ??
-            item?.item_text?.slice(0, 40) ??
-            "",
+              item?.item_text?.slice(0, 40) ??
+              "",
+            "work",
+          ),
           itemText: item?.item_text ?? "",
           score: Math.round(value),
           dimensionId: item?.dimension_id ?? "",

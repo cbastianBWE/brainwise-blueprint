@@ -2,8 +2,8 @@
  * Shared paired-report chip primitives.
  *
  * Lifted out of src/pages/PairedReport.tsx so the one-pager can reuse the exact
- * same chip (colour, tooltip, facet jump) instead of growing a second one.
- * Chip colour comes only from the locked PTP dimension namespace.
+ * same chip (color, tooltip, facet jump) instead of growing a second one.
+ * Chip color comes only from the locked PTP dimension namespace.
  */
 import { useEffect, useState } from "react";
 import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
@@ -154,9 +154,41 @@ export function useFacetAnchorExists(itemNumber?: number | null): boolean {
   return exists;
 }
 
+/** Chips rendered inside a Radix dialog sit above a scroll-locked, overlaid
+ *  page: jumping while the dialog is open moves nothing the user can see. Any
+ *  overlay surface must therefore hand the chip a closer. Without one the chip
+ *  renders inert (default cursor, no hover lift, no handler) rather than
+ *  looking clickable and doing nothing. */
+export interface ChipOverlayProps {
+  /** true when the chip is rendered inside a dialog / overlay surface */
+  inOverlay?: boolean;
+  /** closes that surface; required for a chip in an overlay to be clickable */
+  onCloseOverlay?: () => void;
+}
+
+/** Shared jump behavior for every facet chip in the system. */
+export function useChipJump(
+  itemNumber: number | null | undefined,
+  { inOverlay, onCloseOverlay }: ChipOverlayProps = {},
+): { canJump: boolean; jump: () => void } {
+  const anchorExists = useFacetAnchorExists(itemNumber);
+  const canJump = anchorExists && (!inOverlay || !!onCloseOverlay);
+  const jump = () => {
+    if (!canJump) return;
+    if (inOverlay && onCloseOverlay) {
+      onCloseOverlay();
+      // let the dialog unmount and release the body scroll lock first
+      window.setTimeout(() => jumpToFacet(itemNumber), 240);
+      return;
+    }
+    jumpToFacet(itemNumber);
+  };
+  return { canJump, jump };
+}
+
 /* ---------- facet chip ---------- */
 export function FacetChip({
-  name, entry, firstA, firstB, delay, size = "md", mode,
+  name, entry, firstA, firstB, delay, size = "md", mode, inOverlay, onCloseOverlay,
 }: {
   name: string;
   entry?: FacetEntry;
@@ -167,7 +199,7 @@ export function FacetChip({
   size?: "md" | "sm";
   /** Relationship mode; drives the displayed label only, never a lookup. */
   mode?: string | null;
-}) {
+} & ChipOverlayProps) {
   const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
   const text = base ? (base === AMBER ? MUSTARD : base) : GRAY;
   const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
@@ -176,15 +208,11 @@ export function FacetChip({
     ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
     : null;
 
-  const canJump = useFacetAnchorExists(entry?.itemNumber);
-
-  const jump = () => {
-    jumpToFacet(entry?.itemNumber);
-  };
+  const { canJump, jump } = useChipJump(entry?.itemNumber, { inOverlay, onCloseOverlay });
 
   return (
     <span
-      className="pr-chip"
+      className={canJump ? "pr-chip pr-chip-jump" : "pr-chip"}
       onClick={canJump ? jump : undefined}
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}

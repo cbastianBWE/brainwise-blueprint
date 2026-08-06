@@ -419,6 +419,8 @@ export default function PairedOnePager({
                             firstB={firstB}
                             delay={0}
                             size="sm"
+                            inOverlay
+                            onCloseOverlay={() => setOpen(false)}
                           />
                         ))}
                       </div>

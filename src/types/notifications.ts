@@ -12,7 +12,7 @@ export interface NotificationRow {
   created_at: string;
   read_at: string | null;
   archived_at: string | null;
-  // Server-rendered display via notification_display, denormalised into the row by the RPC.
+  // Server-rendered display via notification_display, denormalized into the row by the RPC.
   title: string;
   body: string;
   action_url: string | null;

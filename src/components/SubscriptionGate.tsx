@@ -75,7 +75,7 @@ export default function SubscriptionGate({ children, feature }: Props) {
       if (isCoachPremium || credits > 0) return <>{children}</>;
       return <Navigate to="/settings/plan" replace />;
     }
-    // Everything else keeps today's behaviour for coaches.
+    // Everything else keeps today's behavior for coaches.
     return <>{children}</>;
   }
 

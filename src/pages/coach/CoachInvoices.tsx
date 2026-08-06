@@ -159,7 +159,7 @@ export default function CoachInvoices() {
   };
 
   useEffect(() => {
-    // Wait for the price catalogue: fetching earlier would bake a 0 fallback
+    // Wait for the price catalog: fetching earlier would bake a 0 fallback
     // price into every transaction total.
     if (plansLoading) return;
     fetchTransactions();

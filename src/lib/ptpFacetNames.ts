@@ -1,5 +1,13 @@
 /**
  * Map of PTP item numbers (1–89) to their canonical facet names.
+ *
+ * MIRROR: this table is a copy of `items.facet_name` in the database and must
+ * be kept in step with it, character for character. If a facet name is edited
+ * in the database, edit it here in the same change.
+ *
+ * These are RAW names. Never render them directly — route every display through
+ * `facetDisplayLabel` so the trailing "(professional)" / "(personal)" suffix is
+ * stripped.
  * Each name carries its context label: (professional) or (personal).
  * Shared between the PTPFullFacetCharts UI component, PTPNarrativeSections,
  * and the PDF data assembler.
@@ -82,7 +90,7 @@ export const PTP_ITEM_FACET_NAMES: Record<number, string> = {
   75: "Self-development drive (personal)",
   76: "Mission and meaning orientation (personal)",
   77: "Values alignment (personal)",
-  78: "Values alignment (organisational) (personal)",
+  78: "Values alignment (organizational) (personal)",
   79: "Artistic and creative expression (personal)",
   80: "Spiritual orientation (personal)",
   81: "Passionate pursuit orientation (personal)",

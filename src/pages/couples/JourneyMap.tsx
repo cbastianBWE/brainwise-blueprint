@@ -413,7 +413,7 @@ export function JourneyMap({
     if (res?.error === "taken_by_partner") {
       setColorNote(`${otherName} has that one`);
     }
-    // colour_not_allowed: fail quietly.
+    // color_not_allowed: fail quietly.
   };
 
   if (!rows || stopsData.length === 0) {
@@ -600,7 +600,7 @@ export function JourneyMap({
 
               {/* Label. Markers are the higher-priority object, so the label
                   is pushed clear of the marker band: a partner marker sits
-                  ±44 from the stop centre with a 15px radius, so anything
+                  ±44 from the stop center with a 15px radius, so anything
                   closer than 68px collides with it. */}
               <div
                 className="pointer-events-none absolute"
@@ -739,7 +739,7 @@ export function JourneyMap({
           }
         />
 
-        {/* Legend + marker colour */}
+        {/* Legend + marker color */}
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-3 text-xs" style={{ borderColor: "#E4DFD3" }}>
           <div className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 rounded-full" style={{ background: colorA }} />

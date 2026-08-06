@@ -137,7 +137,7 @@ export function stripMovePrefix(point: string): string {
     : t;
 }
 
-/** Normalise the facet name for name-keyed lookups.
+/** Normalize the facet name for name-keyed lookups.
  *  Strips the instrument's trailing context suffix so names frozen into older
  *  reports ("Action orientation (professional)") match names from newer ones
  *  ("Action orientation"). Verified collision-free for every item set the paired
@@ -152,8 +152,8 @@ export function normFacetName(name: string): string {
 }
 
 /** Facets whose instrument wording is workplace-specific and needs a relational
- *  label outside work context. Keyed on the normalised facet name. Both spellings
- *  are listed because reports generated before the catalogue fix froze the British
+ *  label outside work context. Keyed on the normalized facet name. Both spellings
+ *  are listed because reports generated before the catalog fix froze the British
  *  form into their structured snapshot. */
 const NON_WORK_FACET_LABEL: Record<string, string> = {
   [normFacetName("Values alignment (organisational)")]: "Values alignment (community)",

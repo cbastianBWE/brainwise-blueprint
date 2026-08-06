@@ -3,7 +3,7 @@ import { Compass } from "lucide-react";
 /**
  * Rewrites a Supabase public storage URL to the image render endpoint with
  * width/height/quality. Non-Supabase URLs pass through unchanged; null returns
- * undefined. (Same behaviour as the coaching catalogue's transform — copied
+ * undefined. (Same behavior as the coaching catalog's transform — copied
  * deliberately rather than imported, so the two surfaces stay decoupled.)
  */
 export const renderImg = (

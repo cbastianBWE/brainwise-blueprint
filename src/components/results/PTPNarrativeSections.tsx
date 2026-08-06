@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronUp, Target, Loader2, Check, Circle, RefreshCw } from "lucide-react";
 import { PTP_DIMENSION_COLORS } from "@/lib/ptpDimensionColors";
 import { PtpDimensionLegend } from "@/components/results/PtpDimensionLegend";
+import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
 import { Button } from "@/components/ui/button";
 import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopmentPlanModal";
@@ -193,10 +194,16 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         const value = r.is_reverse_scored ? 100 - raw : raw;
         return {
           itemNumber: item?.item_number ?? 0,
-          facetName:
+          // "work" mode: the individual PTP report covers the full instrument
+          // including its professional items, so the workplace wording is
+          // correct here. Only the relational reports need the "community"
+          // rewording. Every mode strips the trailing (personal)/(professional).
+          facetName: facetDisplayLabel(
             PTP_ITEM_FACET_NAMES[item?.item_number ?? 0] ??
-            item?.item_text?.slice(0, 40) ??
-            "",
+              item?.item_text?.slice(0, 40) ??
+              "",
+            "work",
+          ),
           itemText: item?.item_text ?? "",
           score: Math.round(value),
           dimensionId: item?.dimension_id ?? "",

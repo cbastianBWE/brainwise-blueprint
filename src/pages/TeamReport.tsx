@@ -27,8 +27,9 @@ import {
   hexAlpha,
   AMBER,
   MUSTARD as CHIP_MUSTARD,
-  jumpToFacet,
-  useFacetAnchorExists,
+  useChipJump,
+  type ChipOverlayProps,
+
 } from "@/components/results/pairedFacetChip";
 
 
@@ -146,7 +147,7 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
   );
 }
 function IdeaBullets({
-  items, style, blockKey, lookupFacet, fallbackAccent,
+  items, style, blockKey, lookupFacet, fallbackAccent, ordered,
 }: {
   items: unknown;
   style?: React.CSSProperties;
@@ -154,6 +155,8 @@ function IdeaBullets({
   lookupFacet?: (name: string) => TeamFacetEntry | undefined;
   /** accent used when no facet in the bullet resolves to a PTP dimension */
   fallbackAccent?: string;
+  /** numbered list (avoid_conflict) rather than the default bullets */
+  ordered?: boolean;
 }) {
   if (Array.isArray(items)) {
     // drop empties, including {point:"",body:"",facets:[]} which would otherwise
@@ -168,8 +171,9 @@ function IdeaBullets({
     if (!list.length) return null;
     // Pre-v14 profiles: every element is a plain string, render exactly as before.
     if (!list.some(isBulletObject)) {
+      const ListTag = ordered ? "ol" : "ul";
       return (
-        <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
+        <ListTag style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: ordered ? "decimal" : "disc", ...style }}>
           {list.map((b, i) => {
             const s = bulletToText(b);
             if (!s) return null;
@@ -179,7 +183,7 @@ function IdeaBullets({
               </li>
             );
           })}
-        </ul>
+        </ListTag>
       );
     }
     return (
@@ -211,11 +215,13 @@ function IdeaBullets({
             >
               {point && (
                 <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>
+                  {ordered && <span style={{ marginRight: 6 }}>{i + 1}.</span>}
                   {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : point}
                 </div>
               )}
               {body && (
                 <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                  {ordered && !point && <span style={{ fontWeight: 800, color: NAVY, marginRight: 6 }}>{i + 1}.</span>}
                   {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : body}
                 </div>
               )}
@@ -225,6 +231,10 @@ function IdeaBullets({
         })}
       </div>
     );
+  }
+  if (items != null && typeof items !== "string") {
+    // malformed section content: render nothing rather than throwing, but leave a trail
+    console.warn("[TeamReport] IdeaBullets received a non-string, non-array value", { blockKey, items });
   }
   return <Paras text={typeof items === "string" ? items : ""} style={style} blockKey={blockKey} />;
 }
@@ -251,8 +261,8 @@ function accentForFacets(
 }
 
 function TeamFacetChip({
-  name, entry,
-}: { name: string; entry?: TeamFacetEntry }) {
+  name, entry, inOverlay, onCloseOverlay,
+}: { name: string; entry?: TeamFacetEntry } & ChipOverlayProps) {
   const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
   // amber is illegible as small text; the paired chip pairs it with mustard
   const text = base ? (base === AMBER ? CHIP_MUSTARD : base) : GRAY;
@@ -261,12 +271,11 @@ function TeamFacetChip({
 
   const tip = entry ? teamChipTip(entry) : null;
 
-  const canJump = useFacetAnchorExists(entry?.itemNumber);
-  const jump = () => { jumpToFacet(entry?.itemNumber); };
+  const { canJump, jump } = useChipJump(entry?.itemNumber, { inOverlay, onCloseOverlay });
 
   return (
     <span
-      className="pr-chip"
+      className={canJump ? "pr-chip pr-chip-jump" : "pr-chip"}
       onClick={canJump ? jump : undefined}
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
@@ -302,13 +311,19 @@ function teamChipTip(entry: TeamFacetEntry): string {
 }
 
 function TeamChipRow({
-  facets, lookupFacet,
-}: { facets: string[]; lookupFacet?: (name: string) => TeamFacetEntry | undefined }) {
+  facets, lookupFacet, inOverlay, onCloseOverlay,
+}: { facets: string[]; lookupFacet?: (name: string) => TeamFacetEntry | undefined } & ChipOverlayProps) {
   if (!facets || facets.length === 0) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
       {facets.map((f, i) => (
-        <TeamFacetChip key={`${f}-${i}`} name={f} entry={lookupFacet?.(f)} />
+        <TeamFacetChip
+          key={`${f}-${i}`}
+          name={f}
+          entry={lookupFacet?.(f)}
+          inOverlay={inOverlay}
+          onCloseOverlay={onCloseOverlay}
+        />
       ))}
     </div>
   );
@@ -814,7 +829,7 @@ export default function TeamReport() {
 
   /* Name-keyed facet index. Bullet `facets` arrays carry facet NAMES, and every
      other lookup in this report keys on itemNumber, so chips need their own map.
-     Keyed on the normalised name; the raw name is kept on the entry. */
+     Keyed on the normalized name; the raw name is kept on the entry. */
   const facetByName = useMemo(() => {
     const m = new Map<string, TeamFacetEntry>();
     const st = profile?.structured;
@@ -1157,25 +1172,12 @@ export default function TeamReport() {
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
-                <ol style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "decimal" }}>
-                  {communication.avoid_conflict.map((t, i) => {
-                    const obj = isBulletObject(t);
-                    const point = obj ? (t.point ?? "").trim() : bulletToText(t);
-                    const body = obj ? (t.body ?? "").trim() : "";
-                    const facets = bulletFacets(t);
-                    return (
-                      <li key={i} style={{ marginBottom: 8 }}>
-                        {obj && point
-                          ? <div style={{ fontWeight: 800, color: NAVY, lineHeight: 1.4 }}>{point}</div>
-                          : null}
-                        {obj
-                          ? (body ? <div style={{ marginTop: 3 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={body} /></div> : null)
-                          : <HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={point} />}
-                        <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
-                      </li>
-                    );
-                  })}
-                </ol>
+                <IdeaBullets
+                  items={communication.avoid_conflict}
+                  blockKey="communication:avoid_conflict"
+                  lookupFacet={lookupFacetByName}
+                  ordered
+                />
               </div>
             )}
           </div>
@@ -1364,7 +1366,12 @@ export default function TeamReport() {
           onOpenChange={setLeadershipOpen}
           items={leadership!}
           renderFacets={(facets) => (
-            <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
+            <TeamChipRow
+              facets={facets}
+              lookupFacet={lookupFacetByName}
+              inOverlay
+              onCloseOverlay={() => setLeadershipOpen(false)}
+            />
           )}
         />
       )}

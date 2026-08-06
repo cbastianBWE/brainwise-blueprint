@@ -407,12 +407,12 @@ export function IkigaiRegionsView({
       <div className="grid gap-3 sm:grid-cols-2">
         {ordered.map((r) => {
           const items = byRegion.get(r)!;
-          const isCentre = r === "ikigai" || r === "hedgehog";
+          const isCenter = r === "ikigai" || r === "hedgehog";
           return (
             <Card
               key={r}
               className={
-                isCentre
+                isCenter
                   ? "border-[var(--bw-orange)] bg-[var(--bw-orange)]/5"
                   : "bg-muted/30"
               }
@@ -420,11 +420,11 @@ export function IkigaiRegionsView({
               <CardHeader className="pb-2">
                 <CardTitle
                   className={
-                    isCentre
+                    isCenter
                       ? "text-base"
                       : "text-sm font-semibold text-muted-foreground"
                   }
-                  style={isCentre ? { color: "var(--bw-orange)" } : undefined}
+                  style={isCenter ? { color: "var(--bw-orange)" } : undefined}
                 >
                   {regionLabels[r] || r}
                 </CardTitle>

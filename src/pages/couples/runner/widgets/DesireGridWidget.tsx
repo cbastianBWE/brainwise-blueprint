@@ -51,7 +51,7 @@ const TIMING_OPTIONS: Array<{ key: string; label: string }> = [
 function ItemCard({ item, children }: { item: GridItem; children: React.ReactNode }) {
   return (
     <li className="overflow-hidden rounded-lg border">
-      {/* Image slot: honoured when image_path is set, never blocking on artwork. */}
+      {/* Image slot: honored when image_path is set, never blocking on artwork. */}
       <div className="flex h-24 items-center justify-center bg-muted/40">
         {item.imageUrl ? (
           <img src={item.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
@@ -132,7 +132,7 @@ export function DesireGridWidget({
 }) {
   const mode = step.gridMode === "affection" ? "affection" : "desire";
   const runNumber = typeof step.runNumber === "number" ? step.runNumber : 1;
-  // The table stores the 4.3 grid under its catalogue name.
+  // The table stores the 4.3 grid under its catalog name.
   const dbMode = mode === "affection" ? "affection" : "desire_vocabulary";
 
   const buckets = useMemo(
