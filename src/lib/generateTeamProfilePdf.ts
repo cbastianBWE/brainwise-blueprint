@@ -878,5 +878,5 @@ export async function generateTeamProfilePdf(
   const today = new Date().toISOString().slice(0, 10);
   const safeName = (data.teamName || "Team").replace(/[^A-Za-z0-9-_]+/g, "_").slice(0, 40);
   doc.save(`BrainWise-Team-${safeName}-${today}.pdf`);
-  void MUTED; void GRAY;
+  void MUTED; void GRAY; void PURPLE;
 }
