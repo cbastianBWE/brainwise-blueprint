@@ -974,6 +974,7 @@ export async function generateTeamProfilePdf(
     }
 
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
+      ctx.y += 7;
       subheading(ctx, "Debrief prompts", 10);
       s.coach.debrief_prompts.forEach((p, i) => {
         doc.setFont("Montserrat", "normal");
