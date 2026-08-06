@@ -226,6 +226,10 @@ function IdeaBullets({
       </div>
     );
   }
+  if (items != null && typeof items !== "string") {
+    // malformed section content: render nothing rather than throwing, but leave a trail
+    console.warn("[TeamReport] IdeaBullets received a non-string, non-array value", { blockKey, items });
+  }
   return <Paras text={typeof items === "string" ? items : ""} style={style} blockKey={blockKey} />;
 }
 
@@ -251,8 +255,8 @@ function accentForFacets(
 }
 
 function TeamFacetChip({
-  name, entry,
-}: { name: string; entry?: TeamFacetEntry }) {
+  name, entry, inOverlay, onCloseOverlay,
+}: { name: string; entry?: TeamFacetEntry } & ChipOverlayProps) {
   const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
   // amber is illegible as small text; the paired chip pairs it with mustard
   const text = base ? (base === AMBER ? CHIP_MUSTARD : base) : GRAY;
@@ -261,12 +265,11 @@ function TeamFacetChip({
 
   const tip = entry ? teamChipTip(entry) : null;
 
-  const canJump = useFacetAnchorExists(entry?.itemNumber);
-  const jump = () => { jumpToFacet(entry?.itemNumber); };
+  const { canJump, jump } = useChipJump(entry?.itemNumber, { inOverlay, onCloseOverlay });
 
   return (
     <span
-      className="pr-chip"
+      className={canJump ? "pr-chip pr-chip-jump" : "pr-chip"}
       onClick={canJump ? jump : undefined}
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
@@ -302,13 +305,19 @@ function teamChipTip(entry: TeamFacetEntry): string {
 }
 
 function TeamChipRow({
-  facets, lookupFacet,
-}: { facets: string[]; lookupFacet?: (name: string) => TeamFacetEntry | undefined }) {
+  facets, lookupFacet, inOverlay, onCloseOverlay,
+}: { facets: string[]; lookupFacet?: (name: string) => TeamFacetEntry | undefined } & ChipOverlayProps) {
   if (!facets || facets.length === 0) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
       {facets.map((f, i) => (
-        <TeamFacetChip key={`${f}-${i}`} name={f} entry={lookupFacet?.(f)} />
+        <TeamFacetChip
+          key={`${f}-${i}`}
+          name={f}
+          entry={lookupFacet?.(f)}
+          inOverlay={inOverlay}
+          onCloseOverlay={onCloseOverlay}
+        />
       ))}
     </div>
   );
@@ -1364,7 +1373,12 @@ export default function TeamReport() {
           onOpenChange={setLeadershipOpen}
           items={leadership!}
           renderFacets={(facets) => (
-            <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
+            <TeamChipRow
+              facets={facets}
+              lookupFacet={lookupFacetByName}
+              inOverlay
+              onCloseOverlay={() => setLeadershipOpen(false)}
+            />
           )}
         />
       )}
