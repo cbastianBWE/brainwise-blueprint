@@ -123,9 +123,21 @@ export default function PairedOnePager({
   const [open, setOpen] = useState(false);
   const [downloading, setDownloading] = useState<null | "summary" | "full">(null);
 
-  const preview = Array.isArray(data.report_preview) ? data.report_preview.filter(Boolean) : [];
-  const talkAbout = Array.isArray(data.talk_about) ? data.talk_about.filter(Boolean) : [];
-  const watch = Array.isArray(data.watch) ? data.watch.filter(Boolean) : [];
+  const preview = Array.isArray(data.report_preview)
+    ? data.report_preview.filter(
+        (p) => !!p && typeof p === "object" && !!((p.text ?? "").trim() || (p.heading ?? "").trim()),
+      )
+    : [];
+  // Some reports stored a malformed entry here (e.g. `{}`); only real strings survive.
+  const talkAbout = Array.isArray(data.talk_about)
+    ? data.talk_about.filter((t): t is string => typeof t === "string" && !!t.trim())
+    : [];
+  const watch = Array.isArray(data.watch)
+    ? data.watch.filter(
+        (w) => !!w && typeof w === "object" && !!((w.point ?? "").trim() || (w.body ?? "").trim()),
+      )
+    : [];
+
   const hasPage2 = preview.length > 0 || talkAbout.length > 0;
 
   const download = async (scope: "summary" | "full") => {

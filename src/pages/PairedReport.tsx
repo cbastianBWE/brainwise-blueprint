@@ -768,7 +768,9 @@ export default function PairedReport() {
   const firstA = nameA.split(" ")[0] || "Person A";
   const firstB = nameB.split(" ")[0] || "Person B";
   const nm = useCallback(
-    (s: string) => (s ?? "").split("Person A").join(firstA).split("Person B").join(firstB),
+    // Guard: a malformed narrative field (object/number) must degrade to blank, not throw.
+    (s: string) => (typeof s === "string" ? s : "").split("Person A").join(firstA).split("Person B").join(firstB),
+
     [firstA, firstB],
   );
 

@@ -131,9 +131,17 @@ export async function generatePairedOnePagerPdf(
     );
   };
 
-  const watch = (data.watch ?? []).filter(Boolean).slice(0, 2);
-  const talkAbout = (data.talk_about ?? []).filter(Boolean).slice(0, 4);
-  const preview = (data.report_preview ?? []).filter(Boolean);
+  const watch = (data.watch ?? []).filter(
+    (w) => !!w && typeof w === "object" && !!((w.point ?? "").trim() || (w.body ?? "").trim()),
+  ).slice(0, 2);
+  // Some reports stored a malformed entry here (e.g. `{}`); only real strings survive.
+  const talkAbout = (data.talk_about ?? [])
+    .filter((t): t is string => typeof t === "string" && !!t.trim())
+    .slice(0, 4);
+  const preview = (data.report_preview ?? []).filter(
+    (p) => !!p && typeof p === "object" && !!((p.text ?? "").trim() || (p.heading ?? "").trim()),
+  );
+
 
   /**
    * Page one is a fixed sheet. Everything is laid out through this one function
