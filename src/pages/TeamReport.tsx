@@ -25,7 +25,10 @@ import {
 import {
   DIM_COLOR,
   hexAlpha,
+  AMBER,
   MUSTARD as CHIP_MUSTARD,
+  jumpToFacet,
+  useFacetAnchorExists,
 } from "@/components/results/pairedFacetChip";
 
 
@@ -38,7 +41,6 @@ const GRAY = "#6D6875";
 const PURPLE = "#3C096C";
 const GREEN = "#2D6A4F";
 const MUSTARD = "#7a5800";
-const AMBER = "#FFB703";
 const INK = "#6D6875";
 const MUTED = "#6D6875";
 const LINE = "rgba(2,31,54,0.12)";
@@ -82,7 +84,7 @@ function shapeKey(shape: string | null | undefined): ShapeKey {
 }
 
 /* ---------- section types ----------
-   v15 of generate-team-narrative emits structured bullets
+   v14+ of generate-team-narrative emits structured bullets
    ({ point, body, facets }) where earlier versions emitted plain strings.
    Older profiles are never regenerated, so every renderer accepts both. */
 interface TeamInThreeItem { headline: string; detail: string; action: string; facets?: string[]; }
@@ -146,15 +148,25 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
 function IdeaBullets({
   items, style, blockKey, lookupFacet,
 }: {
-  items: string | Bullet[];
+  items: unknown;
   style?: React.CSSProperties;
   blockKey?: string;
   lookupFacet?: (name: string) => TeamFacetEntry | undefined;
+  /** accent used when no facet in the bullet resolves to a PTP dimension */
+  fallbackAccent?: string;
 }) {
   if (Array.isArray(items)) {
-    const list = items.filter(Boolean);
+    // drop empties, including {point:"",body:"",facets:[]} which would otherwise
+    // draw a bordered card with nothing in it
+    const list = (items as Bullet[]).filter((b) => {
+      if (!b) return false;
+      if (isBulletObject(b)) {
+        return !!((b.point ?? "").trim() || (b.body ?? "").trim() || bulletFacets(b).length);
+      }
+      return !!bulletToText(b);
+    });
     if (!list.length) return null;
-    // Pre-v15 profiles: every element is a plain string, render exactly as before.
+    // Pre-v14 profiles: every element is a plain string, render exactly as before.
     if (!list.some(isBulletObject)) {
       return (
         <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
@@ -185,7 +197,7 @@ function IdeaBullets({
           const point = (b.point ?? "").trim();
           const body = (b.body ?? "").trim();
           const facets = bulletFacets(b);
-          const accent = accentForFacets(facets, lookupFacet);
+          const accent = accentForFacets(facets, lookupFacet, fallbackAccent);
           return (
             <div
               key={i}
@@ -198,11 +210,13 @@ function IdeaBullets({
               }}
             >
               {point && (
-                <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>{point}</div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : point}
+                </div>
               )}
               {body && (
                 <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
-                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={body} /> : body}
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : body}
                 </div>
               )}
               <TeamChipRow facets={facets} lookupFacet={lookupFacet} />
@@ -212,7 +226,7 @@ function IdeaBullets({
       </div>
     );
   }
-  return <Paras text={items} style={style} blockKey={blockKey} />;
+  return <Paras text={typeof items === "string" ? items : ""} style={style} blockKey={blockKey} />;
 }
 
 /* ---------- name-keyed facet index (chips carry facet names, not item numbers) ---------- */
@@ -227,12 +241,13 @@ export interface TeamFacetEntry {
 function accentForFacets(
   facets: string[],
   lookupFacet?: (name: string) => TeamFacetEntry | undefined,
+  fallback: string = TEAL,
 ): string {
   for (const f of facets) {
     const dom = lookupFacet?.(f)?.domain;
     if (dom && DIM_COLOR[dom]) return DIM_COLOR[dom];
   }
-  return TEAL;
+  return fallback;
 }
 
 function TeamFacetChip({
@@ -246,21 +261,13 @@ function TeamFacetChip({
 
   const tip = entry ? teamChipTip(entry) : null;
 
-  const jump = () => {
-    if (!entry) return;
-    const el = document.getElementById(`facet-${entry.itemNumber}`);
-    if (!el) return; // row filtered out of the visible map — silent no-op
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.remove("pr-pulse");
-    void el.offsetWidth;
-    el.classList.add("pr-pulse");
-    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
-  };
+  const canJump = useFacetAnchorExists(entry?.itemNumber);
+  const jump = () => { jumpToFacet(entry?.itemNumber); };
 
   return (
     <span
       className="pr-chip"
-      onClick={jump}
+      onClick={canJump ? jump : undefined}
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
       style={{
@@ -273,7 +280,7 @@ function TeamFacetChip({
         background: bg,
         border: `1px solid ${border}`,
         color: text,
-        cursor: entry ? "pointer" : "default",
+        cursor: canJump ? "pointer" : "default",
         whiteSpace: "nowrap",
       } as React.CSSProperties}
     >
