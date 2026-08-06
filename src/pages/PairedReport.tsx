@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -280,8 +280,8 @@ function AgreementBar({ d, labA, labB }: { d: { name: string; a: number; b: numb
 }
 
 /* ---------- meter ---------- */
-function Meter({ tier, kind }: { tier: number; kind: "strength" | "watch" }) {
-  const color = kind === "strength" ? GREEN : AMBER;
+function Meter({ tier, kind }: { tier: number; kind: "strength" | "watch" | "protective" }) {
+  const color = kind === "strength" ? GREEN : kind === "protective" ? PURPLE : AMBER;
   return (
     <span style={{ display: "inline-flex", gap: 3, marginLeft: 8, verticalAlign: "middle" }}>
       {[0, 1, 2, 3].map((i) => (
@@ -301,7 +301,7 @@ function tierFromDriver(score: number | null | undefined): number {
 interface DriverCardProps {
   /** anchors the card so facet chips can jump to a promoted driver */
   itemNumber?: number;
-  kind: "strength" | "watch";
+  kind: "strength" | "watch" | "protective";
   rank?: number;
   shape: PairShapeKey;
   label: string;
@@ -318,7 +318,7 @@ function DriverCard({
   itemNumber, kind, rank, shape, label, name, why, actions, question, a, b, tier, onOpenDist,
 }: DriverCardProps) {
   const [open, setOpen] = useState(false);
-  const accent = kind === "strength" ? GREEN : PSC[shape];
+  const accent = kind === "strength" ? GREEN : kind === "protective" ? PURPLE : PSC[shape];
   return (
     <div
       id={itemNumber != null ? `driver-${itemNumber}` : undefined}
@@ -336,7 +336,9 @@ function DriverCard({
     >
       <div style={{ display: "grid", gridTemplateColumns: "170px 1fr", gap: 16, alignItems: "start" }} className="dr-grid">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {kind === "strength"
+          {kind === "protective"
+            ? <Eye size={20} color={PURPLE} />
+            : kind === "strength"
             ? <span style={{ color: GREEN, fontSize: 22 }}>★</span>
             : (
               <span style={{
@@ -354,8 +356,8 @@ function DriverCard({
             display: "inline-flex", alignItems: "center", gap: 8,
             fontSize: 11, fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase",
             padding: "3px 9px", borderRadius: 999,
-            background: kind === "strength" ? "rgba(45,106,79,.12)" : "rgba(255,183,3,.16)",
-            color: kind === "strength" ? GREEN : MUSTARD,
+            background: kind === "strength" ? "rgba(45,106,79,.12)" : kind === "protective" ? "rgba(60,9,108,.12)" : "rgba(255,183,3,.16)",
+            color: kind === "strength" ? GREEN : kind === "protective" ? PURPLE : MUSTARD,
           }}>
             {label}
             <Meter tier={tier} kind={kind} />
@@ -373,12 +375,12 @@ function DriverCard({
                 }}
               >
                 <span style={{ display: "inline-block", transition: ".15s", transform: open ? "rotate(90deg)" : "none" }}>▸</span>
-                See three things to {kind === "strength" ? "keep doing" : "try"}
+                See three things to {kind === "strength" ? "keep doing" : kind === "protective" ? "agree on" : "try"}
               </button>
               <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr", transition: "grid-template-rows .2s ease", marginTop: open ? 10 : 0 }}>
                 <div style={{ overflow: "hidden" }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: GRAY, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
-                    {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
+                    {kind === "strength" ? "Three things to keep doing" : kind === "protective" ? "Three things to agree on" : "Three things to try"}
                   </div>
                   <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                     {actions.map((act, i) => (
@@ -830,6 +832,7 @@ export default function PairedReport() {
       src?.fullMap ?? src?.facets ?? [],
       src?.strengths ?? [],
       src?.focusAreas ?? [],
+      src?.protective ?? [],
     ];
     for (const list of lists) {
       for (const f of list) {
@@ -913,6 +916,7 @@ export default function PairedReport() {
     profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
     profile?.structured?.strengths?.find((f) => f.itemNumber === item) ??
     profile?.structured?.focusAreas?.find((f) => f.itemNumber === item) ??
+    profile?.structured?.protective?.find((f) => f.itemNumber === item) ??
     profile?.structured?.fullMap?.find((f) => f.itemNumber === item);
 
   const pairInThree = sections["pair_in_three"] as PairInThreeItem[] | undefined;
@@ -1012,6 +1016,31 @@ export default function PairedReport() {
     };
   });
 
+  const PROTECTIVE_LABELS: Record<string, string> = {
+    "Blind spot (R)": "Blind spot",
+    "One covers it, fragile": "Carried by one",
+    "Over-protection watch": "Both over-watching",
+  };
+  const protectiveFacets = profile.structured?.protective ?? [];
+  const protectiveDrivers = protectiveFacets.map((f, idx) => {
+    const src = driving?.protective?.[idx];
+    const actions = src?.actions ?? (src?.action ? [src.action] : []);
+    const raw = f.label ?? "";
+    return {
+      itemNumber: f.itemNumber,
+      kind: "protective" as const,
+      shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),
+      label: PROTECTIVE_LABELS[raw] ?? raw,
+      name: facetDisplayLabel(f.facetName, mode),
+      why: src?.why ?? "",
+      actions,
+      question: questionByItem.get(f.itemNumber) ?? "",
+      a: f.stats?.a,
+      b: f.stats?.b,
+      tier: tierFromDriver(f.driverScore),
+    };
+  });
+
   const sectionLead: React.CSSProperties = {
     color: GRAY, maxWidth: 760, margin: "0 0 18px",
   };
@@ -1062,6 +1091,7 @@ export default function PairedReport() {
                     nm={nm}
                     mode={mode}
                     lookupFacet={lookupFacet}
+                    protectiveFirst={(profile.structured?.protective ?? []).length > 0}
                   />
                 )}
                 {hasLeaderActions && (
@@ -1261,13 +1291,13 @@ export default function PairedReport() {
         </div>
 
         {/* drivers */}
-        {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
+        {(strengthDrivers.length > 0 || focusDrivers.length > 0 || protectiveDrivers.length > 0) && (
           <>
             <SectionHead ctx={ctx} eyebrow="THE DRIVERS">What is driving your pair</SectionHead>
             {driving?.opening && (
               <div style={{ color: GRAY, margin: "0 0 18px" }}><Paras ctx={ctx} text={driving.opening} style={{ color: GRAY, maxWidth: "none" }} blockKey="driving:opening" /></div>
             )}
-            {[...strengthDrivers, ...focusDrivers].map((d, i) => (
+            {[...strengthDrivers, ...focusDrivers, ...protectiveDrivers].map((d, i) => (
               <DriverCard
                 key={i}
                 {...d}
@@ -1553,6 +1583,7 @@ export default function PairedReport() {
           suggestionGroups={[
             { label: "Continue / next steps", items: (driving?.strengths ?? []).flatMap((s: any) => s.actions ?? (s.action ? [s.action] : [])).map(nm) },
             { label: "Things to try", items: (driving?.focus ?? []).flatMap((f: any) => f.actions ?? (f.action ? [f.action] : [])).map(nm) },
+            { label: "Agree together", items: (driving?.protective ?? []).flatMap((p: any) => p.actions ?? (p.action ? [p.action] : [])).map(nm) },
           ]}
         />
       )}
