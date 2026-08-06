@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, Trash2, Target } from "lucide-react";
+import { Loader2, Users, Trash2, Target, AlertTriangle } from "lucide-react";
 
 interface ReportRow {
   report_id: string;
@@ -43,16 +43,19 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
   const [shared, setShared] = useState<Record<string, Shared[]>>({});
   const [mine, setMine] = useState<Record<string, Mine[]>>({});
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
-      const rpc = supabase.rpc as unknown as RpcFn;
-      const repData = await safe<ReportRow>(rpc("bw_list_my_reports"));
+      const repData = await safe<ReportRow>((supabase.rpc as unknown as RpcFn)("bw_list_my_reports"));
       const reps = repData.filter((r) => r.kind === kind);
       setReports(reps);
 
-      const mineData = await safe<Mine>(rpc("dp_list_my_report_commitments", { p_kind: kind }));
+      const mineData = await safe<Mine>(
+        (supabase.rpc as unknown as RpcFn)("dp_list_my_report_commitments", { p_kind: kind }),
+      );
       const mineByReport: Record<string, Mine[]> = {};
       mineData.forEach((m) => {
         (mineByReport[m.source_report_id] ??= []).push(m);
@@ -62,11 +65,15 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
       const sharedByReport: Record<string, Shared[]> = {};
       await Promise.all(
         reps.map(async (r) => {
-          const data = await safe<Shared>(rpc("report_list_commitments", { p_report_id: r.report_id, p_kind: kind }));
+          const data = await safe<Shared>(
+            (supabase.rpc as unknown as RpcFn)("report_list_commitments", { p_report_id: r.report_id, p_kind: kind }),
+          );
           sharedByReport[r.report_id] = data;
         }),
       );
       setShared(sharedByReport);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -75,11 +82,16 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
   useEffect(() => { load(); }, [load]);
 
   const archive = async (id: string) => {
-    const rpc = supabase.rpc as unknown as RpcFn;
-    const { error } = await rpc("report_archive_commitment", { p_commitment_id: id });
-    if (error) { toast.error("Couldn't remove that commitment."); return; }
-    toast.success("Commitment removed.");
-    load();
+    try {
+      const { error } = await (supabase.rpc as unknown as RpcFn)("report_archive_commitment", {
+        p_commitment_id: id,
+      });
+      if (error) { toast.error("Couldn't remove that commitment."); return; }
+      toast.success("Commitment removed.");
+      load();
+    } catch {
+      toast.error("Couldn't remove that commitment.");
+    }
   };
 
   if (loading) {
@@ -87,6 +99,21 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
       <div className="flex justify-center py-12">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <Card>
+        <CardContent className="py-12 flex flex-col items-center text-center gap-3">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+          <h3 className="text-lg font-semibold">Couldn't load your commitments</h3>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Something went wrong fetching this tab. Please try again.
+          </p>
+          <Button variant="outline" onClick={() => load()}>Retry</Button>
+        </CardContent>
+      </Card>
     );
   }
 
