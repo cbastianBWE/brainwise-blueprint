@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,10 @@ import TeamOnePager, {
   type TeamOnePagerSection,
   type LeaderOnePagerSection,
 } from "@/components/results/TeamOnePager";
+import {
+  ArchiveReportDialog,
+  useCanArchiveReport,
+} from "@/components/reports/ArchiveReportDialog";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
 
@@ -798,6 +802,9 @@ function Acc({ title, children }: { title: string; children: React.ReactNode }) 
 /* ---------- page ---------- */
 export default function TeamReport() {
   const { teamProfileId } = useParams<{ teamProfileId: string }>();
+  const navigate = useNavigate();
+  const canArchiveReport = useCanArchiveReport("team", teamProfileId);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const {
     loading, noAccess, profile, sections, status,
     refetchSections, refetchProfile,
@@ -1183,6 +1190,17 @@ export default function TeamReport() {
               >
                 Add to development plan
               </Button>
+              {canArchiveReport && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setArchiveOpen(true)}
+                  style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                >
+                  <Archive className="mr-2 h-4 w-4" />
+                  Archive report
+                </Button>
+              )}
             </div>
           )}
 
@@ -1511,6 +1529,15 @@ export default function TeamReport() {
       {/* Tooltip */}
       <TipLayer tip={tip} />
       </TeamReportHighlightProvider>
+      <ArchiveReportDialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        kind="team"
+        reportId={teamProfileId ?? ""}
+        subjects={teamName}
+        onArchived={() => navigate("/team-paired-reports")}
+      />
+
       <ExportPdfModal
         open={exportOpen}
         onOpenChange={setExportOpen}
