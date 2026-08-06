@@ -12,8 +12,13 @@ import { HighlightableText, TeamReportHighlightProvider } from "@/components/res
 import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
 import LeadershipModal, { type LeadershipItem } from "@/components/results/LeadershipModal";
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
+import TeamOnePager, {
+  type TeamOnePagerSection,
+  type LeaderOnePagerSection,
+} from "@/components/results/TeamOnePager";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
+
 import {
   facetDisplayLabel,
   isBulletObject,
@@ -950,6 +955,11 @@ export default function TeamReport() {
   const coach = sections["coach"] as CoachSection | undefined;
   const leadership = sections["leadership"] as LeadershipItem[] | undefined;
   const hasLeadership = Array.isArray(leadership) && leadership.length > 0;
+  /* one-pagers. The leader sheet is RLS-gated: the row simply is not returned
+     for viewers who may not see it, so its absence is the permission check. */
+  const onePagerTeam = sections["one_pager_team"] as TeamOnePagerSection | undefined;
+  const onePagerLeader = sections["one_pager_leader"] as LeaderOnePagerSection | undefined;
+
 
   /* Name-keyed facet index. Bullet `facets` arrays carry facet NAMES, and every
      other lookup in this report keys on itemNumber, so chips need their own map.
@@ -982,6 +992,13 @@ export default function TeamReport() {
     (name: string) => facetByName.get(normFacetName(name)),
     [facetByName],
   );
+
+  /** Flat name/domain index handed to the one-pager PDF for chip color. */
+  const pdfFacetIndex = useMemo(
+    () => Array.from(facetByName.values()).map((f) => ({ facetName: f.facetName, domain: f.domain })),
+    [facetByName],
+  );
+
 
   const facetLookup = (item: number): TeamFacetResult | undefined =>
     profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
@@ -1138,6 +1155,16 @@ export default function TeamReport() {
                 <FileText className="mr-2 h-4 w-4" />
                 Export PDF
               </Button>
+              <TeamOnePager
+                team={onePagerTeam}
+                leader={onePagerLeader}
+                teamName={teamName}
+                dateGenerated={new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                lookupFacet={lookupFacetByName}
+                chipTip={(entry) => teamChipTip(entry as TeamFacetEntry)}
+                facets={pdfFacetIndex}
+              />
+
               {hasLeadership && (
                 <Button
                   variant="outline"
