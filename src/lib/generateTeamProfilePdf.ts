@@ -23,7 +23,14 @@ import {
   drawTeamDistRow,
   type PdfContext,
 } from "./generatePdfPrimitivesShared";
-import { facetDisplayLabel } from "./pairedSectionTypes";
+import {
+  facetDisplayLabel,
+  isBulletObject,
+  bulletToText,
+  bulletFacets,
+  normFacetName,
+  type Bullet,
+} from "./pairedSectionTypes";
 import type { TeamPdfData, TeamFacetForPdf } from "./assembleTeamPdfData";
 
 export interface TeamPdfSections {
