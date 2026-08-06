@@ -610,6 +610,15 @@ export async function generateTeamProfilePdf(
   const ctx = createPdfContext(doc);
   const s = data.sections;
 
+  /* Chip colour comes only from the facet's PTP dimension, keyed on the
+     normalised facet name (chips carry names, everything else carries items). */
+  facetDomainByName = new Map<string, string>();
+  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
+    if (!f?.facetName || !f.domain) continue;
+    const key = normFacetName(f.facetName);
+    if (!facetDomainByName.has(key)) facetDomainByName.set(key, f.domain);
+  }
+
   // 1. team in three
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
     ctx.sectionHeading("Your team in three");
