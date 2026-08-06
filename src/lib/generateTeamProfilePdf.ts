@@ -161,6 +161,39 @@ function chipsUnder(ctx: PdfContext, facets: string[] | undefined, fs: FacetStyl
   ctx.y += layout.h + 2;
 }
 
+/** Height of the first card in a run, so a subheading never lands alone. */
+function firstCardH(
+  ctx: PdfContext,
+  blocks: PdfBlock[],
+  fs: FacetStyler,
+  accent: readonly [number, number, number],
+  width = CONTENT_W,
+): number {
+  const b = blocks[0];
+  if (!b) return 0;
+  const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
+  const m = measureCard(ctx.doc, b, width, blockAccent(b, accent, fs), fs, CARD_METRICS);
+  return Math.min(m.h + CARD_GAP, PAGE_AVAIL - 12);
+}
+
+/**
+ * Draw a subheading. The page-break check runs FIRST, because checkPageBreak
+ * may emit a footer and a continuation header, both of which reset font, size
+ * and color — setting the font before the break left headings rendered in
+ * footer styling. `firstBlockH` reserves room for the content that follows so
+ * a heading is never stranded at the foot of a page.
+ */
+function subheading(ctx: PdfContext, label: string, firstBlockH = 14): void {
+  const { doc } = ctx;
+  ctx.checkPageBreak(6 + Math.max(0, firstBlockH));
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...NAVY);
+  doc.text(label, MARGIN_L, ctx.y);
+  ctx.y += 5;
+}
+
+
 function paragraphs(ctx: PdfContext, text: string): void {
   const paras = splitParas(text);
   for (let i = 0; i < paras.length; i++) {
