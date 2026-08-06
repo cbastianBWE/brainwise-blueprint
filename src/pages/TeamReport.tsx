@@ -1363,6 +1363,9 @@ export default function TeamReport() {
           open={leadershipOpen}
           onOpenChange={setLeadershipOpen}
           items={leadership!}
+          renderFacets={(facets) => (
+            <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
+          )}
         />
       )}
       {teamProfileId && (
