@@ -10,6 +10,7 @@ import {
   PURPLE,
   AMBER,
   MUSTARD,
+  BLACK,
 } from "./generatePdfPrimitivesShared";
 import type { OnePagerSection, OnePagerVoice } from "./pairedSectionTypes";
 
@@ -17,7 +18,6 @@ import type { OnePagerSection, OnePagerVoice } from "./pairedSectionTypes";
 type RGB = readonly [number, number, number];
 
 const PEACH: RGB = SAND_CIRCLE;
-const BLACK: RGB = [30, 30, 30];
 
 const SHARED_LABELS: [keyof OnePagerSection["shared"], string][] = [
   ["strong", "What holds you together"],

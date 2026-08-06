@@ -342,7 +342,18 @@ function twoColumn(
   if (anyCards) {
     const accentL = persons ? NAVY : TEAL;
     const accentR = persons ? MUSTARD : TEAL;
-    ctx.ensureBlockSpace(4.5 + 14);
+    // Reserve the titles plus the measured height of the first real row, so the
+    // titles can never be drawn at the foot of a page and then redrawn overleaf.
+    let firstRowH = 0;
+    for (let i = 0; i < Math.max(leftBody.length, rightBody.length); i++) {
+      const lb0 = leftBody[i] ? toBlock(leftBody[i]) : null;
+      const rb0 = rightBody[i] ? toBlock(rightBody[i]) : null;
+      const l0 = lb0 ? measureCard(doc, lb0, colW, blockAccent(lb0, accentL, fs), fs, CARD_METRICS) : null;
+      const r0 = rb0 ? measureCard(doc, rb0, colW, blockAccent(rb0, accentR, fs), fs, CARD_METRICS) : null;
+      firstRowH = Math.max(l0?.h ?? 0, r0?.h ?? 0);
+      if (firstRowH > 0) break;
+    }
+    ctx.ensureBlockSpace(Math.min(4.5 + firstRowH, PAGE_H - MARGIN_T - MARGIN_B));
     let y = drawTitles(ctx.y);
     const n = Math.max(leftBody.length, rightBody.length);
     for (let i = 0; i < n; i++) {
@@ -918,7 +929,9 @@ export async function generatePairedProfilePdf(
 
     if (s.repair.disclaimer) {
       ctx.y += 2;
-      doc.setFont("Montserrat", "italic");
+      // Montserrat has no registered italic face; jsPDF would silently fall back to
+      // Times italic (a serif) here. Grey 8pt normal carries the de-emphasis instead.
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...MUTED);
       const dl = doc.splitTextToSize(nm(s.repair.disclaimer), CONTENT_W);
@@ -946,7 +959,9 @@ export async function generatePairedProfilePdf(
     );
 
     if (s.intimacy.disclaimer) {
-      doc.setFont("Montserrat", "italic");
+      // Montserrat has no registered italic face; jsPDF would silently fall back to
+      // Times italic (a serif) here. Grey 8pt normal carries the de-emphasis instead.
+      doc.setFont("Montserrat", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...MUTED);
       const dl = doc.splitTextToSize(nm(s.intimacy.disclaimer), CONTENT_W);

@@ -44,7 +44,6 @@ const GRAY = "#6D6875";
 const PURPLE = "#3C096C";
 const GREEN = "#2D6A4F";
 const MUSTARD = "#7a5800";
-const INK = "#6D6875";
 const MUTED = "#6D6875";
 const LINE = "rgba(2,31,54,.10)";
 /** Paired is deliberately flat; the old double drop shadow was the loudest
@@ -125,9 +124,10 @@ const renderBold = (s: string) => {
 };
 
 /* ---------- scroll reveal ----------
-   Keys are namespaced by report kind: the paired report uses the same section
-   names, and a shared key space would make team sections appear with no
-   animation depending on navigation order. */
+   Keys are byte-identical to the paired report's. The isolation comes from this
+   module-scope Set being separate from paired's, not from the key names — do not
+   merge the two Sets, or a section revealed on one report would start out already
+   revealed on the other. */
 const TEAM_REVEALED = new Set<string>();
 
 export interface TeamRevealCtx {
@@ -147,34 +147,26 @@ const noopReveal: TeamRevealCtx = {
 const RevealCtx = createContext<TeamRevealCtx>(noopReveal);
 
 /* ---------- shared card language (matches the paired report) ---------- */
-const cardStyle: React.CSSProperties = {
-  background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
-  padding: "18px 20px", marginBottom: 14, boxShadow: FLAT_SHADOW,
-};
-const pbox: React.CSSProperties = {
-  border: `1px solid ${LINE}`, borderRadius: 10, padding: "13px 15px",
-};
 const boxLabel: React.CSSProperties = {
   fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase",
   fontWeight: 800, marginBottom: 8, color: NAVY,
-};
-const sectionLead: React.CSSProperties = {
-  color: GRAY, maxWidth: 760, margin: "0 0 18px",
 };
 const sectionLabel: React.CSSProperties = {
   fontFamily: POPPINS, fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px",
 };
 
-function SectionHead({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
+function SectionHead({ eyebrow, children }: { eyebrow?: string; children: React.ReactNode }) {
   const ctx = useContext(RevealCtx);
   return (
-    <div ref={ctx.revealRef(`head:${eyebrow}`)} className="pr-anim">
-      <div style={{
-        fontFamily: POPPINS, fontWeight: 700, fontSize: 12, letterSpacing: "0.2em",
-        textTransform: "uppercase", color: ORANGE, marginBottom: 8,
-      }}>
-        {eyebrow}
-      </div>
+    <div ref={ctx.revealRef(`head:${eyebrow ?? String(children)}`)} className="pr-anim">
+      {eyebrow && (
+        <div style={{
+          fontFamily: POPPINS, fontWeight: 700, fontSize: 12, letterSpacing: "0.2em",
+          textTransform: "uppercase", color: ORANGE, marginBottom: 8,
+        }}>
+          {eyebrow}
+        </div>
+      )}
       <h2 style={sectionLabel}>{children}</h2>
     </div>
   );
@@ -214,7 +206,7 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
   );
 }
 function IdeaBullets({
-  items, style, blockKey, lookupFacet, fallbackAccent, ordered,
+  items, style, blockKey, lookupFacet, fallbackAccent,
 }: {
   items: unknown;
   style?: React.CSSProperties;
@@ -222,8 +214,6 @@ function IdeaBullets({
   lookupFacet?: (name: string) => TeamFacetEntry | undefined;
   /** accent used when no facet in the bullet resolves to a PTP dimension */
   fallbackAccent?: string;
-  /** numbered list (avoid_conflict) rather than the default bullets */
-  ordered?: boolean;
 }) {
   const ctx = useContext(RevealCtx);
   if (Array.isArray(items)) {
@@ -239,9 +229,8 @@ function IdeaBullets({
     if (!list.length) return null;
     // Pre-v14 profiles: every element is a plain string, render exactly as before.
     if (!list.some(isBulletObject)) {
-      const ListTag = ordered ? "ol" : "ul";
       return (
-        <ListTag style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: ordered ? "decimal" : "disc", ...style }}>
+        <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, ...style }}>
           {list.map((b, i) => {
             const s = bulletToText(b);
             if (!s) return null;
@@ -251,7 +240,7 @@ function IdeaBullets({
               </li>
             );
           })}
-        </ListTag>
+        </ul>
       );
     }
     return (
@@ -286,13 +275,11 @@ function IdeaBullets({
             >
               {point && (
                 <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
-                  {ordered && <span style={{ marginRight: 6 }}>{i + 1}.</span>}
                   {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : renderBold(point)}
                 </div>
               )}
               {body && (
                 <div style={{ color: GRAY, fontSize: 13.5, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
-                  {ordered && !point && <span style={{ fontWeight: 800, color: NAVY, marginRight: 6 }}>{i + 1}.</span>}
                   {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : renderBold(body)}
                 </div>
               )}
@@ -614,7 +601,7 @@ function AgreementBar({ d }: { d: { name: string; mean: number; high: number; lo
           style={{ position: "absolute", top: 1, width: 14, height: 14, borderRadius: "50%", border: "2px solid #fff", transform: "translateX(-50%)", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,.18)", left: `${d.high}%`, background: PURPLE }} />
         <div style={{ position: "absolute", top: -26, transform: "translateX(-50%)", fontWeight: 800, color: NAVY, fontSize: 13, left: `${d.mean}%` }}>{d.mean}</div>
         <div onMouseMove={(e) => showTip(e, `${d.name}: low ${d.low}, avg ${d.mean}, high ${d.high}`)} onMouseLeave={hideTip}
-          style={{ position: "absolute", top: -3, width: 22, height: 22, borderRadius: "50%", background: NAVY, border: "3px solid #fff", transform: "translateX(-50%)", cursor: "pointer", zIndex: 2, left: `${d.mean}%`, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }} />
+          style={{ position: "absolute", top: -3, width: 22, height: 22, borderRadius: "50%", background: NAVY, border: "3px solid #fff", transform: "translateX(-50%)", cursor: "pointer", zIndex: 2, left: `${d.mean}%`, boxShadow: FLAT_SHADOW }} />
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(2,31,54,0.35)", marginTop: 4 }}>
         <span>0</span><span>50</span><span>100</span>
@@ -903,9 +890,8 @@ export default function TeamReport() {
   }, []);
 
   /* ---------- scroll reveal (one shared observer, once per element, idempotent) ----------
-     TEAM_REVEALED is this page's own set: the paired report uses the same section
-     names, so a shared key space would make team sections appear unanimated
-     depending on navigation order. */
+     TEAM_REVEALED is this page's own Set and the keys are identical to paired's,
+     so the separate Set is the only thing keeping the two reports isolated. */
   const [revealObserver] = useState<IntersectionObserver | null>(() => {
     if (typeof IntersectionObserver === "undefined") return null;
     return new IntersectionObserver(
@@ -1057,12 +1043,20 @@ export default function TeamReport() {
     );
   }
 
-  /* driver lists (strengths + ranked focus areas) */
+  /* driver lists (strengths + ranked focus areas).
+     Rationale is matched by item number, exactly as generateTeamProfilePdf.ts
+     does, so the screen and the PDF can never attach a different `why` to the
+     same facet. A facet with no matching rationale still renders (with an empty
+     why) and warns, rather than silently disappearing from one surface. */
   const strengthFacets = (profile.structured?.strengths ?? []).slice(0, 1);
   const focusFacets = profile.structured?.focusAreas ?? [];
 
+  const strengthSrcByItem = new Map((driving?.strengths ?? []).map((d) => [d.item, d]));
+  const focusSrcByItem = new Map((driving?.focus ?? []).map((d) => [d.item, d]));
+
   const strengthDrivers = strengthFacets.map((f, i) => {
-    const src = driving?.strengths?.[i];
+    const src = strengthSrcByItem.get(f.itemNumber);
+    if (!src) console.warn(`[team report] no driving_facets.strengths entry for item ${f.itemNumber}`);
     const actions = src?.actions ?? (src?.action ? [src.action] : []);
     return {
       itemNumber: f.itemNumber,
@@ -1079,7 +1073,8 @@ export default function TeamReport() {
     };
   });
   const focusDrivers = focusFacets.map((f, idx) => {
-    const src = driving?.focus?.[idx];
+    const src = focusSrcByItem.get(f.itemNumber);
+    if (!src) console.warn(`[team report] no driving_facets.focus entry for item ${f.itemNumber}`);
     const actions = src?.actions ?? (src?.action ? [src.action] : []);
     const sev = (f.driverScore ?? 0);
     let label = "Worth watching";
@@ -1447,7 +1442,7 @@ export default function TeamReport() {
               fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
               padding: "5px 12px", borderRadius: 999, marginBottom: 10,
             }}>For the practitioner, org admin &amp; super admin</div>
-            <SectionHead eyebrow="For the practitioner">Running the debrief</SectionHead>
+            <SectionHead>Running the debrief</SectionHead>
             <p style={{ color: MUTED, margin: "0 0 18px" }}>Facilitation material, shown to practitioners and administrators.</p>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="The why behind each call">
