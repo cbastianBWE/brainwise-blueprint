@@ -47,6 +47,7 @@ export interface TeamPdfData {
   fullMap: TeamFacetForPdf[];
   scoresByItem: Map<number, number[]>;
   itemText: Map<number, string>;
+  anchorsByItem: Map<number, { low: string; high: string }>;
   sections: TeamPdfSectionData;
 }
 
@@ -99,11 +100,14 @@ export async function assembleTeamPdfData(params: {
 
   const { data: items } = await supabase
     .from("items_presentation")
-    .select("item_number,item_text")
+    .select("item_number,item_text,anchor_low,anchor_high")
     .eq("instrument_id", "INST-001");
   const itemText = new Map<number, string>();
-  for (const it of (items ?? []) as Array<{ item_number: number | null; item_text: string }>) {
-    if (it.item_number != null) itemText.set(it.item_number, it.item_text);
+  const anchorsByItem = new Map<number, { low: string; high: string }>();
+  for (const it of (items ?? []) as Array<{ item_number: number | null; item_text: string; anchor_low: string | null; anchor_high: string | null }>) {
+    if (it.item_number == null) continue;
+    itemText.set(it.item_number, it.item_text);
+    anchorsByItem.set(it.item_number, { low: it.anchor_low ?? "", high: it.anchor_high ?? "" });
   }
 
   const scoresByItem = new Map<number, number[]>();
@@ -129,6 +133,7 @@ export async function assembleTeamPdfData(params: {
     fullMap: p.structured?.fullMap ?? p.structured?.facets ?? [],
     scoresByItem,
     itemText,
+    anchorsByItem,
     sections: sections as TeamPdfSectionData,
   };
 }
