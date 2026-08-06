@@ -56,6 +56,7 @@ import {
   TipLayer,
   type PairShapeKey,
   type FacetEntry,
+  questionTipText,
 } from "@/components/results/pairedFacetChip";
 
 

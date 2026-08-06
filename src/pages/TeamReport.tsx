@@ -41,6 +41,7 @@ import {
   showTip,
   hideTip,
   type ChipOverlayProps,
+  questionTipText,
 } from "@/components/results/pairedFacetChip";
 
 
