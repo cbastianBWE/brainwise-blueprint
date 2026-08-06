@@ -96,8 +96,13 @@ export interface PdfBlock {
   facets?: string[];
 }
 
-/** Facet domain lookup, keyed on the normalized facet name. Set per render. */
-let facetDomainByName: Map<string, string> = new Map();
+/** Per-invocation facet styling. Built inside the generate call and threaded
+ *  down, so no module-level mutable state is shared between renders. */
+export interface FacetStyler {
+  label: (name: string) => string;
+  color: (name: string) => readonly [number, number, number];
+  domain: (name: string) => string | undefined;
+}
 
 const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
   Protection: NAVY,
@@ -107,9 +112,25 @@ const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
   Pleasure: MUSTARD, // amber is illegible at 6.5pt; mustard is its text-safe pair
 };
 
-function facetColor(name: string): readonly [number, number, number] {
-  const dom = facetDomainByName.get(normFacetName(name));
-  return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+function makeFacetStyler(
+  facets: { facetName?: string | null; domain?: string | null }[],
+): FacetStyler {
+  const domainByName = new Map<string, string>();
+  for (const f of facets) {
+    if (!f?.facetName || !f.domain) continue;
+    const key = normFacetName(f.facetName);
+    if (!domainByName.has(key)) domainByName.set(key, f.domain);
+  }
+  const domain = (name: string) => domainByName.get(normFacetName(name));
+  return {
+    // The team report always covers the full instrument, so workplace wording is right.
+    label: (name: string) => facetDisplayLabel(name, "work"),
+    color: (name: string) => {
+      const dom = domain(name);
+      return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+    },
+    domain,
+  };
 }
 
 /** jsPDF has no alpha on fills; blend toward white instead. */
@@ -169,6 +190,7 @@ function chipLayout(
   doc: jsPDF,
   facets: string[] | undefined,
   maxW: number,
+  fs: FacetStyler,
 ): { rows: Chip[][]; h: number } {
   const list = (facets ?? []).filter((f) => typeof f === "string" && f.trim());
   if (list.length === 0) return { rows: [], h: 0 };
@@ -178,7 +200,7 @@ function chipLayout(
   let row: Chip[] = [];
   let rowW = 0;
   for (const raw of list) {
-    const label = facetDisplayLabel(cleanMarkdown(raw).trim(), "work");
+    const label = fs.label(cleanMarkdown(raw).trim());
     if (!label) continue;
     const w = Math.min(maxW, doc.getTextWidth(label) + CHIP_PAD_X * 2 + 1.5);
     if (row.length > 0 && rowW + CHIP_GAP_X + w > maxW) {
@@ -186,7 +208,7 @@ function chipLayout(
       row = [];
       rowW = 0;
     }
-    row.push({ label, w, color: facetColor(raw) });
+    row.push({ label, w, color: fs.color(raw) });
     rowW += (row.length > 1 ? CHIP_GAP_X : 0) + w;
   }
   if (row.length > 0) rows.push(row);
@@ -237,6 +259,7 @@ function measureCard(
   b: PdfBlock,
   w: number,
   accent: readonly [number, number, number],
+  fs: FacetStyler,
 ): CardMeasure {
   const innerW = w - CARD_PAD * 2 - CARD_RULE_W;
   doc.setFont("Poppins", "bold");
@@ -247,7 +270,7 @@ function measureCard(
   doc.setFont("Montserrat", "normal");
   doc.setFontSize(BODY_SIZE);
   const textLines: string[] = b.text ? doc.splitTextToSize(cleanMarkdown(b.text), innerW) : [];
-  const chips = chipLayout(doc, b.facets, innerW);
+  const chips = chipLayout(doc, b.facets, innerW, fs);
   const h =
     CARD_PAD * 2 +
     pointLines.length * LH_POINT +
@@ -291,9 +314,9 @@ function drawCardAt(doc: jsPDF, m: CardMeasure, x: number, y: number, w: number,
 }
 
 /** Accent rule color: the first facet's PTP dimension, else the section accent. */
-function blockAccent(b: PdfBlock, fallback: readonly [number, number, number]) {
+function blockAccent(b: PdfBlock, fallback: readonly [number, number, number], fs: FacetStyler) {
   for (const f of b.facets ?? []) {
-    const dom = facetDomainByName.get(normFacetName(f));
+    const dom = fs.domain(f);
     if (dom && PDF_DIM_COLOR[dom]) return PDF_DIM_COLOR[dom];
   }
   return fallback;
@@ -302,13 +325,14 @@ function blockAccent(b: PdfBlock, fallback: readonly [number, number, number]) {
 function bulletCards(
   ctx: PdfContext,
   blocks: PdfBlock[],
+  fs: FacetStyler,
   opts: { indent?: number; width?: number; accent?: readonly [number, number, number] } = {},
 ): void {
   const indent = opts.indent ?? 0;
   const w = opts.width ?? CONTENT_W - indent;
   const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
   for (const b of blocks) {
-    const m = measureCard(ctx.doc, b, w, blockAccent(b, opts.accent ?? TEAL));
+    const m = measureCard(ctx.doc, b, w, blockAccent(b, opts.accent ?? TEAL, fs), fs);
     if (m.h > PAGE_AVAIL) {
       drawCardAt(ctx.doc, m, MARGIN_L + indent, ctx.y, w, false);
       ctx.y += m.h + CARD_GAP;
@@ -321,8 +345,8 @@ function bulletCards(
 }
 
 /** Standalone chip row (team_in_three / leadership items). */
-function chipsUnder(ctx: PdfContext, facets: string[] | undefined, indent = 0): void {
-  const layout = chipLayout(ctx.doc, facets, CONTENT_W - indent);
+function chipsUnder(ctx: PdfContext, facets: string[] | undefined, fs: FacetStyler, indent = 0): void {
+  const layout = chipLayout(ctx.doc, facets, CONTENT_W - indent, fs);
   if (layout.rows.length === 0) return;
   ctx.checkPageBreak(layout.h + 2);
   drawChipRows(ctx.doc, layout.rows, MARGIN_L + indent, ctx.y);
@@ -612,12 +636,7 @@ export async function generateTeamProfilePdf(
 
   /* Chip color comes only from the facet's PTP dimension, keyed on the
      normalized facet name (chips carry names, everything else carries items). */
-  facetDomainByName = new Map<string, string>();
-  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
-    if (!f?.facetName || !f.domain) continue;
-    const key = normFacetName(f.facetName);
-    if (!facetDomainByName.has(key)) facetDomainByName.set(key, f.domain);
-  }
+  const fs = makeFacetStyler([...data.fullMap, ...data.strengths, ...data.focusAreas]);
 
   // 1. team in three
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
