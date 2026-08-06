@@ -460,13 +460,26 @@ function renderBlocks(
   }
 }
 
+const PROTECTIVE_PDF_LABELS: Record<string, string> = {
+  "Blind spot (R)": "BLIND SPOT",
+  "One covers it, fragile": "CARRIED BY ONE",
+  "Over-protection watch": "BOTH OVER-WATCHING",
+};
+
 function drivingCard(
   ctx: PdfContext,
-  args: { kind: "strength" | "focus"; name: string; why: string; actions: string[] },
+  args: {
+    kind: "strength" | "focus" | "protective";
+    name: string;
+    why: string;
+    actions: string[];
+    label?: string;
+  },
 ): void {
   const { doc } = ctx;
-  const accent = args.kind === "strength" ? GREEN : MUSTARD;
-  const kindLabel = args.kind === "strength" ? "STRENGTH" : "FOCUS";
+  const accent =
+    args.kind === "strength" ? GREEN : args.kind === "protective" ? PURPLE : MUSTARD;
+  const kindLabel = args.label ?? (args.kind === "strength" ? "STRENGTH" : "FOCUS");
 
   doc.setFont("Poppins", "bold");
   doc.setFontSize(11);
@@ -657,7 +670,7 @@ export async function generatePairedProfilePdf(
 
   // name-keyed facet domain index, used to color facet captions
   const fs = makeFacetStyler(
-    [...data.fullMap, ...data.strengths, ...data.focusAreas],
+    [...data.fullMap, ...data.strengths, ...data.focusAreas, ...data.protective],
     data.mode ?? null,
   );
   const facetLabel = fs.label;
@@ -767,11 +780,23 @@ export async function generatePairedProfilePdf(
         actions: acts.slice(0, 3).map(nm),
       });
     });
+    const protectiveSrc = s.driving_facets.protective ?? [];
+    data.protective.forEach((f, i) => {
+      const src = protectiveSrc[i];
+      const acts = src?.actions ?? (src?.action ? [src.action] : []);
+      drivingCard(ctx, {
+        kind: "protective",
+        name: facetLabel(f.facetName),
+        why: nm(src?.why ?? ""),
+        actions: acts.slice(0, 3).map(nm),
+        label: PROTECTIVE_PDF_LABELS[f.label ?? ""] ?? "PROTECTIVE",
+      });
+    });
   }
 
   // 5. driving facet charts
   if (sections.drivingFacetCharts) {
-    const set: PairedFacetForPdf[] = [...data.strengths, ...data.focusAreas].filter(
+    const set: PairedFacetForPdf[] = [...data.strengths, ...data.focusAreas, ...data.protective].filter(
       (f) => f.stats && typeof f.stats.a === "number" && typeof f.stats.b === "number",
     );
     if (set.length > 0) {
@@ -1016,7 +1041,7 @@ export async function generatePairedProfilePdf(
     ctx.sectionHeading("For the practitioner or admin only", 22, "Practitioner only");
 
     const facetByItem = new Map<number, string>();
-    for (const f of data.fullMap) {
+    for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas, ...data.protective]) {
       if (f.itemNumber != null && f.facetName) facetByItem.set(f.itemNumber, f.facetName);
     }
 
