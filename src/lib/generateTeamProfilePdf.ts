@@ -734,8 +734,14 @@ export async function generateTeamProfilePdf(
     for (const r of rows) {
       const driver = data.itemText.get(r.item) ?? `Item ${r.item}`;
       const cells = [driver, r.risk_to_work, r.the_move, r.potential_owner];
+      // measure in the body font the cells are drawn in, not the semibold
+      // header font left live above
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(8);
       const splits = cells.map((t, i) => doc.splitTextToSize(cleanMarkdown(t ?? ""), cols[i].w - 3));
-      const rowH = Math.max(...splits.map((s) => s.length)) * 4.2 + 2;
+      // jsPDF advances a multi-line array by its own line factor; measure the
+      // drawn height instead of assuming 4.2mm per line, which left dead gaps
+      const rowH = Math.max(...splits.map((sp) => doc.getTextDimensions(sp).h)) + 2;
       ctx.checkPageBreak(rowH + 2);
       let cx = MARGIN_L;
       doc.setFont("Montserrat", "normal");
@@ -753,15 +759,20 @@ export async function generateTeamProfilePdf(
     if (s.leader_brief.lean_on) {
       ctx.y += 3;
       ctx.checkPageBreak(12);
-      doc.setFillColor(245, 250, 245);
-      doc.setDrawColor(200, 220, 200);
+      // set the font BEFORE measuring: splitTextToSize uses the live font
+      // state, and the 8pt table font was wrapping this 9pt text 9/8 too wide
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
       const leanRaw = cleanMarkdown(s.leader_brief.lean_on).replace(/^\s*lean on:\s*/i, "");
       const dl = doc.splitTextToSize("Lean on: " + leanRaw, CONTENT_W - 6);
       const h = dl.length * 4.5 + 6;
+      doc.setFillColor(245, 250, 245);
+      doc.setDrawColor(200, 220, 200);
       doc.roundedRect(MARGIN_L, ctx.y, CONTENT_W, h, 2, 2, "FD");
       doc.setFont("Montserrat", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...BLACK);
+
       let ty = ctx.y + 4;
       for (const l of dl) {
         doc.text(l, MARGIN_L + 3, ty);
