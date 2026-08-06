@@ -21,7 +21,11 @@ async function run(p: any, label: string) {
     fullMap: st.fullMap ?? st.facets ?? [],
     scoresByItem: new Map<number, number[]>(),
     itemText,
-    sections: p.sections ?? {},
+    sections: Object.fromEntries(
+      Object.entries((p.sections ?? {}) as Record<string, unknown>).map(([k, v]) => [
+        k, typeof v === "string" ? JSON.parse(v) : v,
+      ]),
+    ),
   };
 
   const draws: Draw[] = [];
