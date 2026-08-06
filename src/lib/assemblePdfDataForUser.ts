@@ -489,7 +489,7 @@ export async function assemblePtpPdfData(params: {
     if (assessmentResponses.length > 0) {
       assessmentResponses = assessmentResponses.map((r) => ({
         ...r,
-        interpretation: interpretationMap.get(r.facetName) ?? null,
+        interpretation: lookupInterpretation(r.itemNumber, r.facetName),
       }));
     }
 
