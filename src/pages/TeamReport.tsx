@@ -601,7 +601,7 @@ function tierFromDriver(score: number | null | undefined): number {
 
 /* ---------- driver card ---------- */
 function DriverCard({
-  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, onOpenDist,
+  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, driverScore, onOpenDist,
 }: {
   idx: number;
   /** anchors the card so facet chips can jump to a promoted driver */
@@ -615,11 +615,13 @@ function DriverCard({
   actions: string[];
   question: string;
   scores: number[];
+  /** raw 0..1 driver strength; drives the pip meter, matching the paired report */
+  driverScore?: number | null;
   onOpenDist: (scores: number[], color: string, title: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const accent = kind === "strength" ? GREEN : GC[shape];
-  const tier = 4;
+  const tier = tierFromDriver(driverScore);
   const distColor = kind === "strength" ? GREEN : accent;
   return (
     <div
@@ -936,6 +938,7 @@ export default function TeamReport() {
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
       scores: scoresByItem.get(f.itemNumber) ?? [],
+      driverScore: f.driverScore,
     };
   });
   const focusDrivers = focusFacets.map((f, idx) => {
@@ -956,6 +959,7 @@ export default function TeamReport() {
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
       scores: scoresByItem.get(f.itemNumber) ?? [],
+      driverScore: f.driverScore,
     };
   });
 
