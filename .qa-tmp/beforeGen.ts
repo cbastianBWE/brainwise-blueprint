@@ -33,13 +33,13 @@ import {
   type FacetStyler,
   type PdfBlock,
   type PdfContext,
-} from "./generatePdfPrimitivesShared";
+} from "../src/lib/generatePdfPrimitivesShared";
 import {
   facetDisplayLabel,
   bulletToText,
   type Bullet,
-} from "./pairedSectionTypes";
-import type { TeamPdfData, TeamFacetForPdf } from "./assembleTeamPdfData";
+} from "../src/lib/pairedSectionTypes";
+import type { TeamPdfData, TeamFacetForPdf } from "../src/lib/assembleTeamPdfData";
 
 export interface TeamPdfSections {
   teamInThree: boolean;
