@@ -103,7 +103,7 @@ export function ArchiveReportDialog({
     setTouched(true);
     if (tooShort) return;
     setBusy(true);
-    const { error } = await rpc("bw_archive_report", {
+    const { error } = await supabase.rpc("bw_archive_report", {
       p_kind: kind,
       p_id: reportId,
       p_reason: reason.trim(),
