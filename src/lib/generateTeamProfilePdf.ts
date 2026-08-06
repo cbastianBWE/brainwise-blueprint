@@ -825,12 +825,7 @@ export async function generateTeamProfilePdf(
   if (sections.coach && s.coach) {
     ctx.sectionHeading("For the practitioner, org admin & super admin", undefined, "Behind the scenes");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      ctx.checkPageBreak(6);
-      doc.text("Why these matter", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Why these matter", 16);
       for (const w of s.coach.why) {
         const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
         ctx.ensureBlockSpace(16);
@@ -840,6 +835,9 @@ export async function generateTeamProfilePdf(
         const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
         for (const l of ql) {
           ctx.checkPageBreak(5);
+          doc.setFont("Montserrat", "semibold");
+          doc.setFontSize(8.5);
+          doc.setTextColor(...MUTED);
           doc.text(l, MARGIN_L, ctx.y);
           ctx.y += 4;
         }
@@ -849,14 +847,12 @@ export async function generateTeamProfilePdf(
       }
     }
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
-      ctx.checkPageBreak(6);
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text("Debrief prompts", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Debrief prompts", 10);
       s.coach.debrief_prompts.forEach((p, i) => {
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9);
         const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(p)}`, CONTENT_W - 4);
+
         for (const l of lines) {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
