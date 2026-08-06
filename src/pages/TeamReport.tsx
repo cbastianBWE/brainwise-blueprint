@@ -1013,6 +1013,7 @@ export default function TeamReport() {
                   <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
                   <Paras text={it.detail} blockKey={`team_in_three:${i}:detail`} />
                   <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}>{it.action}</div>
+                  <TeamChipRow facets={it.facets ?? []} lookupFacet={lookupFacetByName} />
                 </div>
               </div>
             ))}
