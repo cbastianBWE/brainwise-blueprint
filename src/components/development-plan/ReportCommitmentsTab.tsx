@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, Trash2, Target } from "lucide-react";
+import { Loader2, Users, Trash2, Target, AlertTriangle } from "lucide-react";
 
 interface ReportRow {
   report_id: string;
