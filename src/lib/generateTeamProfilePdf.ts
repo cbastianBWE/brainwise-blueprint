@@ -536,30 +536,32 @@ export async function generateTeamProfilePdf(
     if (s.driving_facets.opening) paragraphs(ctx, s.driving_facets.opening);
     ctx.y += 2;
     // pair the narrative to the facet by item number, never by array index:
-    // any reordering would otherwise attach the wrong rationale to a facet
+    // any reordering would otherwise attach the wrong rationale to a facet.
+    // A facet with no matching rationale is still drawn (and warned about), so
+    // it can never vanish from the PDF while the screen still shows it.
     const strengthSrc = new Map(
       (s.driving_facets.strengths ?? []).map((d) => [d.item, d]),
     );
     data.strengths.forEach((f) => {
       const src = strengthSrc.get(f.itemNumber);
-      if (!src) return;
-      const acts = src.actions ?? (src.action ? [src.action] : []);
+      if (!src) console.warn(`[team pdf] no driving_facets.strengths entry for item ${f.itemNumber}`);
+      const acts = src?.actions ?? (src?.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "strength",
         name: facetDisplayLabel(f.facetName, "work"),
-        why: src.why ?? "",
+        why: src?.why ?? "",
         actions: acts.slice(0, 3),
       });
     });
     const focusSrc = new Map((s.driving_facets.focus ?? []).map((d) => [d.item, d]));
     data.focusAreas.forEach((f) => {
       const src = focusSrc.get(f.itemNumber);
-      if (!src) return;
-      const acts = src.actions ?? (src.action ? [src.action] : []);
+      if (!src) console.warn(`[team pdf] no driving_facets.focus entry for item ${f.itemNumber}`);
+      const acts = src?.actions ?? (src?.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "focus",
         name: facetDisplayLabel(f.facetName, "work"),
-        why: src.why ?? "",
+        why: src?.why ?? "",
         actions: acts.slice(0, 3),
       });
     });
