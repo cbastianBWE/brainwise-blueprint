@@ -75,22 +75,38 @@ const TEAM_SHAPE_DESC: Record<TeamShapeKey, string> = {
   together: "real common ground",
 };
 
+/* Colors mirror src/pages/TeamReport.tsx's `GC` map exactly, so a facet is
+   drawn in the same hue on screen and in the PDF. */
 const TEAM_SHAPE_COLOR: Record<TeamShapeKey, readonly [number, number, number]> = {
-  allHigh: GREEN,
+  allHigh: ORANGE,
   allLow: NAVY,
   two: MUSTARD,
-  even: PURPLE,
-  together: TEAL,
+  even: TEAL,
+  together: GREEN,
 };
 
+/* Exact-match on the shape vocabulary the database actually stores, mirroring
+   shapeKey() in src/pages/TeamReport.tsx. The previous substring chain never
+   matched "Everyone high"/"Everyone low", so those facets silently fell through
+   to `together` and the allHigh/allLow buckets were unreachable. */
 function shapeKey(shape: string | null | undefined): TeamShapeKey {
-  const s = (shape ?? "").toLowerCase();
-  if (s.includes("all high")) return "allHigh";
-  if (s.includes("all low")) return "allLow";
-  if (s.includes("two")) return "two";
-  if (s.includes("even")) return "even";
-  return "together";
+  switch ((shape ?? "").trim()) {
+    case "Everyone high":
+      return "allHigh";
+    case "Everyone low":
+      return "allLow";
+    case "Two groups":
+      return "two";
+    case "Together (mid)":
+      return "together";
+    case "Even spread":
+    case "Mild":
+      return "even";
+    default:
+      return "even"; // defined fallback for an unrecognized shape
+  }
 }
+
 
 /* ---------- v14 bullet normalization ----------
    Sections may hold plain strings (pre-v14 profiles) or { point, body, facets }
