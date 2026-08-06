@@ -434,9 +434,16 @@ export async function generateTeamOnePagerPdf(
       /* The disclaimer only breaks to its own page when nothing follows it. If
        * the preview page is coming anyway, that page carries the disclaimer —
        * otherwise dense sheets produce an orphan page holding just fine print. */
-      const disclaimerFitsHere =
-        str(d.disclaimer) &&
-        y + (Math.ceil(str(d.disclaimer).length / 150) + 1) * 3.1 * Math.max(k, 0.9) + 5 <= DISCLAIMER_BOTTOM;
+      const disclaimerFitsHere = (() => {
+        const t = str(d.disclaimer);
+        if (!t) return false;
+        const dsize = 7.5 * Math.max(k, 0.9);
+        const dlh = 3.1 * Math.max(k, 0.9);
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(dsize);
+        const l = doc.splitTextToSize(t, CONTENT_W) as string[];
+        return y + l.length * dlh + 5 <= DISCLAIMER_BOTTOM;
+      })();
       if (str(d.disclaimer) && (preview.length === 0 || disclaimerFitsHere)) {
         disclaimerBlock(str(d.disclaimer));
       }
