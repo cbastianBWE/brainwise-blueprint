@@ -1237,7 +1237,7 @@ export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) 
     responsesExpanded,
     setResponsesExpanded,
     assessmentResponses,
-    allFacetInsights,
+    getFacetInsight,
     loadingAllFacetInsights,
     allFacetsExpanded,
     setAllFacetsExpanded,
