@@ -1007,7 +1007,7 @@ function FacetList({
   prefix: string;
   data: ReturnType<typeof usePTPNarrativeData>;
 }) {
-  const { expandedFacets, setExpandedFacets, allFacetInsights, loadingAllFacetInsights } = data;
+  const { expandedFacets, setExpandedFacets, getFacetInsight, loadingAllFacetInsights } = data;
 
   const toggleFacet = (key: string) => {
     setExpandedFacets((prev) => {
@@ -1018,8 +1018,6 @@ function FacetList({
     });
   };
 
-  const getFacetInterpretation = (facetName: string) =>
-    allFacetInsights.find((f) => f.name === facetName);
 
   return (
     <div className="space-y-2">
