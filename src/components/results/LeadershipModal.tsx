@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,8 @@ export interface LeadershipItem {
   headline: string;
   detail: string;
   action?: string;
+  /** facet names the item leans on; rendered as chips when a renderer is given */
+  facets?: string[];
 }
 
 interface Props {
@@ -22,6 +25,8 @@ interface Props {
   items: LeadershipItem[];
   /** Optional name substitution (paired reports pass nm). */
   transform?: (s: string) => string;
+  /** Optional facet-chip renderer; the team report passes its TeamChipRow. */
+  renderFacets?: (facets: string[]) => ReactNode;
 }
 
 /**
@@ -30,7 +35,7 @@ interface Props {
  * data is enforced server-side (restrictive RLS via bw_can_see_leadership_content),
  * so this component simply renders whatever items it is given.
  */
-export default function LeadershipModal({ open, onOpenChange, items, transform }: Props) {
+export default function LeadershipModal({ open, onOpenChange, items, transform, renderFacets }: Props) {
   const t = (s: string) => (transform ? transform(s ?? "") : s ?? "");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -56,6 +61,7 @@ export default function LeadershipModal({ open, onOpenChange, items, transform }
                   {t(it.action)}
                 </div>
               )}
+              {renderFacets && (it.facets ?? []).length > 0 && renderFacets(it.facets ?? [])}
             </div>
           ))}
           <div style={{ fontSize: 12, color: MUTED, marginTop: 8 }}>

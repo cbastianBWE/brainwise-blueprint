@@ -122,6 +122,38 @@ export interface FacetEntry {
   b?: number | null;
 }
 
+/* ---------- shared anchor resolution ----------
+   Facets promoted into strengths / focusAreas are not in the full map, so the
+   chip has to try the driver anchor as well. Distinct prefixes so the two can
+   never collide. */
+export function findFacetAnchor(itemNumber?: number | null): HTMLElement | null {
+  if (itemNumber == null) return null;
+  return (
+    document.getElementById(`facet-${itemNumber}`) ??
+    document.getElementById(`driver-${itemNumber}`)
+  );
+}
+
+export function jumpToFacet(itemNumber?: number | null): boolean {
+  const el = findFacetAnchor(itemNumber);
+  if (!el) return false; // nothing rendered for this facet — silent no-op
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.remove("pr-pulse");
+  void el.offsetWidth;
+  el.classList.add("pr-pulse");
+  window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+  return true;
+}
+
+/** True only once an anchor for this facet actually exists in the DOM. */
+export function useFacetAnchorExists(itemNumber?: number | null): boolean {
+  const [exists, setExists] = useState(false);
+  useEffect(() => {
+    setExists(!!findFacetAnchor(itemNumber));
+  }, [itemNumber]);
+  return exists;
+}
+
 /* ---------- facet chip ---------- */
 export function FacetChip({
   name, entry, firstA, firstB, delay, size = "md", mode,
@@ -144,21 +176,16 @@ export function FacetChip({
     ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
     : null;
 
+  const canJump = useFacetAnchorExists(entry?.itemNumber);
+
   const jump = () => {
-    if (!entry) return;
-    const el = document.getElementById(`facet-${entry.itemNumber}`);
-    if (!el) return; // row filtered out of the visible map — silent no-op
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.classList.remove("pr-pulse");
-    void el.offsetWidth;
-    el.classList.add("pr-pulse");
-    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+    jumpToFacet(entry?.itemNumber);
   };
 
   return (
     <span
       className="pr-chip"
-      onClick={jump}
+      onClick={canJump ? jump : undefined}
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
       style={{
@@ -172,7 +199,7 @@ export function FacetChip({
         background: bg,
         border: `1px solid ${border}`,
         color: text,
-        cursor: entry ? "pointer" : "default",
+        cursor: canJump ? "pointer" : "default",
         whiteSpace: "nowrap",
       } as React.CSSProperties}
     >

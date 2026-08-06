@@ -15147,30 +15147,6 @@ export type Database = {
           },
         ]
       }
-      tmp_team_sections_before: {
-        Row: {
-          content: string | null
-          narrative_status: string | null
-          section_type: string | null
-          snapshot_at: string | null
-          team_profile_id: string | null
-        }
-        Insert: {
-          content?: string | null
-          narrative_status?: string | null
-          section_type?: string | null
-          snapshot_at?: string | null
-          team_profile_id?: string | null
-        }
-        Update: {
-          content?: string | null
-          narrative_status?: string | null
-          section_type?: string | null
-          snapshot_at?: string | null
-          team_profile_id?: string | null
-        }
-        Relationships: []
-      }
       trigger_logic: {
         Row: {
           created_at: string
@@ -17431,6 +17407,10 @@ export type Database = {
       bw_coach_winback_unsubscribe: {
         Args: { p_token: string }
         Returns: boolean
+      }
+      bw_fire_team_narrative: {
+        Args: { p_profile: string; p_section: string }
+        Returns: number
       }
       bw_get_active_price: {
         Args: { p_billing_period?: string; p_tier: string }

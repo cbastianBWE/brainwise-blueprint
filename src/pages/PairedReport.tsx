@@ -297,6 +297,8 @@ function tierFromDriver(score: number | null | undefined): number {
 
 /* ---------- driver card ---------- */
 interface DriverCardProps {
+  /** anchors the card so facet chips can jump to a promoted driver */
+  itemNumber?: number;
   kind: "strength" | "watch";
   rank?: number;
   shape: PairShapeKey;
@@ -311,12 +313,13 @@ interface DriverCardProps {
   onOpenDist: (a: number, b: number, title: string) => void;
 }
 function DriverCard({
-  kind, rank, shape, label, name, why, actions, question, a, b, tier, onOpenDist,
+  itemNumber, kind, rank, shape, label, name, why, actions, question, a, b, tier, onOpenDist,
 }: DriverCardProps) {
   const [open, setOpen] = useState(false);
   const accent = kind === "strength" ? GREEN : PSC[shape];
   return (
     <div
+      id={itemNumber != null ? `driver-${itemNumber}` : undefined}
       onMouseEnter={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
       onMouseLeave={hideTip}
       style={{
@@ -958,6 +961,7 @@ export default function PairedReport() {
     const src = driving?.strengths?.[i];
     const actions = src?.actions ?? (src?.action ? [src.action] : []);
     return {
+      itemNumber: f.itemNumber,
       kind: "strength" as const,
       shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),
       label: i === 0 ? "Start here · your strength" : "Strength",
@@ -979,6 +983,7 @@ export default function PairedReport() {
     else if (sev >= 0.4) label = "Watch";
     else label = "Quiet but real";
     return {
+      itemNumber: f.itemNumber,
       kind: "watch" as const,
       rank: idx + 1,
       shape: pairShapeKey(f.shape, f.stats?.a, f.stats?.b),

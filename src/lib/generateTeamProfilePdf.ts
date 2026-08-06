@@ -84,13 +84,13 @@ function shapeKey(shape: string | null | undefined): TeamShapeKey {
   return "together";
 }
 
-/* ---------- v15 bullet normalisation ----------
-   Sections may hold plain strings (pre-v15 profiles) or { point, body, facets }
-   objects (v15+). Everything funnels through asLines / asBlocks so no object
+/* ---------- v14 bullet normalisation ----------
+   Sections may hold plain strings (pre-v14 profiles) or { point, body, facets }
+   objects (v14+, generator currently at v16). Everything funnels through asLines / asBlocks so no object
    ever reaches cleanMarkdown. Ported from generatePairedProfilePdf.ts. */
 
 export interface PdfBlock {
-  /** bold lead sentence (v15+ object bullets only) */
+  /** bold lead sentence (v14+ object bullets only) */
   point?: string;
   text: string;
   facets?: string[];
@@ -747,7 +747,11 @@ export async function generateTeamProfilePdf(
         const b = blocks[0];
         if (!b) return;
         if (b.point || (b.facets ?? []).length > 0) {
-          bulletCards(ctx, [{ ...b, point: b.point ? `${i + 1}. ${b.point}` : undefined }], {
+          // the ordinal rides the point when there is one, otherwise the text,
+          // so a bullet with facets but no point keeps its number
+          bulletCards(ctx, [b.point
+            ? { ...b, point: `${i + 1}. ${b.point}` }
+            : { ...b, text: `${i + 1}. ${b.text}` }], {
             indent: 3,
             width: CONTENT_W - 3,
             accent: TEAL,
