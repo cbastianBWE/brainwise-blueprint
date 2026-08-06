@@ -1025,7 +1025,7 @@ function FacetList({
         const facetName = facet.facet_name;
         const key = `${prefix}-${idx}`;
         const isExpanded = expandedFacets.has(key);
-        const interpretation = getFacetInterpretation(facetName);
+        const interpretation = getFacetInsight(facet.item_number, facetName);
         const color = PTP_DIMENSION_COLORS[facet.dimension_id] ?? "#021F36";
         const score = Math.round(facet.value);
         const anchorResp = data.assessmentResponses.find(r => r.itemNumber === facet.item_number);
