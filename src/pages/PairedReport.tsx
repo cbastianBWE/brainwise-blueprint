@@ -313,20 +313,21 @@ interface DriverCardProps {
   why: string;
   actions: string[];
   question: string;
+  anchors?: { low: string; high: string } | null;
   a?: number;
   b?: number;
   tier: number;
   onOpenDist: (a: number, b: number, title: string) => void;
 }
 function DriverCard({
-  itemNumber, kind, rank, shape, label, name, why, actions, question, a, b, tier, onOpenDist,
+  itemNumber, kind, rank, shape, label, name, why, actions, question, anchors, a, b, tier, onOpenDist,
 }: DriverCardProps) {
   const [open, setOpen] = useState(false);
   const accent = kind === "strength" ? GREEN : kind === "protective" ? PURPLE : PSC[shape];
   return (
     <div
       id={itemNumber != null ? `driver-${itemNumber}` : undefined}
-      onMouseEnter={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
+      onMouseEnter={question ? (e) => showTip(e, questionTipText(question, anchors)) : undefined}
       onMouseLeave={hideTip}
       style={{
         background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
@@ -999,6 +1000,7 @@ export default function PairedReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       a: f.stats?.a,
       b: f.stats?.b,
       tier: tierFromDriver(f.driverScore),
@@ -1022,6 +1024,7 @@ export default function PairedReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       a: f.stats?.a,
       b: f.stats?.b,
       tier: tierFromDriver(f.driverScore),
@@ -1047,6 +1050,7 @@ export default function PairedReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       a: f.stats?.a,
       b: f.stats?.b,
       tier: tierFromDriver(f.driverScore),
@@ -1513,7 +1517,7 @@ export default function PairedReport() {
                         <div
                           key={f.itemNumber}
                           id={`facet-${f.itemNumber}`}
-                          onMouseEnter={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
+                          onMouseEnter={q ? (e) => showTip(e, questionTipText(q, anchorsByItem.get(f.itemNumber))) : undefined}
                           onMouseLeave={hideTip}
                           className="pr-card"
                           style={{

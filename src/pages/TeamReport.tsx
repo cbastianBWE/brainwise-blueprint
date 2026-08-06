@@ -671,7 +671,7 @@ function tierFromDriver(score: number | null | undefined): number {
 
 /* ---------- driver card ---------- */
 function DriverCard({
-  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, driverScore, blockKey, onOpenDist,
+  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, anchors, scores, driverScore, blockKey, onOpenDist,
 }: {
   idx: number;
   /** anchors the card so facet chips can jump to a promoted driver */
@@ -684,6 +684,7 @@ function DriverCard({
   why: string;
   actions: string[];
   question: string;
+  anchors?: { low: string; high: string } | null;
   scores: number[];
   /** raw 0..1 driver strength; drives the pip meter, matching the paired report */
   driverScore?: number | null;
@@ -699,7 +700,7 @@ function DriverCard({
     <div
       id={itemNumber != null ? `driver-${itemNumber}` : undefined}
       className="pr-card"
-      onMouseMove={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
+      onMouseMove={question ? (e) => showTip(e, questionTipText(question, anchors)) : undefined}
       onMouseLeave={hideTip}
       style={{
         background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
@@ -1094,6 +1095,7 @@ export default function TeamReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
       blockKey: `driving:strength:${i}:why`,
@@ -1117,6 +1119,7 @@ export default function TeamReport() {
       why: src?.why ?? "",
       actions,
       question: questionByItem.get(f.itemNumber) ?? "",
+      anchors: anchorsByItem.get(f.itemNumber) ?? null,
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
       blockKey: `driving:focus:${idx}:why`,
@@ -1454,7 +1457,7 @@ export default function TeamReport() {
                         <div
                           key={f.itemNumber}
                           id={`facet-${f.itemNumber}`}
-                          onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
+                          onMouseMove={q ? (e) => showTip(e, questionTipText(q, anchorsByItem.get(f.itemNumber))) : undefined}
                           onMouseLeave={hideTip}
                           style={{
                             background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
