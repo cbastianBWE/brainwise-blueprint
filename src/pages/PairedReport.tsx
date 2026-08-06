@@ -733,13 +733,16 @@ export default function PairedReport() {
 
   /* question text */
   const [questionByItem, setQuestionByItem] = useState<Map<number, string>>(new Map());
+  const [anchorsByItem, setAnchorsByItem] = useState<Map<number, { low: string; high: string }>>(new Map());
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("items_presentation").select("item_number,item_text").eq("instrument_id", "INST-001");
+      const { data } = await supabase.from("items_presentation").select("item_number,item_text,anchor_low,anchor_high").eq("instrument_id", "INST-001");
       if (cancelled) return;
-      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string }>;
-      setQuestionByItem(new Map(rows.filter((r) => r.item_number != null).map((r) => [r.item_number as number, r.item_text])));
+      const rows = (data ?? []) as Array<{ item_number: number | null; item_text: string; anchor_low: string | null; anchor_high: string | null }>;
+      const withNum = rows.filter((r) => r.item_number != null);
+      setQuestionByItem(new Map(withNum.map((r) => [r.item_number as number, r.item_text])));
+      setAnchorsByItem(new Map(withNum.map((r) => [r.item_number as number, { low: r.anchor_low ?? "", high: r.anchor_high ?? "" }])));
     })();
     return () => { cancelled = true; };
   }, []);
