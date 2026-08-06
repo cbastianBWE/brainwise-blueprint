@@ -48,8 +48,9 @@ async function run(p: any, label: string) {
   API.save = function () { captured = this; return this; };
 
   await generateTeamProfilePdf(data as any, {
-    team_in_three: true, driving_facets: true, communication: true,
-    conflict: true, leadership: true, leader_brief: true, coach: true, full_map: true,
+    teamInThree: true, domains: true, shapeLegend: true, driving: true,
+    drivingFacetCharts: true, communication: true, conflict: true, leadership: true,
+    leaderBrief: true, fullMap: true, fullMapCharts: true, coach: true,
   } as any);
 
   API.text = origText;
