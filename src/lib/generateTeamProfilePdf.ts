@@ -640,21 +640,12 @@ export async function generateTeamProfilePdf(
     const pro = asBlocks(s.conflict.promote_healthy);
     if (hasCards(mit) || hasCards(pro)) {
       // cards are too tall for the two-column grid; stack them full width
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      ctx.checkPageBreak(6);
-      doc.text("Mitigate", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Mitigate", firstCardH(ctx, mit, fs, TEAL));
       bulletCards(ctx, mit, fs, { accent: TEAL });
       ctx.y += 2;
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      ctx.checkPageBreak(6);
-      doc.text("Promote healthy", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Promote healthy", firstCardH(ctx, pro, fs, MUSTARD));
       bulletCards(ctx, pro, fs, { accent: MUSTARD });
+
     } else {
       twoColumn(
         ctx,
