@@ -102,6 +102,21 @@ export default function ReportCommitmentsTab({ kind }: { kind: "team" | "paired"
     );
   }
 
+  if (loadError) {
+    return (
+      <Card>
+        <CardContent className="py-12 flex flex-col items-center text-center gap-3">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+          <h3 className="text-lg font-semibold">Couldn't load your commitments</h3>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Something went wrong fetching this tab. Please try again.
+          </p>
+          <Button variant="outline" onClick={() => load()}>Retry</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const hasCommitments = reports.some(
     (r) => (shared[r.report_id]?.length ?? 0) > 0 || (mine[r.report_id]?.length ?? 0) > 0,
   );
