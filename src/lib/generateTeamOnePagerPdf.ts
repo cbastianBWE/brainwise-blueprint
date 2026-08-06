@@ -518,22 +518,28 @@ export async function generateTeamOnePagerPdf(
     return pagesUsed;
   };
 
-  /* measure down the ladder, then draw once at the first step that fits */
-  const sheetPages = args.scope === "team" && (args.data.report_preview?.length ?? 0) > 0 ? 2 : 1;
+  /* The team sheet must print as one page in a room, so it walks the ladder.
+   * The leader sheet is read on its own and carries far more content than a
+   * single page holds at readable type: it renders at full size and paginates. */
   let step = 0;
   let pages = layout(LADDER[0]);
-  while (pages > sheetPages && step < LADDER.length - 1) {
-    step += 1;
-    pages = layout(LADDER[step]);
-  }
-  if (pages > sheetPages) {
-    console.info(
-      `[team one-pager] ${args.scope}: still ${pages} pages at the smallest step; rendered with real pagination.`,
-    );
-  } else if (step > 0) {
-    console.info(
-      `[team one-pager] ${args.scope}: shrank ${step} step(s) to ${(LADDER[step] * 100).toFixed(1)}% type.`,
-    );
+  if (args.scope === "team") {
+    const sheetPages = (args.data.report_preview?.length ?? 0) > 0 ? 2 : 1;
+    while (pages > sheetPages && step < LADDER.length - 1) {
+      step += 1;
+      pages = layout(LADDER[step]);
+    }
+    if (pages > sheetPages) {
+      console.info(
+        `[team one-pager] team: still ${pages} pages at the smallest step; rendered with real pagination.`,
+      );
+    } else if (step > 0) {
+      console.info(
+        `[team one-pager] team: shrank ${step} step(s) to ${(LADDER[step] * 100).toFixed(1)}% type.`,
+      );
+    }
+  } else {
+    console.info(`[team one-pager] leader: full-size type, ${pages} page(s).`);
   }
 
   draw = true;
