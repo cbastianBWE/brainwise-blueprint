@@ -1,31 +1,40 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Bullet } from "./pairedSectionTypes";
 
 export interface TeamFacetForPdf {
   itemNumber: number;
   facetName: string;
   shape: string;
+  domain?: string | null;
   driverScore?: number | null;
   stats?: { n: number; mean: number; min: number; max: number; range: number } | null;
 }
 
 export interface TeamPdfSectionData {
-  team_in_three?: Array<{ headline: string; detail: string; action?: string }>;
+  team_in_three?: Array<{ headline: string; detail: string; action?: string; facets?: string[] }>;
   driving_facets?: {
     opening?: string;
     strengths?: Array<{ item: number; why: string; actions?: string[]; action?: string }>;
     focus?: Array<{ item: number; why: string; actions?: string[]; action?: string }>;
   };
+  /* v15 of generate-team-narrative emits structured bullets; older profiles
+     still hold plain strings and must keep rendering. */
   communication?: {
-    general: string | string[];
-    under_pressure: string | string[];
-    avoid_conflict: string[];
+    general: string | Bullet[];
+    under_pressure: string | Bullet[];
+    avoid_conflict: Bullet[];
   };
-  conflict?: { summary: string; mitigate: string | string[]; promote_healthy: string | string[] };
+  conflict?: {
+    /** always a plain string — renders as a paragraph, never as a bullet */
+    summary: string;
+    mitigate: string | Bullet[];
+    promote_healthy: string | Bullet[];
+  };
   leader_brief?: {
     rows: Array<{ item: number; risk_to_work: string; the_move: string; potential_owner: string }>;
     lean_on: string;
   };
-  leadership?: Array<{ headline: string; detail: string; action?: string }>;
+  leadership?: Array<{ headline: string; detail: string; action?: string; facets?: string[] }>;
   coach?: { why: Array<{ item: number; rationale: string }>; debrief_prompts: string[] };
 }
 

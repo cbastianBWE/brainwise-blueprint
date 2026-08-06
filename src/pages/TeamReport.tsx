@@ -14,7 +14,19 @@ import LeadershipModal, { type LeadershipItem } from "@/components/results/Leade
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
-import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
+import {
+  facetDisplayLabel,
+  isBulletObject,
+  bulletToText,
+  bulletFacets,
+  normFacetName,
+  type Bullet,
+} from "@/lib/pairedSectionTypes";
+import {
+  DIM_COLOR,
+  hexAlpha,
+  MUSTARD as CHIP_MUSTARD,
+} from "@/components/results/pairedFacetChip";
 
 
 /* ---------- palette ---------- */
@@ -69,8 +81,11 @@ function shapeKey(shape: string | null | undefined): ShapeKey {
   }
 }
 
-/* ---------- section types ---------- */
-interface TeamInThreeItem { headline: string; detail: string; action: string; }
+/* ---------- section types ----------
+   v15 of generate-team-narrative emits structured bullets
+   ({ point, body, facets }) where earlier versions emitted plain strings.
+   Older profiles are never regenerated, so every renderer accepts both. */
+interface TeamInThreeItem { headline: string; detail: string; action: string; facets?: string[]; }
 interface DrivingItem {
   item: number;
   why: string;
@@ -83,11 +98,11 @@ interface DrivingFacetsSection {
   focus: DrivingItem[];
 }
 interface CommunicationSection {
-  general: string | string[];
-  under_pressure: string | string[];
-  avoid_conflict: string[];
+  general: string | Bullet[];
+  under_pressure: string | Bullet[];
+  avoid_conflict: Bullet[];
 }
-interface ConflictSection { summary: string; mitigate: string | string[]; promote_healthy: string | string[]; }
+interface ConflictSection { summary: string; mitigate: string | Bullet[]; promote_healthy: string | Bullet[]; }
 interface LeaderBriefRow { item: number; risk_to_work: string; the_move: string; potential_owner: string; }
 interface LeaderBriefSection { rows: LeaderBriefRow[]; lean_on: string; }
 interface CoachSection {
@@ -128,21 +143,169 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
     </>
   );
 }
-function IdeaBullets({ items, style, blockKey }: { items: string | string[]; style?: React.CSSProperties; blockKey?: string }) {
+function IdeaBullets({
+  items, style, blockKey, lookupFacet,
+}: {
+  items: string | Bullet[];
+  style?: React.CSSProperties;
+  blockKey?: string;
+  lookupFacet?: (name: string) => TeamFacetEntry | undefined;
+}) {
   if (Array.isArray(items)) {
     const list = items.filter(Boolean);
     if (!list.length) return null;
+    // Pre-v15 profiles: every element is a plain string, render exactly as before.
+    if (!list.some(isBulletObject)) {
+      return (
+        <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
+          {list.map((b, i) => {
+            const s = bulletToText(b);
+            if (!s) return null;
+            return (
+              <li key={i} style={{ margin: "4px 0" }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
     return (
-      <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
-        {list.map((s, i) => (
-          <li key={i} style={{ margin: "4px 0" }}>
-            {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
-          </li>
-        ))}
-      </ul>
+      <div style={{ display: "grid", gap: 10, ...style }}>
+        {list.map((b, i) => {
+          if (!isBulletObject(b)) {
+            const s = bulletToText(b);
+            if (!s) return null;
+            return (
+              <div key={i} style={{ color: GRAY, fontSize: 16, lineHeight: 1.6 }}>
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+              </div>
+            );
+          }
+          const point = (b.point ?? "").trim();
+          const body = (b.body ?? "").trim();
+          const facets = bulletFacets(b);
+          const accent = accentForFacets(facets, lookupFacet);
+          return (
+            <div
+              key={i}
+              style={{
+                background: CARD_BG,
+                border: `1px solid ${LINE}`,
+                borderLeft: `4px solid ${accent}`,
+                borderRadius: 12,
+                padding: "12px 13px",
+              }}
+            >
+              {point && (
+                <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>{point}</div>
+              )}
+              {body && (
+                <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={body} /> : body}
+                </div>
+              )}
+              <TeamChipRow facets={facets} lookupFacet={lookupFacet} />
+            </div>
+          );
+        })}
+      </div>
     );
   }
   return <Paras text={items} style={style} blockKey={blockKey} />;
+}
+
+/* ---------- name-keyed facet index (chips carry facet names, not item numbers) ---------- */
+export interface TeamFacetEntry {
+  itemNumber: number;
+  facetName: string;
+  domain?: string | null;
+  shape?: string | null;
+  stats?: { n: number; mean: number; min: number; max: number; range: number } | null;
+}
+
+function accentForFacets(
+  facets: string[],
+  lookupFacet?: (name: string) => TeamFacetEntry | undefined,
+): string {
+  for (const f of facets) {
+    const dom = lookupFacet?.(f)?.domain;
+    if (dom && DIM_COLOR[dom]) return DIM_COLOR[dom];
+  }
+  return TEAL;
+}
+
+function TeamFacetChip({
+  name, entry, delay,
+}: { name: string; entry?: TeamFacetEntry; delay: number }) {
+  const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
+  // amber is illegible as small text; the paired chip pairs it with mustard
+  const text = base ? (base === AMBER ? CHIP_MUSTARD : base) : GRAY;
+  const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
+  const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
+
+  const tip = entry ? teamChipTip(entry) : null;
+
+  const jump = () => {
+    if (!entry) return;
+    const el = document.getElementById(`facet-${entry.itemNumber}`);
+    if (!el) return; // row filtered out of the visible map — silent no-op
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.remove("pr-pulse");
+    void el.offsetWidth;
+    el.classList.add("pr-pulse");
+    window.setTimeout(() => el.classList.remove("pr-pulse"), 1000);
+  };
+
+  return (
+    <span
+      className="pr-chip"
+      onClick={jump}
+      onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
+      onMouseLeave={hideTip}
+      style={{
+        ["--pr-chip-delay" as string]: `${delay}ms`,
+        display: "inline-block",
+        borderRadius: 999,
+        fontWeight: 600,
+        fontSize: 10.5,
+        padding: "3px 9px",
+        background: bg,
+        border: `1px solid ${border}`,
+        color: text,
+        cursor: entry ? "pointer" : "default",
+        whiteSpace: "nowrap",
+      } as React.CSSProperties}
+    >
+      {facetDisplayLabel(name, "work")}
+    </span>
+  );
+}
+
+/** Team-shaped tooltip: the shape, the spread, and the camps when the data has them. */
+function teamChipTip(entry: TeamFacetEntry): string {
+  const parts: string[] = [];
+  const shape = (entry.shape ?? "").trim();
+  if (shape) parts.push(shape.replace(/\.$/, "") + ".");
+  const st = entry.stats;
+  if (st && typeof st.n === "number") {
+    parts.push(`${st.n} members, ${agreementDesc(st.range ?? (st.max - st.min))}`);
+    parts.push(`team average ${Math.round(st.mean)}, from ${Math.round(st.min)} to ${Math.round(st.max)}.`);
+  }
+  return parts.join(" ").trim();
+}
+
+function TeamChipRow({
+  facets, lookupFacet,
+}: { facets: string[]; lookupFacet?: (name: string) => TeamFacetEntry | undefined }) {
+  if (!facets || facets.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
+      {facets.map((f, i) => (
+        <TeamFacetChip key={`${f}-${i}`} name={f} entry={lookupFacet?.(f)} delay={i * 25} />
+      ))}
+    </div>
+  );
 }
 
 
@@ -640,6 +803,38 @@ export default function TeamReport() {
   const leadership = sections["leadership"] as LeadershipItem[] | undefined;
   const hasLeadership = Array.isArray(leadership) && leadership.length > 0;
 
+  /* Name-keyed facet index. Bullet `facets` arrays carry facet NAMES, and every
+     other lookup in this report keys on itemNumber, so chips need their own map.
+     Keyed on the normalised name; the raw name is kept on the entry. */
+  const facetByName = useMemo(() => {
+    const m = new Map<string, TeamFacetEntry>();
+    const st = profile?.structured;
+    const all: TeamFacetResult[] = [
+      ...(st?.strengths ?? []),
+      ...(st?.focusAreas ?? []),
+      ...(st?.fullMap ?? []),
+      ...(st?.facets ?? []),
+    ];
+    for (const f of all) {
+      if (!f?.facetName) continue;
+      const key = normFacetName(f.facetName);
+      if (m.has(key)) continue;
+      m.set(key, {
+        itemNumber: f.itemNumber,
+        facetName: f.facetName,
+        domain: f.domain ?? null,
+        shape: f.shape ?? null,
+        stats: f.stats ?? null,
+      });
+    }
+    return m;
+  }, [profile]);
+
+  const lookupFacetByName = useCallback(
+    (name: string) => facetByName.get(normFacetName(name)),
+    [facetByName],
+  );
+
   const facetLookup = (item: number): TeamFacetResult | undefined =>
     profile?.structured?.facets?.find((f) => f.itemNumber === item) ??
     profile?.structured?.strengths?.find((f) => f.itemNumber === item) ??
@@ -818,6 +1013,7 @@ export default function TeamReport() {
                   <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
                   <Paras text={it.detail} blockKey={`team_in_three:${i}:detail`} />
                   <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}>{it.action}</div>
+                  <TeamChipRow facets={it.facets ?? []} lookupFacet={lookupFacetByName} />
                 </div>
               </div>
             ))}
@@ -940,18 +1136,34 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>In general</div>
-                <IdeaBullets items={communication.general} blockKey="communication:general" />
+                <IdeaBullets items={communication.general} blockKey="communication:general" lookupFacet={lookupFacetByName} />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Under pressure</div>
-                <IdeaBullets items={communication.under_pressure} blockKey="communication:under_pressure" />
+                <IdeaBullets items={communication.under_pressure} blockKey="communication:under_pressure" lookupFacet={lookupFacetByName} />
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
                 <ol style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "decimal" }}>
-                  {communication.avoid_conflict.map((t, i) => <li key={i} style={{ marginBottom: 6 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={t} /></li>)}
+                  {communication.avoid_conflict.map((t, i) => {
+                    const obj = isBulletObject(t);
+                    const point = obj ? (t.point ?? "").trim() : bulletToText(t);
+                    const body = obj ? (t.body ?? "").trim() : "";
+                    const facets = bulletFacets(t);
+                    return (
+                      <li key={i} style={{ marginBottom: 8 }}>
+                        {obj && point
+                          ? <div style={{ fontWeight: 800, color: NAVY, lineHeight: 1.4 }}>{point}</div>
+                          : null}
+                        {obj
+                          ? (body ? <div style={{ marginTop: 3 }}><HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={body} /></div> : null)
+                          : <HighlightableText blockKey={`communication:avoid_conflict:${i}`} text={point} />}
+                        <TeamChipRow facets={facets} lookupFacet={lookupFacetByName} />
+                      </li>
+                    );
+                  })}
                 </ol>
               </div>
             )}
@@ -968,11 +1180,11 @@ export default function TeamReport() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>Mitigate unhealthy conflict</div>
-                <IdeaBullets items={conflict.mitigate} blockKey="conflict:mitigate" />
+                <IdeaBullets items={conflict.mitigate} blockKey="conflict:mitigate" lookupFacet={lookupFacetByName} />
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
-                <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" />
+                <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" lookupFacet={lookupFacetByName} />
               </div>
             </div>
           </div>
@@ -1042,6 +1254,7 @@ export default function TeamReport() {
                       return (
                         <div
                           key={f.itemNumber}
+                          id={`facet-${f.itemNumber}`}
                           onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
                           onMouseLeave={hideTip}
                           style={{

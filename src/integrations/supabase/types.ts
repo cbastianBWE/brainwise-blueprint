@@ -15147,6 +15147,30 @@ export type Database = {
           },
         ]
       }
+      tmp_team_sections_before: {
+        Row: {
+          content: string | null
+          narrative_status: string | null
+          section_type: string | null
+          snapshot_at: string | null
+          team_profile_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          narrative_status?: string | null
+          section_type?: string | null
+          snapshot_at?: string | null
+          team_profile_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          narrative_status?: string | null
+          section_type?: string | null
+          snapshot_at?: string | null
+          team_profile_id?: string | null
+        }
+        Relationships: []
+      }
       trigger_logic: {
         Row: {
           created_at: string
