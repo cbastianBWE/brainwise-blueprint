@@ -484,14 +484,19 @@ export async function generateTeamProfilePdf(
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
     ctx.sectionHeading("Your team in three", undefined, "The shape");
     s.team_in_three.slice(0, 3).forEach((it, i) => {
-      ctx.ensureBlockSpace(20);
+      // font state first, then measure, then reserve: the headline and the first
+      // two lines of its detail move together, so a headline is never stranded.
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(11);
+      const hl = doc.splitTextToSize(cleanMarkdown(it.headline), CONTENT_W - 6) as string[];
+      ctx.ensureBlockSpace(hl.length * 5 + 10);
       doc.setFont("Poppins", "bold");
       doc.setFontSize(11);
       doc.setTextColor(...ORANGE);
       doc.text(`${i + 1}.`, MARGIN_L, ctx.y);
       doc.setTextColor(...NAVY);
-      doc.text(it.headline, MARGIN_L + 6, ctx.y);
-      ctx.y += 5;
+      doc.text(hl, MARGIN_L + 6, ctx.y);
+      ctx.y += hl.length * 5;
       ctx.bodyText(it.detail, 6);
       if (it.action) {
         doc.setFont("Montserrat", "semibold");
