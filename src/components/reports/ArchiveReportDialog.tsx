@@ -27,10 +27,6 @@ export type ReportKind = "team" | "paired";
 
 export const MIN_REASON = 10;
 
-const rpc = supabase.rpc as unknown as (
-  fn: string,
-  args: Record<string, unknown>,
-) => Promise<{ data: unknown; error: { message?: string } | null }>;
 
 export function formatArchiveDate(iso: string | null | undefined) {
   if (!iso) return "";
