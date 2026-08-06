@@ -1043,12 +1043,20 @@ export default function TeamReport() {
     );
   }
 
-  /* driver lists (strengths + ranked focus areas) */
+  /* driver lists (strengths + ranked focus areas).
+     Rationale is matched by item number, exactly as generateTeamProfilePdf.ts
+     does, so the screen and the PDF can never attach a different `why` to the
+     same facet. A facet with no matching rationale still renders (with an empty
+     why) and warns, rather than silently disappearing from one surface. */
   const strengthFacets = (profile.structured?.strengths ?? []).slice(0, 1);
   const focusFacets = profile.structured?.focusAreas ?? [];
 
+  const strengthSrcByItem = new Map((driving?.strengths ?? []).map((d) => [d.item, d]));
+  const focusSrcByItem = new Map((driving?.focus ?? []).map((d) => [d.item, d]));
+
   const strengthDrivers = strengthFacets.map((f, i) => {
-    const src = driving?.strengths?.[i];
+    const src = strengthSrcByItem.get(f.itemNumber);
+    if (!src) console.warn(`[team report] no driving_facets.strengths entry for item ${f.itemNumber}`);
     const actions = src?.actions ?? (src?.action ? [src.action] : []);
     return {
       itemNumber: f.itemNumber,
@@ -1065,7 +1073,8 @@ export default function TeamReport() {
     };
   });
   const focusDrivers = focusFacets.map((f, idx) => {
-    const src = driving?.focus?.[idx];
+    const src = focusSrcByItem.get(f.itemNumber);
+    if (!src) console.warn(`[team report] no driving_facets.focus entry for item ${f.itemNumber}`);
     const actions = src?.actions ?? (src?.action ? [src.action] : []);
     const sev = (f.driverScore ?? 0);
     let label = "Worth watching";
