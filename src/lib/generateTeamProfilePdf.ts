@@ -822,6 +822,7 @@ export async function generateTeamProfilePdf(
         doc.text(it.action, MARGIN_L, ctx.y);
         ctx.y += 5;
       }
+      chipsUnder(ctx, it.facets);
       ctx.y += 2;
     }
   }
