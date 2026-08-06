@@ -75,22 +75,38 @@ const TEAM_SHAPE_DESC: Record<TeamShapeKey, string> = {
   together: "real common ground",
 };
 
+/* Colors mirror src/pages/TeamReport.tsx's `GC` map exactly, so a facet is
+   drawn in the same hue on screen and in the PDF. */
 const TEAM_SHAPE_COLOR: Record<TeamShapeKey, readonly [number, number, number]> = {
-  allHigh: GREEN,
+  allHigh: ORANGE,
   allLow: NAVY,
   two: MUSTARD,
-  even: PURPLE,
-  together: TEAL,
+  even: TEAL,
+  together: GREEN,
 };
 
+/* Exact-match on the shape vocabulary the database actually stores, mirroring
+   shapeKey() in src/pages/TeamReport.tsx. The previous substring chain never
+   matched "Everyone high"/"Everyone low", so those facets silently fell through
+   to `together` and the allHigh/allLow buckets were unreachable. */
 function shapeKey(shape: string | null | undefined): TeamShapeKey {
-  const s = (shape ?? "").toLowerCase();
-  if (s.includes("all high")) return "allHigh";
-  if (s.includes("all low")) return "allLow";
-  if (s.includes("two")) return "two";
-  if (s.includes("even")) return "even";
-  return "together";
+  switch ((shape ?? "").trim()) {
+    case "Everyone high":
+      return "allHigh";
+    case "Everyone low":
+      return "allLow";
+    case "Two groups":
+      return "two";
+    case "Together (mid)":
+      return "together";
+    case "Even spread":
+    case "Mild":
+      return "even";
+    default:
+      return "even"; // defined fallback for an unrecognized shape
+  }
 }
+
 
 /* ---------- v14 bullet normalization ----------
    Sections may hold plain strings (pre-v14 profiles) or { point, body, facets }
@@ -144,6 +160,39 @@ function chipsUnder(ctx: PdfContext, facets: string[] | undefined, fs: FacetStyl
   drawChipRows(ctx.doc, layout.rows, MARGIN_L + indent, ctx.y);
   ctx.y += layout.h + 2;
 }
+
+/** Height of the first card in a run, so a subheading never lands alone. */
+function firstCardH(
+  ctx: PdfContext,
+  blocks: PdfBlock[],
+  fs: FacetStyler,
+  accent: readonly [number, number, number],
+  width = CONTENT_W,
+): number {
+  const b = blocks[0];
+  if (!b) return 0;
+  const PAGE_AVAIL = PAGE_H - MARGIN_T - MARGIN_B;
+  const m = measureCard(ctx.doc, b, width, blockAccent(b, accent, fs), fs, CARD_METRICS);
+  return Math.min(m.h + CARD_GAP, PAGE_AVAIL - 12);
+}
+
+/**
+ * Draw a subheading. The page-break check runs FIRST, because checkPageBreak
+ * may emit a footer and a continuation header, both of which reset font, size
+ * and color — setting the font before the break left headings rendered in
+ * footer styling. `firstBlockH` reserves room for the content that follows so
+ * a heading is never stranded at the foot of a page.
+ */
+function subheading(ctx: PdfContext, label: string, firstBlockH = 14): void {
+  const { doc } = ctx;
+  ctx.checkPageBreak(6 + Math.max(0, firstBlockH));
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(...NAVY);
+  doc.text(label, MARGIN_L, ctx.y);
+  ctx.y += 5;
+}
+
 
 function paragraphs(ctx: PdfContext, text: string): void {
   const paras = splitParas(text);
@@ -486,28 +535,35 @@ export async function generateTeamProfilePdf(
     ctx.sectionHeading("Driving facets", undefined, "What drives it");
     if (s.driving_facets.opening) paragraphs(ctx, s.driving_facets.opening);
     ctx.y += 2;
-    const strengthSrc = s.driving_facets.strengths ?? [];
-    data.strengths.forEach((f, i) => {
-      const src = strengthSrc[i];
-      const acts = src?.actions ?? (src?.action ? [src.action] : []);
+    // pair the narrative to the facet by item number, never by array index:
+    // any reordering would otherwise attach the wrong rationale to a facet
+    const strengthSrc = new Map(
+      (s.driving_facets.strengths ?? []).map((d) => [d.item, d]),
+    );
+    data.strengths.forEach((f) => {
+      const src = strengthSrc.get(f.itemNumber);
+      if (!src) return;
+      const acts = src.actions ?? (src.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "strength",
         name: facetDisplayLabel(f.facetName, "work"),
-        why: src?.why ?? "",
+        why: src.why ?? "",
         actions: acts.slice(0, 3),
       });
     });
-    const focusSrc = s.driving_facets.focus ?? [];
-    data.focusAreas.forEach((f, i) => {
-      const src = focusSrc[i];
-      const acts = src?.actions ?? (src?.action ? [src.action] : []);
+    const focusSrc = new Map((s.driving_facets.focus ?? []).map((d) => [d.item, d]));
+    data.focusAreas.forEach((f) => {
+      const src = focusSrc.get(f.itemNumber);
+      if (!src) return;
+      const acts = src.actions ?? (src.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "focus",
         name: facetDisplayLabel(f.facetName, "work"),
-        why: src?.why ?? "",
+        why: src.why ?? "",
         actions: acts.slice(0, 3),
       });
     });
+
   }
 
   // 5. driving facet charts
@@ -529,31 +585,22 @@ export async function generateTeamProfilePdf(
   // 6. communication
   if (sections.communication && s.communication) {
     ctx.sectionHeading("Communication", undefined, "The mechanics");
-    doc.setFont("Poppins", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...NAVY);
-    ctx.checkPageBreak(6);
-    doc.text("In general", MARGIN_L, ctx.y);
-    ctx.y += 5;
     const genBlocks = asBlocks(s.communication.general);
+    subheading(ctx, "In general", firstCardH(ctx, genBlocks, fs, TEAL));
     if (hasCards(genBlocks)) bulletCards(ctx, genBlocks, fs, { accent: TEAL });
     else for (const line of asLines(s.communication.general)) paragraphs(ctx, line);
     ctx.y += 3;
-    doc.setFont("Poppins", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(...NAVY);
-    doc.text("Under pressure", MARGIN_L, ctx.y);
-    ctx.y += 5;
     const upBlocks = asBlocks(s.communication.under_pressure);
+    subheading(ctx, "Under pressure", firstCardH(ctx, upBlocks, fs, TEAL));
     if (hasCards(upBlocks)) bulletCards(ctx, upBlocks, fs, { accent: TEAL });
     else for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, line);
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text("Avoiding conflict", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(
+        ctx,
+        "Avoiding conflict",
+        firstCardH(ctx, asBlocks([s.communication.avoid_conflict[0]]), fs, TEAL, CONTENT_W - 3),
+      );
       // number from the count of entries actually rendered, so a dropped block
       // does not leave a gap in the sequence (1, 3, 4)
       let n = 0;
@@ -574,7 +621,11 @@ export async function generateTeamProfilePdf(
           });
           return;
         }
+        // measure in the font it is drawn in, not whatever was left live
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9);
         const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(b.text)}`, CONTENT_W - 6);
+
         for (const l of lines) {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
@@ -596,21 +647,12 @@ export async function generateTeamProfilePdf(
     const pro = asBlocks(s.conflict.promote_healthy);
     if (hasCards(mit) || hasCards(pro)) {
       // cards are too tall for the two-column grid; stack them full width
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      ctx.checkPageBreak(6);
-      doc.text("Mitigate", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Mitigate", firstCardH(ctx, mit, fs, TEAL));
       bulletCards(ctx, mit, fs, { accent: TEAL });
       ctx.y += 2;
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      ctx.checkPageBreak(6);
-      doc.text("Promote healthy", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Promote healthy", firstCardH(ctx, pro, fs, MUSTARD));
       bulletCards(ctx, pro, fs, { accent: MUSTARD });
+
     } else {
       twoColumn(
         ctx,
@@ -629,19 +671,39 @@ export async function generateTeamProfilePdf(
     for (let i = 0; i < Math.min(3, s.leadership.length); i++) {
       const it = s.leadership[i];
       ctx.ensureBlockSpace(20);
+      // headline: wrapped like team_in_three, indented past the ordinal so the
+      // continuation lines align under the text rather than under the number
       doc.setFont("Poppins", "bold");
       doc.setFontSize(11);
       doc.setTextColor(...NAVY);
-      doc.text(`${i + 1}. ${it.headline ?? ""}`, MARGIN_L, ctx.y);
-      ctx.y += 5;
+      const ordinal = `${i + 1}. `;
+      const ordW = doc.getTextWidth(ordinal);
+      const hl = doc.splitTextToSize(cleanMarkdown(it.headline ?? ""), CONTENT_W - ordW);
+      hl.forEach((l: string, li: number) => {
+        ctx.checkPageBreak(5.5);
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(...NAVY);
+        if (li === 0) doc.text(ordinal + l, MARGIN_L, ctx.y);
+        else doc.text(l, MARGIN_L + ordW, ctx.y);
+        ctx.y += 5;
+      });
       ctx.bodyText(it.detail ?? "");
       if (it.action) {
+        // measured and drawn in the same font, and wrapped to the content width
         doc.setFont("Poppins", "bold");
         doc.setFontSize(9);
-        doc.setTextColor(...NAVY);
-        doc.text(it.action, MARGIN_L, ctx.y);
-        ctx.y += 5;
+        const al = doc.splitTextToSize(cleanMarkdown(it.action), CONTENT_W);
+        for (const l of al) {
+          ctx.checkPageBreak(5);
+          doc.setFont("Poppins", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(...NAVY);
+          doc.text(l, MARGIN_L, ctx.y);
+          ctx.y += 4.8;
+        }
       }
+
       chipsUnder(ctx, it.facets, fs);
       ctx.y += 2;
     }
@@ -679,8 +741,14 @@ export async function generateTeamProfilePdf(
     for (const r of rows) {
       const driver = data.itemText.get(r.item) ?? `Item ${r.item}`;
       const cells = [driver, r.risk_to_work, r.the_move, r.potential_owner];
+      // measure in the body font the cells are drawn in, not the semibold
+      // header font left live above
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(8);
       const splits = cells.map((t, i) => doc.splitTextToSize(cleanMarkdown(t ?? ""), cols[i].w - 3));
-      const rowH = Math.max(...splits.map((s) => s.length)) * 4.2 + 2;
+      // jsPDF advances a multi-line array by its own line factor; measure the
+      // drawn height instead of assuming 4.2mm per line, which left dead gaps
+      const rowH = Math.max(...splits.map((sp) => doc.getTextDimensions(sp).h)) + 2;
       ctx.checkPageBreak(rowH + 2);
       let cx = MARGIN_L;
       doc.setFont("Montserrat", "normal");
@@ -698,15 +766,20 @@ export async function generateTeamProfilePdf(
     if (s.leader_brief.lean_on) {
       ctx.y += 3;
       ctx.checkPageBreak(12);
-      doc.setFillColor(245, 250, 245);
-      doc.setDrawColor(200, 220, 200);
+      // set the font BEFORE measuring: splitTextToSize uses the live font
+      // state, and the 8pt table font was wrapping this 9pt text 9/8 too wide
+      doc.setFont("Montserrat", "normal");
+      doc.setFontSize(9);
       const leanRaw = cleanMarkdown(s.leader_brief.lean_on).replace(/^\s*lean on:\s*/i, "");
       const dl = doc.splitTextToSize("Lean on: " + leanRaw, CONTENT_W - 6);
       const h = dl.length * 4.5 + 6;
+      doc.setFillColor(245, 250, 245);
+      doc.setDrawColor(200, 220, 200);
       doc.roundedRect(MARGIN_L, ctx.y, CONTENT_W, h, 2, 2, "FD");
       doc.setFont("Montserrat", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...BLACK);
+
       let ty = ctx.y + 4;
       for (const l of dl) {
         doc.text(l, MARGIN_L + 3, ty);
@@ -759,12 +832,7 @@ export async function generateTeamProfilePdf(
   if (sections.coach && s.coach) {
     ctx.sectionHeading("For the practitioner, org admin & super admin", undefined, "Behind the scenes");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      ctx.checkPageBreak(6);
-      doc.text("Why these matter", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Why these matter", 16);
       for (const w of s.coach.why) {
         const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
         ctx.ensureBlockSpace(16);
@@ -774,6 +842,9 @@ export async function generateTeamProfilePdf(
         const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
         for (const l of ql) {
           ctx.checkPageBreak(5);
+          doc.setFont("Montserrat", "semibold");
+          doc.setFontSize(8.5);
+          doc.setTextColor(...MUTED);
           doc.text(l, MARGIN_L, ctx.y);
           ctx.y += 4;
         }
@@ -783,14 +854,12 @@ export async function generateTeamProfilePdf(
       }
     }
     if (Array.isArray(s.coach.debrief_prompts) && s.coach.debrief_prompts.length > 0) {
-      ctx.checkPageBreak(6);
-      doc.setFont("Poppins", "bold");
-      doc.setFontSize(10);
-      doc.setTextColor(...NAVY);
-      doc.text("Debrief prompts", MARGIN_L, ctx.y);
-      ctx.y += 5;
+      subheading(ctx, "Debrief prompts", 10);
       s.coach.debrief_prompts.forEach((p, i) => {
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(9);
         const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(p)}`, CONTENT_W - 4);
+
         for (const l of lines) {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
@@ -809,5 +878,5 @@ export async function generateTeamProfilePdf(
   const today = new Date().toISOString().slice(0, 10);
   const safeName = (data.teamName || "Team").replace(/[^A-Za-z0-9-_]+/g, "_").slice(0, 40);
   doc.save(`BrainWise-Team-${safeName}-${today}.pdf`);
-  void MUTED; void GRAY;
+  void MUTED; void GRAY; void PURPLE;
 }
