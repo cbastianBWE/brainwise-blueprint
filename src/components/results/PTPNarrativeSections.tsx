@@ -142,7 +142,9 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
     anchorHigh: string;
   }[]>([]);
   const [allFacetInsights, setAllFacetInsights] = useState<FacetInterpretation[]>([]);
+  const [facetInsightsByItem, setFacetInsightsByItem] = useState<Map<number, FacetInterpretation>>(new Map());
   const [loadingAllFacetInsights, setLoadingAllFacetInsights] = useState(false);
+
   const [allFacetsExpanded, setAllFacetsExpanded] = useState<Set<string>>(new Set());
   const [sectionRefreshKey, setSectionRefreshKey] = useState(0);
 
