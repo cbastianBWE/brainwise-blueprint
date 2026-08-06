@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Eye, FileText } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Archive, Eye, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +35,10 @@ import {
   type OnePagerSection,
 } from "@/lib/pairedSectionTypes";
 import PairedOnePager from "@/components/results/PairedOnePager";
+import {
+  ArchiveReportDialog,
+  useCanArchiveReport,
+} from "@/components/reports/ArchiveReportDialog";
 import {
   DIM_COLOR,
   PSC,
@@ -684,6 +688,9 @@ function SectionHead({ ctx, eyebrow, children }: { ctx: ReportCtx; eyebrow: stri
 /* ---------- page ---------- */
 export default function PairedReport() {
   const { pairedProfileId } = useParams<{ pairedProfileId: string }>();
+  const navigate = useNavigate();
+  const canArchiveReport = useCanArchiveReport("paired", pairedProfileId);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const {
     loading, noAccess, profile, mode, sections, status,
     refetchSections, refetchProfile,
@@ -1112,6 +1119,17 @@ export default function PairedReport() {
                 >
                   Add to development plan
                 </Button>
+                {canArchiveReport && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setArchiveOpen(true)}
+                    style={{ background: "#fff", color: NAVY, borderColor: "transparent" }}
+                  >
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive report
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -1557,6 +1575,15 @@ export default function PairedReport() {
       {/* tooltip */}
       <TipLayer tip={tip} />
       </PairedReportHighlightProvider>
+      <ArchiveReportDialog
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        kind="paired"
+        reportId={pairedProfileId ?? ""}
+        subjects={`${nameA} & ${nameB}`}
+        onArchived={() => navigate("/team-paired-reports")}
+      />
+
       <ExportPdfModal
         open={exportOpen}
         onOpenChange={setExportOpen}

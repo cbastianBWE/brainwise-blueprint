@@ -17549,6 +17549,9 @@ export type Database = {
       bw_list_my_reports: {
         Args: never
         Returns: {
+          archive_reason: string
+          archived_at: string
+          can_archive: boolean
           computed_at: string
           kind: string
           member_count: number

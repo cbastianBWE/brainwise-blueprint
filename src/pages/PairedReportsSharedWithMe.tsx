@@ -4,6 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import {
+  ArchiveReportDialog,
+  ArchivedBadge,
+  RestoreReportButton,
+} from "@/components/reports/ArchiveReportDialog";
+import { Archive } from "lucide-react";
+
 
 interface ReportRow {
   report_id: string;
@@ -13,6 +21,9 @@ interface ReportRow {
   narrative_status: string;
   computed_at: string | null;
   subjects: string;
+  archived_at: string | null;
+  archive_reason: string | null;
+  can_archive: boolean;
 }
 
 function formatDate(iso: string | null) {
@@ -30,15 +41,23 @@ function capitalize(s: string | null | undefined) {
 }
 
 export default function PairedReportsSharedWithMe() {
+  const { profile } = useUserProfile();
+  const isSuperAdmin = profile?.account_type === "brainwise_super_admin";
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [archiveTarget, setArchiveTarget] = useState<ReportRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase.rpc("bw_list_my_reports");
     if (!error) {
       const all = (data as ReportRow[]) ?? [];
-      setRows(all.filter((r) => r.kind === "paired"));
+      // Archived reports sort last; the database decides who sees them at all.
+      setRows(
+        all
+          .filter((r) => r.kind === "paired")
+          .sort((a, b) => Number(!!a.archived_at) - Number(!!b.archived_at)),
+      );
     }
     setLoading(false);
   }, []);
@@ -67,26 +86,55 @@ export default function PairedReportsSharedWithMe() {
       ) : (
         <div className="space-y-3">
           {rows.map((r) => (
-            <Card key={r.report_id}>
+            <Card key={r.report_id} className={r.archived_at ? "opacity-60" : undefined}>
               <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
                 <CardTitle className="text-base">Paired report</CardTitle>
-                {r.relationship_mode && (
-                  <Badge variant="secondary">{capitalize(r.relationship_mode)}</Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {r.archived_at && (
+                    <ArchivedBadge archivedAt={r.archived_at} reason={r.archive_reason} />
+                  )}
+                  {r.relationship_mode && (
+                    <Badge variant="secondary">{capitalize(r.relationship_mode)}</Badge>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="space-y-1 text-sm">
                   <div>{r.subjects}</div>
                   <div className="text-muted-foreground">{formatDate(r.computed_at)}</div>
+                  {r.archived_at && r.archive_reason && (
+                    <div className="text-xs text-muted-foreground">{r.archive_reason}</div>
+                  )}
                 </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/paired-report/${r.report_id}`}>Open</Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                  {r.archived_at && isSuperAdmin && (
+                    <RestoreReportButton kind="paired" reportId={r.report_id} onRestored={load} />
+                  )}
+                  {!r.archived_at && r.can_archive && (
+                    <Button variant="ghost" size="sm" onClick={() => setArchiveTarget(r)}>
+                      <Archive className="h-4 w-4 mr-1" />
+                      Archive
+                    </Button>
+                  )}
+                  <Button asChild variant="outline" size="sm">
+                    <Link to={`/paired-report/${r.report_id}`}>Open</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <ArchiveReportDialog
+        open={archiveTarget !== null}
+        onOpenChange={(o) => { if (!o) setArchiveTarget(null); }}
+        kind="paired"
+        reportId={archiveTarget?.report_id ?? ""}
+        subjects={archiveTarget?.subjects ?? ""}
+        dateLabel={formatDate(archiveTarget?.computed_at ?? null)}
+        onArchived={load}
+      />
     </div>
   );
 }
