@@ -2,6 +2,16 @@
 // Intentionally duplicated from generateResultsPdf.ts so the individual PTP/NAI/AIRSA
 // exports can never regress from changes made here.
 import jsPDF from "jspdf";
+import {
+  bulletFacets,
+  bulletToText,
+  isBulletObject,
+  isMoveBullet,
+  stripMovePrefix,
+  normFacetName,
+  facetDisplayLabel,
+  type Bullet,
+} from "./pairedSectionTypes";
 
 export const PAGE_W = 210;
 export const PAGE_H = 297;
@@ -25,8 +35,8 @@ export const GREEN = [45, 106, 79] as const;
 export const MUSTARD = [122, 88, 0] as const;
 export const AMBER = [255, 183, 3] as const;
 
-const NAVY_CIRCLE = [16, 38, 58] as const;
-const SAND_CIRCLE = [251, 224, 200] as const;
+export const NAVY_CIRCLE = [16, 38, 58] as const;
+export const SAND_CIRCLE = [251, 224, 200] as const;
 const DISCLAIMER_ICON_BG = [255, 230, 210] as const;
 
 export function hexToRgb(hex: string): [number, number, number] {
@@ -562,4 +572,276 @@ export function drawTeamDistRow(
   doc.line(mx, axisY - 3, mx, axisY + 3);
 
   ctx.y = y + rowH + 1;
+}
+
+/* ==========================================================================
+   Bullet cards + facet chips — shared by the paired and team PDF generators.
+
+   Extracted from generatePairedProfilePdf.ts, which was the superset (it is
+   the only one that renders "THE MOVE" bullets; that path is simply inert for
+   team, whose generator never emits a "The move:" prefix).
+
+   Everything that genuinely differs between the two reports is a parameter:
+   the facet label/color functions and the card metrics. No module-level
+   mutable state lives here, so two concurrent generations cannot clobber each
+   other's facet index.
+   ========================================================================== */
+
+/** Per-invocation facet styling. Built inside each generate call and threaded
+ *  down, so no module-level mutable state is shared between renders. */
+export interface FacetStyler {
+  /** The label to print for a facet. Lookups keep using the raw name. */
+  label: (name: string) => string;
+  color: (name: string) => readonly [number, number, number];
+  domain: (name: string) => string | undefined;
+}
+
+export const PDF_DIM_COLOR: Record<string, readonly [number, number, number]> = {
+  Protection: NAVY,
+  Participation: TEAL,
+  Prediction: GRAY,
+  Purpose: PURPLE,
+  Pleasure: MUSTARD, // amber is illegible at chip sizes; mustard is its text-safe pair
+};
+
+/** Build a facet styler for one render. `mode` drives display labels only. */
+export function makeFacetStyler(
+  facets: { facetName?: string | null; domain?: string | null }[],
+  mode: string | null,
+): FacetStyler {
+  const domainByName = new Map<string, string>();
+  for (const f of facets) {
+    const key = normFacetName(f?.facetName ?? "");
+    if (key && f?.domain && !domainByName.has(key)) domainByName.set(key, f.domain);
+  }
+  const domain = (name: string) => domainByName.get(normFacetName(name));
+  return {
+    label: (name: string) => facetDisplayLabel(name, mode),
+    color: (name: string) => {
+      const dom = domain(name);
+      return (dom && PDF_DIM_COLOR[dom]) || GRAY;
+    },
+    domain,
+  };
+}
+
+/** jsPDF has no alpha on fills; blend toward white instead. */
+export function tint(c: readonly [number, number, number], a: number): [number, number, number] {
+  return [
+    Math.round(255 + (c[0] - 255) * a),
+    Math.round(255 + (c[1] - 255) * a),
+    Math.round(255 + (c[2] - 255) * a),
+  ];
+}
+
+export interface PdfBlock {
+  /** bold lead sentence (object bullets only) */
+  point?: string;
+  text: string;
+  facets?: string[];
+  /** point began with "The move:" — green rule + THE MOVE label */
+  move?: boolean;
+}
+
+/** Normalize a section value that may be a plain string (legacy reports) or an
+ *  array of string / { point, body, facets } bullets. */
+export function asBlocks(v: string | Bullet[] | undefined | null): PdfBlock[] {
+  if (!v) return [];
+  if (Array.isArray(v)) {
+    return v
+      .map((b) => {
+        if (typeof b === "string" || !isBulletObject(b)) {
+          return { text: bulletToText(b), facets: bulletFacets(b) } as PdfBlock;
+        }
+        const move = isMoveBullet(b);
+        const point = move ? stripMovePrefix(b.point ?? "") : (b.point ?? "").trim();
+        const body = (b.body ?? "").trim();
+        return {
+          point: point || undefined,
+          text: point ? body : bulletToText(b),
+          facets: bulletFacets(b),
+          move,
+        } as PdfBlock;
+      })
+      .filter((b) => !!(b.text || b.point));
+  }
+  return typeof v === "string" ? [{ text: v }] : [];
+}
+
+/* ---------- facet chips ---------- */
+
+export const CHIP_H = 3.4;
+export const CHIP_GAP_X = 1.5;
+export const CHIP_GAP_Y = 1.2;
+export const CHIP_PAD_X = 1.6;
+
+export interface Chip {
+  label: string;
+  w: number;
+  color: readonly [number, number, number];
+}
+
+export function chipLayout(
+  doc: jsPDF,
+  facets: string[] | undefined,
+  maxW: number,
+  fs: FacetStyler,
+): { rows: Chip[][]; h: number } {
+  const list = (facets ?? []).filter((f) => typeof f === "string" && f.trim());
+  if (list.length === 0) return { rows: [], h: 0 };
+  doc.setFont("Montserrat", "semibold");
+  doc.setFontSize(6.5);
+  const rows: Chip[][] = [];
+  let row: Chip[] = [];
+  let rowW = 0;
+  for (const raw of list) {
+    const label = fs.label(cleanMarkdown(raw).trim());
+    if (!label) continue;
+    const w = Math.min(maxW, doc.getTextWidth(label) + CHIP_PAD_X * 2 + 1.5);
+    if (row.length > 0 && rowW + CHIP_GAP_X + w > maxW) {
+      rows.push(row);
+      row = [];
+      rowW = 0;
+    }
+    row.push({ label, w, color: fs.color(raw) });
+    rowW += (row.length > 1 ? CHIP_GAP_X : 0) + w;
+  }
+  if (row.length > 0) rows.push(row);
+  const h = rows.length === 0 ? 0 : rows.length * CHIP_H + (rows.length - 1) * CHIP_GAP_Y;
+  return { rows, h };
+}
+
+export function drawChipRows(doc: jsPDF, rows: Chip[][], x: number, top: number): void {
+  let y = top;
+  for (const row of rows) {
+    let cx = x;
+    for (const chip of row) {
+      const fill = tint(chip.color, 0.1);
+      const border = tint(chip.color, 0.3);
+      doc.setFillColor(fill[0], fill[1], fill[2]);
+      doc.setDrawColor(border[0], border[1], border[2]);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(cx, y, chip.w, CHIP_H, CHIP_H / 2, CHIP_H / 2, "FD");
+      doc.setFont("Montserrat", "semibold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(chip.color[0], chip.color[1], chip.color[2]);
+      doc.text(chip.label, cx + chip.w / 2, y + CHIP_H / 2 + 0.85, { align: "center" });
+      cx += chip.w + CHIP_GAP_X;
+    }
+    y += CHIP_H + CHIP_GAP_Y;
+  }
+}
+
+/* ---------- bullet cards ---------- */
+
+export const CARD_PAD = 2.5;
+export const CARD_GAP = 2;
+export const CARD_RULE_W = 1.5;
+
+/** Body type metrics differ per report and must not be flattened:
+ *  paired is 8.5 / 4.1 / 4.4, team is 9 / 4.5 / 4.6. */
+export interface CardMetrics {
+  bodySize: number;
+  lhBody: number;
+  lhPoint: number;
+}
+
+export interface CardMeasure {
+  h: number;
+  pointLines: string[];
+  textLines: string[];
+  chips: { rows: Chip[][]; h: number };
+  innerW: number;
+  accent: readonly [number, number, number];
+  move: boolean;
+  metrics: CardMetrics;
+}
+
+export function measureCard(
+  doc: jsPDF,
+  b: PdfBlock,
+  w: number,
+  accent: readonly [number, number, number],
+  fs: FacetStyler,
+  metrics: CardMetrics,
+): CardMeasure {
+  const innerW = w - CARD_PAD * 2 - CARD_RULE_W;
+  const move = !!b.move;
+  doc.setFont("Poppins", "bold");
+  doc.setFontSize(9.5);
+  const pointLines: string[] = b.point
+    ? doc.splitTextToSize(cleanMarkdown(b.point), innerW)
+    : [];
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(metrics.bodySize);
+  const textLines: string[] = b.text ? doc.splitTextToSize(cleanMarkdown(b.text), innerW) : [];
+  const chips = chipLayout(doc, b.facets, innerW, fs);
+  const h =
+    CARD_PAD * 2 +
+    (move ? 3.2 : 0) +
+    pointLines.length * metrics.lhPoint +
+    textLines.length * metrics.lhBody +
+    (chips.h > 0 ? chips.h + 0.8 : 0);
+  return { h, pointLines, textLines, chips, innerW, accent: move ? GREEN : accent, move, metrics };
+}
+
+export function drawCardAt(
+  doc: jsPDF,
+  m: CardMeasure,
+  x: number,
+  y: number,
+  w: number,
+  framed = true,
+): void {
+  if (framed) {
+    doc.setDrawColor(224, 222, 216);
+    doc.setLineWidth(0.15);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, y, w, m.h, 1.6, 1.6, "FD");
+    doc.setFillColor(m.accent[0], m.accent[1], m.accent[2]);
+    doc.rect(x, y, CARD_RULE_W, m.h, "F");
+  }
+  const tx = x + CARD_RULE_W + CARD_PAD;
+  let cy = y + CARD_PAD + 2.6;
+  if (m.move) {
+    doc.setFont("Montserrat", "semibold");
+    doc.setFontSize(6.5);
+    doc.setTextColor(GREEN[0], GREEN[1], GREEN[2]);
+    doc.text("THE MOVE", tx, cy, { charSpace: 0.5 });
+    cy += 3.2;
+  }
+  if (m.pointLines.length > 0) {
+    doc.setFont("Poppins", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...NAVY);
+    for (const l of m.pointLines) {
+      doc.text(l, tx, cy);
+      cy += m.metrics.lhPoint;
+    }
+  }
+  if (m.textLines.length > 0) {
+    doc.setFont("Montserrat", "normal");
+    doc.setFontSize(m.metrics.bodySize);
+    doc.setTextColor(...BLACK);
+    for (const l of m.textLines) {
+      doc.text(l, tx, cy);
+      cy += m.metrics.lhBody;
+    }
+  }
+  if (m.chips.rows.length > 0) {
+    drawChipRows(doc, m.chips.rows, tx, cy - 2.6 + 0.8);
+  }
+}
+
+/** Accent rule color: the first facet's PTP dimension, else the section accent. */
+export function blockAccent(
+  b: PdfBlock,
+  fallback: readonly [number, number, number],
+  fs: FacetStyler,
+): readonly [number, number, number] {
+  for (const f of b.facets ?? []) {
+    const dom = fs.domain(f);
+    if (dom && PDF_DIM_COLOR[dom]) return PDF_DIM_COLOR[dom];
+  }
+  return fallback;
 }
