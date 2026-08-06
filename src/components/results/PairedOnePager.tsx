@@ -102,6 +102,8 @@ interface Props {
   mode?: string | null;
   lookupFacet: (name: string) => FacetEntry | undefined;
   dateGenerated?: string;
+  /** the first watch card is the protective driver when the pair has one */
+  protectiveFirst?: boolean;
 }
 
 /**
@@ -116,6 +118,7 @@ export default function PairedOnePager({
   mode,
   lookupFacet,
   dateGenerated,
+  protectiveFirst,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [downloading, setDownloading] = useState<null | "summary" | "full">(null);
@@ -135,6 +138,7 @@ export default function PairedOnePager({
         nm,
         mode,
         scope,
+        protectiveFirst,
         facetColor: (f) => {
           const domain = lookupFacet(f)?.domain;
           if (!domain) return undefined;
@@ -316,8 +320,8 @@ export default function PairedOnePager({
                 <Head>Keep an eye on</Head>
                 <div className="grid gap-4 md:grid-cols-2">
                   {watch.slice(0, 2).map((w, i) => (
-                    <div key={i} style={{ borderLeft: `3px solid ${AMBER}`, paddingLeft: 12 }}>
-                      <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: MUSTARD }}>
+                    <div key={i} style={{ borderLeft: `3px solid ${protectiveFirst && i === 0 ? PURPLE : AMBER}`, paddingLeft: 12 }}>
+                      <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: protectiveFirst && i === 0 ? PURPLE : MUSTARD }}>
                         {nm(w.point ?? "")}
                       </div>
                       <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 3 }}>{nm(w.body ?? "")}</div>
