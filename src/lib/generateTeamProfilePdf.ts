@@ -723,14 +723,18 @@ export async function generateTeamProfilePdf(
     ctx.checkPageBreak(6);
     doc.text("In general", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const line of asLines(s.communication.general)) paragraphs(ctx, line);
+    const genBlocks = asBlocks(s.communication.general);
+    if (hasCards(genBlocks)) bulletCards(ctx, genBlocks, { accent: TEAL });
+    else for (const line of asLines(s.communication.general)) paragraphs(ctx, line);
     ctx.y += 3;
     doc.setFont("Poppins", "bold");
     doc.setFontSize(10);
     doc.setTextColor(...NAVY);
     doc.text("Under pressure", MARGIN_L, ctx.y);
     ctx.y += 5;
-    for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, line);
+    const upBlocks = asBlocks(s.communication.under_pressure);
+    if (hasCards(upBlocks)) bulletCards(ctx, upBlocks, { accent: TEAL });
+    else for (const line of asLines(s.communication.under_pressure)) paragraphs(ctx, line);
     ctx.y += 3;
     if (Array.isArray(s.communication.avoid_conflict) && s.communication.avoid_conflict.length > 0) {
       doc.setFont("Poppins", "bold");
@@ -739,7 +743,18 @@ export async function generateTeamProfilePdf(
       doc.text("Avoiding conflict", MARGIN_L, ctx.y);
       ctx.y += 5;
       s.communication.avoid_conflict.forEach((t, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(t)}`, CONTENT_W - 6);
+        const blocks = asBlocks([t]);
+        const b = blocks[0];
+        if (!b) return;
+        if (b.point || (b.facets ?? []).length > 0) {
+          bulletCards(ctx, [{ ...b, point: b.point ? `${i + 1}. ${b.point}` : undefined }], {
+            indent: 3,
+            width: CONTENT_W - 3,
+            accent: TEAL,
+          });
+          return;
+        }
+        const lines = doc.splitTextToSize(`${i + 1}. ${cleanMarkdown(b.text)}`, CONTENT_W - 6);
         for (const l of lines) {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "normal");
@@ -757,14 +772,38 @@ export async function generateTeamProfilePdf(
     ctx.sectionHeading("Conflict");
     if (s.conflict.summary) paragraphs(ctx, s.conflict.summary);
     ctx.y += 2;
-    twoColumn(
-      ctx,
-      "Mitigate",
-      asLines(s.conflict.mitigate),
-      "Promote healthy",
-      asLines(s.conflict.promote_healthy),
-      { bulleted: true },
-    );
+    const mit = asBlocks(s.conflict.mitigate);
+    const pro = asBlocks(s.conflict.promote_healthy);
+    if (hasCards(mit) || hasCards(pro)) {
+      // cards are too tall for the two-column grid; stack them full width
+      ctx.subHeading?.("Mitigate");
+      if (!ctx.subHeading) {
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(...NAVY);
+        ctx.checkPageBreak(6);
+        doc.text("Mitigate", MARGIN_L, ctx.y);
+        ctx.y += 5;
+      }
+      bulletCards(ctx, mit, { accent: TEAL });
+      ctx.y += 2;
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...NAVY);
+      ctx.checkPageBreak(6);
+      doc.text("Promote healthy", MARGIN_L, ctx.y);
+      ctx.y += 5;
+      bulletCards(ctx, pro, { accent: MUSTARD });
+    } else {
+      twoColumn(
+        ctx,
+        "Mitigate",
+        asLines(s.conflict.mitigate),
+        "Promote healthy",
+        asLines(s.conflict.promote_healthy),
+        { bulleted: true },
+      );
+    }
   }
 
   // 7b. leadership snapshot (three headlines + moves)
