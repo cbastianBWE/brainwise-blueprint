@@ -189,7 +189,7 @@ export function RestoreReportButton({
   const [busy, setBusy] = useState(false);
   const restore = async () => {
     setBusy(true);
-    const { error } = await rpc("bw_restore_report", { p_kind: kind, p_id: reportId });
+    const { error } = await supabase.rpc("bw_restore_report", { p_kind: kind, p_id: reportId });
     setBusy(false);
     if (error) {
       toast.error(error.message ?? "Couldn't restore this report.");
