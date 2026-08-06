@@ -14,7 +14,19 @@ import LeadershipModal, { type LeadershipItem } from "@/components/results/Leade
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
 import { assembleTeamPdfData } from "@/lib/assembleTeamPdfData";
 import { generateTeamProfilePdf } from "@/lib/generateTeamProfilePdf";
-import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
+import {
+  facetDisplayLabel,
+  isBulletObject,
+  bulletToText,
+  bulletFacets,
+  normFacetName,
+  type Bullet,
+} from "@/lib/pairedSectionTypes";
+import {
+  DIM_COLOR,
+  hexAlpha,
+  MUSTARD as CHIP_MUSTARD,
+} from "@/components/results/pairedFacetChip";
 
 
 /* ---------- palette ---------- */
