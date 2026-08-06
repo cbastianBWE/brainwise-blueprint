@@ -27,8 +27,9 @@ import {
   hexAlpha,
   AMBER,
   MUSTARD as CHIP_MUSTARD,
-  jumpToFacet,
-  useFacetAnchorExists,
+  useChipJump,
+  type ChipOverlayProps,
+
 } from "@/components/results/pairedFacetChip";
 
 
