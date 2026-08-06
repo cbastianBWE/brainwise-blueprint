@@ -251,8 +251,8 @@ function accentForFacets(
 }
 
 function TeamFacetChip({
-  name, entry, delay,
-}: { name: string; entry?: TeamFacetEntry; delay: number }) {
+  name, entry,
+}: { name: string; entry?: TeamFacetEntry }) {
   const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
   // amber is illegible as small text; the paired chip pairs it with mustard
   const text = base ? (base === AMBER ? CHIP_MUSTARD : base) : GRAY;
@@ -271,7 +271,6 @@ function TeamFacetChip({
       onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
       onMouseLeave={hideTip}
       style={{
-        ["--pr-chip-delay" as string]: `${delay}ms`,
         display: "inline-block",
         borderRadius: 999,
         fontWeight: 600,
@@ -309,7 +308,7 @@ function TeamChipRow({
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
       {facets.map((f, i) => (
-        <TeamFacetChip key={`${f}-${i}`} name={f} entry={lookupFacet?.(f)} delay={i * 25} />
+        <TeamFacetChip key={`${f}-${i}`} name={f} entry={lookupFacet?.(f)} />
       ))}
     </div>
   );
@@ -587,9 +586,11 @@ function tierFromDriver(score: number | null | undefined): number {
 
 /* ---------- driver card ---------- */
 function DriverCard({
-  idx, kind, rank, shape, label, name, why, actions, question, scores, onOpenDist,
+  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, onOpenDist,
 }: {
   idx: number;
+  /** anchors the card so facet chips can jump to a promoted driver */
+  itemNumber?: number;
   kind: "strength" | "watch";
   rank?: number;
   shape: ShapeKey;
@@ -607,6 +608,7 @@ function DriverCard({
   const distColor = kind === "strength" ? GREEN : accent;
   return (
     <div
+      id={itemNumber != null ? `driver-${itemNumber}` : undefined}
       onMouseMove={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
       onMouseLeave={hideTip}
       style={{
@@ -910,6 +912,7 @@ export default function TeamReport() {
     const src = driving?.strengths?.[i];
     const actions = src?.actions ?? (src?.action ? [src.action] : []);
     return {
+      itemNumber: f.itemNumber,
       kind: "strength" as const,
       shape: shapeKey(f.shape),
       label: "Start here · your strength",
@@ -928,6 +931,7 @@ export default function TeamReport() {
     if (sev >= 0.7) label = "Drives strongly";
     else if (sev >= 0.4) label = "Quiet but real";
     return {
+      itemNumber: f.itemNumber,
       kind: "watch" as const,
       rank: idx + 1,
       shape: shapeKey(f.shape),
@@ -1191,7 +1195,7 @@ export default function TeamReport() {
               </div>
               <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
                 <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
-                <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" lookupFacet={lookupFacetByName} />
+                <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" lookupFacet={lookupFacetByName} fallbackAccent={MUSTARD} />
               </div>
             </div>
           </div>
