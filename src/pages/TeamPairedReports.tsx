@@ -13,10 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Users, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Plus, Users, Eye, EyeOff, Loader2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import GenerateReportDialog from "@/components/reports/GenerateReportDialog";
 import ManageReportAccessDialog from "@/components/reports/ManageReportAccessDialog";
+import {
+  ArchiveReportDialog,
+  ArchivedBadge,
+  RestoreReportButton,
+} from "@/components/reports/ArchiveReportDialog";
 
 interface ReportRow {
   report_id: string;
@@ -27,6 +32,9 @@ interface ReportRow {
   computed_at: string | null;
   subjects: string;
   released_to_subjects: boolean;
+  archived_at: string | null;
+  archive_reason: string | null;
+  can_archive: boolean;
 }
 
 interface OrderRow {
@@ -103,6 +111,7 @@ export default function TeamPairedReports() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [manageReport, setManageReport] = useState<{ reportId: string; kind: "team" | "paired"; title: string } | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<ReportRow | null>(null);
   const isSuperAdmin = profile?.account_type === "brainwise_super_admin";
 
   // Post-checkout state
@@ -189,6 +198,12 @@ export default function TeamPairedReports() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pollOrderId]);
+
+  // Archived reports (visible only to their archiver and to super admins) sort last.
+  const sortedRows = useMemo(
+    () => [...rows].sort((a, b) => Number(!!a.archived_at) - Number(!!b.archived_at)),
+    [rows],
+  );
 
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const toggleRelease = async (r: ReportRow) => {
@@ -383,22 +398,35 @@ export default function TeamPairedReports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => {
+                {sortedRows.map((r) => {
+                  const archived = !!r.archived_at;
                   const typeLabel = typeLabelFor(r.kind, r.relationship_mode);
                   const href =
                     r.kind === "team"
                       ? `/team-report/${r.report_id}`
                       : `/paired-report/${r.report_id}`;
                   return (
-                    <TableRow key={`${r.kind}-${r.report_id}`}>
+                    <TableRow key={`${r.kind}-${r.report_id}`} className={archived ? "opacity-60" : undefined}>
                       <TableCell>{typeLabel}</TableCell>
                       <TableCell className="max-w-md">
                         <span className="line-clamp-2">{r.subjects}</span>
+                        {archived && r.archive_reason && (
+                          <span className="block text-xs text-muted-foreground line-clamp-2">
+                            {r.archive_reason}
+                          </span>
+                        )}
                       </TableCell>
-                      <TableCell>{statusBadge(r.narrative_status)}</TableCell>
+                      <TableCell>
+                        {archived ? (
+                          <ArchivedBadge archivedAt={r.archived_at} reason={r.archive_reason} />
+                        ) : (
+                          statusBadge(r.narrative_status)
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(r.computed_at)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {!archived && (
                           <Button
                             variant={r.released_to_subjects ? "outline" : "secondary"}
                             size="sm"
@@ -414,7 +442,17 @@ export default function TeamPairedReports() {
                             )}
                             {r.released_to_subjects ? "Released" : "Held"}
                           </Button>
-                          {isSuperAdmin && (
+                          )}
+                          {archived && isSuperAdmin && (
+                            <RestoreReportButton kind={r.kind} reportId={r.report_id} onRestored={load} />
+                          )}
+                          {!archived && r.can_archive && (
+                            <Button variant="ghost" size="sm" onClick={() => setArchiveTarget(r)}>
+                              <Archive className="h-4 w-4 mr-1" />
+                              Archive
+                            </Button>
+                          )}
+                          {!archived && isSuperAdmin && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -450,6 +488,16 @@ export default function TeamPairedReports() {
         allowedModes={allowedModes}
         onGenerated={load}
         isSuperAdmin={isSuperAdmin}
+      />
+
+      <ArchiveReportDialog
+        open={archiveTarget !== null}
+        onOpenChange={(o) => { if (!o) setArchiveTarget(null); }}
+        kind={archiveTarget?.kind ?? "paired"}
+        reportId={archiveTarget?.report_id ?? ""}
+        subjects={archiveTarget?.subjects ?? ""}
+        dateLabel={formatDate(archiveTarget?.computed_at ?? null)}
+        onArchived={load}
       />
 
       <ManageReportAccessDialog
