@@ -643,7 +643,8 @@ export type Database = {
           created_by: string | null
           id: string
           is_active: boolean
-          model_id: string
+          model_id: string | null
+          model_role: string | null
           prompt_version: number
           system_prompt: string
           user_prompt_template: string
@@ -655,7 +656,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
-          model_id: string
+          model_id?: string | null
+          model_role?: string | null
           prompt_version: number
           system_prompt: string
           user_prompt_template: string
@@ -667,7 +669,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean
-          model_id?: string
+          model_id?: string | null
+          model_role?: string | null
           prompt_version?: number
           system_prompt?: string
           user_prompt_template?: string
@@ -17615,6 +17618,7 @@ export type Database = {
         Args: { p_relationship: string; p_user?: string }
         Returns: string
       }
+      bw_resolve_model: { Args: { p_role: string }; Returns: string }
       bw_resolve_price_entitlement: {
         Args: { p_stripe_price_id: string }
         Returns: {
