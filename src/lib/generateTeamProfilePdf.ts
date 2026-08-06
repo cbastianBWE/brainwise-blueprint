@@ -535,28 +535,35 @@ export async function generateTeamProfilePdf(
     ctx.sectionHeading("Driving facets", undefined, "What drives it");
     if (s.driving_facets.opening) paragraphs(ctx, s.driving_facets.opening);
     ctx.y += 2;
-    const strengthSrc = s.driving_facets.strengths ?? [];
-    data.strengths.forEach((f, i) => {
-      const src = strengthSrc[i];
-      const acts = src?.actions ?? (src?.action ? [src.action] : []);
+    // pair the narrative to the facet by item number, never by array index:
+    // any reordering would otherwise attach the wrong rationale to a facet
+    const strengthSrc = new Map(
+      (s.driving_facets.strengths ?? []).map((d) => [d.item, d]),
+    );
+    data.strengths.forEach((f) => {
+      const src = strengthSrc.get(f.itemNumber);
+      if (!src) return;
+      const acts = src.actions ?? (src.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "strength",
         name: facetDisplayLabel(f.facetName, "work"),
-        why: src?.why ?? "",
+        why: src.why ?? "",
         actions: acts.slice(0, 3),
       });
     });
-    const focusSrc = s.driving_facets.focus ?? [];
-    data.focusAreas.forEach((f, i) => {
-      const src = focusSrc[i];
-      const acts = src?.actions ?? (src?.action ? [src.action] : []);
+    const focusSrc = new Map((s.driving_facets.focus ?? []).map((d) => [d.item, d]));
+    data.focusAreas.forEach((f) => {
+      const src = focusSrc.get(f.itemNumber);
+      if (!src) return;
+      const acts = src.actions ?? (src.action ? [src.action] : []);
       drivingCard(ctx, {
         kind: "focus",
         name: facetDisplayLabel(f.facetName, "work"),
-        why: src?.why ?? "",
+        why: src.why ?? "",
         actions: acts.slice(0, 3),
       });
     });
+
   }
 
   // 5. driving facet charts
