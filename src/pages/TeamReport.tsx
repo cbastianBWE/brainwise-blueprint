@@ -147,7 +147,7 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
   );
 }
 function IdeaBullets({
-  items, style, blockKey, lookupFacet, fallbackAccent,
+  items, style, blockKey, lookupFacet, fallbackAccent, ordered,
 }: {
   items: unknown;
   style?: React.CSSProperties;
@@ -155,6 +155,8 @@ function IdeaBullets({
   lookupFacet?: (name: string) => TeamFacetEntry | undefined;
   /** accent used when no facet in the bullet resolves to a PTP dimension */
   fallbackAccent?: string;
+  /** numbered list (avoid_conflict) rather than the default bullets */
+  ordered?: boolean;
 }) {
   if (Array.isArray(items)) {
     // drop empties, including {point:"",body:"",facets:[]} which would otherwise
@@ -169,8 +171,9 @@ function IdeaBullets({
     if (!list.length) return null;
     // Pre-v14 profiles: every element is a plain string, render exactly as before.
     if (!list.some(isBulletObject)) {
+      const ListTag = ordered ? "ol" : "ul";
       return (
-        <ul style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: "disc", ...style }}>
+        <ListTag style={{ margin: 0, paddingLeft: 22, color: GRAY, fontSize: 16, lineHeight: 1.6, listStyleType: ordered ? "decimal" : "disc", ...style }}>
           {list.map((b, i) => {
             const s = bulletToText(b);
             if (!s) return null;
@@ -180,7 +183,7 @@ function IdeaBullets({
               </li>
             );
           })}
-        </ul>
+        </ListTag>
       );
     }
     return (
@@ -212,11 +215,13 @@ function IdeaBullets({
             >
               {point && (
                 <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>
+                  {ordered && <span style={{ marginRight: 6 }}>{i + 1}.</span>}
                   {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : point}
                 </div>
               )}
               {body && (
                 <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                  {ordered && !point && <span style={{ fontWeight: 800, color: NAVY, marginRight: 6 }}>{i + 1}.</span>}
                   {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : body}
                 </div>
               )}
