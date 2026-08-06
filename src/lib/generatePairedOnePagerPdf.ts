@@ -48,6 +48,9 @@ export interface PairedOnePagerPdfOpts {
   /** Dimension color for a facet chip, when the facet resolves in the map. */
   facetColor?: (facet: string) => RGB | undefined;
 
+  /** the first watch column is the protective driver when the pair has one */
+  protectiveFirst?: boolean;
+
   /** "summary" renders page one only. Defaults to the complete document. */
   scope?: "summary" | "full";
 }
@@ -288,6 +291,7 @@ export async function generatePairedOnePagerPdf(
       heading("Keep an eye on");
       let maxY = y;
       watch.forEach((w, i) => {
+        const isProtective = opts.protectiveFirst === true && i === 0;
         const x = i === 0 ? M : M + colW + gutter;
         let yy = y;
         const top = yy;
@@ -295,7 +299,7 @@ export async function generatePairedOnePagerPdf(
         doc.setFontSize(body);
         const pt = doc.splitTextToSize(nm(w.point ?? ""), colW - 5);
         if (draw) {
-          doc.setTextColor(...MUSTARD);
+          doc.setTextColor(...(isProtective ? PURPLE : MUSTARD));
           doc.text(pt, x + 4, yy);
         }
         yy += pt.length * lh;
@@ -308,7 +312,7 @@ export async function generatePairedOnePagerPdf(
         }
         yy += bd.length * (lh - 0.2);
         if (draw) {
-          doc.setFillColor(...AMBER);
+          doc.setFillColor(...(isProtective ? PURPLE : AMBER));
           doc.rect(x, top - lh + 1.2, 1, yy - top, "F");
         }
         maxY = Math.max(maxY, yy);
