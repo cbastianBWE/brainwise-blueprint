@@ -27,10 +27,6 @@ export type ReportKind = "team" | "paired";
 
 export const MIN_REASON = 10;
 
-const rpc = supabase.rpc as unknown as (
-  fn: string,
-  args: Record<string, unknown>,
-) => Promise<{ data: unknown; error: { message?: string } | null }>;
 
 export function formatArchiveDate(iso: string | null | undefined) {
   if (!iso) return "";
@@ -107,7 +103,7 @@ export function ArchiveReportDialog({
     setTouched(true);
     if (tooShort) return;
     setBusy(true);
-    const { error } = await rpc("bw_archive_report", {
+    const { error } = await supabase.rpc("bw_archive_report", {
       p_kind: kind,
       p_id: reportId,
       p_reason: reason.trim(),
@@ -193,7 +189,7 @@ export function RestoreReportButton({
   const [busy, setBusy] = useState(false);
   const restore = async () => {
     setBusy(true);
-    const { error } = await rpc("bw_restore_report", { p_kind: kind, p_id: reportId });
+    const { error } = await supabase.rpc("bw_restore_report", { p_kind: kind, p_id: reportId });
     setBusy(false);
     if (error) {
       toast.error(error.message ?? "Couldn't restore this report.");
