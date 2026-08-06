@@ -109,8 +109,61 @@ export interface PTPNarrativeSectionsProps {
 }
 
 /* =========================================================================
+   facet_insights_all keying
+
+   The stored facet_data array is keyed by POSITION, not by name: the
+   generator stores the name the model echoes back, which occasionally drifts
+   (dropped "(personal)"/"(professional)" suffixes), so a name match silently
+   misses. Stripping the suffix on both sides is not a fix either — on a
+   combined 89-item sitting the professional and personal halves of a facet
+   collapse to the same string and the match becomes ambiguous.
+
+   Item number is stable on both sides, so we zip the stored array against the
+   assessment's items ordered by item_number and key the map by item number.
+   If the lengths disagree we do NOT zip — a shifted zip would attach the wrong
+   text to every facet after the divergence — we warn and let the caller fall
+   back to name matching.
+   ========================================================================= */
+async function orderedItemNumbers(assessmentId: string): Promise<number[]> {
+  const { data: responses } = await supabase
+    .from("assessment_responses")
+    .select("item_id")
+    .eq("assessment_id", assessmentId);
+  const itemIds = (responses ?? []).map((r) => r.item_id);
+  if (!itemIds.length) return [];
+  const { data: items } = await supabase
+    .from("items_presentation")
+    .select("item_id, item_number")
+    .in("item_id", itemIds);
+  return (items ?? [])
+    .map((i) => i.item_number ?? 0)
+    .filter((n) => n > 0)
+    .sort((a, b) => a - b);
+}
+
+function zipInsightsByItem(
+  halves: Array<{ insights: FacetInterpretation[]; itemNumbers: number[] }>,
+): Map<number, FacetInterpretation> {
+  const map = new Map<number, FacetInterpretation>();
+  for (const half of halves) {
+    if (!half.insights.length) continue;
+    if (half.insights.length !== half.itemNumbers.length) {
+      console.warn(
+        `[all-facets] stored insight count (${half.insights.length}) does not match item count (${half.itemNumbers.length}); falling back to name matching`,
+      );
+      continue;
+    }
+    half.itemNumbers.forEach((n, i) => {
+      if (!map.has(n)) map.set(n, half.insights[i]);
+    });
+  }
+  return map;
+}
+
+/* =========================================================================
    Shared data hook
    ========================================================================= */
+
 
 function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   const {
