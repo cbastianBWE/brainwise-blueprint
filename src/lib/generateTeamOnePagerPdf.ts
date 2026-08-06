@@ -119,8 +119,14 @@ export async function generateTeamOnePagerPdf(
   const M = 14;
   const CONTENT_W = PAGE_W - M * 2;
   const BAND_H = 50;
-  /** Single footer boundary. Nothing is drawn below this, on any page. */
+  /** Flow boundary for every normal block: content blocks break to a new page
+   *  rather than cross this line. The single documented exception is the
+   *  disclaimer, which may run down to DISCLAIMER_BOTTOM (below). */
   const BOTTOM = PAGE_H - 16;
+  /** The disclaimer is fine print and is allowed into the bottom margin rather
+   *  than strand itself on an otherwise empty page. It still clears the footer
+   *  text baseline at PAGE_H - 8. */
+  const DISCLAIMER_BOTTOM = PAGE_H - 12;
   const CONT_TOP = 22;
   const GUTTER = 10;
   const COL_W = (CONTENT_W - GUTTER) / 2;
@@ -331,9 +337,9 @@ export async function generateTeamOnePagerPdf(
       doc.setFontSize(dsize);
       const lines = doc.splitTextToSize(text, CONTENT_W) as string[];
       const need = lines.length * dlh + 5;
-      // the disclaimer is allowed to sit in the bottom margin rather than
-      // strand itself on an otherwise empty page
-      if (y + need > PAGE_H - 12) ensure(need);
+      // the disclaimer may run into the bottom margin (see DISCLAIMER_BOTTOM)
+      // rather than strand itself on an otherwise empty page
+      if (y + need > DISCLAIMER_BOTTOM) ensure(need);
       y += 2;
       if (draw) {
         doc.setDrawColor(220, 224, 228);
@@ -369,7 +375,15 @@ export async function generateTeamOnePagerPdf(
           doc.setFontSize(body);
           const lines = doc.splitTextToSize(str(row.line?.text), textW) as string[];
           const chips = chipLayout(doc, row.line?.facets, textW, fs);
-          const h = lines.length * lh + (chips.h > 0 ? chips.h + 1.6 : 0) + 1.4;
+          // chips hang 1.6mm below the last text baseline; the row must then
+          // clear the whole chip block plus an even gap, or the next row's
+          // separator is drawn straight through the chip labels
+          const chipLead = 1.6;
+          const chipTrail = 3.8 * k;
+          const h =
+            lines.length * lh +
+            (chips.h > 0 ? chips.h + chipLead + chipTrail - lh : 0) +
+            1.4;
           ensure(h + 1.4);
           if (i > 0 && draw) {
             doc.setDrawColor(220, 224, 228);
@@ -389,8 +403,9 @@ export async function generateTeamOnePagerPdf(
           }
           let rowBottom = y + lines.length * lh;
           if (chips.h > 0) {
-            if (draw) drawChipRows(doc, chips.rows, M + labelW, rowBottom - lh + 1.6);
-            rowBottom += chips.h - lh + 2.4;
+            const chipTop = rowBottom - lh + chipLead;
+            if (draw) drawChipRows(doc, chips.rows, M + labelW, chipTop);
+            rowBottom = chipTop + chips.h + chipTrail;
           }
           y = rowBottom + 1.4;
         });
@@ -414,10 +429,26 @@ export async function generateTeamOnePagerPdf(
         numberedList(talkAbout, 2);
       }
 
-      if (str(d.disclaimer)) disclaimerBlock(str(d.disclaimer));
+      const preview = (Array.isArray(d.report_preview) ? d.report_preview : []).filter(Boolean);
+
+      /* The disclaimer only breaks to its own page when nothing follows it. If
+       * the preview page is coming anyway, that page carries the disclaimer —
+       * otherwise dense sheets produce an orphan page holding just fine print. */
+      const disclaimerFitsHere = (() => {
+        const t = str(d.disclaimer);
+        if (!t) return false;
+        const dsize = 7.5 * Math.max(k, 0.9);
+        const dlh = 3.1 * Math.max(k, 0.9);
+        doc.setFont("Montserrat", "normal");
+        doc.setFontSize(dsize);
+        const l = doc.splitTextToSize(t, CONTENT_W) as string[];
+        return y + l.length * dlh + 5 <= DISCLAIMER_BOTTOM;
+      })();
+      if (str(d.disclaimer) && (preview.length === 0 || disclaimerFitsHere)) {
+        disclaimerBlock(str(d.disclaimer));
+      }
 
       /* the report preview always starts its own page, like the paired snapshot */
-      const preview = (Array.isArray(d.report_preview) ? d.report_preview : []).filter(Boolean);
       if (preview.length > 0) {
         page += 1;
         goto(page);
@@ -441,6 +472,7 @@ export async function generateTeamOnePagerPdf(
           facets: Array.isArray(p.facets) ? p.facets.filter(Boolean) : [],
         }));
         cardGrid(blocks, 2, TEAL);
+        if (str(d.disclaimer) && !disclaimerFitsHere) disclaimerBlock(str(d.disclaimer));
       }
     } else {
       const d = args.data;
@@ -486,22 +518,28 @@ export async function generateTeamOnePagerPdf(
     return pagesUsed;
   };
 
-  /* measure down the ladder, then draw once at the first step that fits */
-  const sheetPages = args.scope === "team" && (args.data.report_preview?.length ?? 0) > 0 ? 2 : 1;
+  /* The team sheet must print as one page in a room, so it walks the ladder.
+   * The leader sheet is read on its own and carries far more content than a
+   * single page holds at readable type: it renders at full size and paginates. */
   let step = 0;
   let pages = layout(LADDER[0]);
-  while (pages > sheetPages && step < LADDER.length - 1) {
-    step += 1;
-    pages = layout(LADDER[step]);
-  }
-  if (pages > sheetPages) {
-    console.info(
-      `[team one-pager] ${args.scope}: still ${pages} pages at the smallest step; rendered with real pagination.`,
-    );
-  } else if (step > 0) {
-    console.info(
-      `[team one-pager] ${args.scope}: shrank ${step} step(s) to ${(LADDER[step] * 100).toFixed(1)}% type.`,
-    );
+  if (args.scope === "team") {
+    const sheetPages = (args.data.report_preview?.length ?? 0) > 0 ? 2 : 1;
+    while (pages > sheetPages && step < LADDER.length - 1) {
+      step += 1;
+      pages = layout(LADDER[step]);
+    }
+    if (pages > sheetPages) {
+      console.info(
+        `[team one-pager] team: still ${pages} pages at the smallest step; rendered with real pagination.`,
+      );
+    } else if (step > 0) {
+      console.info(
+        `[team one-pager] team: shrank ${step} step(s) to ${(LADDER[step] * 100).toFixed(1)}% type.`,
+      );
+    }
+  } else {
+    console.info(`[team one-pager] leader: full-size type, ${pages} page(s).`);
   }
 
   draw = true;
