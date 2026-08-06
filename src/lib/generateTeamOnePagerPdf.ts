@@ -337,9 +337,9 @@ export async function generateTeamOnePagerPdf(
       doc.setFontSize(dsize);
       const lines = doc.splitTextToSize(text, CONTENT_W) as string[];
       const need = lines.length * dlh + 5;
-      // the disclaimer is allowed to sit in the bottom margin rather than
-      // strand itself on an otherwise empty page
-      if (y + need > PAGE_H - 12) ensure(need);
+      // the disclaimer may run into the bottom margin (see DISCLAIMER_BOTTOM)
+      // rather than strand itself on an otherwise empty page
+      if (y + need > DISCLAIMER_BOTTOM) ensure(need);
       y += 2;
       if (draw) {
         doc.setDrawColor(220, 224, 228);
