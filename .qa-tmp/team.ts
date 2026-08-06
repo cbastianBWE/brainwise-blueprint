@@ -40,11 +40,15 @@ async function run(p: any, label: string) {
       try {
         const f = doc.getFont();
         const size = doc.internal.getFontSize();
+        const opts = rest.find((r) => r && typeof r === "object" && "align" in r) as { align?: string } | undefined;
+        const align = opts?.align ?? "left";
         for (const t of arr) {
           if (typeof t !== "string" || !t) continue;
+          const w = doc.getTextWidth(t);
+          const right = align === "right" ? x : align === "center" ? x + w / 2 : x + w;
           draws.push({
             page: doc.internal.getCurrentPageInfo().pageNumber,
-            x, y, right: x + doc.getTextWidth(t),
+            x, y, right,
             text: t, font: `${f?.fontName}/${f?.fontStyle}`, size,
           });
         }
@@ -92,6 +96,12 @@ async function run(p: any, label: string) {
   // numbering gaps for avoid_conflict sequence
   const nums = draws.filter((d) => /^\d+$/.test(d.text.trim()) && d.x < 25).map((d) => Number(d.text));
   console.log("small ordinals seen:", nums.slice(0, 30).join(","));
+  const lean = draws.filter((d) => /Lean on/.test(d.text) || d.text.length > 0);
+  void lean;
+  const leanLines = draws.filter((d) => d.font.startsWith("Montserrat") && d.size === 9 && d.right > 190);
+  console.log("wide 9pt lines (lean-on candidates):", leanLines.length, leanLines.map((d) => d.right.toFixed(1)).join(","));
+  const shapeHeads = draws.filter((d) => /Nobody down there|Nobody up here|Two groups|Even spread|Together/.test(d.text));
+  console.log("full-map group headings:", shapeHeads.map((d) => `p${d.page}:${d.text}`).join(" | "));
   return { pages, over: over.length };
 }
 
