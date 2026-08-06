@@ -25,28 +25,33 @@ async function run(p: any, label: string) {
   };
 
   const draws: Draw[] = [];
-  const API: any = (jsPDF as any).API ?? (jsPDF as any).prototype;
-  if (typeof API.text !== "function") { const jp: any = (jsPDF as any).jsPDF ?? jsPDF; Object.assign(API, {}); }
-  const origText = API.text;
   let captured: any = null;
-  API.text = function (txt: any, x: number, y: number, ...rest: any[]) {
-    const arr = Array.isArray(txt) ? txt : [txt];
-    try {
-      const f = this.getFont?.();
-      const size = this.internal.getFontSize();
-      for (const t of arr) {
-        if (typeof t !== "string" || !t) continue;
-        draws.push({
-          page: this.internal.getCurrentPageInfo().pageNumber,
-          x, y, right: x + this.getTextWidth(t),
-          text: t, font: `${f?.fontName}/${f?.fontStyle}`, size,
-        });
-      }
-    } catch { /* ignore */ }
-    return origText.call(this, txt, x, y, ...rest);
-  };
-  const origSave = API.save;
-  API.save = function () { captured = this; return this; };
+  const API: any = (jsPDF as any).API;
+  const hook = ["initialized", function (this: any) {
+    const doc = this;
+    captured = doc;
+    const orig = doc.text.bind(doc);
+    doc.text = (txt: any, x: number, y: number, ...rest: any[]) => {
+      const arr = Array.isArray(txt) ? txt : [txt];
+      try {
+        const f = doc.getFont();
+        const size = doc.internal.getFontSize();
+        for (const t of arr) {
+          if (typeof t !== "string" || !t) continue;
+          draws.push({
+            page: doc.internal.getCurrentPageInfo().pageNumber,
+            x, y, right: x + doc.getTextWidth(t),
+            text: t, font: `${f?.fontName}/${f?.fontStyle}`, size,
+          });
+        }
+      } catch { /* ignore */ }
+      return orig(txt, x, y, ...rest);
+    };
+    const os = doc.save.bind(doc);
+    doc.save = () => doc;
+    void os;
+  }];
+  API.events.push(hook);
 
   await generateTeamProfilePdf(data as any, {
     teamInThree: true, domains: true, shapeLegend: true, driving: true,
@@ -54,8 +59,7 @@ async function run(p: any, label: string) {
     leaderBrief: true, fullMap: true, fullMapCharts: true, coach: true,
   } as any);
 
-  API.text = origText;
-  API.save = origSave;
+  API.events.splice(API.events.indexOf(hook), 1);
 
   const pages = captured?.internal?.getNumberOfPages?.() ?? 0;
   const over = draws.filter((d) => d.right > LIMIT + 0.3);
