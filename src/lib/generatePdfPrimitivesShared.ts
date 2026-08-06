@@ -226,7 +226,7 @@ export interface CoverParams {
   subtitle: string;
   contextPillLabel: string;
   field1: CoverField;
-  field2: CoverField;
+  field2?: CoverField;
   field3?: CoverField;
   disclaimer: string;
   copyright: string;
@@ -335,19 +335,19 @@ export async function renderCoverPage(doc: jsPDF, p: CoverParams): Promise<void>
   doc.setTextColor(...ORANGE);
   doc.setCharSpace(1);
   doc.text(p.field1.label.toUpperCase(), MARGIN_L, fieldY);
-  doc.text(p.field2.label.toUpperCase(), MARGIN_L + fieldColW + 10, fieldY);
+  if (p.field2) doc.text(p.field2.label.toUpperCase(), MARGIN_L + fieldColW + 10, fieldY);
   doc.setCharSpace(0);
 
   doc.setFont("Poppins", "bold");
   doc.setFontSize(15);
   doc.setTextColor(...NAVY);
   doc.text(p.field1.value, MARGIN_L, fieldY + 9);
-  doc.text(p.field2.value, MARGIN_L + fieldColW + 10, fieldY + 9);
+  if (p.field2) doc.text(p.field2.value, MARGIN_L + fieldColW + 10, fieldY + 9);
 
   doc.setDrawColor(180, 180, 180);
   doc.setLineWidth(0.3);
   doc.line(MARGIN_L, fieldY + 13, MARGIN_L + fieldColW, fieldY + 13);
-  doc.line(MARGIN_L + fieldColW + 10, fieldY + 13, MARGIN_L + CONTENT_W, fieldY + 13);
+  if (p.field2) doc.line(MARGIN_L + fieldColW + 10, fieldY + 13, MARGIN_L + CONTENT_W, fieldY + 13);
 
   let nextY = fieldY + 28;
   if (p.field3) {
@@ -516,9 +516,94 @@ export function drawPairDistRow(
   ctx.y = y + rowH + 1;
 }
 
+/** One recessive ink for every member dot. The shape bucket is already stated
+ *  by the heading above the rows, so color carries no extra information here;
+ *  a single mid-gray also clears the 3:1 contrast floor at 1.3mm. */
+export const DIST_DOT: readonly [number, number, number] = [109, 104, 117];
+
+/** Height of the compact strip drawn inside a driver card. */
+export const DIST_STRIP_H = 9;
+
+/**
+ * The scale key for a run of distribution rows. Drawn once per section: the
+ * axis ends and its midpoint, the member count, and the one direct label the
+ * mean marker gets anywhere in the report.
+ */
+export function drawTeamDistScale(
+  ctx: PdfContext,
+  args: { n: number; x?: number; width?: number },
+): void {
+  const { doc } = ctx;
+  const x = args.x ?? MARGIN_L;
+  const w = args.width ?? CONTENT_W;
+  ctx.checkPageBreak(16);
+  const axisX = x + AXIS_LEFT_PAD;
+  const axisW = w - AXIS_LEFT_PAD - AXIS_RIGHT_PAD;
+
+  const keyY = ctx.y + 2;
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...MUTED);
+  doc.text(`Each dot is one member's score (n=${args.n}).`, x, keyY);
+  const lead = doc.getTextWidth(`Each dot is one member's score (n=${args.n}).`);
+  const tickX = x + lead + 4;
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.9);
+  doc.line(tickX, keyY - 2.4, tickX, keyY + 0.6);
+  doc.setTextColor(...MUTED);
+  doc.text("team mean", tickX + 2, keyY);
+
+  const axisY = keyY + 5;
+  drawAxis(ctx, axisY, axisX, axisW);
+  doc.setFont("Montserrat", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(...MUTED);
+  doc.text("0", axisX, axisY + 3.4);
+  doc.text("50", axisX + axisW / 2, axisY + 3.4, { align: "center" });
+  doc.text("100", axisX + axisW, axisY + 3.4, { align: "right" });
+
+  ctx.y = axisY + 6;
+}
+
+/** The dots + mean tick for one facet, at an explicit position. Returns the
+ *  height consumed, so a card can measure it before drawing. */
+export function drawDistStripAt(
+  doc: jsPDF,
+  args: { x: number; y: number; width: number; scores: number[] },
+): number {
+  const scores = (args.scores ?? []).filter((n) => typeof n === "number");
+  if (scores.length === 0) return 0;
+  const axisX = args.x + AXIS_LEFT_PAD;
+  const axisW = args.width - AXIS_LEFT_PAD - AXIS_RIGHT_PAD;
+  const axisY = args.y + DIST_STRIP_H / 2;
+
+  doc.setDrawColor(210, 210, 210);
+  doc.setLineWidth(0.2);
+  doc.line(axisX, axisY, axisX + axisW, axisY);
+  doc.setDrawColor(220, 220, 220);
+  [0, 50, 100].forEach((v) => {
+    const x = axisX + (v / 100) * axisW;
+    doc.line(x, axisY - 0.8, x, axisY + 0.8);
+  });
+
+  const jitter = [-1.8, 0, 1.8];
+  doc.setFillColor(DIST_DOT[0], DIST_DOT[1], DIST_DOT[2]);
+  scores.forEach((s, i) => {
+    const v = Math.max(0, Math.min(100, s));
+    doc.circle(axisX + (v / 100) * axisW, axisY + jitter[i % 3], 1.3, "F");
+  });
+
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.9);
+  const mx = axisX + (mean / 100) * axisW;
+  doc.line(mx, axisY - 3, mx, axisY + 3);
+  return DIST_STRIP_H;
+}
+
 export function drawTeamDistRow(
   ctx: PdfContext,
-  args: { label: string; scores: number[]; dotColor?: readonly [number, number, number] },
+  args: { label: string; scores: number[] },
 ): void {
   const { doc } = ctx;
   const scores = Array.isArray(args.scores) ? args.scores.filter((n) => typeof n === "number") : [];
@@ -545,31 +630,12 @@ export function drawTeamDistRow(
   const labelLines = doc.splitTextToSize(cleanMarkdown(args.label), CONTENT_W - 30);
   doc.text(labelLines[0], MARGIN_L, y + 3);
 
-  doc.setFont("Montserrat", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(...MUTED);
-  doc.text(`n=${scores.length}`, MARGIN_L + CONTENT_W, y + 3, { align: "right" });
-
-  const axisY = y + 8;
-  const axisX = MARGIN_L + AXIS_LEFT_PAD;
-  const axisW = CONTENT_W - AXIS_LEFT_PAD - AXIS_RIGHT_PAD;
-  drawAxis(ctx, axisY, axisX, axisW);
-
-  const dotColor = args.dotColor ?? TEAL;
-  const jitter = [-1.8, 0, 1.8];
-  doc.setFillColor(dotColor[0], dotColor[1], dotColor[2]);
-  scores.forEach((s, i) => {
-    const v = Math.max(0, Math.min(100, s));
-    const x = axisX + (v / 100) * axisW;
-    const dy = jitter[i % 3];
-    doc.circle(x, axisY + dy, 1.3, "F");
+  drawDistStripAt(doc, {
+    x: MARGIN_L,
+    y: y + 8 - DIST_STRIP_H / 2,
+    width: CONTENT_W,
+    scores,
   });
-
-  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const mx = axisX + (mean / 100) * axisW;
-  doc.setDrawColor(...NAVY);
-  doc.setLineWidth(0.9);
-  doc.line(mx, axisY - 3, mx, axisY + 3);
 
   ctx.y = y + rowH + 1;
 }
