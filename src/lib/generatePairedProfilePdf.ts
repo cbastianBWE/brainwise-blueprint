@@ -1082,6 +1082,7 @@ export async function generatePairedProfilePdf(
             facets: (s.conflict.per_person.b.facets ?? []).map(nm),
           },
         ],
+        fs,
         { persons: true },
       );
     }
