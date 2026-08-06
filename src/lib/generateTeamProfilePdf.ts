@@ -32,6 +32,8 @@ import {
   measureCard,
   drawCardAt,
   CARD_GAP,
+  CARD_PAD,
+  CARD_RULE_W,
   type CardMetrics,
   type FacetStyler,
   type PdfBlock,
@@ -501,6 +503,13 @@ export async function generateTeamProfilePdf(
   // The team report always covers the full instrument, so workplace wording is right.
   const fs = makeFacetStyler([...data.fullMap, ...data.strengths, ...data.focusAreas], "work");
 
+  /* item number -> facet name. Built unconditionally: both the leader brief's
+     Driver column and the practitioner cards key on it. */
+  const facetByItem = new Map<number, string>();
+  for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
+    if (!facetByItem.has(f.itemNumber)) facetByItem.set(f.itemNumber, f.facetName);
+  }
+
   // 1. team in three
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
     ctx.sectionHeading("Your team in three", SECTION_RESERVE, "The shape");
@@ -736,11 +745,8 @@ export async function generateTeamProfilePdf(
     ctx.y += 3;
 
     // the Driver column names the facet, exactly as the screen does; the raw
-    // instrument question stays in the practitioner section, where it is the point
-    const facetByItem = new Map<number, string>();
-    for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
-      if (!facetByItem.has(f.itemNumber)) facetByItem.set(f.itemNumber, f.facetName);
-    }
+    // instrument question also appears in the practitioner section, but there it
+    // is supporting detail under the facet name, not the heading
     for (const r of rows) {
       const facetName = facetByItem.get(r.item);
       const driver = facetName ? facetDisplayLabel(facetName, "work") : `Item ${r.item}`;
