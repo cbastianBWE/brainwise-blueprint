@@ -664,19 +664,39 @@ export async function generateTeamProfilePdf(
     for (let i = 0; i < Math.min(3, s.leadership.length); i++) {
       const it = s.leadership[i];
       ctx.ensureBlockSpace(20);
+      // headline: wrapped like team_in_three, indented past the ordinal so the
+      // continuation lines align under the text rather than under the number
       doc.setFont("Poppins", "bold");
       doc.setFontSize(11);
       doc.setTextColor(...NAVY);
-      doc.text(`${i + 1}. ${it.headline ?? ""}`, MARGIN_L, ctx.y);
-      ctx.y += 5;
+      const ordinal = `${i + 1}. `;
+      const ordW = doc.getTextWidth(ordinal);
+      const hl = doc.splitTextToSize(cleanMarkdown(it.headline ?? ""), CONTENT_W - ordW);
+      hl.forEach((l: string, li: number) => {
+        ctx.checkPageBreak(5.5);
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(...NAVY);
+        if (li === 0) doc.text(ordinal + l, MARGIN_L, ctx.y);
+        else doc.text(l, MARGIN_L + ordW, ctx.y);
+        ctx.y += 5;
+      });
       ctx.bodyText(it.detail ?? "");
       if (it.action) {
+        // measured and drawn in the same font, and wrapped to the content width
         doc.setFont("Poppins", "bold");
         doc.setFontSize(9);
-        doc.setTextColor(...NAVY);
-        doc.text(it.action, MARGIN_L, ctx.y);
-        ctx.y += 5;
+        const al = doc.splitTextToSize(cleanMarkdown(it.action), CONTENT_W);
+        for (const l of al) {
+          ctx.checkPageBreak(5);
+          doc.setFont("Poppins", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(...NAVY);
+          doc.text(l, MARGIN_L, ctx.y);
+          ctx.y += 4.8;
+        }
       }
+
       chipsUnder(ctx, it.facets, fs);
       ctx.y += 2;
     }
