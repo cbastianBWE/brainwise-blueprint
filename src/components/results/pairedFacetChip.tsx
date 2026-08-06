@@ -2,8 +2,8 @@
  * Shared paired-report chip primitives.
  *
  * Lifted out of src/pages/PairedReport.tsx so the one-pager can reuse the exact
- * same chip (colour, tooltip, facet jump) instead of growing a second one.
- * Chip colour comes only from the locked PTP dimension namespace.
+ * same chip (color, tooltip, facet jump) instead of growing a second one.
+ * Chip color comes only from the locked PTP dimension namespace.
  */
 import { useEffect, useState } from "react";
 import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
