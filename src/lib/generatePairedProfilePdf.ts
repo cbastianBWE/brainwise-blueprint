@@ -734,7 +734,7 @@ export async function generatePairedProfilePdf(
       doc.setFont("Montserrat", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...BLACK);
-      doc.text(`— ${PAIR_SHAPE_DESC[k]}`, x + tw + 2.5, legendY);
+      doc.text(`- ${PAIR_SHAPE_DESC[k]}`, x + tw + 2.5, legendY);
     });
     ctx.y = legendY + 6;
   }
@@ -775,7 +775,7 @@ export async function generatePairedProfilePdf(
       (f) => f.stats && typeof f.stats.a === "number" && typeof f.stats.b === "number",
     );
     if (set.length > 0) {
-      ctx.sectionHeading("Driving facets — distribution", 22, "The drivers");
+      ctx.sectionHeading("Driving facets: distribution", 22, "The drivers");
       for (const f of set) {
         drawPairDistRow(ctx, { label: facetLabel(f.facetName), a: f.stats!.a, b: f.stats!.b });
       }

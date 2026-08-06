@@ -21,9 +21,6 @@ import {
   cleanMarkdown,
   splitParas,
   drawTeamDistRow,
-  drawTeamDistScale,
-  drawDistStripAt,
-  DIST_STRIP_H,
   asBlocks,
   blockAccent,
   chipLayout,
@@ -36,13 +33,13 @@ import {
   type FacetStyler,
   type PdfBlock,
   type PdfContext,
-} from "./generatePdfPrimitivesShared";
+} from "./shared";
 import {
   facetDisplayLabel,
   bulletToText,
   type Bullet,
-} from "./pairedSectionTypes";
-import type { TeamPdfData, TeamFacetForPdf } from "./assembleTeamPdfData";
+} from "../lib/pairedSectionTypes";
+import type { TeamPdfData, TeamFacetForPdf } from "../lib/assembleTeamPdfData";
 
 export interface TeamPdfSections {
   teamInThree: boolean;
@@ -78,6 +75,16 @@ const TEAM_SHAPE_DESC: Record<TeamShapeKey, string> = {
   together: "real common ground",
 };
 
+/* Colors mirror src/pages/TeamReport.tsx's `GC` map exactly, so a facet is
+   drawn in the same hue on screen and in the PDF. */
+const TEAM_SHAPE_COLOR: Record<TeamShapeKey, readonly [number, number, number]> = {
+  allHigh: ORANGE,
+  allLow: NAVY,
+  two: MUSTARD,
+  even: TEAL,
+  together: GREEN,
+};
+
 /* Exact-match on the shape vocabulary the database actually stores, mirroring
    shapeKey() in src/pages/TeamReport.tsx. The previous substring chain never
    matched "Everyone high"/"Everyone low", so those facets silently fell through
@@ -107,11 +114,6 @@ function shapeKey(shape: string | null | undefined): TeamShapeKey {
    asLines / asBlocks so no object ever reaches cleanMarkdown. asBlocks, the
    chip layer and the card layer live in generatePdfPrimitivesShared.ts and are
    shared with the paired PDF. */
-
-/** One rule for every top-level section: it needs this much room below its
- *  heading or it starts the next page, so major sections never begin as a
- *  three-line sliver at the foot of a page. */
-const SECTION_RESERVE = 62;
 
 /** Team body metrics; the paired PDF passes its own to the same primitives. */
 const CARD_METRICS: CardMetrics = { bodySize: 9, lhBody: 4.5, lhPoint: 4.6 };
@@ -287,15 +289,7 @@ function twoColumn(
 
 function drivingCard(
   ctx: PdfContext,
-  args: {
-    kind: "strength" | "focus";
-    name: string;
-    why: string;
-    actions: string[];
-    /** the facet's member scores; the evidence sits inside the card, between
-     *  the rationale and the actions, rather than in a cross-referenced section */
-    scores?: number[];
-  },
+  args: { kind: "strength" | "focus"; name: string; why: string; actions: string[] },
 ): void {
   const { doc } = ctx;
   const accent = args.kind === "strength" ? GREEN : MUSTARD;
@@ -306,19 +300,10 @@ function drivingCard(
   doc.setFont("Montserrat", "normal");
   doc.setFontSize(9);
   const whyLines = doc.splitTextToSize(cleanMarkdown(args.why), CONTENT_W - 8);
-  const bulletW = doc.getTextWidth("• ");
-  // wrapped action lines hang to the text, not back to the bullet
-  const actLines: Array<{ text: string; indent: number }> = args.actions.flatMap((a) => {
-    const wrapped: string[] = doc.splitTextToSize(cleanMarkdown(a), CONTENT_W - 12 - bulletW);
-    return wrapped.map((ln, i) => ({
-      text: i === 0 ? "• " + ln : ln,
-      indent: i === 0 ? 0 : bulletW,
-    }));
-  });
-  const scores = (args.scores ?? []).filter((n) => typeof n === "number");
-  const stripH = scores.length > 0 ? DIST_STRIP_H + 2 : 0;
-  const contentH =
-    6 + nameLines.length * 4.5 + whyLines.length * 4.5 + stripH + actLines.length * 4.5 + 6;
+  const actLines = args.actions.flatMap((a) =>
+    doc.splitTextToSize("• " + cleanMarkdown(a), CONTENT_W - 12),
+  );
+  const contentH = 6 + nameLines.length * 4.5 + whyLines.length * 4.5 + actLines.length * 4.5 + 6;
   ctx.ensureBlockSpace(contentH + 3);
   const boxTop = ctx.y;
   doc.setDrawColor(220, 220, 220);
@@ -342,14 +327,7 @@ function drivingCard(
   doc.setFontSize(9);
   doc.setTextColor(...BLACK);
   for (const l of whyLines) { doc.text(l, MARGIN_L + 4, y); y += 4.5; }
-  if (scores.length > 0) {
-    drawDistStripAt(doc, { x: MARGIN_L + 4, y: y - 3, width: CONTENT_W - 8, scores });
-    y += stripH;
-  }
-  doc.setFont("Montserrat", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...BLACK);
-  for (const l of actLines) { doc.text(l.text, MARGIN_L + 4 + l.indent, y); y += 4.5; }
+  for (const l of actLines) { doc.text(l, MARGIN_L + 4, y); y += 4.5; }
   ctx.y = boxTop + contentH + 3;
 }
 
@@ -468,7 +446,7 @@ export async function generateTeamProfilePdf(
   sections: TeamPdfSections,
 ): Promise<void> {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const { registerPdfFonts } = await import("./pdfFonts");
+  const { registerPdfFonts } = await import("../lib/pdfFonts");
   registerPdfFonts(doc);
 
   const todayLong = new Date().toLocaleDateString("en-US", {
@@ -483,9 +461,10 @@ export async function generateTeamProfilePdf(
     trademark: false,
     subtitle:
       "The patterns that shape how this team works under pressure, built from every member's Personal Threat Profile and mapped to the BrainWise 5P model.",
-    // the team size is stated once, by the pill; the title already names the team
     contextPillLabel: `${data.memberCount} MEMBERS`,
-    field1: { label: "DATE COMPLETED", value: todayLong },
+    field1: { label: "TEAM", value: data.teamName },
+    field2: { label: "DATE COMPLETED", value: todayLong },
+    field3: { label: "TEAM SIZE", value: `${data.memberCount} members` },
     disclaimer:
       "This report aggregates the self-report profiles of team members to describe group tendencies under pressure. It is not a clinical assessment, a diagnosis, or an evaluation of any individual. Individual responses are not identified. It is intended to support team discussion, not to rank or appraise people.",
     copyright:
@@ -503,7 +482,7 @@ export async function generateTeamProfilePdf(
 
   // 1. team in three
   if (sections.teamInThree && Array.isArray(s.team_in_three) && s.team_in_three.length > 0) {
-    ctx.sectionHeading("Your team in three", SECTION_RESERVE, "The shape");
+    ctx.sectionHeading("Your team in three", undefined, "The shape");
     s.team_in_three.slice(0, 3).forEach((it, i) => {
       // font state first, then measure, then reserve: the headline and the first
       // two lines of its detail move together, so a headline is never stranded.
@@ -537,13 +516,13 @@ export async function generateTeamProfilePdf(
 
   // 2. domains
   if (sections.domains && Object.keys(data.domains).length > 0) {
-    ctx.sectionHeading("Three domains, at a glance", SECTION_RESERVE, "The scores");
+    ctx.sectionHeading("Three domains, at a glance", undefined, "The scores");
     drawDomainsRadial(ctx, data);
   }
 
   // 3. shape legend
   if (sections.shapeLegend) {
-    ctx.sectionHeading("How to read the shapes", SECTION_RESERVE, "How to read this");
+    ctx.sectionHeading("How to read the shapes", undefined, "How to read this");
     for (const k of TEAM_SHAPES) {
       ctx.ensureBlockSpace(14);
       doc.setFont("Poppins", "bold");
@@ -556,21 +535,11 @@ export async function generateTeamProfilePdf(
     }
   }
 
-  // 4. driving (each driver's distribution is drawn inside its own card)
+  // 4. driving
   if (sections.driving && s.driving_facets) {
-    ctx.sectionHeading("Driving facets", SECTION_RESERVE, "What drives it");
+    ctx.sectionHeading("Driving facets", undefined, "What drives it");
     if (s.driving_facets.opening) paragraphs(ctx, s.driving_facets.opening);
     ctx.y += 2;
-    const drivingSet: TeamFacetForPdf[] = [...data.strengths, ...data.focusAreas];
-    const withScores =
-      sections.drivingFacetCharts &&
-      drivingSet.some((f) => (data.scoresByItem.get(f.itemNumber) ?? []).length > 0);
-    if (withScores) {
-      drawTeamDistScale(ctx, { n: data.memberCount });
-      ctx.y += 2;
-    }
-    const scoresFor = (f: TeamFacetForPdf) =>
-      withScores ? data.scoresByItem.get(f.itemNumber) ?? [] : [];
     // pair the narrative to the facet by item number, never by array index:
     // any reordering would otherwise attach the wrong rationale to a facet.
     // A facet with no matching rationale is still drawn (and warned about), so
@@ -587,7 +556,6 @@ export async function generateTeamProfilePdf(
         name: facetDisplayLabel(f.facetName, "work"),
         why: src?.why ?? "",
         actions: acts.slice(0, 3),
-        scores: scoresFor(f),
       });
     });
     const focusSrc = new Map((s.driving_facets.focus ?? []).map((d) => [d.item, d]));
@@ -600,15 +568,30 @@ export async function generateTeamProfilePdf(
         name: facetDisplayLabel(f.facetName, "work"),
         why: src?.why ?? "",
         actions: acts.slice(0, 3),
-        scores: scoresFor(f),
       });
     });
+
   }
 
+  // 5. driving facet charts
+  if (sections.drivingFacetCharts) {
+    const set: TeamFacetForPdf[] = [...data.strengths, ...data.focusAreas];
+    if (set.length > 0) {
+      ctx.sectionHeading("Driving facets — team distribution", undefined, "The spread");
+      for (const f of set) {
+        const scores = data.scoresByItem.get(f.itemNumber) ?? [];
+        drawTeamDistRow(ctx, {
+          label: facetDisplayLabel(f.facetName, "work"),
+          scores,
+          dotColor: TEAM_SHAPE_COLOR[shapeKey(f.shape)],
+        });
+      }
+    }
+  }
 
   // 6. communication
   if (sections.communication && s.communication) {
-    ctx.sectionHeading("Communication", SECTION_RESERVE, "The mechanics");
+    ctx.sectionHeading("Communication", undefined, "The mechanics");
     const genBlocks = asBlocks(s.communication.general);
     subheading(ctx, "In general", firstCardH(ctx, genBlocks, fs, TEAL));
     if (hasCards(genBlocks)) bulletCards(ctx, genBlocks, fs, { accent: TEAL });
@@ -664,7 +647,7 @@ export async function generateTeamProfilePdf(
 
   // 7. conflict
   if (sections.conflict && s.conflict) {
-    ctx.sectionHeading("Conflict", SECTION_RESERVE, "The pattern");
+    ctx.sectionHeading("Conflict", undefined, "The pattern");
     if (s.conflict.summary) paragraphs(ctx, s.conflict.summary);
     ctx.y += 2;
     const mit = asBlocks(s.conflict.mitigate);
@@ -689,27 +672,53 @@ export async function generateTeamProfilePdf(
     }
   }
 
-  // 7b. leadership snapshot (three headlines + moves), carded like every other
-  //     narrative section: the action is the card's last line and the chips sit
-  //     at the card's foot, so they can never read as the next item's chips.
+  // 7b. leadership snapshot (three headlines + moves)
   if (sections.leadership && Array.isArray(s.leadership) && s.leadership.length > 0) {
-    const leadershipBlocks: PdfBlock[] = s.leadership.slice(0, 3).map((it, i) => {
-      const detail = cleanMarkdown(it.detail ?? "").trim();
-      const action = cleanMarkdown(it.action ?? "").trim();
-      return {
-        point: `${i + 1}. ${cleanMarkdown(it.headline ?? "").trim()}`,
-        text: [detail, action].filter(Boolean).join("\n"),
-        facets: it.facets ?? [],
-      };
-    });
-    ctx.sectionHeading("For the leader", SECTION_RESERVE, "For the leader");
-    bulletCards(ctx, leadershipBlocks, fs, { accent: NAVY });
-  }
+    ctx.sectionHeading("For the leader", undefined, "For the leader");
+    for (let i = 0; i < Math.min(3, s.leadership.length); i++) {
+      const it = s.leadership[i];
+      ctx.ensureBlockSpace(20);
+      // headline: wrapped like team_in_three, indented past the ordinal so the
+      // continuation lines align under the text rather than under the number
+      doc.setFont("Poppins", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...NAVY);
+      const ordinal = `${i + 1}. `;
+      const ordW = doc.getTextWidth(ordinal);
+      const hl = doc.splitTextToSize(cleanMarkdown(it.headline ?? ""), CONTENT_W - ordW);
+      hl.forEach((l: string, li: number) => {
+        ctx.checkPageBreak(5.5);
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(11);
+        doc.setTextColor(...NAVY);
+        if (li === 0) doc.text(ordinal + l, MARGIN_L, ctx.y);
+        else doc.text(l, MARGIN_L + ordW, ctx.y);
+        ctx.y += 5;
+      });
+      ctx.bodyText(it.detail ?? "");
+      if (it.action) {
+        // measured and drawn in the same font, and wrapped to the content width
+        doc.setFont("Poppins", "bold");
+        doc.setFontSize(9);
+        const al = doc.splitTextToSize(cleanMarkdown(it.action), CONTENT_W);
+        for (const l of al) {
+          ctx.checkPageBreak(5);
+          doc.setFont("Poppins", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(...NAVY);
+          doc.text(l, MARGIN_L, ctx.y);
+          ctx.y += 4.8;
+        }
+      }
 
+      chipsUnder(ctx, it.facets, fs);
+      ctx.y += 2;
+    }
+  }
 
   // 8. leader brief (privileged)
   if (sections.leaderBrief && s.leader_brief) {
-    ctx.sectionHeading("For the leader: the moves", SECTION_RESERVE, "The moves");
+    ctx.sectionHeading("For the leader: the moves", undefined, "The moves");
     const rows = s.leader_brief.rows ?? [];
     const cols = [
       { key: "driver", label: "Driver", w: 40 },
@@ -736,15 +745,8 @@ export async function generateTeamProfilePdf(
     doc.line(MARGIN_L, ctx.y, MARGIN_L + CONTENT_W, ctx.y);
     ctx.y += 3;
 
-    // the Driver column names the facet, exactly as the screen does; the raw
-    // instrument question stays in the practitioner section, where it is the point
-    const facetByItem = new Map<number, string>();
-    for (const f of [...data.fullMap, ...data.strengths, ...data.focusAreas]) {
-      if (!facetByItem.has(f.itemNumber)) facetByItem.set(f.itemNumber, f.facetName);
-    }
     for (const r of rows) {
-      const facetName = facetByItem.get(r.item);
-      const driver = facetName ? facetDisplayLabel(facetName, "work") : `Item ${r.item}`;
+      const driver = data.itemText.get(r.item) ?? `Item ${r.item}`;
       const cells = [driver, r.risk_to_work, r.the_move, r.potential_owner];
       // measure in the body font the cells are drawn in, not the semibold
       // header font left live above
@@ -796,19 +798,11 @@ export async function generateTeamProfilePdf(
 
   // 9. full map (+ chart mode)
   if (sections.fullMap || sections.fullMapCharts) {
-    ctx.sectionHeading("The full map", SECTION_RESERVE, "Every facet");
+    ctx.sectionHeading("The full map", undefined, "Every facet");
     const buckets: Record<TeamShapeKey, TeamFacetForPdf[]> = {
       allHigh: [], allLow: [], two: [], even: [], together: [],
     };
     for (const f of data.fullMap) buckets[shapeKey(f.shape)].push(f);
-
-    if (
-      sections.fullMapCharts &&
-      data.fullMap.some((f) => (data.scoresByItem.get(f.itemNumber) ?? []).length > 0)
-    ) {
-      drawTeamDistScale(ctx, { n: data.memberCount });
-      ctx.y += 2;
-    }
 
     for (const k of TEAM_SHAPES) {
       const items = buckets[k];
@@ -824,6 +818,7 @@ export async function generateTeamProfilePdf(
           drawTeamDistRow(ctx, {
             label: facetDisplayLabel(f.facetName, "work"),
             scores: data.scoresByItem.get(f.itemNumber) ?? [],
+            dotColor: TEAM_SHAPE_COLOR[k],
           });
         }
       } else {
@@ -842,20 +837,16 @@ export async function generateTeamProfilePdf(
 
   // 10. coach (privileged)
   if (sections.coach && s.coach) {
-    ctx.sectionHeading("For the practitioner, org admin & super admin", SECTION_RESERVE, "Behind the scenes");
+    ctx.sectionHeading("For the practitioner, org admin & super admin", undefined, "Behind the scenes");
     if (Array.isArray(s.coach.why) && s.coach.why.length > 0) {
       subheading(ctx, "Why these matter", 16);
       for (const w of s.coach.why) {
         const q = data.itemText.get(w.item) ?? `Item ${w.item}`;
-        // measure first, then reserve the whole quote plus the first line of the
-        // rationale, so a three-line question can never split from its body
-        doc.setFont("Montserrat", "semibold");
-        doc.setFontSize(8.5);
-        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
-        ctx.ensureBlockSpace(ql.length * 4 + 9);
+        ctx.ensureBlockSpace(16);
         doc.setFont("Montserrat", "semibold");
         doc.setFontSize(8.5);
         doc.setTextColor(...MUTED);
+        const ql = doc.splitTextToSize(cleanMarkdown(q), CONTENT_W);
         for (const l of ql) {
           ctx.checkPageBreak(5);
           doc.setFont("Montserrat", "semibold");
