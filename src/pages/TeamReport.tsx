@@ -1134,8 +1134,6 @@ export default function TeamReport() {
                 </ol>
               </div>
             )}
-              </div>
-            )}
           </div>
         </section>
       )}
