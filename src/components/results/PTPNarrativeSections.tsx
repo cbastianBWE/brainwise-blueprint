@@ -498,11 +498,25 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
         ? primaryLoaded.length >= (storedTotal ?? 0) && additionalLoaded.length > 0
         : storedTotal !== null && loaded.length >= storedTotal;
 
+      // Key the loaded array by item number (see zipInsightsByItem above).
+      const primaryItems = await orderedItemNumbers(assessmentId);
+      const additionalItems = isCombinedSplitPair
+        ? await orderedItemNumbers(additionalAssessmentId!)
+        : [];
+      if (cancelled) return;
+      const buildMap = (primary: FacetInterpretation[], additional: FacetInterpretation[]) =>
+        zipInsightsByItem([
+          { insights: primary, itemNumbers: primaryItems },
+          { insights: additional, itemNumbers: additionalItems },
+        ]);
+
       if (loaded.length > 0) {
         setAllFacetInsights(loaded);
+        setFacetInsightsByItem(buildMap(primaryLoaded, additionalLoaded));
         if (isComplete) return; // Full data — done
         // Partial — fall through to poll for completion of primary row
       }
+
 
       // 3. Wait for accordion to open before triggering generation
       if (!responsesExpanded) return;
