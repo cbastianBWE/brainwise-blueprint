@@ -99,6 +99,18 @@ export function showTip(e: React.MouseEvent, text: string) {
 }
 export function hideTip() { TipCtx.current?.(null); }
 
+/** The floating tooltip surface. Identical on the paired and team reports. */
+export function TipLayer({ tip }: { tip: Tip }) {
+  if (!tip) return null;
+  return (
+    <div style={{
+      position: "fixed", pointerEvents: "none", background: NAVY, color: "#fff",
+      fontSize: 12, lineHeight: 1.4, padding: "8px 11px", borderRadius: 8,
+      zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
+    }}>{tip.text}</div>
+  );
+}
+
 /* ---------- small helpers ---------- */
 export function hexAlpha(hex: string, alpha: number): string {
   const h = hex.replace("#", "");
@@ -121,6 +133,16 @@ export interface FacetEntry {
   shape?: string | null;
   a?: number | null;
   b?: number | null;
+}
+
+/** The paired report's chip tooltip: the pair shape, then each person's band. */
+export function pairChipTip(
+  entry: { shape?: string | null; a?: number | null; b?: number | null },
+  firstA: string,
+  firstB: string,
+): string {
+  const shape = PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t;
+  return `${shape}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`;
 }
 
 /* ---------- shared anchor resolution ----------
@@ -187,27 +209,49 @@ export function useChipJump(
   return { canJump, jump };
 }
 
-/* ---------- facet chip ---------- */
+/* ---------- facet chip ----------
+   One chip serves the paired and team reports. Everything that differs between
+   them is a prop: the tooltip text is injected, and the entry is narrowed to the
+   structural minimum both reports' richer facet types widen into. */
+
+/** The minimum a chip needs. Paired entries (a/b) and team entries (stats) both
+ *  satisfy this. */
+export interface FacetChipEntry {
+  itemNumber?: number;
+  facetName?: string;
+  domain?: string | null;
+  shape?: string | null;
+  a?: number | null;
+  b?: number | null;
+}
+
 export function FacetChip({
-  name, entry, firstA, firstB, delay, size = "md", mode, inOverlay, onCloseOverlay,
+  name, entry, firstA, firstB, delay, size = "md", mode, tip: tipProp, inOverlay, onCloseOverlay,
 }: {
   name: string;
-  entry?: FacetEntry;
-  firstA: string;
-  firstB: string;
+  entry?: FacetChipEntry;
+  /** only needed for the derived pair-shape tooltip */
+  firstA?: string;
+  firstB?: string;
   delay: number;
   /** "sm" is used by the printed one-pager, where vertical space is fixed. */
   size?: "md" | "sm";
   /** Relationship mode; drives the displayed label only, never a lookup. */
   mode?: string | null;
+  /** Explicit tooltip. When omitted, the pair-shape tooltip is derived. */
+  tip?: string | null;
 } & ChipOverlayProps) {
   const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
   const text = base ? (base === AMBER ? MUSTARD : base) : GRAY;
   const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
   const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
-  const tip = entry
-    ? `${PAIR_SHAPE_SHORT[pairShapeKey(entry.shape, entry.a ?? undefined, entry.b ?? undefined)].t}. ${firstA} ${bandWord(entry.a)}, ${firstB} ${bandWord(entry.b)}`
-    : null;
+  const tip =
+    tipProp !== undefined
+      ? tipProp
+      : entry
+        ? pairChipTip(entry, firstA ?? "Person A", firstB ?? "Person B")
+        : null;
+
 
   const { canJump, jump } = useChipJump(entry?.itemNumber, { inOverlay, onCloseOverlay });
 

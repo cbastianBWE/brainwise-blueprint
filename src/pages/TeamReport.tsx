@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
@@ -24,12 +24,14 @@ import {
 } from "@/lib/pairedSectionTypes";
 import {
   DIM_COLOR,
-  hexAlpha,
   AMBER,
-  MUSTARD as CHIP_MUSTARD,
-  useChipJump,
+  POPPINS,
+  FacetChip,
+  TipLayer,
+  useTipController,
+  showTip,
+  hideTip,
   type ChipOverlayProps,
-
 } from "@/components/results/pairedFacetChip";
 
 
@@ -44,7 +46,10 @@ const GREEN = "#2D6A4F";
 const MUSTARD = "#7a5800";
 const INK = "#6D6875";
 const MUTED = "#6D6875";
-const LINE = "rgba(2,31,54,0.12)";
+const LINE = "rgba(2,31,54,.10)";
+/** Paired is deliberately flat; the old double drop shadow was the loudest
+ *  visual difference between the two reports. */
+const FLAT_SHADOW = "0 1px 2px rgba(2,31,54,.04)";
 const CARD_BG = "#ffffff";
 const SHAPE_KEYS = ["allHigh", "allLow", "two", "even", "together"] as const;
 type ShapeKey = (typeof SHAPE_KEYS)[number];
@@ -113,6 +118,68 @@ interface CoachSection {
   debrief_prompts: string[];
 }
 
+/* ---------- bold markdown ---------- */
+const renderBold = (s: string) => {
+  const parts = (s ?? "").split(/\*\*(.+?)\*\*/g);
+  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : <span key={i}>{p}</span>));
+};
+
+/* ---------- scroll reveal ----------
+   Keys are namespaced by report kind: the paired report uses the same section
+   names, and a shared key space would make team sections appear with no
+   animation depending on navigation order. */
+const TEAM_REVEALED = new Set<string>();
+
+export interface TeamRevealCtx {
+  revealRef: (key: string) => (el: HTMLElement | null) => void;
+  revealProps: (delayIndex?: number, key?: string) => {
+    ref: (el: HTMLElement | null) => void;
+    className: string;
+    style: React.CSSProperties;
+  };
+}
+
+const noopReveal: TeamRevealCtx = {
+  revealRef: () => () => {},
+  revealProps: () => ({ ref: () => {}, className: "", style: {} }),
+};
+
+const RevealCtx = createContext<TeamRevealCtx>(noopReveal);
+
+/* ---------- shared card language (matches the paired report) ---------- */
+const cardStyle: React.CSSProperties = {
+  background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
+  padding: "18px 20px", marginBottom: 14, boxShadow: FLAT_SHADOW,
+};
+const pbox: React.CSSProperties = {
+  border: `1px solid ${LINE}`, borderRadius: 10, padding: "13px 15px",
+};
+const boxLabel: React.CSSProperties = {
+  fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase",
+  fontWeight: 800, marginBottom: 8, color: NAVY,
+};
+const sectionLead: React.CSSProperties = {
+  color: GRAY, maxWidth: 760, margin: "0 0 18px",
+};
+const sectionLabel: React.CSSProperties = {
+  fontFamily: POPPINS, fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px",
+};
+
+function SectionHead({ eyebrow, children }: { eyebrow: string; children: React.ReactNode }) {
+  const ctx = useContext(RevealCtx);
+  return (
+    <div ref={ctx.revealRef(`head:${eyebrow}`)} className="pr-anim">
+      <div style={{
+        fontFamily: POPPINS, fontWeight: 700, fontSize: 12, letterSpacing: "0.2em",
+        textTransform: "uppercase", color: ORANGE, marginBottom: 8,
+      }}>
+        {eyebrow}
+      </div>
+      <h2 style={sectionLabel}>{children}</h2>
+    </div>
+  );
+}
+
 /* ---------- prose helpers ---------- */
 function splitParas(text: string): string[] {
   if (!text) return [];
@@ -140,7 +207,7 @@ function Paras({ text, style, blockKey }: { text: string; style?: React.CSSPrope
     <>
       {paras.map((p, i) => (
         <p key={i} style={{ ...base, marginTop: i === 0 ? 0 : 12 }}>
-          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={p} /> : p}
+          {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={p} /> : renderBold(p)}
         </p>
       ))}
     </>
@@ -158,6 +225,7 @@ function IdeaBullets({
   /** numbered list (avoid_conflict) rather than the default bullets */
   ordered?: boolean;
 }) {
+  const ctx = useContext(RevealCtx);
   if (Array.isArray(items)) {
     // drop empties, including {point:"",body:"",facets:[]} which would otherwise
     // draw a bordered card with nothing in it
@@ -179,7 +247,7 @@ function IdeaBullets({
             if (!s) return null;
             return (
               <li key={i} style={{ margin: "4px 0" }}>
-                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
               </li>
             );
           })}
@@ -194,7 +262,7 @@ function IdeaBullets({
             if (!s) return null;
             return (
               <div key={i} style={{ color: GRAY, fontSize: 16, lineHeight: 1.6 }}>
-                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : s}
+                {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}`} text={s} /> : renderBold(s)}
               </div>
             );
           }
@@ -205,24 +273,27 @@ function IdeaBullets({
           return (
             <div
               key={i}
+              {...ctx.revealProps(i, `${blockKey ?? "bullets"}:${i}`)}
+              className="pr-anim pr-card"
               style={{
+                ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`,
                 background: CARD_BG,
                 border: `1px solid ${LINE}`,
                 borderLeft: `4px solid ${accent}`,
                 borderRadius: 12,
                 padding: "12px 13px",
-              }}
+              } as React.CSSProperties}
             >
               {point && (
-                <div style={{ fontWeight: 800, fontSize: 15, color: NAVY, lineHeight: 1.4 }}>
+                <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
                   {ordered && <span style={{ marginRight: 6 }}>{i + 1}.</span>}
-                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : point}
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} /> : renderBold(point)}
                 </div>
               )}
               {body && (
-                <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
+                <div style={{ color: GRAY, fontSize: 13.5, lineHeight: 1.6, marginTop: point ? 4 : 0 }}>
                   {ordered && !point && <span style={{ fontWeight: 800, color: NAVY, marginRight: 6 }}>{i + 1}.</span>}
-                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : body}
+                  {blockKey ? <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} /> : renderBold(body)}
                 </div>
               )}
               <TeamChipRow facets={facets} lookupFacet={lookupFacet} />
@@ -237,6 +308,60 @@ function IdeaBullets({
     console.warn("[TeamReport] IdeaBullets received a non-string, non-array value", { blockKey, items });
   }
   return <Paras text={typeof items === "string" ? items : ""} style={style} blockKey={blockKey} />;
+}
+
+/* ---------- ordered sequence (avoid_conflict) ---------- */
+function Sequence({
+  items, blockKey, lookupFacet, connector = true,
+}: {
+  items: Bullet[];
+  blockKey: string;
+  lookupFacet?: (name: string) => TeamFacetEntry | undefined;
+  connector?: boolean;
+}) {
+  const ctx = useContext(RevealCtx);
+  const list = (items ?? []).filter((b) => {
+    if (!b) return false;
+    if (isBulletObject(b)) return !!((b.point ?? "").trim() || (b.body ?? "").trim() || bulletFacets(b).length);
+    return !!bulletToText(b);
+  });
+  if (!list.length) return null;
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      {list.map((raw, i) => {
+        const obj = isBulletObject(raw);
+        const point = obj ? (raw.point ?? "") : bulletToText(raw);
+        const body = obj ? (raw.body ?? "") : "";
+        return (
+          <div key={i} {...ctx.revealProps(i, `${blockKey}:${i}`)} style={{ ["--pr-delay" as string]: `${Math.min(i * 40, 240)}ms`, display: "flex", gap: 10, alignItems: "flex-start", position: "relative" } as React.CSSProperties}>
+            <div style={{ position: "relative", flex: "0 0 24px" }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%", background: TEAL, color: "#fff",
+                fontSize: 12, fontWeight: 700, fontFamily: POPPINS,
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>{i + 1}</div>
+              {connector && i < list.length - 1 && (
+                <div className="pr-connector" style={{ position: "absolute", left: 11, top: 24, width: 2, height: "calc(100% + 12px)", background: LINE }} />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              {point && (
+                <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14.5, color: NAVY, lineHeight: 1.4 }}>
+                  <HighlightableText blockKey={`${blockKey}:${i}:point`} text={point} />
+                </div>
+              )}
+              {body && (
+                <div style={{ color: GRAY, fontSize: 13.5, lineHeight: 1.6, marginTop: 3 }}>
+                  <HighlightableText blockKey={`${blockKey}:${i}:body`} text={body} />
+                </div>
+              )}
+              <TeamChipRow facets={bulletFacets(raw)} lookupFacet={lookupFacet} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 /* ---------- name-keyed facet index (chips carry facet names, not item numbers) ---------- */
@@ -260,43 +385,6 @@ function accentForFacets(
   return fallback;
 }
 
-function TeamFacetChip({
-  name, entry, inOverlay, onCloseOverlay,
-}: { name: string; entry?: TeamFacetEntry } & ChipOverlayProps) {
-  const base = entry?.domain ? DIM_COLOR[entry.domain] : undefined;
-  // amber is illegible as small text; the paired chip pairs it with mustard
-  const text = base ? (base === AMBER ? CHIP_MUSTARD : base) : GRAY;
-  const bg = base ? hexAlpha(base, 0.1) : "rgba(109,104,117,.08)";
-  const border = base ? hexAlpha(base, 0.26) : "rgba(109,104,117,.22)";
-
-  const tip = entry ? teamChipTip(entry) : null;
-
-  const { canJump, jump } = useChipJump(entry?.itemNumber, { inOverlay, onCloseOverlay });
-
-  return (
-    <span
-      className={canJump ? "pr-chip pr-chip-jump" : "pr-chip"}
-      onClick={canJump ? jump : undefined}
-      onMouseEnter={tip ? (e) => showTip(e, tip) : undefined}
-      onMouseLeave={hideTip}
-      style={{
-        display: "inline-block",
-        borderRadius: 999,
-        fontWeight: 600,
-        fontSize: 10.5,
-        padding: "3px 9px",
-        background: bg,
-        border: `1px solid ${border}`,
-        color: text,
-        cursor: canJump ? "pointer" : "default",
-        whiteSpace: "nowrap",
-      } as React.CSSProperties}
-    >
-      {facetDisplayLabel(name, "work")}
-    </span>
-  );
-}
-
 /** Team-shaped tooltip: the shape, the spread, and the camps when the data has them. */
 function teamChipTip(entry: TeamFacetEntry): string {
   const parts: string[] = [];
@@ -316,39 +404,25 @@ function TeamChipRow({
   if (!facets || facets.length === 0) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
-      {facets.map((f, i) => (
-        <TeamFacetChip
-          key={`${f}-${i}`}
-          name={f}
-          entry={lookupFacet?.(f)}
-          inOverlay={inOverlay}
-          onCloseOverlay={onCloseOverlay}
-        />
-      ))}
+      {facets.map((f, i) => {
+        const entry = lookupFacet?.(f);
+        return (
+          <FacetChip
+            key={`${f}-${i}`}
+            name={f}
+            entry={entry}
+            mode="work"
+            tip={entry ? teamChipTip(entry) : null}
+            delay={i * 25}
+            inOverlay={inOverlay}
+            onCloseOverlay={onCloseOverlay}
+          />
+        );
+      })}
     </div>
   );
 }
 
-
-/* ---------- tooltip ---------- */
-type Tip = { x: number; y: number; text: string } | null;
-const TipCtx = { current: null as null | ((t: Tip) => void) };
-function useTipController() {
-  const [tip, setTip] = useState<Tip>(null);
-  useEffect(() => {
-    TipCtx.current = setTip;
-    return () => { TipCtx.current = null; };
-  }, []);
-  return tip;
-}
-function showTip(e: React.MouseEvent, text: string) {
-  TipCtx.current?.({
-    x: Math.min(e.clientX + 12, window.innerWidth - 310),
-    y: e.clientY + 14,
-    text,
-  });
-}
-function hideTip() { TipCtx.current?.(null); }
 
 /* ---------- Distribution glyph + modal ---------- */
 function DistGlyph({
@@ -601,7 +675,7 @@ function tierFromDriver(score: number | null | undefined): number {
 
 /* ---------- driver card ---------- */
 function DriverCard({
-  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, driverScore, onOpenDist,
+  idx, itemNumber, kind, rank, shape, label, name, why, actions, question, scores, driverScore, blockKey, onOpenDist,
 }: {
   idx: number;
   /** anchors the card so facet chips can jump to a promoted driver */
@@ -617,6 +691,8 @@ function DriverCard({
   scores: number[];
   /** raw 0..1 driver strength; drives the pip meter, matching the paired report */
   driverScore?: number | null;
+  /** enables highlighting on the rationale, like the rest of the page */
+  blockKey?: string;
   onOpenDist: (scores: number[], color: string, title: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -626,14 +702,15 @@ function DriverCard({
   return (
     <div
       id={itemNumber != null ? `driver-${itemNumber}` : undefined}
+      className="pr-card"
       onMouseMove={question ? (e) => showTip(e, `Question answered: ${question}`) : undefined}
       onMouseLeave={hideTip}
       style={{
         background: kind === "strength" ? "linear-gradient(0deg,rgba(45,106,79,.05),rgba(45,106,79,.05)),#fff" : CARD_BG,
         border: `1px solid ${LINE}`,
         borderLeft: `6px solid ${accent}`,
-        borderRadius: 16,
-        boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
+        borderRadius: 14,
+        boxShadow: FLAT_SHADOW,
         padding: "18px 20px",
         marginBottom: 14,
       }}
@@ -642,7 +719,13 @@ function DriverCard({
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {kind === "strength"
             ? <span style={{ color: GREEN, fontSize: 22 }}>★</span>
-            : <span style={{ fontSize: 26, fontWeight: 800, color: GRAY }}>{rank}</span>}
+            : (
+              <span style={{
+                width: 22, height: 22, borderRadius: "50%", background: NAVY, color: "#fff",
+                fontSize: 12, fontWeight: 700, fontFamily: POPPINS,
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+              }}>{rank}</span>
+            )}
           {scores.length > 0 && (
             <DistGlyph
               scores={scores}
@@ -663,7 +746,7 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 800, color: NAVY, margin: "4px 0 8px", fontSize: 18 }}>{name}</div>
-          <div style={{ color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>{why}</div>
+          <div style={{ color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>{blockKey ? <HighlightableText blockKey={blockKey} text={why} /> : renderBold(why)}</div>
           {actions.length > 0 && (
             <>
               <button
@@ -700,7 +783,7 @@ function DriverCard({
 function Acc({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)", marginBottom: 12, overflow: "hidden" }}>
+    <div className="pr-card" style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, boxShadow: FLAT_SHADOW, marginBottom: 12, overflow: "hidden" }}>
       <button type="button" onClick={() => setOpen((o) => !o)} style={{
         width: "100%", textAlign: "left", background: "none", border: 0, padding: "16px 18px",
         fontSize: 18, fontWeight: 800, color: NAVY, cursor: "pointer",
@@ -819,6 +902,59 @@ export default function TeamReport() {
     return () => { s.remove(); };
   }, []);
 
+  /* ---------- scroll reveal (one shared observer, once per element, idempotent) ----------
+     TEAM_REVEALED is this page's own set: the paired report uses the same section
+     names, so a shared key space would make team sections appear unanimated
+     depending on navigation order. */
+  const [revealObserver] = useState<IntersectionObserver | null>(() => {
+    if (typeof IntersectionObserver === "undefined") return null;
+    return new IntersectionObserver(
+      (entries, obs) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            const k = (e.target as HTMLElement).dataset.prRevealKey;
+            if (k) TEAM_REVEALED.add(k);
+            e.target.classList.add("pr-in");
+            obs.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.12 },
+    );
+  });
+  useEffect(() => () => revealObserver?.disconnect(), [revealObserver]);
+
+  /** Stable per-key ref callbacks so a re-render never detaches/reattaches the node. */
+  const revealRefCache = useRef(new Map<string, (el: HTMLElement | null) => void>());
+  const revealRef = useCallback(
+    (key: string) => {
+      const cache = revealRefCache.current;
+      const existing = cache.get(key);
+      if (existing) return existing;
+      const fn = (el: HTMLElement | null) => {
+        if (!el) return;
+        el.dataset.prRevealKey = key;
+        if (el.classList.contains("pr-in")) return;
+        if (!revealObserver || TEAM_REVEALED.has(key)) { el.classList.add("pr-in"); return; }
+        revealObserver.observe(el);
+      };
+      cache.set(key, fn);
+      return fn;
+    },
+    [revealObserver],
+  );
+
+  const revealProps = useCallback(
+    (delayIndex = 0, key = "") => ({
+      ref: revealRef(key),
+      className: "pr-anim",
+      style: { ["--pr-delay" as string]: `${Math.min(delayIndex * 40, 240)}ms` } as React.CSSProperties,
+    }),
+    [revealRef],
+  );
+
+  const revealCtx = useMemo<TeamRevealCtx>(() => ({ revealRef, revealProps }), [revealRef, revealProps]);
+
   /* derived data */
   const teamInThree = sections["team_in_three"] as TeamInThreeItem[] | undefined;
   const driving = sections["driving_facets"] as DrivingFacetsSection | undefined;
@@ -914,7 +1050,7 @@ export default function TeamReport() {
   if (noAccess || !profile) {
     return (
       <div style={{ background: SAND, minHeight: "100vh", padding: 24 }}>
-        <div style={{ maxWidth: 1040, margin: "0 auto", background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 24, textAlign: "center", color: MUTED }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto", background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 24, textAlign: "center", color: MUTED }}>
           You do not have access to this team report.
         </div>
       </div>
@@ -939,6 +1075,7 @@ export default function TeamReport() {
       question: questionByItem.get(f.itemNumber) ?? "",
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
+      blockKey: `driving:strength:${i}:why`,
     };
   });
   const focusDrivers = focusFacets.map((f, idx) => {
@@ -960,6 +1097,7 @@ export default function TeamReport() {
       question: questionByItem.get(f.itemNumber) ?? "",
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
+      blockKey: `driving:focus:${idx}:why`,
     };
   });
 
@@ -968,7 +1106,8 @@ export default function TeamReport() {
     ?? "Team";
 
   return (
-    <div style={{ background: SAND, color: GRAY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
+    <div style={{ background: SAND, color: NAVY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
+      <RevealCtx.Provider value={revealCtx}>
       <TeamReportHighlightProvider teamProfileId={teamProfileId} enabled={canHighlight}>
       {/* Hero */}
       <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
@@ -1032,7 +1171,7 @@ export default function TeamReport() {
       {/* Team in three (overlap) */}
       {Array.isArray(teamInThree) && teamInThree.length > 0 && (
         <div style={{ maxWidth: 1040, margin: "-78px auto 0", padding: "0 20px" }}>
-          <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
+          <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, boxShadow: FLAT_SHADOW }}>
             <div style={{ padding: "16px 18px", borderBottom: `1px solid ${LINE}`, fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", color: GRAY, fontWeight: 700 }}>
               Your team in three · the whole report in 30 seconds
             </div>
@@ -1042,7 +1181,7 @@ export default function TeamReport() {
                 <div>
                   <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
                   <Paras text={it.detail} blockKey={`team_in_three:${i}:detail`} />
-                  <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}>{it.action}</div>
+                  <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}><HighlightableText blockKey={`team_in_three:${i}:action`} text={it.action} /></div>
                   <TeamChipRow facets={it.facets ?? []} lookupFacet={lookupFacetByName} />
                 </div>
               </div>
@@ -1075,12 +1214,11 @@ export default function TeamReport() {
       {/* Three domains */}
       <section style={{ padding: "34px 0" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-          <div style={{ fontSize: 13, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 700, color: ORANGE }}>Team Profile</div>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>The three threat domains</h2>
+          <SectionHead eyebrow="The scores">The three threat domains</SectionHead>
           <p style={{ color: MUTED, margin: "0 0 18px" }}>
             Center is zero, the outer ring is 100. Each sector is one domain. The solid line is the team average; the dashed lines and their dots are the team&apos;s high and low edges. The bars below show how much members agree.
           </p>
-          <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 22, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
+          <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 22, boxShadow: FLAT_SHADOW }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
               <Radial domains={domains} />
               <div style={{ display: "flex", gap: 18, flexWrap: "wrap", justifyContent: "center", fontSize: 12, color: "#6D6875", margin: "4px 0" }}>
@@ -1111,7 +1249,7 @@ export default function TeamReport() {
       {/* How to read the shapes */}
       <section style={{ padding: "34px 0" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-          <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How to read the shapes</h2>
+          <SectionHead eyebrow="How to read this">How to read the shapes</SectionHead>
           <p style={{ color: MUTED, margin: "0 0 18px" }}>
             Every card below is one of five pictures. A dot is a teammate, placed lower to higher. Click a shape to highlight it in the full map.
           </p>
@@ -1127,10 +1265,11 @@ export default function TeamReport() {
                 key={sh.k}
                 onClick={() => setActiveShape((a) => (a === sh.k ? null : sh.k))}
                 style={{
-                  background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16,
-                  boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
+                  background: CARD_BG,
+                  border: `1px solid ${activeShape === sh.k ? NAVY : LINE}`,
+                  borderRadius: 14,
+                  boxShadow: activeShape === sh.k ? "0 0 0 2px rgba(2,31,54,.12)" : FLAT_SHADOW,
                   padding: 14, textAlign: "center", cursor: "pointer", transition: ".15s",
-                  outline: activeShape === sh.k ? `2px solid ${TEAL}` : "none",
                 }}
               >
                 <ArchGlyph k={sh.k} />
@@ -1146,7 +1285,7 @@ export default function TeamReport() {
       {(strengthDrivers.length > 0 || focusDrivers.length > 0) && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>What is driving your team</h2>
+            <SectionHead eyebrow="The drivers">What is driving your team</SectionHead>
             <p style={{ color: GRAY, margin: "0 0 18px", fontSize: 16, lineHeight: 1.6 }}>
               We open with the team&apos;s strength, then the areas to watch in priority order. The picture on each card is your team&apos;s real spread on that trait. Click any card for three specific moves; hover to see the question the team answered.
             </p>
@@ -1162,25 +1301,25 @@ export default function TeamReport() {
       {communication && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How this team communicates</h2>
+            <SectionHead eyebrow="The mechanics">How this team communicates</SectionHead>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
-              <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>In general</div>
+              <div className="pr-card" style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 18, boxShadow: FLAT_SHADOW }}>
+                <div style={boxLabel}>In general</div>
                 <IdeaBullets items={communication.general} blockKey="communication:general" lookupFacet={lookupFacetByName} />
               </div>
-              <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Under pressure</div>
+              <div className="pr-card" style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 18, boxShadow: FLAT_SHADOW }}>
+                <div style={boxLabel}>Under pressure</div>
                 <IdeaBullets items={communication.under_pressure} blockKey="communication:under_pressure" lookupFacet={lookupFacetByName} />
               </div>
             </div>
             {Array.isArray(communication.avoid_conflict) && communication.avoid_conflict.length > 0 && (
               <div style={{ marginTop: 14, background: "rgba(255,183,3,.10)", border: "1px solid rgba(255,183,3,.35)", borderRadius: 12, padding: 16 }}>
                 <h4 style={{ margin: "0 0 10px", color: NAVY, fontSize: 18 }}>Avoiding communication conflict</h4>
-                <IdeaBullets
+                <Sequence
                   items={communication.avoid_conflict}
                   blockKey="communication:avoid_conflict"
                   lookupFacet={lookupFacetByName}
-                  ordered
+                  connector
                 />
               </div>
             )}
@@ -1192,15 +1331,15 @@ export default function TeamReport() {
       {conflict && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>How this team handles conflict</h2>
+            <SectionHead eyebrow="The pattern">How this team handles conflict</SectionHead>
             <div style={{ margin: "0 0 18px" }}><Paras text={conflict.summary} style={{ maxWidth: "none" }} blockKey="conflict:summary" /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="pair-grid">
-              <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: TEAL }}>Mitigate unhealthy conflict</div>
+              <div className="pr-card" style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 18, boxShadow: FLAT_SHADOW }}>
+                <div style={boxLabel}>Mitigate unhealthy conflict</div>
                 <IdeaBullets items={conflict.mitigate} blockKey="conflict:mitigate" lookupFacet={lookupFacetByName} />
               </div>
-              <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
-                <div style={{ fontSize: 13, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, marginBottom: 10, color: MUSTARD }}>Promote healthy conflict</div>
+              <div className="pr-card" style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 18, boxShadow: FLAT_SHADOW }}>
+                <div style={boxLabel}>Promote healthy conflict</div>
                 <IdeaBullets items={conflict.promote_healthy} blockKey="conflict:promote" lookupFacet={lookupFacetByName} fallbackAccent={MUSTARD} />
               </div>
             </div>
@@ -1212,9 +1351,9 @@ export default function TeamReport() {
       {canSeePrivileged && leader && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>For the leader: the moves</h2>
+            <SectionHead eyebrow="For the leader">For the leader: the moves</SectionHead>
             <p style={{ color: MUTED, margin: "0 0 18px" }}>One page. The top drivers, what each costs the work, the lever, and who owns it.</p>
-            <div style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16, padding: 18, boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)" }}>
+            <div className="pr-card" style={{ background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14, padding: 18, boxShadow: FLAT_SHADOW }}>
               <div style={{ overflowX: "auto" }} className="leader-tbl-wrap">
                 <table style={{ width: "100%", borderCollapse: "collapse", overflow: "hidden", borderRadius: 12, border: `1px solid ${LINE}` }} className="leader-tbl">
                   <thead className="leader-thead">
@@ -1254,7 +1393,7 @@ export default function TeamReport() {
       {fullMapGroups.length > 0 && (
         <section style={{ padding: "34px 0" }}>
           <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Every pattern we found</h2>
+            <SectionHead eyebrow="The full map">Every pattern we found</SectionHead>
             <p style={{ color: MUTED, margin: "0 0 18px" }}>The full map, grouped by the five shapes above. The picture on each is the team&apos;s real spread. Hover any trait to see the question the team answered.</p>
             {fullMapGroups.map((g) => {
               const dim = activeShape && activeShape !== g.k;
@@ -1275,8 +1414,8 @@ export default function TeamReport() {
                           onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
                           onMouseLeave={hideTip}
                           style={{
-                            background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16,
-                            boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
+                            background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
+                            boxShadow: FLAT_SHADOW,
                             padding: 12, borderTop: `3px solid ${GC[g.k]}`, cursor: "help",
                           }}
                         >
@@ -1308,7 +1447,7 @@ export default function TeamReport() {
               fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
               padding: "5px 12px", borderRadius: 999, marginBottom: 10,
             }}>For the practitioner, org admin &amp; super admin</div>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: NAVY, margin: "0 0 6px" }}>Running the debrief</h2>
+            <SectionHead eyebrow="For the practitioner">Running the debrief</SectionHead>
             <p style={{ color: MUTED, margin: "0 0 18px" }}>Facilitation material, shown to practitioners and administrators.</p>
             {Array.isArray(coach.why) && coach.why.length > 0 && (
               <Acc title="The why behind each call">
@@ -1348,13 +1487,7 @@ export default function TeamReport() {
       />
 
       {/* Tooltip */}
-      {tip && (
-        <div style={{
-          position: "fixed", pointerEvents: "none", background: NAVY, color: "#fff",
-          fontSize: 12, lineHeight: 1.4, padding: "8px 11px", borderRadius: 8,
-          zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
-        }}>{tip.text}</div>
-      )}
+      <TipLayer tip={tip} />
       </TeamReportHighlightProvider>
       <ExportPdfModal
         open={exportOpen}
@@ -1391,6 +1524,7 @@ export default function TeamReport() {
           ]}
         />
       )}
+      </RevealCtx.Provider>
     </div>
 
   );
@@ -1415,8 +1549,8 @@ function GenerationBanner({
 }) {
   if (status === "complete") return null;
   const baseCard: React.CSSProperties = {
-    background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 16,
-    boxShadow: "0 1px 2px rgba(2,31,54,.06),0 8px 24px rgba(2,31,54,.06)",
+    background: CARD_BG, border: `1px solid ${LINE}`, borderRadius: 14,
+    boxShadow: FLAT_SHADOW,
     padding: 16, fontSize: 16, color: "#6D6875",
   };
   if (!canDrive) {

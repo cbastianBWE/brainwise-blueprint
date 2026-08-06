@@ -1,18 +1,22 @@
 import jsPDF from "jspdf";
 import { facetDisplayLabel } from "./pairedSectionTypes";
+import {
+  NAVY,
+  NAVY_CIRCLE,
+  ORANGE,
+  SAND_CIRCLE,
+  TEAL,
+  GRAY,
+  PURPLE,
+  AMBER,
+  MUSTARD,
+} from "./generatePdfPrimitivesShared";
 import type { OnePagerSection, OnePagerVoice } from "./pairedSectionTypes";
 
-type RGB = [number, number, number];
+// One shared palette across every PDF surface; PEACH is the shared sand circle.
+type RGB = readonly [number, number, number];
 
-const NAVY: RGB = [2, 31, 54];
-const NAVY_CIRCLE: RGB = [16, 38, 58];
-const ORANGE: RGB = [245, 116, 26];
-const PEACH: RGB = [251, 224, 200];
-const TEAL: RGB = [0, 109, 119];
-const GRAY: RGB = [109, 104, 117];
-const PURPLE: RGB = [60, 9, 108];
-const AMBER: RGB = [255, 183, 3];
-const MUSTARD: RGB = [122, 88, 0];
+const PEACH: RGB = SAND_CIRCLE;
 const BLACK: RGB = [30, 30, 30];
 
 const SHARED_LABELS: [keyof OnePagerSection["shared"], string][] = [

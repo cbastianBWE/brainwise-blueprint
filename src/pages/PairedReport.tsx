@@ -47,7 +47,9 @@ import {
   hideTip,
   hexAlpha,
   bandWord,
+  pairChipTip,
   FacetChip,
+  TipLayer,
   type PairShapeKey,
   type FacetEntry,
 } from "@/components/results/pairedFacetChip";
@@ -487,17 +489,19 @@ function ChipRow({ ctx, facets }: { ctx: ReportCtx; facets: string[] }) {
   if (!facets || facets.length === 0) return null;
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 9 }}>
-      {facets.map((f, i) => (
-        <FacetChip
-          key={`${f}-${i}`}
-          name={ctx.nm(f)}
-          entry={ctx.lookupFacet(f)}
-          mode={ctx.mode}
-          firstA={ctx.firstA}
-          firstB={ctx.firstB}
-          delay={i * 25}
-        />
-      ))}
+      {facets.map((f, i) => {
+        const entry = ctx.lookupFacet(f);
+        return (
+          <FacetChip
+            key={`${f}-${i}`}
+            name={ctx.nm(f)}
+            entry={entry}
+            mode={ctx.mode}
+            tip={entry ? pairChipTip(entry, ctx.firstA, ctx.firstB) : null}
+            delay={i * 25}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -527,13 +531,23 @@ function Bullets({
   );
 
   if (!Array.isArray(text)) return legacyList(splitSentences(nm(text ?? "")));
-  if (!text.some(isBulletObject)) {
-    return legacyList(text.map((t) => nm(typeof t === "string" ? t : "")).filter(Boolean));
+  // drop empties, including {point:"",body:"",facets:[]}, which would otherwise
+  // draw a bordered card with nothing in it (backported from the team report)
+  const list = text.filter((b) => {
+    if (!b) return false;
+    if (isBulletObject(b)) {
+      return !!((b.point ?? "").trim() || (b.body ?? "").trim() || bulletFacets(b).length);
+    }
+    return !!(typeof b === "string" ? b.trim() : "");
+  });
+  if (!list.length) return null;
+  if (!list.some(isBulletObject)) {
+    return legacyList(list.map((t) => nm(typeof t === "string" ? t : "")).filter(Boolean));
   }
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
-      {text.map((b, i) => {
+      {list.map((b, i) => {
         if (!isBulletObject(b)) {
           const s = nm(typeof b === "string" ? b : "");
           if (!s) return null;
@@ -1511,13 +1525,7 @@ export default function PairedReport() {
 
 
       {/* tooltip */}
-      {tip && (
-        <div style={{
-          position: "fixed", pointerEvents: "none", background: NAVY, color: "#fff",
-          fontSize: 12, lineHeight: 1.4, padding: "8px 11px", borderRadius: 8,
-          zIndex: 9999, maxWidth: 300, left: tip.x, top: tip.y,
-        }}>{tip.text}</div>
-      )}
+      <TipLayer tip={tip} />
       </PairedReportHighlightProvider>
       <ExportPdfModal
         open={exportOpen}
