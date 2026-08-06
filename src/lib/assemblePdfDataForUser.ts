@@ -433,7 +433,7 @@ export async function assemblePtpPdfData(params: {
           itemText: s.itemText,
           score: Math.round(s.value),
           dimensionId: s.dimensionId,
-          interpretation: interpretationMap.get(s.facetName) ?? null,
+          interpretation: lookupInterpretation(s.itemNumber, s.facetName),
         });
 
         const selection = selectDrivingFacets(filteredItems);
