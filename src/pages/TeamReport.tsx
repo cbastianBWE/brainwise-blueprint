@@ -1254,6 +1254,7 @@ export default function TeamReport() {
                       return (
                         <div
                           key={f.itemNumber}
+                          id={`facet-${f.itemNumber}`}
                           onMouseMove={q ? (e) => showTip(e, `Question answered: ${q}`) : undefined}
                           onMouseLeave={hideTip}
                           style={{
