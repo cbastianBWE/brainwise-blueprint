@@ -78,34 +78,72 @@ export default function BulkSeatLinkModal({
     if (!uuid) return;
     setStage("submitting");
 
-    const { data, error } = await supabase.rpc("coach_bulk_link_create" as any, {
-      p_instrument_id: uuid,
-      p_seats: seatsNum,
-      p_coach_note: coachNote.trim() || null,
-    } as any);
-    if (error) {
-      toast.error("Could not create link: " + error.message);
-      setStage("form");
-      return;
-    }
-    const linkId = (data as any[])?.[0]?.link_id;
+    let linkId = pendingLinkId;
+
     if (!linkId) {
-      toast.error("Link created but its id was missing in the response.");
-      setStage("form");
-      return;
+      const { data, error } = await supabase.rpc("coach_bulk_link_create" as any, {
+        p_instrument_id: uuid,
+        p_seats: seatsNum,
+        p_coach_note: coachNote.trim() || null,
+      } as any);
+      if (error) {
+        toast.error("Could not create link: " + error.message);
+        setStage("form");
+        return;
+      }
+      linkId = (data as any[])?.[0]?.link_id;
+      if (!linkId) {
+        toast.error("Link created but its id was missing in the response.");
+        setStage("form");
+        return;
+      }
+      setPendingLinkId(linkId);
     }
 
-    const priceId = oneTimePriceId("individual");
-    if (!priceId) {
-      toast.error("Pricing is unavailable right now. Please try again shortly.");
-      setStage("form");
-      return;
-    }
     const { data: checkoutData, error: checkoutErr } = await supabase.functions.invoke("create-checkout", {
-      body: { mode: "coach_bulk_link", price_id: priceId, bulk_link_id: linkId },
+      body: { mode: "coach_bulk_link", bulk_link_id: linkId },
     });
+
     if (checkoutErr || !checkoutData?.url) {
-      toast.error("Link created but checkout could not start. It is saved as unpaid — contact support.");
+      const { code } = await readFnError(checkoutErr);
+
+      if (code === "bulk_link_not_payable") {
+        toast.success("This seat link is already paid and active. Find it in the Active Seat Links list.");
+        resetAll();
+        onOpenChange(false);
+        return;
+      }
+
+      let message: string;
+      switch (code) {
+        case "missing_bearer_token":
+        case "not_authenticated":
+          message = "Your session has expired. Sign in again and retry.";
+          break;
+        case "not_your_bulk_link":
+          message = "This seat link belongs to another practitioner.";
+          break;
+        case "bulk_link_not_found":
+          message = "That seat link no longer exists. Close and start again.";
+          break;
+        case "bulk_link_seats_invalid":
+          message = "The seat count on this link is invalid. Close and start again.";
+          break;
+        case "pricing_not_configured":
+          message = "Seat pricing is not configured. Contact support.";
+          break;
+        case "origin_not_allowed":
+          message = "Checkout could not start from this address. Contact support.";
+          break;
+        default:
+          message = "Checkout could not start. Your link is saved as unpaid and you can retry.";
+      }
+
+      if (code === "bulk_link_not_found" || code === "bulk_link_seats_invalid") {
+        setPendingLinkId(null);
+      }
+
+      toast.error(message);
       setStage("form");
       return;
     }
