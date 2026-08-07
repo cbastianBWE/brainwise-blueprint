@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -29,14 +28,25 @@ interface Props {
 
 type Stage = "form" | "submitting";
 
+async function readFnError(err: unknown): Promise<{ code: string | null; status: number | null }> {
+  const ctx = (err as { context?: Response } | null)?.context;
+  if (!ctx || typeof ctx.json !== "function") return { code: null, status: null };
+  try {
+    const body = await ctx.json();
+    return { code: typeof body?.error === "string" ? body.error : null, status: ctx.status ?? null };
+  } catch {
+    return { code: null, status: ctx.status ?? null };
+  }
+}
+
 export default function BulkSeatLinkModal({
   open, onOpenChange, allowedInstrumentIds, perAssessmentPrice,
 }: Props) {
-  const { oneTimePriceId } = useSubscriptionPlans();
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
   const [seats, setSeats] = useState<string>("5");
   const [coachNote, setCoachNote] = useState<string>("");
+  const [pendingLinkId, setPendingLinkId] = useState<string | null>(null);
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -45,6 +55,7 @@ export default function BulkSeatLinkModal({
     setInstrumentShortId("");
     setSeats("5");
     setCoachNote("");
+    setPendingLinkId(null);
   };
 
   const handleOpenChange = (o: boolean) => {
