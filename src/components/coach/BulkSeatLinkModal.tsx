@@ -223,7 +223,7 @@ export default function BulkSeatLinkModal({
             <Button onClick={handleSubmit} disabled={submitDisabled}>
               {stage === "submitting" ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</>
-              ) : "Continue to Payment"}
+              ) : pendingLinkId ? "Retry Payment" : "Continue to Payment"}
             </Button>
           </div>
         </div>
