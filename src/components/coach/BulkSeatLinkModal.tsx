@@ -167,7 +167,7 @@ export default function BulkSeatLinkModal({
             {allowedInstruments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No certified instruments available.</p>
             ) : (
-              <RadioGroup value={instrumentShortId} onValueChange={setInstrumentShortId}>
+              <RadioGroup value={instrumentShortId} onValueChange={(v) => { setPendingLinkId(null); setInstrumentShortId(v); }}>
                 {allowedInstruments.map(inst => (
                   <div key={inst.id} className="flex items-center gap-2">
                     <RadioGroupItem value={inst.id} id={`seatlink-${inst.id}`} />
@@ -189,7 +189,7 @@ export default function BulkSeatLinkModal({
               min={1}
               max={500}
               value={seats}
-              onChange={(e) => setSeats(e.target.value)}
+              onChange={(e) => { setPendingLinkId(null); setSeats(e.target.value); }}
             />
             {!validSeats && seats !== "" && (
               <p className="text-xs text-destructive">Enter a number between 1 and 500.</p>
