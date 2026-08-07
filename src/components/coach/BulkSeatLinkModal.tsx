@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptionPlans";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -29,14 +28,25 @@ interface Props {
 
 type Stage = "form" | "submitting";
 
+async function readFnError(err: unknown): Promise<{ code: string | null; status: number | null }> {
+  const ctx = (err as { context?: Response } | null)?.context;
+  if (!ctx || typeof ctx.json !== "function") return { code: null, status: null };
+  try {
+    const body = await ctx.json();
+    return { code: typeof body?.error === "string" ? body.error : null, status: ctx.status ?? null };
+  } catch {
+    return { code: null, status: ctx.status ?? null };
+  }
+}
+
 export default function BulkSeatLinkModal({
   open, onOpenChange, allowedInstrumentIds, perAssessmentPrice,
 }: Props) {
-  const { oneTimePriceId } = useSubscriptionPlans();
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
   const [seats, setSeats] = useState<string>("5");
   const [coachNote, setCoachNote] = useState<string>("");
+  const [pendingLinkId, setPendingLinkId] = useState<string | null>(null);
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -45,6 +55,7 @@ export default function BulkSeatLinkModal({
     setInstrumentShortId("");
     setSeats("5");
     setCoachNote("");
+    setPendingLinkId(null);
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -67,34 +78,72 @@ export default function BulkSeatLinkModal({
     if (!uuid) return;
     setStage("submitting");
 
-    const { data, error } = await supabase.rpc("coach_bulk_link_create" as any, {
-      p_instrument_id: uuid,
-      p_seats: seatsNum,
-      p_coach_note: coachNote.trim() || null,
-    } as any);
-    if (error) {
-      toast.error("Could not create link: " + error.message);
-      setStage("form");
-      return;
-    }
-    const linkId = (data as any[])?.[0]?.link_id;
+    let linkId = pendingLinkId;
+
     if (!linkId) {
-      toast.error("Link created but its id was missing in the response.");
-      setStage("form");
-      return;
+      const { data, error } = await supabase.rpc("coach_bulk_link_create" as any, {
+        p_instrument_id: uuid,
+        p_seats: seatsNum,
+        p_coach_note: coachNote.trim() || null,
+      } as any);
+      if (error) {
+        toast.error("Could not create link: " + error.message);
+        setStage("form");
+        return;
+      }
+      linkId = (data as any[])?.[0]?.link_id;
+      if (!linkId) {
+        toast.error("Link created but its id was missing in the response.");
+        setStage("form");
+        return;
+      }
+      setPendingLinkId(linkId);
     }
 
-    const priceId = oneTimePriceId("individual");
-    if (!priceId) {
-      toast.error("Pricing is unavailable right now. Please try again shortly.");
-      setStage("form");
-      return;
-    }
     const { data: checkoutData, error: checkoutErr } = await supabase.functions.invoke("create-checkout", {
-      body: { mode: "coach_bulk_link", price_id: priceId, bulk_link_id: linkId },
+      body: { mode: "coach_bulk_link", bulk_link_id: linkId },
     });
+
     if (checkoutErr || !checkoutData?.url) {
-      toast.error("Link created but checkout could not start. It is saved as unpaid — contact support.");
+      const { code } = await readFnError(checkoutErr);
+
+      if (code === "bulk_link_not_payable") {
+        toast.success("This seat link is already paid and active. Find it in the Active Seat Links list.");
+        resetAll();
+        onOpenChange(false);
+        return;
+      }
+
+      let message: string;
+      switch (code) {
+        case "missing_bearer_token":
+        case "not_authenticated":
+          message = "Your session has expired. Sign in again and retry.";
+          break;
+        case "not_your_bulk_link":
+          message = "This seat link belongs to another practitioner.";
+          break;
+        case "bulk_link_not_found":
+          message = "That seat link no longer exists. Close and start again.";
+          break;
+        case "bulk_link_seats_invalid":
+          message = "The seat count on this link is invalid. Close and start again.";
+          break;
+        case "pricing_not_configured":
+          message = "Seat pricing is not configured. Contact support.";
+          break;
+        case "origin_not_allowed":
+          message = "Checkout could not start from this address. Contact support.";
+          break;
+        default:
+          message = "Checkout could not start. Your link is saved as unpaid and you can retry.";
+      }
+
+      if (code === "bulk_link_not_found" || code === "bulk_link_seats_invalid") {
+        setPendingLinkId(null);
+      }
+
+      toast.error(message);
       setStage("form");
       return;
     }
@@ -118,7 +167,7 @@ export default function BulkSeatLinkModal({
             {allowedInstruments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No certified instruments available.</p>
             ) : (
-              <RadioGroup value={instrumentShortId} onValueChange={setInstrumentShortId}>
+              <RadioGroup value={instrumentShortId} onValueChange={(v) => { setPendingLinkId(null); setInstrumentShortId(v); }}>
                 {allowedInstruments.map(inst => (
                   <div key={inst.id} className="flex items-center gap-2">
                     <RadioGroupItem value={inst.id} id={`seatlink-${inst.id}`} />
@@ -140,7 +189,7 @@ export default function BulkSeatLinkModal({
               min={1}
               max={500}
               value={seats}
-              onChange={(e) => setSeats(e.target.value)}
+              onChange={(e) => { setPendingLinkId(null); setSeats(e.target.value); }}
             />
             {!validSeats && seats !== "" && (
               <p className="text-xs text-destructive">Enter a number between 1 and 500.</p>
@@ -174,7 +223,7 @@ export default function BulkSeatLinkModal({
             <Button onClick={handleSubmit} disabled={submitDisabled}>
               {stage === "submitting" ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</>
-              ) : "Continue to Payment"}
+              ) : pendingLinkId ? "Retry Payment" : "Continue to Payment"}
             </Button>
           </div>
         </div>
