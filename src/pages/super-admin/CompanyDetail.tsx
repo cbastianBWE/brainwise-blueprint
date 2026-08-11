@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuperAdminSession } from "@/hooks/useSuperAdminSession";
@@ -28,6 +28,7 @@ import CompanyDomainsSection from "@/components/super-admin/CompanyDomainsSectio
 import CompanyCoachesSection from "@/components/super-admin/CompanyCoachesSection";
 import ModuleEntitlementsPanel from "@/components/super-admin/ModuleEntitlementsPanel";
 import OperationsWorkspaceSection from "@/components/super-admin/OperationsWorkspaceSection";
+import CompanyReportRequestsSection from "@/components/super-admin/CompanyReportRequestsSection";
 
 interface OrgUser {
   id: string;
@@ -43,6 +44,10 @@ export default function CompanyDetail() {
   const { sessionId } = useSuperAdminSession();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const TAB_VALUES = ["overview", "members", "coaches", "departments", "invitations", "contract", "modules", "branding", "domains"];
+  const rawTab = searchParams.get("tab") ?? "overview";
+  const activeTab = TAB_VALUES.includes(rawTab) ? rawTab : "overview";
   const [orgName, setOrgName] = useState("");
   const [users, setUsers] = useState<OrgUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +134,11 @@ export default function CompanyDetail() {
         <ArrowLeft className="h-4 w-4" /> Back to Organizations
       </Button>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setSearchParams(v === "overview" ? {} : { tab: v }, { replace: true })}
+        className="w-full"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
@@ -171,12 +180,13 @@ export default function CompanyDetail() {
           <CompanyInvitationsSection orgId={orgId!} />
         </TabsContent>
 
-        <TabsContent value="contract" className="mt-6">
+        <TabsContent value="contract" className="space-y-6 mt-6">
           <ContractFeaturesSection
             orgId={orgId!}
             onError={(msg) => toast({ title: "Error", description: msg, variant: "destructive" })}
             onSuccess={(msg) => toast({ title: "Saved", description: msg })}
           />
+          <CompanyReportRequestsSection orgId={orgId!} />
         </TabsContent>
 
         <TabsContent value="modules" className="mt-6">

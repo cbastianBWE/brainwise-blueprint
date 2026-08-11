@@ -126,7 +126,7 @@ function median(values: number[]): number | null {
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
 }
 
-export default function ResourceEngagementReport() {
+export default function ResourceEngagementReport({ embedded = false }: { embedded?: boolean }) {
   const [source, setSource] = useState<SourceFilter>("all");
   const [resourceId, setResourceId] = useState<string>("all");
   const [emailFilter, setEmailFilter] = useState("");
@@ -301,7 +301,7 @@ export default function ResourceEngagementReport() {
       ? "You do not have access to this report."
       : raw;
     return (
-      <div className="container mx-auto p-6">
+      <div className={embedded ? "" : "container mx-auto p-6"}>
         <Card className="border-destructive">
           <CardContent className="p-6 space-y-4">
             <p className="text-sm text-destructive">{message}</p>
@@ -318,8 +318,9 @@ export default function ResourceEngagementReport() {
   const truncated = reportQuery.data?.truncated === true;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className={embedded ? "space-y-6" : "container mx-auto p-6 space-y-6"}>
+      <div className={embedded ? "flex justify-end gap-2" : "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"}>
+        {!embedded && (
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: COLORS.navy }}>
             <BookOpen className="h-6 w-6" style={{ color: COLORS.teal }} />
@@ -330,6 +331,7 @@ export default function ResourceEngagementReport() {
             are counted separately.
           </p>
         </div>
+        )}
         <div className="flex gap-2">
           <Button
             variant="outline"

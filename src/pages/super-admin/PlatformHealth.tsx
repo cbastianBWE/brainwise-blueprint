@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LearningReport from "@/pages/super-admin/LearningReport";
+import ResourceEngagementReport from "@/pages/super-admin/ResourceEngagementReport";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Award,
@@ -15,7 +19,50 @@ interface Stats {
   certificationCounts: Record<string, { in_progress: number; certified: number }>;
 }
 
+const TABS = [
+  { value: "overview", label: "Overview" },
+  { value: "learning", label: "Learning" },
+  { value: "resource-engagement", label: "Resource Engagement" },
+] as const;
+
 export default function PlatformHealth() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const raw = searchParams.get("tab") ?? "overview";
+  const tab = TABS.some(t => t.value === raw) ? raw : "overview";
+
+  return (
+    <div className="py-8 px-4 max-w-6xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Platform Health</h1>
+        <p className="text-sm text-muted-foreground mt-1">Platform-wide metrics and reporting</p>
+      </div>
+
+      <Tabs
+        value={tab}
+        onValueChange={(v) => setSearchParams(v === "overview" ? {} : { tab: v }, { replace: true })}
+        className="w-full"
+      >
+        <TabsList>
+          {TABS.map(t => (
+            <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="overview" className="mt-6">
+          <OverviewTab />
+        </TabsContent>
+        <TabsContent value="learning" className="mt-6">
+          <LearningReport embedded />
+        </TabsContent>
+        <TabsContent value="resource-engagement" className="mt-6">
+          <ResourceEngagementReport embedded />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function OverviewTab() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,12 +129,7 @@ export default function PlatformHealth() {
   ];
 
   return (
-    <div className="py-8 px-4 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Platform Health</h1>
-        <p className="text-sm text-muted-foreground mt-1">Overview of platform-wide metrics</p>
-      </div>
-
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {cards.map(c => (
           <Card key={c.label}>

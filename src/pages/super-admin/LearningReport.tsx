@@ -115,7 +115,7 @@ function formatDate(d: string | null) {
   }
 }
 
-export default function LearningReport() {
+export default function LearningReport({ embedded = false }: { embedded?: boolean }) {
   const [tier, setTier] = useState<Tier>("all");
   const [targetKey, setTargetKey] = useState<string>("all"); // "all" or `${id}` or `name::${name}`
   const [userId, setUserId] = useState<string>("all");
@@ -461,9 +461,10 @@ export default function LearningReport() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className={embedded ? "space-y-6" : "container mx-auto p-6 space-y-6"}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className={embedded ? "flex justify-end gap-2" : "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"}>
+        {!embedded && (
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2" style={{ color: COLORS.navy }}>
             <ClipboardList className="h-6 w-6" style={{ color: COLORS.teal }} />
@@ -473,6 +474,7 @@ export default function LearningReport() {
             Completion across cert paths, curricula, modules, and content items.
           </p>
         </div>
+        )}
         <div className="flex gap-2">
           <Button variant="outline" onClick={refreshAll} disabled={summaryQuery.isFetching || detailQuery.isFetching}>
             <RefreshCw className={`h-4 w-4 ${summaryQuery.isFetching || detailQuery.isFetching ? "animate-spin" : ""}`} />

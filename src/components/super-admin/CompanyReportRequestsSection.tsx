@@ -17,7 +17,6 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { FileClock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ReportCapacityRequestRow {
@@ -48,7 +47,7 @@ function statusBadge(status: ReportCapacityRequestRow["status"]) {
   return <Badge variant="secondary">{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>;
 }
 
-export default function ReportCapacityRequests() {
+export default function CompanyReportRequestsSection({ orgId }: { orgId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showResolved, setShowResolved] = useState(false);
@@ -57,17 +56,21 @@ export default function ReportCapacityRequests() {
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: requests, isLoading, error } = useQuery({
-    queryKey: ["report-capacity-requests", showResolved],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["org-report-capacity-requests", orgId],
     queryFn: async (): Promise<ReportCapacityRequestRow[]> => {
       const { data, error } = await supabase.rpc("list_report_capacity_requests", {
-        p_status: showResolved ? null : "pending",
+        p_status: null,
       });
       if (error) throw error;
-      return (data ?? []) as ReportCapacityRequestRow[];
+      return ((data ?? []) as ReportCapacityRequestRow[]).filter(
+        (r) => r.organization_id === orgId
+      );
     },
     staleTime: 10_000,
   });
+
+  const rows = (data ?? []).filter((r) => (showResolved ? true : r.status === "pending"));
 
   const openResolve = (row: ReportCapacityRequestRow) => {
     setSelected(row);
@@ -97,7 +100,7 @@ export default function ReportCapacityRequests() {
       });
       setSelected(null);
       setNote("");
-      queryClient.invalidateQueries({ queryKey: ["report-capacity-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["org-report-capacity-requests", orgId] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast({ variant: "destructive", title: "Resolve failed", description: msg });
@@ -107,102 +110,81 @@ export default function ReportCapacityRequests() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-[#021F36] flex items-center gap-2">
-            <FileClock className="h-7 w-7" />
-            Report Requests
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Organization requests to expand team/paired report capacity.
-          </p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Report Capacity Requests</CardTitle>
+        <CardDescription>
+          Requests from this organization to expand their team and paired report allowance.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Switch
+            id={`show-resolved-${orgId}`}
+            checked={showResolved}
+            onCheckedChange={setShowResolved}
+          />
+          <Label htmlFor={`show-resolved-${orgId}`} className="cursor-pointer">
+            Show resolved
+          </Label>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <Switch id="show-resolved" checked={showResolved} onCheckedChange={setShowResolved} />
-        <Label htmlFor="show-resolved" className="cursor-pointer">
-          Show resolved
-        </Label>
-      </div>
+        {isLoading && (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{showResolved ? "All Requests" : "Pending Requests"}</CardTitle>
-          <CardDescription>
-            {requests?.length ?? 0} request{requests?.length === 1 ? "" : "s"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Approving marks the request resolved. To actually grant the org more reports, open the
-            organization and raise its included team/paired quantity, then the admin can re-order.
-          </p>
+        {error && (
+          <div className="text-destructive text-sm">
+            Error loading requests: {(error as Error).message}
+          </div>
+        )}
 
-          {isLoading && (
-            <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          )}
+        {!isLoading && !error && rows.length === 0 && (
+          <p className="text-sm text-muted-foreground">No requests from this organization.</p>
+        )}
 
-          {error && (
-            <div className="text-destructive text-sm py-4">
-              Error loading requests: {(error as Error).message}
-            </div>
-          )}
-
-          {!isLoading && !error && requests && requests.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileClock className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>No requests</p>
-            </div>
-          )}
-
-          {!isLoading && !error && requests && requests.length > 0 && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Requested by</TableHead>
-                  <TableHead>Included / Used</TableHead>
-                  <TableHead>Requested</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
+        {!isLoading && !error && rows.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Requested by</TableHead>
+                <TableHead>Included / Used</TableHead>
+                <TableHead>Requested</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell className="font-medium">
+                    {row.report_type.charAt(0).toUpperCase() + row.report_type.slice(1)}
+                  </TableCell>
+                  <TableCell>{row.requested_by_name}</TableCell>
+                  <TableCell className="text-sm">
+                    {row.included_qty_at_request} / {row.used_at_request}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {new Date(row.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>{statusBadge(row.status)}</TableCell>
+                  <TableCell>
+                    {row.status === "pending" && (
+                      <Button variant="ghost" size="sm" onClick={() => openResolve(row)}>
+                        Resolve
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">{row.org_name}</TableCell>
-                    <TableCell>
-                      {row.report_type.charAt(0).toUpperCase() + row.report_type.slice(1)}
-                    </TableCell>
-                    <TableCell>{row.requested_by_name}</TableCell>
-                    <TableCell className="text-sm">
-                      {row.included_qty_at_request} / {row.used_at_request}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {new Date(row.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{statusBadge(row.status)}</TableCell>
-                    <TableCell>
-                      {row.status === "pending" && (
-                        <Button variant="ghost" size="sm" onClick={() => openResolve(row)}>
-                          Resolve
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && closeResolve()}>
         <DialogContent className="max-w-md">
@@ -258,6 +240,6 @@ export default function ReportCapacityRequests() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 }

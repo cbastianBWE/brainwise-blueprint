@@ -113,14 +113,11 @@ import ContentAuthoring from "./pages/super-admin/ContentAuthoring";
 import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
 import LessonBuilderList from "./pages/super-admin/LessonBuilderList";
-import LearningReport from "./pages/super-admin/LearningReport";
-import ResourceEngagementReport from "./pages/super-admin/ResourceEngagementReport";
 import QuizQuestionsEditor from "./pages/super-admin/QuizQuestionsEditor";
 import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
 import AdminNewsletter from "./pages/super-admin/AdminNewsletter";
 import AdminNewsletterArticle from "./pages/super-admin/AdminNewsletterArticle";
 import CompCouponsManagement from "./pages/super-admin/CompCouponsManagement";
-import ReportCapacityRequests from "./pages/super-admin/ReportCapacityRequests";
 import OperationsCustomers from "./pages/operations/OperationsCustomers";
 import OperationsCustomerDetail from "./pages/operations/OperationsCustomerDetail";
 import OperationsInvoices from "./pages/operations/OperationsInvoices";
@@ -328,14 +325,14 @@ const App = () => (
               <Route path="/super-admin/company/:orgId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompanyDetail /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><VersionManagement /></SuperAdminSessionProvider></RoleGuard>} />
              <Route path="/super-admin/content-authoring" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ContentAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
-             <Route path="/super-admin/learning-report" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LearningReport /></SuperAdminSessionProvider></RoleGuard>} />
-             <Route path="/super-admin/resource-engagement" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ResourceEngagementReport /></SuperAdminSessionProvider></RoleGuard>} />
+             <Route path="/super-admin/learning-report" element={<Navigate to="/super-admin/health?tab=learning" replace />} />
+             <Route path="/super-admin/resource-engagement" element={<Navigate to="/super-admin/health?tab=resource-engagement" replace />} />
               <Route path="/super-admin/learning-admin" element={<Navigate to="/super-admin/members" replace />} />
               <Route path="/super-admin/resources" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminResourceAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/newsletter" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminNewsletter /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/newsletter/:articleId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminNewsletterArticle /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coupons" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompCouponsManagement /></SuperAdminSessionProvider></RoleGuard>} />
-              <Route path="/super-admin/report-requests" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ReportCapacityRequests /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/report-requests" element={<Navigate to="/super-admin/companies" replace />} />
               <Route path="/super-admin/asset-library" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AssetLibrary /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/lessons" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBuilderList /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/content-authoring/lessons/:contentItemId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LessonBlocksEditor /></SuperAdminSessionProvider></RoleGuard>} />

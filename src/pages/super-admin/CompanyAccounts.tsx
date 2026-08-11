@@ -4,7 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Building2, Eye, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Building2, Eye, Plus, FileClock } from "lucide-react";
+
+const EM_SPACE = "\u2003";
+
+interface PendingRequestRow {
+  id: string;
+  organization_id: string;
+  org_name: string;
+  report_type: "team" | "paired";
+  requested_by_name: string;
+  created_at: string;
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 60) return `${Math.max(mins, 0)}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
 
 interface OrgRow {
   id: string;
@@ -17,6 +38,7 @@ export default function CompanyAccounts() {
   const navigate = useNavigate();
   const [orgs, setOrgs] = useState<OrgRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState<PendingRequestRow[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -26,6 +48,19 @@ export default function CompanyAccounts() {
     };
     load();
   }, []);
+
+  useEffect(() => {
+    const loadPending = async () => {
+      const { data } = await supabase.rpc("list_report_capacity_requests", { p_status: "pending" });
+      setPending(((data ?? []) as unknown as PendingRequestRow[]));
+    };
+    loadPending();
+  }, []);
+
+  const pendingByOrg = pending.reduce<Record<string, number>>((acc, r) => {
+    acc[r.organization_id] = (acc[r.organization_id] || 0) + 1;
+    return acc;
+  }, {});
 
   if (loading) {
     return (
@@ -46,6 +81,41 @@ export default function CompanyAccounts() {
           <Plus className="h-4 w-4" /> Create Organization
         </Button>
       </div>
+
+      {pending.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileClock className="h-5 w-5" />
+              Pending Report Requests
+              <Badge style={{ background: "#F59E0B", color: "white" }}>{pending.length}</Badge>
+            </CardTitle>
+            <CardDescription>Organizations asking to expand their report allowance</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {pending.slice(0, 5).map(r => (
+              <div key={r.id} className="flex items-center justify-between gap-3 text-sm border-b last:border-b-0 pb-2 last:pb-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{r.org_name}</span>
+                  <span className="text-muted-foreground capitalize">{r.report_type}</span>
+                  <span className="text-muted-foreground">· {r.requested_by_name}</span>
+                  <span className="text-xs text-muted-foreground">· {timeAgo(r.created_at)}</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate(`/super-admin/company/${r.organization_id}?tab=contract`)}
+                >
+                  Review
+                </Button>
+              </div>
+            ))}
+            {pending.length > 5 && (
+              <p className="text-xs text-muted-foreground">and {pending.length - 5} more</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {orgs.length === 0 ? (
         <Card>
@@ -69,6 +139,7 @@ export default function CompanyAccounts() {
                     <TableHead>Seats Purchased</TableHead>
                     <TableHead>Seats Used</TableHead>
                     <TableHead>Participation Rate</TableHead>
+                    <TableHead>Pending</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -83,6 +154,13 @@ export default function CompanyAccounts() {
                         <TableCell>{org.seat_count}</TableCell>
                         <TableCell>{org.seats_used}</TableCell>
                         <TableCell>{rate}%</TableCell>
+                        <TableCell>
+                          {pendingByOrg[org.id] ? (
+                            <Badge style={{ background: "#F59E0B", color: "white" }}>{pendingByOrg[org.id]}</Badge>
+                          ) : (
+                            EM_SPACE
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
