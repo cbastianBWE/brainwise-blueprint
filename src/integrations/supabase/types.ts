@@ -21200,6 +21200,15 @@ export type Database = {
         Args: { p_note?: string; p_request_id: string; p_status: string }
         Returns: boolean
       }
+      resource_engagement_report: {
+        Args: {
+          p_limit?: number
+          p_resource_id?: string
+          p_source?: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       restore_article_version: {
         Args: { p_reason: string; p_version_id: string }
         Returns: Json

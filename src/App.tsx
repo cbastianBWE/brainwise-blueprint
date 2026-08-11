@@ -114,6 +114,7 @@ import AssetLibrary from "./pages/super-admin/AssetLibrary";
 import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
 import LessonBuilderList from "./pages/super-admin/LessonBuilderList";
 import LearningReport from "./pages/super-admin/LearningReport";
+import ResourceEngagementReport from "./pages/super-admin/ResourceEngagementReport";
 import QuizQuestionsEditor from "./pages/super-admin/QuizQuestionsEditor";
 import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
 import AdminNewsletter from "./pages/super-admin/AdminNewsletter";
@@ -328,6 +329,7 @@ const App = () => (
               <Route path="/super-admin/versions" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><VersionManagement /></SuperAdminSessionProvider></RoleGuard>} />
              <Route path="/super-admin/content-authoring" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ContentAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
              <Route path="/super-admin/learning-report" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><LearningReport /></SuperAdminSessionProvider></RoleGuard>} />
+             <Route path="/super-admin/resource-engagement" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><ResourceEngagementReport /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/learning-admin" element={<Navigate to="/super-admin/members" replace />} />
               <Route path="/super-admin/resources" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminResourceAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/newsletter" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminNewsletter /></SuperAdminSessionProvider></RoleGuard>} />
