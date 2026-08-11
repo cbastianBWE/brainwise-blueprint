@@ -115,11 +115,8 @@ const superAdminNav: NavItem[] = [
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Practitioner Management", url: "/super-admin/coaches", icon: Users },
   { title: "Organizations", url: "/super-admin/companies", icon: Briefcase },
-  { title: "Report Requests", url: "/super-admin/report-requests", icon: FileClock },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
-  { title: "Learning Report", url: "/super-admin/learning-report", icon: ClipboardList },
-  { title: "Resource Engagement", url: "/super-admin/resource-engagement", icon: BookOpen },
   { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
   
   { title: "My Learning", url: "/my-learning", icon: GraduationCap },
