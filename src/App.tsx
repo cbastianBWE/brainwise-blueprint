@@ -162,6 +162,7 @@ import OperationsLeadCapture from "./pages/operations/OperationsLeadCapture";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import VerifyCertification from "./pages/VerifyCertification";
+import LinkedInCallback from "./pages/LinkedInCallback";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
@@ -199,6 +200,7 @@ const App = () => (
             <Route path="/claim/:token" element={<ClaimInvitation />} />
             <Route path="/estimate/:token" element={<PublicEstimateRespond />} />
             <Route path="/verify/cert/:certId" element={<VerifyCertification />} />
+            <Route path="/linkedin/callback" element={<LinkedInCallback />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
