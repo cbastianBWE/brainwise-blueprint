@@ -2018,6 +2018,7 @@ export type Database = {
       }
       coach_certifications: {
         Row: {
+          certificate_image_path: string | null
           certification_path_id: string | null
           certification_type: string
           certified_at: string | null
@@ -2033,6 +2034,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          certificate_image_path?: string | null
           certification_path_id?: string | null
           certification_type: string
           certified_at?: string | null
@@ -2048,6 +2050,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          certificate_image_path?: string | null
           certification_path_id?: string | null
           certification_type?: string
           certified_at?: string | null
@@ -17780,6 +17783,10 @@ export type Database = {
         Returns: Json
       }
       cancel_scheduled_assignment: { Args: { p_id: string }; Returns: Json }
+      certification_display_name: {
+        Args: { p_certification_type: string }
+        Returns: string
+      }
       check_mfa_freshness: {
         Args: { p_max_age_seconds?: number; p_session_id: string }
         Returns: boolean
