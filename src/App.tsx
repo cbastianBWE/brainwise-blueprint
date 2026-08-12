@@ -162,6 +162,7 @@ import OperationsLeadCapture from "./pages/operations/OperationsLeadCapture";
 import PublicInvoicePay from "./pages/public/PublicInvoicePay";
 import PublicEstimateRespond from "./pages/public/PublicEstimateRespond";
 import VerifyCertification from "./pages/VerifyCertification";
+import LinkedInCallback from "./pages/LinkedInCallback";
 import EpnComplete from "./pages/EpnComplete";
 import AirsaManagerComplete from "./pages/AirsaManagerComplete";
 import VerifyConversion from "./pages/VerifyConversion";
