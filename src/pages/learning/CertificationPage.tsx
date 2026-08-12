@@ -226,6 +226,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const [caption, setCaption] = useState<string>("");
   const [posting, setPosting] = useState(false);
   const [postedUrl, setPostedUrl] = useState<string | null>(null);
+  const [posted, setPosted] = useState(false);
   const [manualFallback, setManualFallback] = useState(false);
 
   useEffect(() => {
@@ -364,6 +365,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const openShare = () => {
     const opt = CAPTION_OPTIONS.find((o) => o.id === captionId) ?? CAPTION_OPTIONS[0];
     setCaption(opt.build(display_name, verifyUrl));
+    setPosted(false);
     setPostedUrl(null);
     setManualFallback(false);
     setShareOpen(true);
@@ -424,28 +426,47 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
       }
 
       const code: string = await new Promise((resolve, reject) => {
-        const timer = window.setInterval(() => {
-          if (popup.closed) {
-            window.clearInterval(timer);
-            window.removeEventListener("message", onMessage);
-            reject(new Error("LinkedIn window was closed before finishing."));
-          }
-        }, 500);
+        let settled = false;
+        let closeTimeout: number | undefined;
+
+        const cleanup = () => {
+          window.clearInterval(timer);
+          window.clearTimeout(closeTimeout);
+          window.removeEventListener("message", onMessage);
+        };
 
         function onMessage(e: MessageEvent) {
           if (e.origin !== window.location.origin) return;
           if (e.data?.source !== "brainwise-linkedin") return;
           if (e.data.state !== state) return;
-          window.clearInterval(timer);
-          window.removeEventListener("message", onMessage);
-          if (e.data.error)
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (e.data.error) {
             reject(new Error(e.data.errorDescription || "LinkedIn declined the request."));
-          else if (e.data.code) resolve(e.data.code);
-          else reject(new Error("LinkedIn did not return an authorization code."));
+          } else if (e.data.code) {
+            resolve(e.data.code);
+          } else {
+            reject(new Error("LinkedIn did not return an authorization code."));
+          }
         }
+
+        // The callback page posts its message and closes itself immediately, so a
+        // closed window is not proof of cancellation. Wait for the message to arrive
+        // before giving up.
+        const timer = window.setInterval(() => {
+          if (!popup.closed || settled || closeTimeout !== undefined) return;
+          closeTimeout = window.setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(new Error("LinkedIn window was closed before finishing."));
+          }, 1500);
+        }, 500);
 
         window.addEventListener("message", onMessage);
       });
+
 
       // 4. Post.
       const res = await supabase.functions.invoke("linkedin-share-certificate", {
@@ -460,6 +481,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
         throw new Error("LinkedIn rejected the post. Try the manual option below.");
       }
 
+      setPosted(true);
       setPostedUrl(res.data.post_url ?? null);
       toast.success("Posted to LinkedIn.");
     } catch (err: any) {
@@ -549,14 +571,16 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
             {caption.length} / 2800
           </div>
 
-          {postedUrl ? (
+          {posted ? (
             <div className="space-y-2">
               <div className="font-medium text-[var(--bw-navy)]">Your post is live on LinkedIn.</div>
-              <Button asChild variant="outline" size="sm">
-                <a href={postedUrl} target="_blank" rel="noopener noreferrer">
-                  View your post
-                </a>
-              </Button>
+              {postedUrl && (
+                <Button asChild variant="outline" size="sm">
+                  <a href={postedUrl} target="_blank" rel="noopener noreferrer">
+                    View your post
+                  </a>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
