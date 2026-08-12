@@ -200,6 +200,7 @@ const App = () => (
             <Route path="/claim/:token" element={<ClaimInvitation />} />
             <Route path="/estimate/:token" element={<PublicEstimateRespond />} />
             <Route path="/verify/cert/:certId" element={<VerifyCertification />} />
+            <Route path="/linkedin/callback" element={<LinkedInCallback />} />
             <Route path="/coming-soon" element={<ComingSoon />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
