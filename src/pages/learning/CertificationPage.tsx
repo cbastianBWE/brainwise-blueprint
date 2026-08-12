@@ -340,9 +340,6 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   };
 
   const verifyUrl = `${window.location.origin}/verify/cert/${certification.certification_id}`;
-  const suggestedCaption =
-    `I'm now a ${display_name} through BrainWise Enterprises.\n\n` +
-    `Verify my credential: ${verifyUrl}`;
 
   const handleAddToProfile = () => {
     const params = new URLSearchParams({
