@@ -410,30 +410,92 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
         </Button>
       </div>
 
-      {shareHint && (
-        <div className="rounded-md border border-[var(--bw-orange)]/40 bg-[var(--bw-orange)]/5 p-4 text-sm space-y-3">
-          <div className="font-medium text-[var(--bw-navy)]">Finish your post in LinkedIn</div>
-          <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
-            <li>Paste the caption into the post box, then edit it however you like.</li>
-            <li>
-              Click the photo icon and attach the certificate that just downloaded (
-              <span className="font-mono text-xs">
-                BrainWise-{fileLabel}-Certificate-for-LinkedIn.png
-              </span>
-              ).
-            </li>
-            <li>Post.</li>
-          </ol>
-          <div className="rounded border bg-background p-3 text-xs whitespace-pre-wrap text-foreground">
-            {suggestedCaption}
+      {shareOpen && (
+        <div className="rounded-md border border-[var(--bw-orange)]/40 bg-[var(--bw-orange)]/5 p-4 text-sm space-y-4">
+          <div className="font-medium text-[var(--bw-navy)]">Choose a caption</div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {CAPTION_OPTIONS.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => pickCaption(o.id)}
+                className={`text-left rounded-md border bg-background p-3 transition-colors ${
+                  captionId === o.id
+                    ? "border-[var(--bw-orange)] bg-[var(--bw-orange)]/5"
+                    : "hover:border-foreground/30"
+                }`}
+              >
+                <div className="font-medium">{o.label}</div>
+                <div className="text-xs text-muted-foreground">{o.hint}</div>
+              </button>
+            ))}
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => navigator.clipboard.writeText(suggestedCaption)}
+
+          <textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            rows={12}
+            className="w-full rounded border bg-background p-3 text-sm"
+          />
+          <div
+            className={`text-right text-xs ${
+              caption.length > 2800 ? "text-destructive" : "text-muted-foreground"
+            }`}
           >
-            <Copy className="h-4 w-4 mr-1" /> Copy caption again
-          </Button>
+            {caption.length} / 2800
+          </div>
+
+          {postedUrl ? (
+            <div className="space-y-2">
+              <div className="font-medium text-[var(--bw-navy)]">Your post is live on LinkedIn.</div>
+              <Button asChild variant="outline" size="sm">
+                <a href={postedUrl} target="_blank" rel="noopener noreferrer">
+                  View your post
+                </a>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                A LinkedIn window will open so you can authorise the post. We don't keep your
+                LinkedIn login.
+              </p>
+              <Button
+                onClick={postToLinkedIn}
+                disabled={posting || !caption.trim() || caption.length > 2800}
+                className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+              >
+                {posting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Linkedin className="h-4 w-4 mr-2" />
+                )}
+                Post to LinkedIn
+              </Button>
+            </div>
+          )}
+
+          {manualFallback && (
+            <div className="rounded-md border bg-background p-4 space-y-3">
+              <div className="font-medium text-[var(--bw-navy)]">
+                Posting automatically didn't work. Do it manually instead:
+              </div>
+              <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+                <li>Paste the caption into the post box, then edit it however you like.</li>
+                <li>
+                  Click the photo icon and attach the certificate that just downloaded (
+                  <span className="font-mono text-xs">
+                    BrainWise-{fileLabel}-Certificate-for-LinkedIn.png
+                  </span>
+                  ).
+                </li>
+                <li>Post.</li>
+              </ol>
+              <Button size="sm" variant="outline" onClick={manualShare}>
+                <Copy className="h-4 w-4 mr-1" /> Copy caption &amp; download image
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
