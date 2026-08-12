@@ -3,7 +3,7 @@ import { format } from "date-fns";
 
 const TEMPLATES: Record<string, { src: string; width: number; height: number }> = {
   ptp_coach: {
-    src: "/certificates/ptp-coach-certificate-template.png",
+    src: "/certificates/ptp-practitioner-certificate-template.png",
     width: 3264,
     height: 2522,
   },
@@ -80,17 +80,19 @@ export default function CertificateCanvas({
         nameSize -= 2;
         ctx.font = `bold ${nameSize}px Montserrat, sans-serif`;
       }
-      ctx.fillText(recipientName, cw * 0.5, ch * 0.336);
+      ctx.fillText(recipientName, cw * 0.5, ch * 0.363);
 
-      // Date — centered directly below the baked "AWARDED ON" label
+      // Date — inline with the baked "AWARDED ON" label
       if (certifiedAt) {
         const dateSize = Math.round(ch * 0.016);
         ctx.fillStyle = "#F9F7F1";
         ctx.font = `bold ${dateSize}px Montserrat, sans-serif`;
-        ctx.textAlign = "center";
+        // Inline with the baked-in "AWARDED ON" label, which ends at x = 0.4755 and is
+        // vertically centred at y = 0.7002. Left-aligned, with a small gap after it.
+        ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         const dateText = format(new Date(certifiedAt), "MMMM d, yyyy");
-        ctx.fillText(dateText, cw * 0.5, ch * 0.689);
+        ctx.fillText(dateText, cw * 0.4915, ch * 0.7002);
       }
 
       if (!cancelled) onReadyRef.current?.(canvas);

@@ -49,14 +49,18 @@ const BADGE_ASSETS: Record<
 > = {
   ptp_coach: {
     linkedin: {
-      navy: "/badges/ptp-coach-linkedin-badge-dark.png",
-      cream: "/badges/ptp-coach-linkedin-badge-light.png",
+      navy: "/badges/ptp-practitioner-linkedin-badge-dark.png",
+      cream: "/badges/ptp-practitioner-linkedin-badge-light.png",
     },
     banner: {
-      navy: "/badges/ptp-coach-email-banner-dark.png",
-      cream: "/badges/ptp-coach-email-banner-light.png",
+      navy: "/badges/ptp-practitioner-email-banner-dark.png",
+      cream: "/badges/ptp-practitioner-email-banner-light.png",
     },
   },
+};
+
+const CERT_FILE_LABEL: Record<string, string> = {
+  ptp_coach: "PTP-Practitioner",
 };
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -175,6 +179,8 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const [canvasReady, setCanvasReady] = useState(false);
   const [linkedinVariant, setLinkedinVariant] = useState<"navy" | "cream">("navy");
   const [bannerVariant, setBannerVariant] = useState<"navy" | "cream">("navy");
+  const [sharing, setSharing] = useState(false);
+  const [shareHint, setShareHint] = useState(false);
 
   useEffect(() => {
     setCanvasReady(false);
@@ -221,6 +227,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const awardedDate = certifiedAt ? format(new Date(certifiedAt), "MMMM d, yyyy") : "";
   const hasTemplate = certType === "ptp_coach";
   const assets = BADGE_ASSETS[certType];
+  const fileLabel = CERT_FILE_LABEL[certType] ?? certType;
 
   if (!is_certified) {
     const isRevoked = certification.status === "revoked";
@@ -249,12 +256,28 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
     setCanvasReady(true);
   };
 
+  // The file the practitioner attaches to their LinkedIn post. The full-resolution
+  // certificate is over 3000px wide and needlessly heavy to upload from a phone.
+  const buildPostImage = (): Promise<Blob | null> => {
+    const src = canvasRef.current;
+    if (!src) return Promise.resolve(null);
+    const out = document.createElement("canvas");
+    const scale = Math.min(1, 1600 / src.width);
+    out.width = Math.round(src.width * scale);
+    out.height = Math.round(src.height * scale);
+    const ctx = out.getContext("2d");
+    if (!ctx) return Promise.resolve(null);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(src, 0, 0, out.width, out.height);
+    return new Promise((resolve) => out.toBlob((b) => resolve(b), "image/png"));
+  };
+
   const handlePng = () => {
     const c = canvasRef.current;
     if (!c) return;
     c.toBlob((blob) => {
       if (!blob) return;
-      triggerDownload(blob, `BrainWise-${certType}-Certificate.png`);
+      triggerDownload(blob, `BrainWise-${fileLabel}-Certificate.png`);
     }, "image/png");
   };
 
@@ -267,13 +290,13 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
       format: [c.width, c.height],
     });
     pdf.addImage(c.toDataURL("image/png"), "PNG", 0, 0, c.width, c.height);
-    pdf.save(`BrainWise-${certType}-Certificate.pdf`);
+    pdf.save(`BrainWise-${fileLabel}-Certificate.pdf`);
   };
 
   const verifyUrl = `${window.location.origin}/verify/cert/${certification.certification_id}`;
   const suggestedCaption =
-    `I'm proud to be ${display_name} through BrainWise Enterprises! ` +
-    `You can verify my credential here: ${verifyUrl}`;
+    `I'm now a ${display_name} through BrainWise Enterprises.\n\n` +
+    `Verify my credential: ${verifyUrl}`;
 
   const handleAddToProfile = () => {
     const params = new URLSearchParams({
@@ -295,20 +318,47 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
     );
   };
 
-  const handleSharePost = () => {
-    window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(verifyUrl)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-  };
+  const handleShareToLinkedIn = async () => {
+    if (!canvasRef.current) return;
+    setSharing(true);
+    let copied = false;
 
-  const handleCopyCaption = async () => {
     try {
-      await navigator.clipboard.writeText(suggestedCaption);
-      toast.success("Caption copied — paste it into your LinkedIn post.");
-    } catch {
-      toast.error("Couldn't copy. You can select and copy the caption manually.");
+      // Copy first. Browsers only permit clipboard writes inside the user
+      // gesture, and awaiting the canvas work first can lose that window.
+      try {
+        await navigator.clipboard.writeText(suggestedCaption);
+        copied = true;
+      } catch {
+        copied = false;
+      }
+
+      // Download the image they will attach to the post.
+      const postImage = await buildPostImage();
+      if (postImage) {
+        triggerDownload(postImage, `BrainWise-${fileLabel}-Certificate-for-LinkedIn.png`);
+      }
+
+      // Open the composer. The text parameter is undocumented and LinkedIn may
+      // ignore it, which is exactly why the caption is already on the clipboard.
+      const composer = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(
+        suggestedCaption,
+      )}`;
+      const win = window.open(composer, "_blank", "noopener,noreferrer");
+
+      setShareHint(true);
+
+      if (!win) {
+        toast.error(
+          "Your browser blocked the LinkedIn tab. Allow pop-ups for this site and try again.",
+        );
+      } else if (copied) {
+        toast.success("Certificate downloaded and caption copied.");
+      } else {
+        toast.success("Certificate downloaded. Copy the caption below by hand.");
+      }
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -350,13 +400,42 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
         <Button onClick={handleAddToProfile} variant="outline">
           <Linkedin className="h-4 w-4 mr-2" /> Add to LinkedIn profile
         </Button>
-        <Button onClick={handleSharePost} variant="outline">
-          <Linkedin className="h-4 w-4 mr-2" /> Share as a post
-        </Button>
-        <Button onClick={handleCopyCaption} variant="outline">
-          <Copy className="h-4 w-4 mr-2" /> Copy caption
+        <Button onClick={handleShareToLinkedIn} disabled={!canvasReady || sharing} variant="outline">
+          {sharing ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Linkedin className="h-4 w-4 mr-2" />
+          )}
+          Share on LinkedIn
         </Button>
       </div>
+
+      {shareHint && (
+        <div className="rounded-md border border-[var(--bw-orange)]/40 bg-[var(--bw-orange)]/5 p-4 text-sm space-y-3">
+          <div className="font-medium text-[var(--bw-navy)]">Finish your post in LinkedIn</div>
+          <ol className="list-decimal pl-5 space-y-1 text-muted-foreground">
+            <li>Paste the caption into the post box, then edit it however you like.</li>
+            <li>
+              Click the photo icon and attach the certificate that just downloaded (
+              <span className="font-mono text-xs">
+                BrainWise-{fileLabel}-Certificate-for-LinkedIn.png
+              </span>
+              ).
+            </li>
+            <li>Post.</li>
+          </ol>
+          <div className="rounded border bg-background p-3 text-xs whitespace-pre-wrap text-foreground">
+            {suggestedCaption}
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigator.clipboard.writeText(suggestedCaption)}
+          >
+            <Copy className="h-4 w-4 mr-1" /> Copy caption again
+          </Button>
+        </div>
+      )}
 
       {/* Certificate preview (smaller) */}
       {hasTemplate ? (
@@ -394,7 +473,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
               onVariantChange={setLinkedinVariant}
               previewSrc={assets.linkedin[linkedinVariant]}
               previewClassName="aspect-square max-w-[220px] mx-auto"
-              downloadFilename={`BrainWise-${certType}-LinkedIn-Badge-${
+              downloadFilename={`BrainWise-${fileLabel}-LinkedIn-Badge-${
                 linkedinVariant === "navy" ? "Navy" : "Cream"
               }.png`}
               whereToUse="LinkedIn Certifications section, post images, profile featured items."
@@ -406,7 +485,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
               onVariantChange={setBannerVariant}
               previewSrc={assets.banner[bannerVariant]}
               previewClassName="aspect-[5/1] w-full"
-              downloadFilename={`BrainWise-${certType}-Email-Banner-${
+              downloadFilename={`BrainWise-${fileLabel}-Email-Banner-${
                 bannerVariant === "navy" ? "Navy" : "Cream"
               }.png`}
               whereToUse="Gmail/Outlook signature, newsletter footer."
@@ -417,7 +496,8 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
             <div className="font-medium text-foreground">Quick usage notes</div>
             <ul className="list-disc pl-5 space-y-1">
               <li>
-                LinkedIn Certifications: add as a Certification with issuer "BrainWise Enterprises".
+                LinkedIn Certifications: add as a Certification with issuer "BrainWise
+                Enterprises", or use "Add to LinkedIn profile" above to prefill it.
               </li>
               <li>Email signature: cap displayed width around 600px for best rendering.</li>
               <li>Variants: use Navy on light backgrounds, Cream on dark backgrounds.</li>
