@@ -49,14 +49,18 @@ const BADGE_ASSETS: Record<
 > = {
   ptp_coach: {
     linkedin: {
-      navy: "/badges/ptp-coach-linkedin-badge-dark.png",
-      cream: "/badges/ptp-coach-linkedin-badge-light.png",
+      navy: "/badges/ptp-practitioner-linkedin-badge-dark.png",
+      cream: "/badges/ptp-practitioner-linkedin-badge-light.png",
     },
     banner: {
-      navy: "/badges/ptp-coach-email-banner-dark.png",
-      cream: "/badges/ptp-coach-email-banner-light.png",
+      navy: "/badges/ptp-practitioner-email-banner-dark.png",
+      cream: "/badges/ptp-practitioner-email-banner-light.png",
     },
   },
+};
+
+const CERT_FILE_LABEL: Record<string, string> = {
+  ptp_coach: "PTP-Practitioner",
 };
 
 function triggerDownload(blob: Blob, filename: string) {
