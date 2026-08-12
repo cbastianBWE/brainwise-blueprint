@@ -424,28 +424,47 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
       }
 
       const code: string = await new Promise((resolve, reject) => {
-        const timer = window.setInterval(() => {
-          if (popup.closed) {
-            window.clearInterval(timer);
-            window.removeEventListener("message", onMessage);
-            reject(new Error("LinkedIn window was closed before finishing."));
-          }
-        }, 500);
+        let settled = false;
+        let closeTimeout: number | undefined;
+
+        const cleanup = () => {
+          window.clearInterval(timer);
+          window.clearTimeout(closeTimeout);
+          window.removeEventListener("message", onMessage);
+        };
 
         function onMessage(e: MessageEvent) {
           if (e.origin !== window.location.origin) return;
           if (e.data?.source !== "brainwise-linkedin") return;
           if (e.data.state !== state) return;
-          window.clearInterval(timer);
-          window.removeEventListener("message", onMessage);
-          if (e.data.error)
+          if (settled) return;
+          settled = true;
+          cleanup();
+          if (e.data.error) {
             reject(new Error(e.data.errorDescription || "LinkedIn declined the request."));
-          else if (e.data.code) resolve(e.data.code);
-          else reject(new Error("LinkedIn did not return an authorization code."));
+          } else if (e.data.code) {
+            resolve(e.data.code);
+          } else {
+            reject(new Error("LinkedIn did not return an authorization code."));
+          }
         }
+
+        // The callback page posts its message and closes itself immediately, so a
+        // closed window is not proof of cancellation. Wait for the message to arrive
+        // before giving up.
+        const timer = window.setInterval(() => {
+          if (!popup.closed || settled || closeTimeout !== undefined) return;
+          closeTimeout = window.setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(new Error("LinkedIn window was closed before finishing."));
+          }, 1500);
+        }, 500);
 
         window.addEventListener("message", onMessage);
       });
+
 
       // 4. Post.
       const res = await supabase.functions.invoke("linkedin-share-certificate", {
