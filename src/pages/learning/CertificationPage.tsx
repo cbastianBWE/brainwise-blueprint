@@ -63,6 +63,48 @@ const CERT_FILE_LABEL: Record<string, string> = {
   ptp_coach: "PTP-Practitioner",
 };
 
+interface CaptionOption {
+  id: string;
+  label: string;
+  hint: string;
+  build: (displayName: string, verifyUrl: string) => string;
+}
+
+const CAPTION_OPTIONS: CaptionOption[] = [
+  {
+    id: "practical",
+    label: "What I can now do",
+    hint: "Leads with the credential and what it unlocks for clients.",
+    build: (n, url) =>
+      `🧠 I'm now a ${n}.\n\n` +
+      `The Personal Threat & Reward Profile maps 89 facets of what actually drives someone, and just as importantly, what's quietly driving against it. Most assessments tell you what a person does. This one tells you what they're protecting.\n\n` +
+      `Practically: I can now run PTP debriefs, plus paired and team profiles. It sits underneath the tools you already use rather than replacing them.\n\n` +
+      `If you've ever watched someone say they want a change and then work against it for six months, that gap is what this is built for. Happy to talk it through. 👇\n\n` +
+      `Verify my credential: ${url}`,
+  },
+  {
+    id: "insight",
+    label: "What surprised me",
+    hint: "Leads with an idea from the training. Reads least like an announcement.",
+    build: (n, url) =>
+      `Certified ✅ I'm officially a ${n}.\n\n` +
+      `The part that stuck with me: threat and reward run at the same time, not as opposites. Someone can genuinely want the promotion and genuinely be protecting themselves from it. Both true at once. Until you can see both, coaching the goal alone doesn't move anything.\n\n` +
+      `The Personal Threat & Reward Profile puts numbers on both sides across 89 facets, and the debrief turns that into something a person can act on. 🧠\n\n` +
+      `I'm now certified to run those debriefs and to deliver paired and team profiles. Want to see yours? Message me.\n\n` +
+      `Verify my credential: ${url}`,
+  },
+  {
+    id: "short",
+    label: "Short and punchy",
+    hint: "Four lines. Best if you post often and don't want a wall of text.",
+    build: (n, url) =>
+      `🎉 Officially a ${n}.\n\n` +
+      `89 facets. What drives you, and what's quietly driving against it. I can now run PTP debriefs plus paired and team profiles.\n\n` +
+      `If you've ever wondered why the change you want keeps stalling, that's the question this answers. Let's talk. 🧠\n\n` +
+      `Verify my credential: ${url}`,
+  },
+];
+
 function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -179,8 +221,12 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const [canvasReady, setCanvasReady] = useState(false);
   const [linkedinVariant, setLinkedinVariant] = useState<"navy" | "cream">("navy");
   const [bannerVariant, setBannerVariant] = useState<"navy" | "cream">("navy");
-  const [sharing, setSharing] = useState(false);
-  const [shareHint, setShareHint] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [captionId, setCaptionId] = useState<string>("practical");
+  const [caption, setCaption] = useState<string>("");
+  const [posting, setPosting] = useState(false);
+  const [postedUrl, setPostedUrl] = useState<string | null>(null);
+  const [manualFallback, setManualFallback] = useState(false);
 
   useEffect(() => {
     setCanvasReady(false);
@@ -318,47 +364,112 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
     );
   };
 
-  const handleShareToLinkedIn = async () => {
-    if (!canvasRef.current) return;
-    setSharing(true);
-    let copied = false;
+  const openShare = () => {
+    const opt = CAPTION_OPTIONS.find((o) => o.id === captionId) ?? CAPTION_OPTIONS[0];
+    setCaption(opt.build(display_name, verifyUrl));
+    setPostedUrl(null);
+    setManualFallback(false);
+    setShareOpen(true);
+  };
 
+  const pickCaption = (id: string) => {
+    if (id === captionId) return;
+    setCaptionId(id);
+    const opt = CAPTION_OPTIONS.find((o) => o.id === id);
+    if (opt) setCaption(opt.build(display_name, verifyUrl));
+  };
+
+  const manualShare = async () => {
     try {
-      // Copy first. Browsers only permit clipboard writes inside the user
-      // gesture, and awaiting the canvas work first can lose that window.
-      try {
-        await navigator.clipboard.writeText(suggestedCaption);
-        copied = true;
-      } catch {
-        copied = false;
+      await navigator.clipboard.writeText(caption);
+    } catch {
+      /* the caption is on screen either way */
+    }
+    const image = await buildPostImage();
+    if (image) triggerDownload(image, `BrainWise-${fileLabel}-Certificate-for-LinkedIn.png`);
+    window.open("https://www.linkedin.com/feed/?shareActive=true", "_blank", "noopener,noreferrer");
+  };
+
+  const postToLinkedIn = async () => {
+    if (!canvasRef.current || !caption.trim()) return;
+    setPosting(true);
+    try {
+      // 1. Store the certificate image. The Edge Function reads it from storage
+      //    rather than us shipping bytes through the OAuth round trip.
+      const image = await buildPostImage();
+      if (!image) throw new Error("Could not prepare your certificate image.");
+      const form = new FormData();
+      form.append("certification_id", certification.certification_id);
+      form.append("file", image, "certificate.png");
+      const up = await supabase.functions.invoke("persist-certificate-image", { body: form });
+      if (up.error) throw new Error("Could not save your certificate image.");
+
+      // 2. Get the public client id.
+      const cfg = await supabase.functions.invoke("linkedin-share-certificate", { method: "GET" });
+      if (cfg.error || !cfg.data?.client_id) {
+        throw new Error("LinkedIn posting is not configured yet.");
       }
 
-      // Download the image they will attach to the post.
-      const postImage = await buildPostImage();
-      if (postImage) {
-        triggerDownload(postImage, `BrainWise-${fileLabel}-Certificate-for-LinkedIn.png`);
+      // 3. Popup, so this page stays alive and the caption survives.
+      const redirectUri = `${window.location.origin}/linkedin/callback`;
+      const state = crypto.randomUUID();
+      const authUrl =
+        `https://www.linkedin.com/oauth/v2/authorization?response_type=code` +
+        `&client_id=${encodeURIComponent(cfg.data.client_id)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&state=${encodeURIComponent(state)}` +
+        `&scope=${encodeURIComponent(cfg.data.scope ?? "openid profile w_member_social")}`;
+
+      const popup = window.open(authUrl, "brainwise-linkedin", "width=600,height=720");
+      if (!popup) {
+        setManualFallback(true);
+        throw new Error("Your browser blocked the LinkedIn window. Use the manual option below.");
       }
 
-      // Open the composer. The text parameter is undocumented and LinkedIn may
-      // ignore it, which is exactly why the caption is already on the clipboard.
-      const composer = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(
-        suggestedCaption,
-      )}`;
-      const win = window.open(composer, "_blank", "noopener,noreferrer");
+      const code: string = await new Promise((resolve, reject) => {
+        const timer = window.setInterval(() => {
+          if (popup.closed) {
+            window.clearInterval(timer);
+            window.removeEventListener("message", onMessage);
+            reject(new Error("LinkedIn window was closed before finishing."));
+          }
+        }, 500);
 
-      setShareHint(true);
+        function onMessage(e: MessageEvent) {
+          if (e.origin !== window.location.origin) return;
+          if (e.data?.source !== "brainwise-linkedin") return;
+          if (e.data.state !== state) return;
+          window.clearInterval(timer);
+          window.removeEventListener("message", onMessage);
+          if (e.data.error)
+            reject(new Error(e.data.errorDescription || "LinkedIn declined the request."));
+          else if (e.data.code) resolve(e.data.code);
+          else reject(new Error("LinkedIn did not return an authorization code."));
+        }
 
-      if (!win) {
-        toast.error(
-          "Your browser blocked the LinkedIn tab. Allow pop-ups for this site and try again.",
-        );
-      } else if (copied) {
-        toast.success("Certificate downloaded and caption copied.");
-      } else {
-        toast.success("Certificate downloaded. Copy the caption below by hand.");
+        window.addEventListener("message", onMessage);
+      });
+
+      // 4. Post.
+      const res = await supabase.functions.invoke("linkedin-share-certificate", {
+        body: {
+          certification_id: certification.certification_id,
+          caption,
+          code,
+          redirect_uri: redirectUri,
+        },
+      });
+      if (res.error || !res.data?.ok) {
+        throw new Error("LinkedIn rejected the post. Try the manual option below.");
       }
+
+      setPostedUrl(res.data.post_url ?? null);
+      toast.success("Posted to LinkedIn.");
+    } catch (err: any) {
+      setManualFallback(true);
+      toast.error(err?.message ?? "Could not post to LinkedIn.");
     } finally {
-      setSharing(false);
+      setPosting(false);
     }
   };
 
@@ -400,12 +511,8 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
         <Button onClick={handleAddToProfile} variant="outline">
           <Linkedin className="h-4 w-4 mr-2" /> Add to LinkedIn profile
         </Button>
-        <Button onClick={handleShareToLinkedIn} disabled={!canvasReady || sharing} variant="outline">
-          {sharing ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Linkedin className="h-4 w-4 mr-2" />
-          )}
+        <Button onClick={openShare} disabled={!canvasReady} variant="outline">
+          <Linkedin className="h-4 w-4 mr-2" />
           Share on LinkedIn
         </Button>
       </div>
