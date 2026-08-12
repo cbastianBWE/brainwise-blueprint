@@ -226,6 +226,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const [caption, setCaption] = useState<string>("");
   const [posting, setPosting] = useState(false);
   const [postedUrl, setPostedUrl] = useState<string | null>(null);
+  const [posted, setPosted] = useState(false);
   const [manualFallback, setManualFallback] = useState(false);
 
   useEffect(() => {
@@ -364,6 +365,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
   const openShare = () => {
     const opt = CAPTION_OPTIONS.find((o) => o.id === captionId) ?? CAPTION_OPTIONS[0];
     setCaption(opt.build(display_name, verifyUrl));
+    setPosted(false);
     setPostedUrl(null);
     setManualFallback(false);
     setShareOpen(true);
@@ -479,6 +481,7 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
         throw new Error("LinkedIn rejected the post. Try the manual option below.");
       }
 
+      setPosted(true);
       setPostedUrl(res.data.post_url ?? null);
       toast.success("Posted to LinkedIn.");
     } catch (err: any) {
@@ -568,14 +571,16 @@ function CertificationTabContent({ certificationId }: { certificationId: string 
             {caption.length} / 2800
           </div>
 
-          {postedUrl ? (
+          {posted ? (
             <div className="space-y-2">
               <div className="font-medium text-[var(--bw-navy)]">Your post is live on LinkedIn.</div>
-              <Button asChild variant="outline" size="sm">
-                <a href={postedUrl} target="_blank" rel="noopener noreferrer">
-                  View your post
-                </a>
-              </Button>
+              {postedUrl && (
+                <Button asChild variant="outline" size="sm">
+                  <a href={postedUrl} target="_blank" rel="noopener noreferrer">
+                    View your post
+                  </a>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
