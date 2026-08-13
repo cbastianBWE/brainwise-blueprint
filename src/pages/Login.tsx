@@ -22,9 +22,14 @@ const Login = () => {
   const [showReactivate, setShowReactivate] = useState(false);
   const [reactivating, setReactivating] = useState(false);
   const [mfaUserId, setMfaUserId] = useState<string | null>(null);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUnconfirmedEmail(null);
+    setResent(false);
     setLoading(true);
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -34,8 +39,24 @@ const Login = () => {
 
     if (error) {
       setLoading(false);
-      if (error.message.toLowerCase().includes('banned') || error.message.toLowerCase().includes('user is banned')) {
+      const code = (error as { code?: string }).code ?? '';
+      const msg = error.message.toLowerCase();
+      if (code === 'user_banned' || msg.includes('banned')) {
         setShowReactivate(true);
+      } else if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) {
+        setUnconfirmedEmail(email.trim());
+      } else if (code === 'invalid_credentials' || msg.includes('invalid login credentials')) {
+        toast({
+          title: "Email or password is incorrect",
+          description: "Double-check both and try again. If you've forgotten your password, use the reset link below.",
+          variant: "destructive",
+        });
+      } else if (code === 'over_request_rate_limit' || msg.includes('rate limit')) {
+        toast({
+          title: "Too many attempts",
+          description: "Please wait a minute before trying again.",
+          variant: "destructive",
+        });
       } else {
         toast({ title: "Login Failed", description: error.message, variant: "destructive" });
       }
@@ -92,6 +113,31 @@ const Login = () => {
     }
   };
 
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: unconfirmedEmail,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (error) {
+      const code = (error as { code?: string }).code ?? '';
+      if (code === 'over_email_send_rate_limit' || error.message.toLowerCase().includes('rate limit')) {
+        toast({
+          title: "Please wait before requesting another",
+          description: "A verification email was sent recently. Check your inbox and spam folder, then try again in a few minutes.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Could not resend", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+    setResent(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 gap-6">
       <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -119,10 +165,35 @@ const Login = () => {
             />
           ) : (
             <>
+              {unconfirmedEmail && (
+                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 mb-4 space-y-3">
+                  <p className="text-sm text-foreground">
+                    <strong>Verify your email to continue.</strong> We sent a verification
+                    link to {unconfirmedEmail}. You'll need to click it before you can log
+                    in. Check your spam folder if it isn't in your inbox.
+                  </p>
+                  {resent ? (
+                    <p className="text-sm text-[var(--bw-forest)]">
+                      A new verification link is on its way. Please open it soon, links
+                      expire after a short window.
+                    </p>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResendConfirmation}
+                      disabled={resending}
+                    >
+                      {resending ? "Sending..." : "Resend verification email"}
+                    </Button>
+                  )}
+                </div>
+              )}
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setUnconfirmedEmail(null); setResent(false); }} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
@@ -131,7 +202,7 @@ const Login = () => {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => { setPassword(e.target.value); setUnconfirmedEmail(null); setResent(false); }}
                       required
                       className="pr-10"
                     />
