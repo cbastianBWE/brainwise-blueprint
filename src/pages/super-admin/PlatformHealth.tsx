@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LearningReport from "@/pages/super-admin/LearningReport";
 import ResourceEngagementReport from "@/pages/super-admin/ResourceEngagementReport";
+import PlatformTicketsTab from "@/components/super-admin/PlatformTicketsTab";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Award,
