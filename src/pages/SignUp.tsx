@@ -32,6 +32,8 @@ const SignUp = () => {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
   const { toast } = useToast();
 
   const [searchParams] = useSearchParams();
@@ -153,6 +155,25 @@ const SignUp = () => {
     }
   };
 
+  const handleResendConfirmation = async () => {
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (error) {
+      toast({
+        title: "Could not resend",
+        description: "A verification email was sent recently. Check your inbox and spam folder, then try again in a few minutes.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setResent(true);
+  };
+
   const BrandLink = () => (
     <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
       <img src="/brain-icon.png" alt="BrainWise" className="h-8 w-8" />
@@ -173,10 +194,22 @@ const SignUp = () => {
               We've sent a verification link to <strong>{email}</strong>. Please check your email to verify your account before logging in.
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center">
-            <Link to="/login">
-              <Button variant="outline">Back to Log In</Button>
-            </Link>
+          <CardContent className="text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Please open the link soon. Verification links expire after a short window.
+            </p>
+            {resent ? (
+              <p className="text-sm text-[var(--bw-forest)]">A new verification link has been sent.</p>
+            ) : (
+              <Button variant="outline" onClick={handleResendConfirmation} disabled={resending}>
+                {resending ? "Sending..." : "Resend verification email"}
+              </Button>
+            )}
+            <div>
+              <Link to="/login">
+                <Button variant="ghost">Back to Log In</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
