@@ -10663,6 +10663,215 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_ticket_scan_state: {
+        Row: {
+          first_scan_completed_at: string | null
+          id: boolean
+          last_scan_at: string | null
+          last_scan_opened: number
+          last_scan_resolved: number
+        }
+        Insert: {
+          first_scan_completed_at?: string | null
+          id?: boolean
+          last_scan_at?: string | null
+          last_scan_opened?: number
+          last_scan_resolved?: number
+        }
+        Update: {
+          first_scan_completed_at?: string | null
+          id?: boolean
+          last_scan_at?: string | null
+          last_scan_opened?: number
+          last_scan_resolved?: number
+        }
+        Relationships: []
+      }
+      platform_ticket_types: {
+        Row: {
+          created_at: string
+          default_severity: string
+          description: string | null
+          is_active: boolean
+          label: string
+          ticket_type: string
+        }
+        Insert: {
+          created_at?: string
+          default_severity: string
+          description?: string | null
+          is_active?: boolean
+          label: string
+          ticket_type: string
+        }
+        Update: {
+          created_at?: string
+          default_severity?: string
+          description?: string | null
+          is_active?: boolean
+          label?: string
+          ticket_type?: string
+        }
+        Relationships: []
+      }
+      platform_tickets: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          dedupe_key: string
+          detail: Json
+          id: string
+          is_backlog: boolean
+          notified_at: string | null
+          resolution: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          subject_email: string | null
+          subject_ref: string | null
+          subject_user_id: string | null
+          ticket_type: string
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          dedupe_key: string
+          detail?: Json
+          id?: string
+          is_backlog?: boolean
+          notified_at?: string | null
+          resolution?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          status?: string
+          subject_email?: string | null
+          subject_ref?: string | null
+          subject_user_id?: string | null
+          ticket_type: string
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          dedupe_key?: string
+          detail?: Json
+          id?: string
+          is_backlog?: boolean
+          notified_at?: string | null
+          resolution?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          subject_email?: string | null
+          subject_ref?: string | null
+          subject_user_id?: string | null
+          ticket_type?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_tickets_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_ticket_type_fkey"
+            columns: ["ticket_type"]
+            isOneToOne: false
+            referencedRelation: "platform_ticket_types"
+            referencedColumns: ["ticket_type"]
+          },
+        ]
+      }
       platform_versions: {
         Row: {
           activated_at: string | null
@@ -17746,6 +17955,7 @@ export type Database = {
         Args: { p_id: string; p_kind: string }
         Returns: Json
       }
+      bw_scan_platform_tickets: { Args: never; Returns: Json }
       bw_set_coach_comp: {
         Args: { p_coach: string; p_comped: boolean; p_reason?: string }
         Returns: Json
@@ -20454,6 +20664,7 @@ export type Database = {
         Args: { p_enabled: boolean; p_feature: string; p_reason: string }
         Returns: Json
       }
+      platform_tickets_scan_now: { Args: never; Returns: Json }
       prepare_lesson_open_response: {
         Args: { p_block_id: string }
         Returns: Json

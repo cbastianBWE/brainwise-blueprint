@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LearningReport from "@/pages/super-admin/LearningReport";
 import ResourceEngagementReport from "@/pages/super-admin/ResourceEngagementReport";
+import PlatformTicketsTab from "@/components/super-admin/PlatformTicketsTab";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Award,
@@ -21,6 +22,7 @@ interface Stats {
 
 const TABS = [
   { value: "overview", label: "Overview" },
+  { value: "tickets", label: "Tickets" },
   { value: "learning", label: "Learning" },
   { value: "resource-engagement", label: "Resource Engagement" },
 ] as const;
@@ -51,6 +53,10 @@ export default function PlatformHealth() {
         <TabsContent value="overview" className="mt-6">
           <OverviewTab />
         </TabsContent>
+        <TabsContent value="tickets" className="mt-6">
+          <PlatformTicketsTab />
+        </TabsContent>
+
         <TabsContent value="learning" className="mt-6">
           <LearningReport embedded />
         </TabsContent>
