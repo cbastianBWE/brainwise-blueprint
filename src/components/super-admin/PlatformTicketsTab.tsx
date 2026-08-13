@@ -350,7 +350,7 @@ export default function PlatformTicketsTab() {
                     {(t.status === "resolved" || t.status === "dismissed") && (
                       <p className="text-xs text-muted-foreground">
                         Resolved {relTime(t.resolved_at)} ({t.resolution ?? t.status})
-                        {t.resolution_note ? ` — ${t.resolution_note}` : ""}
+                        {t.resolution_note ? `. ${t.resolution_note}` : ""}
                       </p>
                     )}
 
@@ -400,8 +400,9 @@ export default function PlatformTicketsTab() {
                 {actionKind === "resolved" ? "Resolve ticket" : "Dismiss ticket"}
               </DialogTitle>
               <DialogDescription>
-                If the underlying condition is still true, the next scan will reopen this
-                ticket.
+                {actionKind === "resolved"
+                  ? "If the underlying condition is still true, the next scan will reopen this ticket."
+                  : "Dismiss suppresses this condition permanently. The scanner will not raise it again for this record, even if it stays true."}
               </DialogDescription>
             </DialogHeader>
             <Textarea
