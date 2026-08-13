@@ -22,6 +22,7 @@ interface Stats {
 
 const TABS = [
   { value: "overview", label: "Overview" },
+  { value: "tickets", label: "Tickets" },
   { value: "learning", label: "Learning" },
   { value: "resource-engagement", label: "Resource Engagement" },
 ] as const;
