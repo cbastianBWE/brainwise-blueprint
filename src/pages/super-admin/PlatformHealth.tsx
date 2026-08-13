@@ -53,6 +53,10 @@ export default function PlatformHealth() {
         <TabsContent value="overview" className="mt-6">
           <OverviewTab />
         </TabsContent>
+        <TabsContent value="tickets" className="mt-6">
+          <PlatformTicketsTab />
+        </TabsContent>
+
         <TabsContent value="learning" className="mt-6">
           <LearningReport embedded />
         </TabsContent>
