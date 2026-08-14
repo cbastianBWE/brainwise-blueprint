@@ -458,6 +458,10 @@ export default function CoachManagement() {
                           )}
                         </TableCell>
                         <TableCell className="flex gap-2">
+                          <Button size="sm" variant="outline" className="gap-1" disabled={!inv.token} onClick={() => copyInviteLink(inv)}>
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy link
+                          </Button>
                           <Button
                             size="sm"
                             variant={inv.email_send_status === "failed" ? "default" : "outline"}
