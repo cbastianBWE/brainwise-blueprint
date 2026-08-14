@@ -867,19 +867,59 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     </p>
                   )}
                   {item.steps?.length > 0 && (
-                    <ol
-                      style={{
-                        fontSize: 13,
-                        color: "var(--fg-1)",
-                        lineHeight: 1.6,
-                        margin: 0,
-                        paddingLeft: 20,
-                      }}
-                    >
-                      {item.steps.map((step, j) => (
-                        <li key={j} style={{ marginBottom: 4 }}><HighlightableText blockKey={`action_plan:${i}:step:${j}`} text={step} /></li>
-                      ))}
-                    </ol>
+                    <div style={{ marginTop: 14, borderTop: "1px solid var(--border-1)", paddingTop: 14 }}>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-primary)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          color: "var(--fg-3)",
+                          margin: "0 0 10px",
+                        }}
+                      >
+                        Try these
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {item.steps.map((step, j) => (
+                          <div
+                            key={j}
+                            style={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: 12,
+                              background: "var(--bw-cream-200)",
+                              border: "1px solid var(--border-1)",
+                              borderRadius: "var(--r-md)",
+                              padding: "10px 12px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                flexShrink: 0,
+                                width: 24,
+                                height: 24,
+                                borderRadius: "var(--r-circle)",
+                                background: "var(--bw-navy)",
+                                color: "var(--bw-white)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 12,
+                                fontWeight: 600,
+                                fontFamily: "var(--font-display)",
+                              }}
+                            >
+                              {j + 1}
+                            </div>
+                            <p style={{ fontSize: 14, color: "var(--fg-1)", lineHeight: 1.55, margin: 0 }}>
+                              <HighlightableText blockKey={`action_plan:${i}:step:${j}`} text={step} />
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               ))}
