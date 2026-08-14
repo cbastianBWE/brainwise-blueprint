@@ -345,7 +345,7 @@ export default function CoachManagement() {
     setLoading(true);
     const { data } = await supabase
       .from("coach_invitations")
-      .select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at")
+      .select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at, token")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
     setInvitations((data as Invitation[]) || []);
@@ -353,6 +353,20 @@ export default function CoachManagement() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const copyInviteLink = async (inv: Invitation) => {
+    if (!inv.token) {
+      toast({ title: "No link available", description: "This invitation has no token. Cancel it and send a new one.", variant: "destructive" });
+      return;
+    }
+    const url = `${window.location.origin}/signup?coach_token=${inv.token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Invitation link copied", description: "Send this to the practitioner if the email did not arrive." });
+    } catch {
+      toast({ title: "Could not copy", description: url, variant: "destructive" });
+    }
+  };
 
   const handleResend = async (inv: Invitation) => {
     const { data, error } = await supabase.functions.invoke("invite-coach", {
