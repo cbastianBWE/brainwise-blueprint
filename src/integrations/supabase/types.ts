@@ -19108,6 +19108,10 @@ export type Database = {
         Args: { p_reason: string; p_subscribers: Json }
         Returns: Json
       }
+      increment_ai_usage: {
+        Args: { p_month_year: string; p_usage_type: string; p_user_id: string }
+        Returns: number
+      }
       individual_feature_override_set: {
         Args: {
           p_enabled: boolean
