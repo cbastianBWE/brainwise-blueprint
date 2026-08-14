@@ -246,11 +246,14 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          {r.invitation_source === "shareable_link" && (
-                            <Button size="sm" variant="outline" onClick={() => copyLink(r)}>
-                              <Copy className="h-3 w-3 mr-1" /> Copy link
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!r.invite_token}
+                            onClick={() => copyLink(r)}
+                          >
+                            <Copy className="h-3 w-3 mr-1" /> Copy link
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
