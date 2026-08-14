@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Loader2, Mail, Upload, Download, Trash2, Users, Send,
+  Loader2, Mail, Upload, Download, Trash2, Users, Send, Copy,
 } from "lucide-react";
 import { PUBLIC_INSTRUMENTS } from "@/lib/instruments";
 
@@ -53,6 +53,7 @@ interface PendingInvitation {
   org_level: string | null;
   expires_at: string | null;
   created_at: string;
+  code: string | null;
 }
 
 type ParsedRow = {
@@ -115,10 +116,24 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
   const [revokeRow, setRevokeRow] = useState<PendingInvitation | null>(null);
   const [revokePending, setRevokePending] = useState(false);
 
+  const copyInviteLink = async (row: PendingInvitation) => {
+    if (!row.code) {
+      toast({ title: "No link available", description: "This invitation has no code. Revoke it and send a new one.", variant: "destructive" });
+      return;
+    }
+    const url = `${window.location.origin}/signup?invite=${encodeURIComponent(row.code)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Invitation link copied", description: "Send this to the invitee if the email did not arrive." });
+    } catch {
+      toast({ title: "Could not copy", description: url, variant: "destructive" });
+    }
+  };
+
   const loadPending = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from("corporate_invitations")
-      .select("id, invitee_email, account_type, department_name, org_level, expires_at, created_at")
+      .select("id, invitee_email, account_type, department_name, org_level, expires_at, created_at, code")
       .eq("organization_id", orgId)
       .is("redeemed_at", null)
       .order("created_at", { ascending: false });
@@ -377,7 +392,7 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
                   <TableHead>Created</TableHead>
                   <TableHead>Expires</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-24"></TableHead>
+                  <TableHead className="w-56"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -408,15 +423,27 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => setRevokeRow(r)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Revoke
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              disabled={!r.code}
+                              onClick={() => copyInviteLink(r)}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              Copy link
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => setRevokeRow(r)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Revoke
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

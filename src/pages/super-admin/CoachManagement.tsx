@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, Download, Upload, Loader2 } from "lucide-react";
+import { Plus, Trash2, Download, Upload, Loader2, Copy } from "lucide-react";
 import * as XLSX from "xlsx";
 import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrackingSection";
 import CohortsSessionsSection from "@/components/super-admin/CohortsSessionsSection";
@@ -49,6 +49,7 @@ interface Invitation {
   email_send_status: "sent" | "failed" | null;
   email_send_error: string | null;
   email_last_attempt_at: string | null;
+  token: string | null;
 }
 
 // Helper: inspect the invite-coach response body and produce a user-facing summary.
@@ -344,7 +345,7 @@ export default function CoachManagement() {
     setLoading(true);
     const { data } = await supabase
       .from("coach_invitations")
-      .select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at")
+      .select("id, first_name, last_name, email, certification_type, created_at, expires_at, email_send_status, email_send_error, email_last_attempt_at, token")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
     setInvitations((data as Invitation[]) || []);
@@ -352,6 +353,20 @@ export default function CoachManagement() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const copyInviteLink = async (inv: Invitation) => {
+    if (!inv.token) {
+      toast({ title: "No link available", description: "This invitation has no token. Cancel it and send a new one.", variant: "destructive" });
+      return;
+    }
+    const url = `${window.location.origin}/signup?coach_token=${inv.token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Invitation link copied", description: "Send this to the practitioner if the email did not arrive." });
+    } catch {
+      toast({ title: "Could not copy", description: url, variant: "destructive" });
+    }
+  };
 
   const handleResend = async (inv: Invitation) => {
     const { data, error } = await supabase.functions.invoke("invite-coach", {
@@ -443,6 +458,10 @@ export default function CoachManagement() {
                           )}
                         </TableCell>
                         <TableCell className="flex gap-2">
+                          <Button size="sm" variant="outline" className="gap-1" disabled={!inv.token} onClick={() => copyInviteLink(inv)}>
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy link
+                          </Button>
                           <Button
                             size="sm"
                             variant={inv.email_send_status === "failed" ? "default" : "outline"}
