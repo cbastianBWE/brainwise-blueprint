@@ -187,14 +187,57 @@ export function MediaRecorderPane({
   );
 }
 
+// Every platform ships dictation the user already has. When the browser
+// cannot do in-page speech recognition, tell the user how to use it rather
+// than hiding the option.
+export function dictationHint(): string {
+  if (typeof navigator === "undefined") {
+    return "Use your device's built-in dictation to speak into this box.";
+  }
+  const ua = navigator.userAgent || "";
+  // Modern iPads report as Macintosh, so check touch points as well.
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && (navigator as any).maxTouchPoints > 1);
+  const isAndroid = /Android/.test(ua);
+  if (isIOS || isAndroid) {
+    return "Tap the microphone key on your keyboard, then speak.";
+  }
+  if (/Windows/.test(ua)) {
+    return "Press the Windows key and H together, then speak.";
+  }
+  if (/Mac OS X|Macintosh/.test(ua)) {
+    return "Turn on Dictation in System Settings, under Keyboard, then press its shortcut and speak.";
+  }
+  return "Use your device's built-in dictation to speak into this box.";
+}
+
 // ---- DictateButton (extracted verbatim) ----
 export function DictateButton({ onFinal, disabled }: { onFinal: (text: string) => void; disabled?: boolean }) {
   const [listening, setListening] = useState(false);
+  const [fallback, setFallback] = useState<null | "unsupported" | "denied">(null);
   const recRef = useRef<any>(null);
-  const supported =
+
+  const hasNative =
     typeof window !== "undefined" &&
-    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-  if (!supported) return null;
+    !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+  const mode = !hasNative ? "unsupported" : fallback;
+
+  if (mode) {
+    return (
+      <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+        <Mic className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+        <span>
+          {mode === "denied"
+            ? "Microphone access was blocked, so in-page dictation is unavailable. You can allow it in your browser settings, or dictate another way: "
+            : "This browser cannot dictate directly into the page. "}
+          {dictationHint()}
+        </span>
+      </p>
+    );
+  }
+
   const toggle = () => {
     if (listening) {
       try { recRef.current?.stop(); } catch { /* ignore */ }
@@ -213,12 +256,25 @@ export function DictateButton({ onFinal, disabled }: { onFinal: (text: string) =
       }
     };
     rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    rec.onerror = (event: any) => {
+      setListening(false);
+      const err = event?.error;
+      // no-speech, aborted and audio-capture are transient. The rest mean
+      // this browser cannot serve dictation at all, so switch to the hint
+      // permanently rather than letting the user click a dead button.
+      if (err === "not-allowed") setFallback("denied");
+      else if (err === "service-not-allowed" || err === "language-not-supported" || err === "network") {
+        setFallback("unsupported");
+      }
+    };
     recRef.current = rec;
     try {
       rec.start();
       setListening(true);
-    } catch { setListening(false); }
+    } catch {
+      setListening(false);
+      setFallback("unsupported");
+    }
   };
   return (
     <Button
@@ -353,12 +409,6 @@ export function MultimodalField({
       {allowed.length > 1 && (
         <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Answer mode">
           {allowed.map((m) => {
-            if (m === "dictate") {
-              const supported =
-                typeof window !== "undefined" &&
-                ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-              if (!supported) return null;
-            }
             return (
               <Button
                 key={m}
