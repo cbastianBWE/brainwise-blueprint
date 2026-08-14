@@ -185,12 +185,6 @@ export function QaMultimodalWidget({
           {modes.length > 1 && (
             <div className="flex flex-wrap gap-2">
               {modes.map((m) => {
-                if (m === "dictate") {
-                  const supported =
-                    typeof window !== "undefined" &&
-                    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-                  if (!supported) return null;
-                }
                 return (
                   <Button
                     key={m}
