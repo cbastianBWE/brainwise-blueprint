@@ -898,12 +898,12 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                           >
                             <div
                               style={{
-
                                 flexShrink: 0,
                                 width: 24,
                                 height: 24,
                                 borderRadius: "var(--r-circle)",
-                                background: "var(--bw-navy)",
+                                background: stepAccent,
+
                                 color: "var(--bw-white)",
                                 display: "flex",
                                 alignItems: "center",
