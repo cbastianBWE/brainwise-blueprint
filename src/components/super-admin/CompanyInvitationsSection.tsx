@@ -392,7 +392,7 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
                   <TableHead>Created</TableHead>
                   <TableHead>Expires</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="w-24"></TableHead>
+                  <TableHead className="w-56"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -423,15 +423,27 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => setRevokeRow(r)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Revoke
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              disabled={!r.code}
+                              onClick={() => copyInviteLink(r)}
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              Copy link
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => setRevokeRow(r)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Revoke
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
