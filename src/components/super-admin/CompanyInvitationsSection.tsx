@@ -116,10 +116,24 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
   const [revokeRow, setRevokeRow] = useState<PendingInvitation | null>(null);
   const [revokePending, setRevokePending] = useState(false);
 
+  const copyInviteLink = async (row: PendingInvitation) => {
+    if (!row.code) {
+      toast({ title: "No link available", description: "This invitation has no code. Revoke it and send a new one.", variant: "destructive" });
+      return;
+    }
+    const url = `${window.location.origin}/signup?invite=${encodeURIComponent(row.code)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Invitation link copied", description: "Send this to the invitee if the email did not arrive." });
+    } catch {
+      toast({ title: "Could not copy", description: url, variant: "destructive" });
+    }
+  };
+
   const loadPending = useCallback(async () => {
     const { data, error } = await (supabase as any)
       .from("corporate_invitations")
-      .select("id, invitee_email, account_type, department_name, org_level, expires_at, created_at")
+      .select("id, invitee_email, account_type, department_name, org_level, expires_at, created_at, code")
       .eq("organization_id", orgId)
       .is("redeemed_at", null)
       .order("created_at", { ascending: false });
