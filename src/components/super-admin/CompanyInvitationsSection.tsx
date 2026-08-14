@@ -428,7 +428,7 @@ export default function CompanyInvitationsSection({ orgId }: { orgId: string }) 
                               variant="outline"
                               size="sm"
                               className="gap-1"
-                              disabled={!r.code}
+                              disabled={!r.code || !!expired}
                               onClick={() => copyInviteLink(r)}
                             >
                               <Copy className="h-3.5 w-3.5" />
