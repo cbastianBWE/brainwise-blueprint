@@ -924,7 +924,9 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
+
             </div>
           )}
         </div>
