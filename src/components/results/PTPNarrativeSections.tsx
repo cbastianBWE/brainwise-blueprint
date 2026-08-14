@@ -884,7 +884,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                       >
                         Try these
                       </p>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                         {item.steps.map((step, j) => (
                           <div
                             key={j}
@@ -892,14 +892,13 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                               display: "flex",
                               alignItems: "flex-start",
                               gap: 12,
-                              background: "var(--bw-cream-200)",
-                              border: "1px solid var(--border-1)",
-                              borderRadius: "var(--r-md)",
-                              padding: "10px 12px",
+                              borderLeft: `3px solid ${stepAccent}`,
+                              padding: "2px 0 2px 14px",
                             }}
                           >
                             <div
                               style={{
+
                                 flexShrink: 0,
                                 width: 24,
                                 height: 24,
