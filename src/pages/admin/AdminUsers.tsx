@@ -22,7 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw, Briefcase, CheckCircle2, MoreHorizontal } from "lucide-react";
+import { Loader2, AlertTriangle, X, Upload, Download, KeyRound, Search, UserX, UserCheck, Users2, RefreshCw, Briefcase, CheckCircle2, MoreHorizontal, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useOrgInstrumentAccess, DASHBOARD_INSTRUMENT_UUIDS } from "@/hooks/useOrgInstrumentAccess";
 import {
@@ -611,7 +611,7 @@ export default function AdminUsers() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("corporate_invitations")
-        .select("id, invitee_email, department_name, org_level, expires_at, created_at")
+        .select("id, invitee_email, department_name, org_level, expires_at, created_at, code")
         .eq("organization_id", orgId)
         .is("redeemed_at", null)
         .gt("expires_at", new Date().toISOString())
@@ -624,9 +624,24 @@ export default function AdminUsers() {
         org_level: string | null;
         expires_at: string;
         created_at: string;
+        code: string | null;
       }>;
     },
   });
+
+  const copyInviteLink = async (row: { code: string | null }) => {
+    if (!row.code) {
+      toast({ title: "No link available", description: "This invitation has no code. Revoke it and send a new one.", variant: "destructive" });
+      return;
+    }
+    const url = `${window.location.origin}/signup?invite=${encodeURIComponent(row.code)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Invitation link copied", description: "Send this to the invitee if the email did not arrive." });
+    } catch {
+      toast({ title: "Could not copy", description: url, variant: "destructive" });
+    }
+  };
 
   const orgUsersQuery = useQuery({
     queryKey: ["admin-org-users", orgId],
