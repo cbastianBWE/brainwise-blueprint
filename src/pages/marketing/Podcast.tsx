@@ -35,6 +35,7 @@ export default function Podcast() {
   const showTitle = feed?.show.title ?? "My BrainWise Coach";
   const showDescription = feed?.show.description_text ?? "";
   const showImage = feed?.show.image ?? null;
+  const [imageFailed, setImageFailed] = useState(false);
   const heroEpisode: PodcastEpisode | undefined = feed?.episodes[0];
   const archiveEpisodes: PodcastEpisode[] = feed?.episodes.slice(1) ?? [];
   const totalArchivePages = Math.max(1, Math.ceil(archiveEpisodes.length / podcastMeta.episodesPerPage));
@@ -176,7 +177,7 @@ export default function Podcast() {
                 <PodcastListenBadges variant="onDark" />
               </div>
             </div>
-            {showImage && !isMobile && (
+            {showImage && !imageFailed && !isMobile && (
               <div
                 style={{
                   width: isTablet ? 220 : 280,
@@ -305,6 +306,8 @@ export default function Podcast() {
 function FeaturedEpisode({ episode, isMobile }: { episode: PodcastEpisode; isMobile: boolean }) {
   const date = formatEpisodeDate(episode.pub_date);
   const cover = episode.episode_image;
+  const [coverFailed, setCoverFailed] = useState(false);
+  const showCover = Boolean(cover) && !coverFailed;
 
   return (
     <div
@@ -315,12 +318,12 @@ function FeaturedEpisode({ episode, isMobile }: { episode: PodcastEpisode; isMob
         borderRadius: "var(--r-lg)",
         padding: isMobile ? 20 : 32,
         display: "grid",
-        gridTemplateColumns: cover && !isMobile ? "200px 1fr" : "1fr",
+        gridTemplateColumns: showCover && !isMobile ? "200px 1fr" : "1fr",
         gap: isMobile ? 20 : 32,
         boxShadow: "var(--shadow-sm)",
       }}
     >
-      {cover && (
+      {showCover && (
         <img
           src={cover}
           alt={`${episode.title} cover`}
@@ -332,9 +335,7 @@ function FeaturedEpisode({ episode, isMobile }: { episode: PodcastEpisode; isMob
             objectFit: "cover",
             display: "block",
           }}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
+          onError={() => setCoverFailed(true)}
         />
       )}
       <div>
