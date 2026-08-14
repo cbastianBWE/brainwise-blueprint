@@ -842,8 +842,11 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating action plan...</p>
           ) : (
             <div className="space-y-3">
-              {actionPlan.map((item, i) => (
+              {actionPlan.map((item, i) => {
+                const stepAccent = PTP_DIMENSION_COLORS[(item.dimension_tags ?? [])[0]] ?? "#021F36";
+                return (
                 <div key={i} style={cardSurface}>
+
                   <div style={{ marginBottom: 8 }}>
                     {(item.dimension_tags ?? []).map((tag) => (
                       <DimensionPill key={tag} dimId={tag} dimensionNameMap={dimensionNameMap} />
