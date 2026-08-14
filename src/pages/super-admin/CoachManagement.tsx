@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Trash2, Download, Upload, Loader2 } from "lucide-react";
+import { Plus, Trash2, Download, Upload, Loader2, Copy } from "lucide-react";
 import * as XLSX from "xlsx";
 import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrackingSection";
 import CohortsSessionsSection from "@/components/super-admin/CohortsSessionsSection";
@@ -49,6 +49,7 @@ interface Invitation {
   email_send_status: "sent" | "failed" | null;
   email_send_error: string | null;
   email_last_attempt_at: string | null;
+  token: string | null;
 }
 
 // Helper: inspect the invite-coach response body and produce a user-facing summary.

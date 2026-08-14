@@ -1506,6 +1506,7 @@ export default function AdminUsers() {
                       <TableHead>Org Level</TableHead>
                       <TableHead>Sent on</TableHead>
                       <TableHead>Expires</TableHead>
+                      <TableHead className="w-32"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1516,6 +1517,18 @@ export default function AdminUsers() {
                         <TableCell>{inv.org_level || "—"}</TableCell>
                         <TableCell>{formatDate(inv.created_at)}</TableCell>
                         <TableCell>{formatDate(inv.expires_at)}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1"
+                            disabled={!inv.code}
+                            onClick={() => copyInviteLink(inv)}
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Copy link
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
