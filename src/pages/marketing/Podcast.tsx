@@ -191,9 +191,7 @@ export default function Podcast() {
                   src={showImage}
                   alt={`${showTitle} cover art`}
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
+                  onError={() => setImageFailed(true)}
                 />
               </div>
             )}
