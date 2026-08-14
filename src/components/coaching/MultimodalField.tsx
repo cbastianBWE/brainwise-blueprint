@@ -409,12 +409,6 @@ export function MultimodalField({
       {allowed.length > 1 && (
         <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Answer mode">
           {allowed.map((m) => {
-            if (m === "dictate") {
-              const supported =
-                typeof window !== "undefined" &&
-                ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
-              if (!supported) return null;
-            }
             return (
               <Button
                 key={m}
