@@ -145,10 +145,22 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
 
   useEffect(() => { fetchPending(); }, [fetchPending]);
 
-  const copyLink = (row: PendingRow) => {
-    const url = `${window.location.origin}/signup?email=${encodeURIComponent(row.client_email)}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard");
+  const copyLink = async (row: PendingRow) => {
+    if (!row.invite_token) {
+      toast.error("No link available", {
+        description: "This invitation predates claim links. Use Resend to email it instead.",
+      });
+      return;
+    }
+    const url = `${window.location.origin}/claim/${row.invite_token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invitation link copied", {
+        description: "Send this to your client directly if the email did not arrive.",
+      });
+    } catch {
+      toast.error("Could not copy", { description: url });
+    }
   };
 
   const confirmRevoke = async () => {
