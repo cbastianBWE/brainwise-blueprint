@@ -39,6 +39,7 @@ interface PendingRow {
   payment_mode: "self_pay" | "coach_paid";
   created_at: string;
   expires_at: string | null;
+  invite_token: string | null;
 }
 
 const sourceLabel = (s: string) =>
@@ -104,7 +105,7 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
     const nowIso = new Date().toISOString();
     const { data, error } = await (supabase as any)
       .from("coach_clients")
-      .select("id, client_email, client_first_name, client_last_name, instrument_id, invitation_status, invitation_source, stripe_payment_intent_id, created_at, expires_at, revoked_at")
+      .select("id, client_email, client_first_name, client_last_name, instrument_id, invitation_status, invitation_source, stripe_payment_intent_id, created_at, expires_at, revoked_at, invite_token")
       .eq("coach_user_id", coachUserId)
       .in("invitation_status", ["sent", "opened", "partially_completed"])
       .is("revoked_at", null)
@@ -134,6 +135,7 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
         payment_mode: r.stripe_payment_intent_id ? "coach_paid" : "self_pay",
         created_at: r.created_at,
         expires_at: r.expires_at,
+        invite_token: r.invite_token ?? null,
       };
     });
     console.log("[PendingInvitations] loaded rows:", enriched.length);
