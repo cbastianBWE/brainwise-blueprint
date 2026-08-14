@@ -842,8 +842,11 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
             <p style={{ fontSize: 13, color: "var(--fg-3)", margin: 0 }}>Generating action plan...</p>
           ) : (
             <div className="space-y-3">
-              {actionPlan.map((item, i) => (
+              {actionPlan.map((item, i) => {
+                const stepAccent = PTP_DIMENSION_COLORS[(item.dimension_tags ?? [])[0]] ?? "#021F36";
+                return (
                 <div key={i} style={cardSurface}>
+
                   <div style={{ marginBottom: 8 }}>
                     {(item.dimension_tags ?? []).map((tag) => (
                       <DimensionPill key={tag} dimId={tag} dimensionNameMap={dimensionNameMap} />
@@ -881,7 +884,7 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                       >
                         Try these
                       </p>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                         {item.steps.map((step, j) => (
                           <div
                             key={j}
@@ -889,10 +892,8 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                               display: "flex",
                               alignItems: "flex-start",
                               gap: 12,
-                              background: "var(--bw-cream-200)",
-                              border: "1px solid var(--border-1)",
-                              borderRadius: "var(--r-md)",
-                              padding: "10px 12px",
+                              borderLeft: `3px solid ${stepAccent}`,
+                              padding: "2px 0 2px 14px",
                             }}
                           >
                             <div
@@ -901,7 +902,8 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                                 width: 24,
                                 height: 24,
                                 borderRadius: "var(--r-circle)",
-                                background: "var(--bw-navy)",
+                                background: stepAccent,
+
                                 color: "var(--bw-white)",
                                 display: "flex",
                                 alignItems: "center",
@@ -922,7 +924,9 @@ export function PTPProfileOverviewSection(props: PTPNarrativeSectionsProps) {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
+
             </div>
           )}
         </div>
