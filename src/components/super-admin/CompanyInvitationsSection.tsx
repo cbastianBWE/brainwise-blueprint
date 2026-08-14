@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Loader2, Mail, Upload, Download, Trash2, Users, Send,
+  Loader2, Mail, Upload, Download, Trash2, Users, Send, Copy,
 } from "lucide-react";
 import { PUBLIC_INSTRUMENTS } from "@/lib/instruments";
 
@@ -53,6 +53,7 @@ interface PendingInvitation {
   org_level: string | null;
   expires_at: string | null;
   created_at: string;
+  code: string | null;
 }
 
 type ParsedRow = {
