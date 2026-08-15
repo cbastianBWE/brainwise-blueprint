@@ -1,3 +1,4 @@
+import { renderBold } from "@/lib/renderBold";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Archive, FileText } from "lucide-react";
@@ -128,11 +129,6 @@ interface CoachSection {
   debrief_prompts: string[];
 }
 
-/* ---------- bold markdown ---------- */
-const renderBold = (s: string) => {
-  const parts = (s ?? "").split(/\*\*(.+?)\*\*/g);
-  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : <span key={i}>{p}</span>));
-};
 
 /* ---------- scroll reveal ----------
    Keys are byte-identical to the paired report's. The isolation comes from this

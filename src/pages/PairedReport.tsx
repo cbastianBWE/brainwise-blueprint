@@ -1,3 +1,4 @@
+import { renderBold } from "@/lib/renderBold";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Archive, Eye, FileText } from "lucide-react";
@@ -95,11 +96,7 @@ const PRIVILEGED_ACCOUNT_TYPES = new Set([
   "brainwise_super_admin",
 ]);
 
-/* ---------- bold markdown + sentence split helpers ---------- */
-const renderBold = (s: string) => {
-  const parts = (s ?? "").split(/\*\*(.+?)\*\*/g);
-  return parts.map((p, i) => (i % 2 === 1 ? <strong key={i}>{p}</strong> : <span key={i}>{p}</span>));
-};
+/* ---------- sentence split helpers ---------- */
 const splitSentences = (raw: string) =>
   (raw ?? "").replace(/([.!?])\s+(?=[A-Z(])/g, "$1|").split("|").map((s) => s.trim()).filter(Boolean);
 
