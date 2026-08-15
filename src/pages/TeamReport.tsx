@@ -744,7 +744,7 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 800, color: NAVY, margin: "4px 0 8px", fontSize: 18 }}>{name}</div>
-          <div style={{ color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>{blockKey ? <HighlightableText blockKey={blockKey} text={why} /> : renderBold(why)}</div>
+          <div style={{ color: GRAY, fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>{blockKey ? <HighlightableText blockKey={`${blockKey}:why`} text={why} /> : renderBold(why)}</div>
           {actions.length > 0 && (
             <>
               <button
@@ -765,7 +765,11 @@ function DriverCard({
                     {kind === "strength" ? "Three things to keep doing" : "Three things to try"}
                   </div>
                   <ol style={{ margin: 0, paddingLeft: 24, color: GRAY, listStyleType: "decimal", fontSize: 16, lineHeight: 1.6 }}>
-                    {actions.map((a, i) => <li key={i} style={{ marginBottom: 8, paddingLeft: 4 }}>{a}</li>)}
+                    {actions.map((a, i) => (
+                      <li key={i} style={{ marginBottom: 8, paddingLeft: 4 }}>
+                        {blockKey ? <HighlightableText blockKey={`${blockKey}:action:${i}`} text={a} /> : renderBold(a)}
+                      </li>
+                    ))}
                   </ol>
                 </div>
               </div>
@@ -1099,7 +1103,7 @@ export default function TeamReport() {
       anchors: anchorsByItem.get(f.itemNumber) ?? null,
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
-      blockKey: `driving:strength:${i}:why`,
+      blockKey: `driving:strength:${i}`,
     };
   });
   const focusDrivers = focusFacets.map((f, idx) => {
@@ -1123,7 +1127,7 @@ export default function TeamReport() {
       anchors: anchorsByItem.get(f.itemNumber) ?? null,
       scores: scoresByItem.get(f.itemNumber) ?? [],
       driverScore: f.driverScore,
-      blockKey: `driving:focus:${idx}:why`,
+      blockKey: `driving:focus:${idx}`,
     };
   });
 
@@ -1226,7 +1230,7 @@ export default function TeamReport() {
               <div key={i} style={{ display: "grid", gridTemplateColumns: "54px 1fr", gap: 8, padding: 18, borderBottom: i === teamInThree.length - 1 ? "none" : `1px solid ${LINE}` }}>
                 <div style={{ fontSize: 34, fontWeight: 800, color: ORANGE, lineHeight: 1 }}>{i + 1}</div>
                 <div>
-                  <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}>{it.headline}</div>
+                  <div style={{ fontWeight: 800, color: NAVY, marginBottom: 6, fontSize: 18 }}><HighlightableText blockKey={`team_in_three:${i}:headline`} text={it.headline} /></div>
                   <Paras text={it.detail} blockKey={`team_in_three:${i}:detail`} />
                   <div style={{ color: TEAL, fontWeight: 700, marginTop: 10, fontSize: 16 }}><HighlightableText blockKey={`team_in_three:${i}:action`} text={it.action} /></div>
                   <TeamChipRow facets={it.facets ?? []} lookupFacet={lookupFacetByName} />

@@ -313,6 +313,8 @@ interface DriverCardProps {
   name: string;
   why: string;
   actions: string[];
+  /** enables highlighting on the rationale and actions, like the team report */
+  blockKey?: string;
   question: string;
   anchors?: { low: string; high: string } | null;
   a?: number;
@@ -321,7 +323,7 @@ interface DriverCardProps {
   onOpenDist: (a: number, b: number, title: string) => void;
 }
 function DriverCard({
-  itemNumber, kind, rank, shape, label, name, why, actions, question, anchors, a, b, tier, onOpenDist,
+  itemNumber, kind, rank, shape, label, name, why, actions, blockKey, question, anchors, a, b, tier, onOpenDist,
 }: DriverCardProps) {
   const [open, setOpen] = useState(false);
   const accent = kind === "strength" ? GREEN : kind === "protective" ? PURPLE : PSC[shape];
@@ -369,7 +371,9 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 700, fontSize: 18, color: NAVY, margin: "8px 0 4px" }}>{name}</div>
-          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>{renderBold(why)}</div>
+          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:why`} text={why} /> : renderBold(why)}
+          </div>
           {actions.length > 0 && (
             <>
               <button
@@ -390,7 +394,9 @@ function DriverCard({
                   </div>
                   <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                     {actions.map((act, i) => (
-                      <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{renderBold(act)}</li>
+                      <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>
+                        {blockKey ? <HighlightableText blockKey={`${blockKey}:action:${i}`} text={act} /> : renderBold(act)}
+                      </li>
                     ))}
                   </ol>
                 </div>
@@ -1173,9 +1179,9 @@ export default function PairedReport() {
             {pairInThree.slice(0, 3).map((t, i) => (
               <div key={i} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 14, padding: 16, boxShadow: "0 6px 18px rgba(2,31,54,.08)" }}>
                 <div style={{ color: ORANGE, fontWeight: 800, fontSize: 22 }}>{i + 1}</div>
-                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}>{nm(t.headline)}</div>
+                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}><HighlightableText blockKey={`pair-in-three:${i}:headline`} text={nm(t.headline)} /></div>
                 <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}><HighlightableText blockKey={`pair-in-three:${i}:detail`} text={nm(t.detail)} /></div>
-                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{renderBold(nm(t.action))}</div>}
+                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}><HighlightableText blockKey={`pair-in-three:${i}:action`} text={nm(t.action)} /></div>}
               </div>
             ))}
           </div>
@@ -1331,6 +1337,7 @@ export default function PairedReport() {
                 {...d}
                 why={nm(d.why)}
                 actions={d.actions.map(nm)}
+                blockKey={`driving:${d.kind}:${d.itemNumber ?? i}`}
                 onOpenDist={openDist}
               />
             ))}
