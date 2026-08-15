@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { ReportHighlight } from "@/hooks/useReportHighlights";
 
@@ -40,13 +40,16 @@ export function usePairedReportHighlights(pairedProfileId: string | undefined, e
     ids.forEach((id) => resolvedIds.current.add(id));
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
     settleTimer.current = window.setTimeout(() => {
-      setOrphans(() => {
+      setOrphans((prev) => {
         const out: ReportHighlight[] = [];
         for (const [key, list] of Object.entries(byBlockRef.current)) {
           if (!seenBlocks.current.has(key)) continue;
           for (const h of list) {
             if (!resolvedIds.current.has(h.id)) out.push(h);
           }
+        }
+        if (prev.length === out.length && prev.every((p, i) => p.id === out[i].id)) {
+          return prev;
         }
         return out;
       });
@@ -74,7 +77,10 @@ export function usePairedReportHighlights(pairedProfileId: string | undefined, e
   const removeHighlight = useCallback(async (id: string) => {
     await (supabase as any).from("paired_report_highlights").delete().eq("id", id); reload();
   }, [reload]);
-  return { byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved };
+  return useMemo(
+    () => ({ byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved }),
+    [byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved],
+  );
 }
 
 export function useTeamReportHighlights(teamProfileId: string | undefined, enabled: boolean) {
@@ -112,13 +118,16 @@ export function useTeamReportHighlights(teamProfileId: string | undefined, enabl
     ids.forEach((id) => resolvedIds.current.add(id));
     if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
     settleTimer.current = window.setTimeout(() => {
-      setOrphans(() => {
+      setOrphans((prev) => {
         const out: ReportHighlight[] = [];
         for (const [key, list] of Object.entries(byBlockRef.current)) {
           if (!seenBlocks.current.has(key)) continue;
           for (const h of list) {
             if (!resolvedIds.current.has(h.id)) out.push(h);
           }
+        }
+        if (prev.length === out.length && prev.every((p, i) => p.id === out[i].id)) {
+          return prev;
         }
         return out;
       });
@@ -146,5 +155,8 @@ export function useTeamReportHighlights(teamProfileId: string | undefined, enabl
   const removeHighlight = useCallback(async (id: string) => {
     await (supabase as any).from("team_report_highlights").delete().eq("id", id); reload();
   }, [reload]);
-  return { byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved };
+  return useMemo(
+    () => ({ byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved }),
+    [byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved],
+  );
 }
