@@ -91,7 +91,7 @@ export default function PTPBrainOverview({ contextTab }: PTPBrainOverviewProps) 
               marginBottom: i < paragraphs.length - 1 ? "var(--s-3)" : 0,
             }}
           >
-            {renderInline(p)}
+            <HighlightableText blockKey={`ptp_brain_overview:${contextTab}:${i}`} text={p} />
           </p>
         ))}
       </div>
