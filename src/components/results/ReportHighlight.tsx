@@ -166,7 +166,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   if (cursor < text.length) segs.push(<span key="tend">{text.slice(cursor)}</span>);
 
 
-  const popStyle: React.CSSProperties = { position: "fixed", transform: "translateX(-50%)", zIndex: 60, background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px", boxShadow: "var(--shadow-md)" };
+  const popStyle: React.CSSProperties = { position: "fixed", transform: "translateX(-50%)", zIndex: 100, background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px", boxShadow: "var(--shadow-md)" };
   const taStyle: React.CSSProperties = { width: 200, minHeight: 48, resize: "vertical", fontSize: 12, fontFamily: "inherit", color: "var(--fg-1)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 6px", boxSizing: "border-box" };
 
   return (
