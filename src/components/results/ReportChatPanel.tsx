@@ -1,3 +1,4 @@
+import { renderBold } from "@/lib/renderBold";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export function ReportChatPanel({
                       : "max-w-[85%] rounded-lg px-3 py-2 text-sm bg-muted whitespace-pre-wrap"
                   }
                 >
-                  {m.content}
+                  {m.role === "assistant" ? renderBold(m.content) : m.content}
                 </div>
               </div>
             ))

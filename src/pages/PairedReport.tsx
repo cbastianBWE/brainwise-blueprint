@@ -1,3 +1,4 @@
+import { renderBold } from "@/lib/renderBold";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Archive, Eye, FileText } from "lucide-react";
