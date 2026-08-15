@@ -242,6 +242,61 @@ export default function Assessment() {
     })();
   }, [user, searchParams, selectedInstrument]);
 
+  useEffect(() => {
+    if (!selectedInstrument) return;
+    if (selectedInstrument.instrument_id !== "INST-001") return;
+    if (contextType !== null) return;
+
+    let cancelled = false;
+    setPtpContextLoading(true);
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { if (!cancelled) setPtpContextLoading(false); return; }
+
+      const [ccRes, purchaseRes] = await Promise.all([
+        supabase
+          .from("coach_clients_client_view")
+          .select("context_progress, preferred_first_context, created_at")
+          .eq("instrument_id", selectedInstrument.instrument_id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("assessment_purchases")
+          .select("context_progress")
+          .eq("user_id", user.id)
+          .is("consumed_at", null),
+      ]);
+
+      if (cancelled) return;
+
+      const rows = (ccRes.data ?? []) as Array<{ context_progress: string | null; preferred_first_context: string | null }>;
+      const progresses = [
+        ...rows.map((r) => r.context_progress),
+        ...((purchaseRes.data ?? []) as Array<{ context_progress: string | null }>).map((r) => r.context_progress),
+      ].filter(Boolean);
+
+      if (progresses.includes("professional_done") && !progresses.includes("both_done")) {
+        setContextType("personal");
+        setPtpContextLoading(false);
+        return;
+      }
+      if (progresses.includes("personal_done") && !progresses.includes("both_done")) {
+        setContextType("professional");
+        setPtpContextLoading(false);
+        return;
+      }
+
+      const rec = rows.find((r) => r.preferred_first_context)?.preferred_first_context ?? null;
+      if (rec === "professional" || rec === "personal" || rec === "both") {
+        setPtpRecommended(rec);
+      }
+      setPtpContextLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+  }, [selectedInstrument, contextType]);
+
+
   const handleStartEpn = async (assignmentId: string) => {
     setEpnStarting(true);
     const { data: versionData } = await supabase
