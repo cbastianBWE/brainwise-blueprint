@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { DirectoryListingCard } from "@/components/coach/DirectoryListingCard";
 
 interface AcceptanceRow {
   id: string;
@@ -118,6 +119,8 @@ export default function CoachProfile() {
           )}
         </CardContent>
       </Card>
+
+      <DirectoryListingCard />
     </div>
   );
 }

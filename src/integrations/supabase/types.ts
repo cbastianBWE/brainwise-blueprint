@@ -2435,6 +2435,7 @@ export type Database = {
           effective_from: string
           id: string
           is_current: boolean
+          kind: string
           version_hash: string
         }
         Insert: {
@@ -2443,6 +2444,7 @@ export type Database = {
           effective_from?: string
           id?: string
           is_current?: boolean
+          kind?: string
           version_hash: string
         }
         Update: {
@@ -2451,6 +2453,7 @@ export type Database = {
           effective_from?: string
           id?: string
           is_current?: boolean
+          kind?: string
           version_hash?: string
         }
         Relationships: []
@@ -10955,6 +10958,272 @@ export type Database = {
           },
         ]
       }
+      practitioner_bio_generations: {
+        Row: {
+          created_at: string
+          id: string
+          input_summary: Json | null
+          model_id: string | null
+          output_chars: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_summary?: Json | null
+          model_id?: string | null
+          output_chars?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_summary?: Json | null
+          model_id?: string | null
+          output_chars?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_bio_generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_bio_generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "practitioner_bio_generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_bio_generations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practitioner_directory_listing: {
+        Row: {
+          consent_note: string | null
+          consent_recorded_at: string
+          consent_source: string
+          consented_at: string | null
+          decision_version_id: string | null
+          listed: boolean
+          updated_at: string
+          user_id: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          consent_note?: string | null
+          consent_recorded_at?: string
+          consent_source?: string
+          consented_at?: string | null
+          decision_version_id?: string | null
+          listed?: boolean
+          updated_at?: string
+          user_id: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          consent_note?: string | null
+          consent_recorded_at?: string
+          consent_source?: string
+          consented_at?: string | null
+          decision_version_id?: string | null
+          listed?: boolean
+          updated_at?: string
+          user_id?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_directory_listing_decision_version_id_fkey"
+            columns: ["decision_version_id"]
+            isOneToOne: false
+            referencedRelation: "coach_disclosure_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_listing_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_listing_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_listing_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_listing_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practitioner_directory_profiles: {
+        Row: {
+          approved_at: string | null
+          approved_payload: Json | null
+          bio: string | null
+          booking_url: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          display_name: string | null
+          headline: string | null
+          headshot_path: string | null
+          instagram_url: string | null
+          linkedin_url: string | null
+          moderation_status: string
+          region: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          slug: string | null
+          submitted_at: string | null
+          updated_at: string
+          user_id: string
+          website_url: string | null
+          x_url: string | null
+          youtube_url: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_payload?: Json | null
+          bio?: string | null
+          booking_url?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string | null
+          headline?: string | null
+          headshot_path?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          moderation_status?: string
+          region?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          slug?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+          x_url?: string | null
+          youtube_url?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_payload?: Json | null
+          bio?: string | null
+          booking_url?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          display_name?: string | null
+          headline?: string | null
+          headshot_path?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          moderation_status?: string
+          region?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          slug?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+          x_url?: string | null
+          youtube_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practitioner_directory_profiles_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practitioner_directory_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_purchases: {
         Row: {
           amount_cents: number
@@ -15561,6 +15830,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trigger_failure_log: {
+        Row: {
+          context: Json | null
+          error_context: string | null
+          error_message: string | null
+          function_name: string
+          id: string
+          occurred_at: string
+          record_id: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          sqlstate: string | null
+          table_name: string | null
+          trigger_name: string
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          error_context?: string | null
+          error_message?: string | null
+          function_name: string
+          id?: string
+          occurred_at?: string
+          record_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sqlstate?: string | null
+          table_name?: string | null
+          trigger_name: string
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          error_context?: string | null
+          error_message?: string | null
+          function_name?: string
+          id?: string
+          occurred_at?: string
+          record_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sqlstate?: string | null
+          table_name?: string | null
+          trigger_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       trigger_logic: {
         Row: {
@@ -20655,6 +20975,101 @@ export type Database = {
       org_unassign_coach: {
         Args: { p_coach_user_id: string; p_organization_id: string }
         Returns: undefined
+      }
+      pd_admin_delete_profile: { Args: { p_user_id: string }; Returns: Json }
+      pd_admin_list_profiles: {
+        Args: { p_status?: string }
+        Returns: {
+          approved_at: string
+          approved_payload: Json
+          draft: Json
+          email: string
+          full_name: string
+          listed: boolean
+          missing_fields: string[]
+          moderation_status: string
+          slug: string
+          submitted_at: string
+          user_id: string
+        }[]
+      }
+      pd_admin_review_profile: {
+        Args: { p_action: string; p_note?: string; p_user_id: string }
+        Returns: Json
+      }
+      pd_admin_update_profile: {
+        Args: { p_patch: Json; p_user_id: string }
+        Returns: Json
+      }
+      pd_bio_generations_remaining_today: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
+      pd_generate_slug: { Args: { p_user_id: string }; Returns: string }
+      pd_get_my_directory_state: { Args: never; Returns: Json }
+      pd_profile_missing_fields: {
+        Args: { p_user_id: string }
+        Returns: string[]
+      }
+      pd_public_directory: {
+        Args: never
+        Returns: {
+          bio: string
+          booking_url: string
+          certifications: Json
+          city: string
+          country: string
+          display_name: string
+          headline: string
+          headshot_path: string
+          instagram_url: string
+          linkedin_url: string
+          region: string
+          slug: string
+          website_url: string
+          x_url: string
+          youtube_url: string
+        }[]
+      }
+      pd_public_profile: {
+        Args: { p_slug: string }
+        Returns: {
+          bio: string
+          booking_url: string
+          certifications: Json
+          city: string
+          country: string
+          display_name: string
+          headline: string
+          headshot_path: string
+          instagram_url: string
+          linkedin_url: string
+          region: string
+          slug: string
+          website_url: string
+          x_url: string
+          youtube_url: string
+        }[]
+      }
+      pd_set_my_listing_consent: { Args: { p_listed: boolean }; Returns: Json }
+      pd_upsert_my_profile: {
+        Args: {
+          p_bio?: string
+          p_booking_url?: string
+          p_city?: string
+          p_country?: string
+          p_display_name?: string
+          p_headline?: string
+          p_headshot_path?: string
+          p_instagram_url?: string
+          p_linkedin_url?: string
+          p_region?: string
+          p_submit?: boolean
+          p_website_url?: string
+          p_x_url?: string
+          p_youtube_url?: string
+        }
+        Returns: Json
       }
       peer_access_request_create: {
         Args: { p_target_user_id: string }

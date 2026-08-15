@@ -82,7 +82,7 @@ const coachNav: NavItem[] = [
   { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/coach/resources", icon: BookOpen },
   { title: "Certification", url: "/coach/certification", icon: Award },
-  { title: "My Profile", url: "/coach/profile", icon: UserCircle, disabled: true, badge: "Coming Soon" },
+  { title: "My Profile", url: "/coach/profile", icon: UserCircle },
 ];
 
 const adminNav: NavItem[] = [
@@ -114,6 +114,7 @@ const superAdminNav: NavItem[] = [
   
   { title: "Platform Health", url: "/super-admin/health", icon: Heart },
   { title: "Practitioner Management", url: "/super-admin/coaches", icon: Users },
+  { title: "Practitioner Directory", url: "/super-admin/practitioner-directory", icon: UserCircle },
   { title: "Organizations", url: "/super-admin/companies", icon: Briefcase },
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },

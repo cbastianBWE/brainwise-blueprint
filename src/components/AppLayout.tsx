@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CoachDisclosureGate } from "@/components/coach/CoachDisclosureGate";
+import { PractitionerDirectoryPrompt } from "@/components/coach/PractitionerDirectoryPrompt";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
@@ -180,6 +181,7 @@ export default function AppLayout() {
               )}
               <Outlet />
             </CoachDisclosureGate>
+            <PractitionerDirectoryPrompt />
           </main>
         </div>
       </div>
