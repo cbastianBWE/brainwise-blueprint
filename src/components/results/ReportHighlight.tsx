@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
 import { usePairedReportHighlights, useTeamReportHighlights } from "@/hooks/useProfileReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
@@ -165,13 +166,13 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   if (cursor < text.length) segs.push(<span key="tend">{text.slice(cursor)}</span>);
 
 
-  const popStyle: React.CSSProperties = { position: "fixed", transform: "translateX(-50%)", zIndex: 60, background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px", boxShadow: "var(--shadow-md)" };
+  const popStyle: React.CSSProperties = { position: "fixed", transform: "translateX(-50%)", zIndex: 100, background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px", boxShadow: "var(--shadow-md)" };
   const taStyle: React.CSSProperties = { width: 200, minHeight: 48, resize: "vertical", fontSize: 12, fontFamily: "inherit", color: "var(--fg-1)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 6px", boxSizing: "border-box" };
 
   return (
     <span ref={ref} style={{ position: "relative" }}>
       {segs.length ? segs : text}
-      {pop && (
+      {pop && createPortal(
         <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ display: "flex", gap: 6, justifyContent: "center" }}>
             {HIGHLIGHT_COLORS.map((c) => (
@@ -183,9 +184,10 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
           <textarea value={createNote} onChange={(e) => setCreateNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment (optional)" aria-label="Highlight comment" style={taStyle} />
           <span style={{ fontSize: 10, color: "var(--fg-1)", opacity: 0.6, textAlign: "center" }}>Pick a color to save, or click away to cancel</span>
-        </span>
+        </span>,
+        document.body,
       )}
-      {editPop && (
+      {editPop && createPortal(
         <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment" aria-label="Edit highlight comment" style={taStyle} />
@@ -199,7 +201,8 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
                 style={{ fontSize: 12, fontWeight: 600, color: "var(--bw-teal)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>Save</button>
             </span>
           </span>
-        </span>
+        </span>,
+        document.body,
       )}
     </span>
   );
