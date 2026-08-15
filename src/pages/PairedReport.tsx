@@ -313,6 +313,8 @@ interface DriverCardProps {
   name: string;
   why: string;
   actions: string[];
+  /** enables highlighting on the rationale and actions, like the team report */
+  blockKey?: string;
   question: string;
   anchors?: { low: string; high: string } | null;
   a?: number;
@@ -321,7 +323,7 @@ interface DriverCardProps {
   onOpenDist: (a: number, b: number, title: string) => void;
 }
 function DriverCard({
-  itemNumber, kind, rank, shape, label, name, why, actions, question, anchors, a, b, tier, onOpenDist,
+  itemNumber, kind, rank, shape, label, name, why, actions, blockKey, question, anchors, a, b, tier, onOpenDist,
 }: DriverCardProps) {
   const [open, setOpen] = useState(false);
   const accent = kind === "strength" ? GREEN : kind === "protective" ? PURPLE : PSC[shape];
