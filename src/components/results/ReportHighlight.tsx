@@ -120,10 +120,11 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     };
   }, [detectSelection, enabled]);
 
+  const blockRows = ctx?.byBlock[blockKey];
   const ranges = useMemo(() => {
     if (!enabled || !ctx) return [];
     const s = blockTextSha(text);
-    return (ctx.byBlock[blockKey] ?? [])
+    return (blockRows ?? [])
       .map((h) => {
         if (h.block_text_sha === s) return { ...h, s: h.start_offset, e: h.end_offset };
         const idx = text.indexOf(h.quoted_text);
@@ -132,12 +133,14 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
       })
       .filter(Boolean)
       .sort((a, b) => (a!.s - b!.s)) as (ReportHighlight & { s: number; e: number })[];
-  }, [enabled, ctx, blockKey, text]);
+  }, [enabled, blockRows, blockKey, text]);
 
+  const report = ctx?.reportBlockResolved;
+  const resolvedKey = ranges.map((h) => h.id).join(",");
   useEffect(() => {
-    if (!enabled || !ctx) return;
-    ctx.reportBlockResolved(blockKey, ranges.map((h) => h.id));
-  }, [enabled, ctx, blockKey, ranges]);
+    if (!enabled || !report) return;
+    report(blockKey, resolvedKey ? resolvedKey.split(",") : []);
+  }, [enabled, report, blockKey, resolvedKey]);
 
   if (!enabled) return <>{text}</>;
 
