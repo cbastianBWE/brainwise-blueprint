@@ -1179,9 +1179,9 @@ export default function PairedReport() {
             {pairInThree.slice(0, 3).map((t, i) => (
               <div key={i} style={{ background: "#fff", border: `1px solid ${LINE}`, borderRadius: 14, padding: 16, boxShadow: "0 6px 18px rgba(2,31,54,.08)" }}>
                 <div style={{ color: ORANGE, fontWeight: 800, fontSize: 22 }}>{i + 1}</div>
-                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}>{nm(t.headline)}</div>
+                <div style={{ fontWeight: 700, margin: "6px 0 4px", fontSize: 18 }}><HighlightableText blockKey={`pair-in-three:${i}:headline`} text={nm(t.headline)} /></div>
                 <div style={{ fontSize: 15, color: GRAY, lineHeight: 1.6 }}><HighlightableText blockKey={`pair-in-three:${i}:detail`} text={nm(t.detail)} /></div>
-                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}>{renderBold(nm(t.action))}</div>}
+                {t.action && <div style={{ color: TEAL, fontWeight: 600, fontSize: 14, marginTop: 8 }}><HighlightableText blockKey={`pair-in-three:${i}:action`} text={nm(t.action)} /></div>}
               </div>
             ))}
           </div>
@@ -1337,6 +1337,7 @@ export default function PairedReport() {
                 {...d}
                 why={nm(d.why)}
                 actions={d.actions.map(nm)}
+                blockKey={`driving:${d.kind}:${d.itemNumber ?? i}`}
                 onOpenDist={openDist}
               />
             ))}
