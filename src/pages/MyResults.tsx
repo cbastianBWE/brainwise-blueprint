@@ -1530,6 +1530,11 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 contextTab={ptpContextTab ?? 'single'}
                 enabled={allowHighlighting}
               >
+              {effectiveSelected?.isPTP && (
+                <section>
+                  <PTPBrainOverview contextTab={ptpContextTab} />
+                </section>
+              )}
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <PTPReportProgressOverlay />
                 {allowHighlighting && (
