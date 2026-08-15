@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ReportHighlight {
@@ -10,9 +10,21 @@ export interface ReportHighlight {
 
 export function useReportHighlights(assessmentResultId: string | undefined, contextTab: string, enabled: boolean) {
   const [byBlock, setByBlock] = useState<Record<string, ReportHighlight[]>>({});
+  const [orphans, setOrphans] = useState<ReportHighlight[]>([]);
+  const seenBlocks = useRef<Set<string>>(new Set());
+  const resolvedIds = useRef<Set<string>>(new Set());
+  const settleTimer = useRef<number | null>(null);
+  const byBlockRef = useRef<Record<string, ReportHighlight[]>>({});
+  useEffect(() => { byBlockRef.current = byBlock; }, [byBlock]);
 
   const reload = useCallback(async () => {
-    if (!enabled || !assessmentResultId) { setByBlock({}); return; }
+    if (!enabled || !assessmentResultId) {
+      seenBlocks.current = new Set();
+      resolvedIds.current = new Set();
+      setOrphans([]);
+      setByBlock({});
+      return;
+    }
     const { data } = await supabase
       .from("ptp_report_highlights")
       .select("id, block_key, context_tab, start_offset, end_offset, block_text_sha, quoted_text, color, note")
@@ -20,10 +32,39 @@ export function useReportHighlights(assessmentResultId: string | undefined, cont
       .eq("context_tab", contextTab);
     const map: Record<string, ReportHighlight[]> = {};
     (data ?? []).forEach((h) => { (map[h.block_key] ??= []).push(h as ReportHighlight); });
+    seenBlocks.current = new Set();
+    resolvedIds.current = new Set();
+    setOrphans([]);
     setByBlock(map);
   }, [assessmentResultId, contextTab, enabled]);
 
   useEffect(() => { reload(); }, [reload]);
+
+  // Called by each rendered block once it knows which of its stored
+  // highlights it managed to place. Refs, not state, so hundreds of blocks
+  // reporting cannot trigger a render storm. The debounce lets the whole
+  // report finish mounting before we decide anything is missing.
+  const reportBlockResolved = useCallback((blockKey: string, ids: string[]) => {
+    seenBlocks.current.add(blockKey);
+    ids.forEach((id) => resolvedIds.current.add(id));
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      setOrphans(() => {
+        const out: ReportHighlight[] = [];
+        for (const [key, list] of Object.entries(byBlockRef.current)) {
+          if (!seenBlocks.current.has(key)) continue; // block never rendered
+          for (const h of list) {
+            if (!resolvedIds.current.has(h.id)) out.push(h);
+          }
+        }
+        return out;
+      });
+    }, 400);
+  }, []);
+
+  useEffect(() => () => {
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+  }, []);
 
   const addHighlight = useCallback(async (a: { blockKey: string; start: number; end: number; sha: string; quoted: string; color: string; note?: string | null }) => {
     if (!assessmentResultId) return;
@@ -49,5 +90,5 @@ export function useReportHighlights(assessmentResultId: string | undefined, cont
     reload();
   }, [reload]);
 
-  return { byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled };
+  return { byBlock, addHighlight, updateHighlightNote, removeHighlight, enabled, orphans, reportBlockResolved };
 }

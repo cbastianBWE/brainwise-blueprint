@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
 import { usePairedReportHighlights, useTeamReportHighlights } from "@/hooks/useProfileReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
@@ -9,26 +9,29 @@ interface HighlightCtx {
   addHighlight: (a: { blockKey: string; start: number; end: number; sha: string; quoted: string; color: string; note?: string | null }) => void;
   updateHighlightNote: (id: string, note: string | null) => void;
   removeHighlight: (id: string) => void;
+  orphans: ReportHighlight[];
+  reportBlockResolved: (blockKey: string, ids: string[]) => void;
 }
 const Ctx = createContext<HighlightCtx | null>(null);
 
 export function ReportHighlightProvider({ assessmentResultId, contextTab, enabled, children }:
   { assessmentResultId: string | undefined; contextTab: string; enabled: boolean; children: React.ReactNode }) {
   const hl = useReportHighlights(assessmentResultId, contextTab, enabled);
-  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={hl}><HighlightOrphanNotice />{children}</Ctx.Provider>;
 }
 
 export function PairedReportHighlightProvider({ pairedProfileId, enabled, children }:
   { pairedProfileId: string | undefined; enabled: boolean; children: React.ReactNode }) {
   const hl = usePairedReportHighlights(pairedProfileId, enabled);
-  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={hl}><HighlightOrphanNotice />{children}</Ctx.Provider>;
 }
 
 export function TeamReportHighlightProvider({ teamProfileId, enabled, children }:
   { teamProfileId: string | undefined; enabled: boolean; children: React.ReactNode }) {
   const hl = useTeamReportHighlights(teamProfileId, enabled);
-  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={hl}><HighlightOrphanNotice />{children}</Ctx.Provider>;
 }
+
 
 export function HighlightableText({ blockKey, text }: { blockKey: string; text: string }) {
   const ctx = useContext(Ctx);
@@ -117,18 +120,29 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     };
   }, [detectSelection, enabled]);
 
+  const ranges = useMemo(() => {
+    if (!enabled || !ctx) return [];
+    const s = blockTextSha(text);
+    return (ctx.byBlock[blockKey] ?? [])
+      .map((h) => {
+        if (h.block_text_sha === s) return { ...h, s: h.start_offset, e: h.end_offset };
+        const idx = text.indexOf(h.quoted_text);
+        if (idx >= 0) return { ...h, s: idx, e: idx + h.quoted_text.length };
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => (a!.s - b!.s)) as (ReportHighlight & { s: number; e: number })[];
+  }, [enabled, ctx, blockKey, text]);
+
+  useEffect(() => {
+    if (!enabled || !ctx) return;
+    ctx.reportBlockResolved(blockKey, ranges.map((h) => h.id));
+  }, [enabled, ctx, blockKey, ranges]);
+
   if (!enabled) return <>{text}</>;
 
   const sha = blockTextSha(text);
-  const ranges = (ctx.byBlock[blockKey] ?? [])
-    .map((h) => {
-      if (h.block_text_sha === sha) return { ...h, s: h.start_offset, e: h.end_offset };
-      const idx = text.indexOf(h.quoted_text);
-      if (idx >= 0) return { ...h, s: idx, e: idx + h.quoted_text.length };
-      return null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => (a!.s - b!.s)) as (ReportHighlight & { s: number; e: number })[];
+
 
   const segs: React.ReactNode[] = [];
   let cursor = 0;
@@ -185,5 +199,36 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
         </span>
       )}
     </span>
+  );
+}
+
+export function HighlightOrphanNotice() {
+  const ctx = useContext(Ctx);
+  const [open, setOpen] = useState(false);
+  if (!ctx || !ctx.enabled || ctx.orphans.length === 0) return null;
+  const n = ctx.orphans.length;
+  return (
+    <div style={{ margin: "0 0 16px", padding: "10px 14px", border: "1px solid var(--border-1)", borderRadius: 8, background: "var(--bw-cream-200)", fontSize: 13, color: "var(--fg-1)" }}>
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: "inherit", fontSize: 13, textAlign: "left" }}>
+        {n === 1 ? "1 highlight could not be placed" : `${n} highlights could not be placed`} after this report was updated. {open ? "Hide" : "Show"}
+      </button>
+      {open && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+          {ctx.orphans.map((h) => (
+            <div key={h.id} style={{ borderLeft: "3px solid var(--border-1)", paddingLeft: 10 }}>
+              <div style={{ fontStyle: "italic", opacity: 0.85 }}>"{h.quoted_text}"</div>
+              {h.note && h.note.trim() && (
+                <div style={{ marginTop: 4 }}><strong>Your note:</strong> {h.note}</div>
+              )}
+              <button type="button" onClick={() => ctx.removeHighlight(h.id)}
+                style={{ marginTop: 4, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontSize: 12, color: "var(--bw-teal)" }}>
+                Delete this highlight
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
