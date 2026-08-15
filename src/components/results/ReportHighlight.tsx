@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
 import { usePairedReportHighlights, useTeamReportHighlights } from "@/hooks/useProfileReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
