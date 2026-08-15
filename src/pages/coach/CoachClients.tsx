@@ -440,6 +440,7 @@ export default function CoachClients() {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
+    setPreferredContext(null);
     setIsActorDebrief(false);
     setIsFreeGrant(false);
   };
@@ -487,6 +488,7 @@ export default function CoachClients() {
         client_last_name: lastName,
         coach_note: note,
         results_released: resultsReleased,
+        preferred_first_context: preferredContext,
       };
       console.log("[CoachClients] create-checkout payload:", JSON.stringify(payload, null, 2));
 
@@ -546,6 +548,7 @@ export default function CoachClients() {
         coach_notes: note || null,
         instrument_id: uuid,
         results_released: resultsReleased,
+        preferred_first_context: uuid === PTP_UUID ? preferredContext : null,
       });
       if (error) {
         toast.error("Failed to create client record: " + error.message);
@@ -693,6 +696,7 @@ export default function CoachClients() {
       p_coach_note: note.trim() || null,
       p_email_html: html,
       p_results_released: resultsReleased,
+      p_preferred_first_context: preferredContext,
     });
     const result = data as unknown as CreateActorDebriefOrderResult | null;
     if (error) {
@@ -748,6 +752,7 @@ export default function CoachClients() {
       p_instrument_ids: instCodes,
       p_coach_note: note || null,
       p_results_released: resultsReleased,
+      p_preferred_first_context: preferredContext,
     } as any);
 
     if (error) {
