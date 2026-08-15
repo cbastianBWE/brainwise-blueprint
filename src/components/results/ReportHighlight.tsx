@@ -63,7 +63,61 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     };
   }, [pop, editPop]);
 
-  if (!ctx || !ctx.enabled) return <>{text}</>;
+  const detectSelection = useCallback(() => {
+    const el = ref.current; const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.startContainer) || !el.contains(range.endContainer)) return;
+    const pre = document.createRange(); pre.selectNodeContents(el); pre.setEnd(range.startContainer, range.startOffset);
+    const start = pre.toString().length; const end = start + range.toString().length;
+    if (end <= start) return;
+    const rect = range.getBoundingClientRect();
+    const POP_H = 130;
+    let top = rect.top - POP_H; if (top < 8) top = rect.bottom + 8;
+    let x = rect.left + rect.width / 2;
+    x = Math.min(Math.max(x, 120), window.innerWidth - 120);
+    setEditPop(null);
+    setCreateNote("");
+    setPop({ x, y: top, start, end });
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onUp = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (t && (popRef.current?.contains(t) || editRef.current?.contains(t))) return;
+      detectSelection();
+    };
+    const onTouch = () => setTimeout(detectSelection, 80);
+    // iOS: after lifting the finger the user drags the selection handles, and
+    // no further touchend fires. selectionchange is the only reliable signal
+    // that the range grew or shrank. Debounced because it fires continuously
+    // while dragging.
+    const onSelChange = () => {
+      if (selTimer.current !== null) window.clearTimeout(selTimer.current);
+      selTimer.current = window.setTimeout(detectSelection, 150);
+    };
+    // Only on coarse pointers. A fully expanded report mounts hundreds of
+    // these, and desktop already has mouseup, so attaching selectionchange
+    // everywhere would be pure cost.
+    const isCoarse = typeof window !== "undefined"
+      && typeof window.matchMedia === "function"
+      && window.matchMedia("(pointer: coarse)").matches;
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("touchend", onTouch);
+    if (isCoarse) document.addEventListener("selectionchange", onSelChange);
+    return () => {
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("touchend", onTouch);
+      if (isCoarse) document.removeEventListener("selectionchange", onSelChange);
+      if (selTimer.current !== null) {
+        window.clearTimeout(selTimer.current);
+        selTimer.current = null;
+      }
+    };
+  }, [detectSelection, enabled]);
+
+  if (!enabled) return <>{text}</>;
 
   const sha = blockTextSha(text);
   const ranges = (ctx.byBlock[blockKey] ?? [])
@@ -93,38 +147,6 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   });
   if (cursor < text.length) segs.push(<span key="tend">{text.slice(cursor)}</span>);
 
-  const detectSelection = useCallback(() => {
-    const el = ref.current; const sel = window.getSelection();
-    if (!el || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-    const range = sel.getRangeAt(0);
-    if (!el.contains(range.startContainer) || !el.contains(range.endContainer)) return;
-    const pre = document.createRange(); pre.selectNodeContents(el); pre.setEnd(range.startContainer, range.startOffset);
-    const start = pre.toString().length; const end = start + range.toString().length;
-    if (end <= start) return;
-    const rect = range.getBoundingClientRect();
-    const POP_H = 130;
-    let top = rect.top - POP_H; if (top < 8) top = rect.bottom + 8;
-    let x = rect.left + rect.width / 2;
-    x = Math.min(Math.max(x, 120), window.innerWidth - 120);
-    setEditPop(null);
-    setCreateNote("");
-    setPop({ x, y: top, start, end });
-  }, []);
-
-  useEffect(() => {
-    const onUp = (e: MouseEvent) => {
-      const t = e.target as Node | null;
-      if (t && (popRef.current?.contains(t) || editRef.current?.contains(t))) return;
-      detectSelection();
-    };
-    const onTouch = () => setTimeout(detectSelection, 80);
-    document.addEventListener("mouseup", onUp);
-    document.addEventListener("touchend", onTouch);
-    return () => {
-      document.removeEventListener("mouseup", onUp);
-      document.removeEventListener("touchend", onTouch);
-    };
-  }, [detectSelection]);
 
   const popStyle: React.CSSProperties = { position: "fixed", transform: "translateX(-50%)", zIndex: 60, background: "var(--bw-white)", border: "1px solid var(--border-1)", borderRadius: 8, padding: "8px", boxShadow: "var(--shadow-md)" };
   const taStyle: React.CSSProperties = { width: 200, minHeight: 48, resize: "vertical", fontSize: 12, fontFamily: "inherit", color: "var(--fg-1)", border: "1px solid var(--border-1)", borderRadius: 6, padding: "4px 6px", boxSizing: "border-box" };
