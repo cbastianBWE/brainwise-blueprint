@@ -120,18 +120,29 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     };
   }, [detectSelection, enabled]);
 
+  const ranges = useMemo(() => {
+    if (!enabled || !ctx) return [];
+    const s = blockTextSha(text);
+    return (ctx.byBlock[blockKey] ?? [])
+      .map((h) => {
+        if (h.block_text_sha === s) return { ...h, s: h.start_offset, e: h.end_offset };
+        const idx = text.indexOf(h.quoted_text);
+        if (idx >= 0) return { ...h, s: idx, e: idx + h.quoted_text.length };
+        return null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => (a!.s - b!.s)) as (ReportHighlight & { s: number; e: number })[];
+  }, [enabled, ctx, blockKey, text]);
+
+  useEffect(() => {
+    if (!enabled || !ctx) return;
+    ctx.reportBlockResolved(blockKey, ranges.map((h) => h.id));
+  }, [enabled, ctx, blockKey, ranges]);
+
   if (!enabled) return <>{text}</>;
 
   const sha = blockTextSha(text);
-  const ranges = (ctx.byBlock[blockKey] ?? [])
-    .map((h) => {
-      if (h.block_text_sha === sha) return { ...h, s: h.start_offset, e: h.end_offset };
-      const idx = text.indexOf(h.quoted_text);
-      if (idx >= 0) return { ...h, s: idx, e: idx + h.quoted_text.length };
-      return null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => (a!.s - b!.s)) as (ReportHighlight & { s: number; e: number })[];
+
 
   const segs: React.ReactNode[] = [];
   let cursor = 0;
