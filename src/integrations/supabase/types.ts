@@ -1833,6 +1833,8 @@ export type Database = {
           id: string
           instrument_id: string
           paid_at: string | null
+          preferred_first_context: string | null
+          results_released: boolean
           seats_claimed: number
           seats_total: number
           status: string
@@ -1848,6 +1850,8 @@ export type Database = {
           id?: string
           instrument_id: string
           paid_at?: string | null
+          preferred_first_context?: string | null
+          results_released?: boolean
           seats_claimed?: number
           seats_total: number
           status?: string
@@ -1863,6 +1867,8 @@ export type Database = {
           id?: string
           instrument_id?: string
           paid_at?: string | null
+          preferred_first_context?: string | null
+          results_released?: boolean
           seats_claimed?: number
           seats_total?: number
           status?: string
@@ -2184,6 +2190,7 @@ export type Database = {
           invite_token: string
           invite_token_claimed_at: string | null
           paired_assessment_id: string | null
+          preferred_first_context: string | null
           refund_amount: number | null
           refund_failure_reason: string | null
           refunded_at: string | null
@@ -2217,6 +2224,7 @@ export type Database = {
           invite_token?: string
           invite_token_claimed_at?: string | null
           paired_assessment_id?: string | null
+          preferred_first_context?: string | null
           refund_amount?: number | null
           refund_failure_reason?: string | null
           refunded_at?: string | null
@@ -2250,6 +2258,7 @@ export type Database = {
           invite_token?: string
           invite_token_claimed_at?: string | null
           paired_assessment_id?: string | null
+          preferred_first_context?: string | null
           refund_amount?: number | null
           refund_failure_reason?: string | null
           refunded_at?: string | null
@@ -2899,6 +2908,8 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
+          preferred_first_context: string | null
+          results_released: boolean
           rows: Json
           status: string
           stripe_session_id: string | null
@@ -2909,6 +2920,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          preferred_first_context?: string | null
+          results_released?: boolean
           rows: Json
           status?: string
           stripe_session_id?: string | null
@@ -2919,6 +2932,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
+          preferred_first_context?: string | null
+          results_released?: boolean
           rows?: Json
           status?: string
           stripe_session_id?: string | null
@@ -16595,6 +16610,7 @@ export type Database = {
           invitation_source: string | null
           invitation_status: string | null
           paired_assessment_id: string | null
+          preferred_first_context: string | null
           results_released: boolean | null
           stripe_payment_intent_id: string | null
         }
@@ -16614,6 +16630,7 @@ export type Database = {
           invitation_source?: string | null
           invitation_status?: string | null
           paired_assessment_id?: string | null
+          preferred_first_context?: string | null
           results_released?: boolean | null
           stripe_payment_intent_id?: string | null
         }
@@ -16633,6 +16650,7 @@ export type Database = {
           invitation_source?: string | null
           invitation_status?: string | null
           paired_assessment_id?: string | null
+          preferred_first_context?: string | null
           results_released?: boolean | null
           stripe_payment_intent_id?: string | null
         }
@@ -17736,7 +17754,11 @@ export type Database = {
         Returns: Json
       }
       bulk_coach_invitation_create: {
-        Args: { p_rows: Json }
+        Args: {
+          p_preferred_first_context?: string
+          p_results_released?: boolean
+          p_rows: Json
+        }
         Returns: {
           client_email: string
           coach_client_id: string
@@ -18023,8 +18045,10 @@ export type Database = {
       }
       coach_bulk_link_create: {
         Args: {
-          p_coach_note?: string
+          p_coach_note: string
           p_instrument_id: string
+          p_preferred_first_context?: string
+          p_results_released?: boolean
           p_seats: number
         }
         Returns: {
@@ -18083,8 +18107,10 @@ export type Database = {
           p_client_email: string
           p_client_first_name: string
           p_client_last_name: string
-          p_coach_note?: string
+          p_coach_note: string
           p_instrument_ids: string[]
+          p_preferred_first_context?: string
+          p_results_released?: boolean
         }
         Returns: {
           batch_id: string
@@ -18097,8 +18123,9 @@ export type Database = {
           p_client_email: string
           p_client_first_name: string
           p_client_last_name: string
-          p_coach_note?: string
+          p_coach_note: string
           p_instrument_ids: string[]
+          p_preferred_first_context?: string
         }
         Returns: {
           coach_client_id: string
@@ -18310,9 +18337,10 @@ export type Database = {
           p_actor_email: string
           p_actor_first_name: string
           p_certification_id: string
-          p_coach_note?: string
-          p_email_html?: string
-          p_results_released?: boolean
+          p_coach_note: string
+          p_email_html: string
+          p_preferred_first_context?: string
+          p_results_released: boolean
         }
         Returns: Json
       }
@@ -18332,9 +18360,10 @@ export type Database = {
           p_client_email: string
           p_client_first_name: string
           p_client_last_name: string
-          p_coach_note?: string
+          p_coach_note: string
           p_instrument_ids: string[]
-          p_results_released?: boolean
+          p_preferred_first_context?: string
+          p_results_released: boolean
         }
         Returns: Json
       }
