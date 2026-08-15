@@ -44,6 +44,12 @@ const INSTRUMENTS = CANONICAL_INSTRUMENTS
     desc: i.description,
   }));
 
+// The PTP is the only instrument with professional/personal contexts.
+// selectedInstruments holds short names, so resolve INST-001's short name once.
+const PTP_META = CANONICAL_INSTRUMENTS.find((i) => i.instrument_id === "INST-001");
+const PTP_SHORT_ID = PTP_META?.short_name ?? "PTP";
+const PTP_UUID = PTP_META?.uuid ?? "";
+
 const CERT_TYPE_TO_INSTRUMENTS: Record<string, string[]> = {
   ptp_coach: ["PTP"],
   ai_transformation_coach: ["NAI", "AIRSA", "HSS"],
@@ -125,6 +131,7 @@ export default function CoachClients() {
   const [instrumentError, setInstrumentError] = useState(false);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
@@ -433,6 +440,7 @@ export default function CoachClients() {
     setFirstName(""); setLastName(""); setEmail(""); setNote("");
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
+    setPreferredContext(null);
     setIsActorDebrief(false);
     setIsFreeGrant(false);
   };
@@ -480,6 +488,7 @@ export default function CoachClients() {
         client_last_name: lastName,
         coach_note: note,
         results_released: resultsReleased,
+        preferred_first_context: preferredContext,
       };
       console.log("[CoachClients] create-checkout payload:", JSON.stringify(payload, null, 2));
 
@@ -539,6 +548,7 @@ export default function CoachClients() {
         coach_notes: note || null,
         instrument_id: uuid,
         results_released: resultsReleased,
+        preferred_first_context: uuid === PTP_UUID ? preferredContext : null,
       });
       if (error) {
         toast.error("Failed to create client record: " + error.message);
@@ -686,6 +696,7 @@ export default function CoachClients() {
       p_coach_note: note.trim() || null,
       p_email_html: html,
       p_results_released: resultsReleased,
+      p_preferred_first_context: preferredContext,
     });
     const result = data as unknown as CreateActorDebriefOrderResult | null;
     if (error) {
@@ -741,6 +752,7 @@ export default function CoachClients() {
       p_instrument_ids: instCodes,
       p_coach_note: note || null,
       p_results_released: resultsReleased,
+      p_preferred_first_context: preferredContext,
     } as any);
 
     if (error) {
@@ -996,6 +1008,36 @@ export default function CoachClients() {
         </div>
         <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
       </div>
+      {/* PTP is the only instrument with contexts. In the actor-debrief branch the
+          instrument is always the PTP and isn't chosen via selectedInstruments. */}
+      {((!isFreeGrant && (isActorDebrief || actorOnlyMode)) || selectedInstruments.includes(PTP_SHORT_ID)) && (
+        <div className="space-y-2 pt-2">
+          <Label className="text-sm">Suggest a starting context (optional)</Label>
+          <p className="text-xs text-muted-foreground">
+            The PTP has a work half and a personal half. Your suggestion pre-selects
+            the client's choice and explains that it came from you. They can still
+            pick either, or both.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { v: null, label: "No suggestion" },
+              { v: 'professional', label: "Corporate / Professional" },
+              { v: 'personal', label: "Personal / Social" },
+              { v: 'both', label: "Both" },
+            ] as const).map((opt) => (
+              <Button
+                key={opt.label}
+                type="button"
+                size="sm"
+                variant={preferredContext === opt.v ? "default" : "outline"}
+                onClick={() => setPreferredContext(opt.v)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
       {canOfferActorDebrief && (
         <div className="flex items-center justify-between rounded-md border p-3">
           <div className="space-y-0.5 pr-3">

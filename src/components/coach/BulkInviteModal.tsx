@@ -15,6 +15,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { Trash2, Upload, Plus, Loader2 } from "lucide-react";
 
 const INSTRUMENTS = [
@@ -84,6 +85,8 @@ export default function BulkInviteModal({
   const [confirmReviewed, setConfirmReviewed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [resultsReleased, setResultsReleased] = useState(false);
 
   const allowedInstruments = useMemo(
     () => INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id)),
@@ -97,6 +100,8 @@ export default function BulkInviteModal({
     setRpcSummary(null);
     setConfirmReviewed(false);
     setSubmitting(false);
+    setPreferredContext(null);
+    setResultsReleased(false);
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -217,6 +222,8 @@ export default function BulkInviteModal({
     setStage("dispatching");
     setSubmitting(true);
     const payload = {
+      preferred_first_context: preferredContext,
+      results_released: resultsReleased,
       rows: validRows.map(r => ({
         client_email: r.email.trim().toLowerCase(),
         client_first_name: r.first_name.trim() || null,
@@ -402,6 +409,43 @@ export default function BulkInviteModal({
                       })}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between rounded-md border p-3 mt-3">
+                <div className="space-y-0.5 pr-3">
+                  <Label className="text-sm">Allow clients to see results immediately</Label>
+                  <p className="text-xs text-muted-foreground">If off, clients must wait for practitioner debrief before viewing results</p>
+                </div>
+                <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+              </div>
+
+              {rows.some(r => r.instrument_short_id === "PTP") && (
+                <div className="space-y-2 pt-2">
+                  <Label className="text-sm">Suggest a starting context for everyone in this batch (optional)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    The PTP has a work half and a personal half. Your suggestion pre-selects
+                    the client's choice and explains that it came from you. They can still
+                    pick either, or both.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { v: null, label: "No suggestion" },
+                      { v: 'professional', label: "Corporate / Professional" },
+                      { v: 'personal', label: "Personal / Social" },
+                      { v: 'both', label: "Both" },
+                    ] as const).map((opt) => (
+                      <Button
+                        key={opt.label}
+                        type="button"
+                        size="sm"
+                        variant={preferredContext === opt.v ? "default" : "outline"}
+                        onClick={() => setPreferredContext(opt.v)}
+                      >
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               )}
 

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, Copy, Link as LinkIcon } from "lucide-react";
 
 const INSTRUMENTS = [
@@ -45,6 +46,9 @@ export default function ShareableLinkModal({
   const [coachNote, setCoachNote] = useState("");
   const [resultLink, setResultLink] = useState<string | null>(null);
   const [resultExpiresAt, setResultExpiresAt] = useState<string | null>(null);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [resultsReleased, setResultsReleased] = useState(false);
+
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -56,6 +60,8 @@ export default function ShareableLinkModal({
     setCoachNote("");
     setResultLink(null);
     setResultExpiresAt(null);
+    setPreferredContext(null);
+    setResultsReleased(false);
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -89,6 +95,7 @@ export default function ShareableLinkModal({
         p_client_last_name: lastName.trim() || null,
         p_instrument_ids: instrumentUuids,
         p_coach_note: coachNote.trim() || null,
+        p_preferred_first_context: preferredContext,
       };
       console.log("[ShareableLinkModal] coach_shareable_link_self_pay params:", params);
       const { data, error } = await supabase.rpc("coach_shareable_link_self_pay" as any, params as any);
@@ -114,6 +121,8 @@ export default function ShareableLinkModal({
       p_client_last_name: lastName.trim() || null,
       p_instrument_ids: instrumentUuids,
       p_coach_note: coachNote.trim() || null,
+      p_preferred_first_context: preferredContext,
+      p_results_released: resultsReleased,
     };
     console.log("[ShareableLinkModal] coach_shareable_link_coach_paid params:", params);
     const { data: rpcData, error: rpcError } = await supabase.rpc("coach_shareable_link_coach_paid" as any, params as any);
@@ -218,6 +227,43 @@ export default function ShareableLinkModal({
               <Label className="text-sm">Personal Note <span className="text-muted-foreground">(optional)</span></Label>
               <Textarea value={coachNote} onChange={e => setCoachNote(e.target.value)} rows={2} />
             </div>
+
+            <div className="flex items-center justify-between rounded-md border p-3">
+              <div className="space-y-0.5 pr-3">
+                <Label className="text-sm">Allow client to see results immediately</Label>
+                <p className="text-xs text-muted-foreground">If off, client must wait for practitioner debrief before viewing results</p>
+              </div>
+              <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+            </div>
+
+            {selectedInstrumentShortIds.includes("PTP") && (
+              <div className="space-y-2 pt-1">
+                <Label className="text-sm">Suggest a starting context (optional)</Label>
+                <p className="text-xs text-muted-foreground">
+                  The PTP has a work half and a personal half. Your suggestion pre-selects
+                  the client's choice and explains that it came from you. They can still
+                  pick either, or both.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { v: null, label: "No suggestion" },
+                    { v: 'professional', label: "Corporate / Professional" },
+                    { v: 'personal', label: "Personal / Social" },
+                    { v: 'both', label: "Both" },
+                  ] as const).map((opt) => (
+                    <Button
+                      key={opt.label}
+                      type="button"
+                      size="sm"
+                      variant={preferredContext === opt.v ? "default" : "outline"}
+                      onClick={() => setPreferredContext(opt.v)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {paymentMode === "coach_paid" && selectedInstrumentShortIds.length > 0 && (
               <p className="text-sm text-muted-foreground">

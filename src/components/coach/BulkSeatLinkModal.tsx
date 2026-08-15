@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
 
 const INSTRUMENTS = [
@@ -47,6 +48,8 @@ export default function BulkSeatLinkModal({
   const [seats, setSeats] = useState<string>("5");
   const [coachNote, setCoachNote] = useState<string>("");
   const [pendingLinkId, setPendingLinkId] = useState<string | null>(null);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [resultsReleased, setResultsReleased] = useState(false);
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -56,6 +59,8 @@ export default function BulkSeatLinkModal({
     setSeats("5");
     setCoachNote("");
     setPendingLinkId(null);
+    setPreferredContext(null);
+    setResultsReleased(false);
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -85,6 +90,8 @@ export default function BulkSeatLinkModal({
         p_instrument_id: uuid,
         p_seats: seatsNum,
         p_coach_note: coachNote.trim() || null,
+        p_preferred_first_context: preferredContext,
+        p_results_released: resultsReleased,
       } as any);
       if (error) {
         toast.error("Could not create link: " + error.message);
@@ -200,6 +207,43 @@ export default function BulkSeatLinkModal({
             <Label htmlFor="coach-note">Personal Note (optional)</Label>
             <Textarea id="coach-note" value={coachNote} onChange={(e) => setCoachNote(e.target.value)} rows={2} />
           </div>
+
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="space-y-0.5 pr-3">
+              <Label className="text-sm">Allow client to see results immediately</Label>
+              <p className="text-xs text-muted-foreground">If off, client must wait for practitioner debrief before viewing results</p>
+            </div>
+            <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+          </div>
+
+          {instrumentShortId === "PTP" && (
+            <div className="space-y-2 pt-2">
+              <Label className="text-sm">Suggest a starting context (optional)</Label>
+              <p className="text-xs text-muted-foreground">
+                The PTP has a work half and a personal half. Your suggestion pre-selects
+                the client's choice and explains that it came from you. They can still
+                pick either, or both.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { v: null, label: "No suggestion" },
+                  { v: 'professional', label: "Corporate / Professional" },
+                  { v: 'personal', label: "Personal / Social" },
+                  { v: 'both', label: "Both" },
+                ] as const).map((opt) => (
+                  <Button
+                    key={opt.label}
+                    type="button"
+                    size="sm"
+                    variant={preferredContext === opt.v ? "default" : "outline"}
+                    onClick={() => setPreferredContext(opt.v)}
+                  >
+                    {opt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="rounded-md bg-muted/50 p-3 text-sm">
             {priceMissing ? (
