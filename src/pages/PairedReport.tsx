@@ -371,7 +371,9 @@ function DriverCard({
             <Meter tier={tier} kind={kind} />
           </span>
           <div style={{ fontWeight: 700, fontSize: 18, color: NAVY, margin: "8px 0 4px" }}>{name}</div>
-          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>{renderBold(why)}</div>
+          <div style={{ color: GRAY, fontSize: 15, lineHeight: 1.6, maxWidth: "70ch" }}>
+            {blockKey ? <HighlightableText blockKey={`${blockKey}:why`} text={why} /> : renderBold(why)}
+          </div>
           {actions.length > 0 && (
             <>
               <button
@@ -392,7 +394,9 @@ function DriverCard({
                   </div>
                   <ol style={{ margin: 0, paddingLeft: 22, listStyleType: "decimal" }}>
                     {actions.map((act, i) => (
-                      <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>{renderBold(act)}</li>
+                      <li key={i} style={{ fontSize: 15, margin: "4px 0", lineHeight: 1.6 }}>
+                        {blockKey ? <HighlightableText blockKey={`${blockKey}:action:${i}`} text={act} /> : renderBold(act)}
+                      </li>
                     ))}
                   </ol>
                 </div>
