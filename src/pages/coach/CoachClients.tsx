@@ -1008,6 +1008,36 @@ export default function CoachClients() {
         </div>
         <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
       </div>
+      {/* PTP is the only instrument with contexts. In the actor-debrief branch the
+          instrument is always the PTP and isn't chosen via selectedInstruments. */}
+      {((!isFreeGrant && (isActorDebrief || actorOnlyMode)) || selectedInstruments.includes(PTP_SHORT_ID)) && (
+        <div className="space-y-2 pt-2">
+          <Label className="text-sm">Suggest a starting context (optional)</Label>
+          <p className="text-xs text-muted-foreground">
+            The PTP has a work half and a personal half. Your suggestion pre-selects
+            the client's choice and explains that it came from you. They can still
+            pick either, or both.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {([
+              { v: null, label: "No suggestion" },
+              { v: 'professional', label: "Corporate / Professional" },
+              { v: 'personal', label: "Personal / Social" },
+              { v: 'both', label: "Both" },
+            ] as const).map((opt) => (
+              <Button
+                key={opt.label}
+                type="button"
+                size="sm"
+                variant={preferredContext === opt.v ? "default" : "outline"}
+                onClick={() => setPreferredContext(opt.v)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
       {canOfferActorDebrief && (
         <div className="flex items-center justify-between rounded-md border p-3">
           <div className="space-y-0.5 pr-3">
