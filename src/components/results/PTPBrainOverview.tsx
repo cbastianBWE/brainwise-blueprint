@@ -1,4 +1,5 @@
 import React from "react";
+import { HighlightableText } from "@/components/results/ReportHighlight";
 
 interface PTPBrainOverviewProps {
   contextTab: "professional" | "personal" | "combined" | null;

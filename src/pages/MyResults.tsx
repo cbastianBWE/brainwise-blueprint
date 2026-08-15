@@ -1301,12 +1301,8 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             </section>
           )}
 
-          {/* PTP and Brain Overview (PTP only, new placement above dimension scores) */}
-          {effectiveSelected?.isPTP && (
-            <section>
-              <PTPBrainOverview contextTab={ptpContextTab} />
-            </section>
-          )}
+
+
 
           {/* NAI Overview — static intro card, renders above dimension scores for NAI only */}
           {isNAI && (
