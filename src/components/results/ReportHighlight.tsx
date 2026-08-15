@@ -201,3 +201,34 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
     </span>
   );
 }
+
+export function HighlightOrphanNotice() {
+  const ctx = useContext(Ctx);
+  const [open, setOpen] = useState(false);
+  if (!ctx || !ctx.enabled || ctx.orphans.length === 0) return null;
+  const n = ctx.orphans.length;
+  return (
+    <div style={{ margin: "0 0 16px", padding: "10px 14px", border: "1px solid var(--border-1)", borderRadius: 8, background: "var(--bw-cream-200)", fontSize: 13, color: "var(--fg-1)" }}>
+      <button type="button" onClick={() => setOpen((v) => !v)}
+        style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", color: "inherit", fontSize: 13, textAlign: "left" }}>
+        {n === 1 ? "1 highlight could not be placed" : `${n} highlights could not be placed`} after this report was updated. {open ? "Hide" : "Show"}
+      </button>
+      {open && (
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+          {ctx.orphans.map((h) => (
+            <div key={h.id} style={{ borderLeft: "3px solid var(--border-1)", paddingLeft: 10 }}>
+              <div style={{ fontStyle: "italic", opacity: 0.85 }}>"{h.quoted_text}"</div>
+              {h.note && h.note.trim() && (
+                <div style={{ marginTop: 4 }}><strong>Your note:</strong> {h.note}</div>
+              )}
+              <button type="button" onClick={() => ctx.removeHighlight(h.id)}
+                style={{ marginTop: 4, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontSize: 12, color: "var(--bw-teal)" }}>
+                Delete this highlight
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
