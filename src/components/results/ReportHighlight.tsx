@@ -172,7 +172,7 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   return (
     <span ref={ref} style={{ position: "relative" }}>
       {segs.length ? segs : text}
-      {pop && (
+      {pop && createPortal(
         <span ref={popRef} style={{ ...popStyle, left: pop.x, top: pop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ display: "flex", gap: 6, justifyContent: "center" }}>
             {HIGHLIGHT_COLORS.map((c) => (
