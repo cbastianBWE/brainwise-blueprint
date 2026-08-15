@@ -64,7 +64,9 @@ export function ReportChatPanel({
       setInput(text);
       setMessages((prev) => prev.slice(0, -1));
       if (status === 402 || code === "chat_limit_reached") {
-        setErrorMsg("You have used your AI allowance for this month.");
+        setErrorMsg(
+          "You have no AI messages remaining. Your practitioner can help, or you can upgrade for more."
+        );
       } else if (status === 403 || code === "access_denied") {
         setErrorMsg("You do not have access to this report.");
       } else {
