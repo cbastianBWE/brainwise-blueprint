@@ -1352,6 +1352,12 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             </section>
           )}
 
+          {effectiveSelected?.isPTP && (
+            <section>
+              <PTPBrainOverview contextTab={ptpContextTab} />
+            </section>
+          )}
+
           {/* SECTION 2 - Profile Chart */}
           <section>
             <Card>
@@ -1530,11 +1536,6 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                 contextTab={ptpContextTab ?? 'single'}
                 enabled={allowHighlighting}
               >
-              {effectiveSelected?.isPTP && (
-                <section>
-                  <PTPBrainOverview contextTab={ptpContextTab} />
-                </section>
-              )}
               <PTPNarrativeProvider {...ptpNarrativeProps}>
                 <PTPReportProgressOverlay />
                 {allowHighlighting && (
