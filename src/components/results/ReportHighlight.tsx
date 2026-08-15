@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useReportHighlights, type ReportHighlight } from "@/hooks/useReportHighlights";
 import { usePairedReportHighlights, useTeamReportHighlights } from "@/hooks/useProfileReportHighlights";
 import { HIGHLIGHT_COLORS, highlightCss, blockTextSha } from "@/lib/reportHighlightColors";
@@ -9,26 +9,29 @@ interface HighlightCtx {
   addHighlight: (a: { blockKey: string; start: number; end: number; sha: string; quoted: string; color: string; note?: string | null }) => void;
   updateHighlightNote: (id: string, note: string | null) => void;
   removeHighlight: (id: string) => void;
+  orphans: ReportHighlight[];
+  reportBlockResolved: (blockKey: string, ids: string[]) => void;
 }
 const Ctx = createContext<HighlightCtx | null>(null);
 
 export function ReportHighlightProvider({ assessmentResultId, contextTab, enabled, children }:
   { assessmentResultId: string | undefined; contextTab: string; enabled: boolean; children: React.ReactNode }) {
   const hl = useReportHighlights(assessmentResultId, contextTab, enabled);
-  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={hl}><HighlightOrphanNotice />{children}</Ctx.Provider>;
 }
 
 export function PairedReportHighlightProvider({ pairedProfileId, enabled, children }:
   { pairedProfileId: string | undefined; enabled: boolean; children: React.ReactNode }) {
   const hl = usePairedReportHighlights(pairedProfileId, enabled);
-  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={hl}><HighlightOrphanNotice />{children}</Ctx.Provider>;
 }
 
 export function TeamReportHighlightProvider({ teamProfileId, enabled, children }:
   { teamProfileId: string | undefined; enabled: boolean; children: React.ReactNode }) {
   const hl = useTeamReportHighlights(teamProfileId, enabled);
-  return <Ctx.Provider value={hl}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={hl}><HighlightOrphanNotice />{children}</Ctx.Provider>;
 }
+
 
 export function HighlightableText({ blockKey, text }: { blockKey: string; text: string }) {
   const ctx = useContext(Ctx);
