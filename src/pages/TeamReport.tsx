@@ -9,6 +9,7 @@ import { useTeamProfile, type TeamFacetResult } from "@/hooks/useTeamProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, TeamReportHighlightProvider } from "@/components/results/ReportHighlight";
+import { ReportChatPanel } from "@/components/results/ReportChatPanel";
 import ExportPdfModal, { type TeamPdfSectionsUi } from "@/components/results/ExportPdfModal";
 import LeadershipModal, { type LeadershipItem } from "@/components/results/LeadershipModal";
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
@@ -1139,6 +1140,9 @@ export default function TeamReport() {
     <div style={{ background: SAND, color: NAVY, fontFamily: 'Montserrat, system-ui, sans-serif', fontSize: 16, lineHeight: 1.6, minHeight: "100vh" }}>
       <RevealCtx.Provider value={revealCtx}>
       <TeamReportHighlightProvider teamProfileId={teamProfileId} enabled={canHighlight}>
+      <div style={{ display: "flex", justifyContent: "flex-end", maxWidth: 1040, margin: "0 auto", padding: "12px 20px 0" }}>
+        <ReportChatPanel reportType="team" reportId={teamProfileId} />
+      </div>
       {/* Hero */}
       <header style={{ background: NAVY, color: "#ffffff", padding: "54px 0 110px" }}>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "0 20px" }}>
