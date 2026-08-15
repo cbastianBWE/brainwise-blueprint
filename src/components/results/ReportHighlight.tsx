@@ -201,7 +201,8 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
                 style={{ fontSize: 12, fontWeight: 600, color: "var(--bw-teal)", background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>Save</button>
             </span>
           </span>
-        </span>
+        </span>,
+        document.body,
       )}
     </span>
   );
