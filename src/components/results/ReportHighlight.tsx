@@ -184,9 +184,10 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
           <textarea value={createNote} onChange={(e) => setCreateNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment (optional)" aria-label="Highlight comment" style={taStyle} />
           <span style={{ fontSize: 10, color: "var(--fg-1)", opacity: 0.6, textAlign: "center" }}>Pick a color to save, or click away to cancel</span>
-        </span>
+        </span>,
+        document.body,
       )}
-      {editPop && (
+      {editPop && createPortal(
         <span ref={editRef} style={{ ...popStyle, left: editPop.x, top: editPop.y, display: "flex", flexDirection: "column", gap: 6 }}>
           <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} onMouseDown={(e) => e.stopPropagation()} onMouseUp={(e) => e.stopPropagation()}
             placeholder="Add a comment" aria-label="Edit highlight comment" style={taStyle} />
