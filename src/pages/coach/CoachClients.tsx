@@ -44,6 +44,12 @@ const INSTRUMENTS = CANONICAL_INSTRUMENTS
     desc: i.description,
   }));
 
+// The PTP is the only instrument with professional/personal contexts.
+// selectedInstruments holds short names, so resolve INST-001's short name once.
+const PTP_META = CANONICAL_INSTRUMENTS.find((i) => i.instrument_id === "INST-001");
+const PTP_SHORT_ID = PTP_META?.short_name ?? "PTP";
+const PTP_UUID = PTP_META?.uuid ?? "";
+
 const CERT_TYPE_TO_INSTRUMENTS: Record<string, string[]> = {
   ptp_coach: ["PTP"],
   ai_transformation_coach: ["NAI", "AIRSA", "HSS"],
@@ -125,6 +131,7 @@ export default function CoachClients() {
   const [instrumentError, setInstrumentError] = useState(false);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
