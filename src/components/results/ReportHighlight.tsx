@@ -39,6 +39,8 @@ export function HighlightableText({ blockKey, text }: { blockKey: string; text: 
   const [createNote, setCreateNote] = useState("");
   const [editPop, setEditPop] = useState<{ id: string; x: number; y: number } | null>(null);
   const [editNote, setEditNote] = useState("");
+  const selTimer = useRef<number | null>(null);
+  const enabled = !!ctx && ctx.enabled;
 
   useEffect(() => {
     if (!pop && !editPop) return;
