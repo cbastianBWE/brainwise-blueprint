@@ -37,6 +37,8 @@ export default function Assessment() {
 
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [ptpRecommended, setPtpRecommended] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [ptpContextLoading, setPtpContextLoading] = useState(false);
   const [entitlementSource, setEntitlementSource] = useState<EntitlementSource | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
 
@@ -283,7 +285,14 @@ export default function Assessment() {
 
   if (selectedInstrument) {
     if (selectedInstrument.instrument_id === "INST-001" && contextType === null) {
-      return <PTPContextSelection onSelect={setContextType} />;
+      if (ptpContextLoading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        );
+      }
+      return <PTPContextSelection onSelect={setContextType} recommended={ptpRecommended} />;
     }
     return (
       <AssessmentFlow
@@ -415,8 +424,10 @@ export default function Assessment() {
 
 function PTPContextSelection({
   onSelect,
+  recommended,
 }: {
   onSelect: (ctx: 'professional' | 'personal' | 'both') => void;
+  recommended?: 'professional' | 'personal' | 'both' | null;
 }) {
   return (
     <div className="min-h-screen bg-background py-12 px-4">
@@ -427,35 +438,75 @@ function PTPContextSelection({
             Before we begin, tell us which context you are completing this assessment for. You can complete the other half later.
           </p>
         </div>
+        {recommended && (
+          <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
+            Your practitioner suggested starting with{" "}
+            <strong>
+              {recommended === "professional"
+                ? "Corporate / Professional"
+                : recommended === "personal"
+                ? "Personal / Social"
+                : "Both"}
+            </strong>
+            . You can still choose whichever you prefer.
+          </div>
+        )}
         <div className="grid gap-4">
           <Card
-            className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              recommended === 'professional'
+                ? "border-primary ring-1 ring-primary/30"
+                : "hover:border-primary/50"
+            }`}
             onClick={() => onSelect('professional')}
           >
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Corporate / Professional</h3>
+              {recommended === 'professional' && (
+                <span className="inline-block mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  Suggested by your practitioner
+                </span>
+              )}
               <p className="text-sm text-muted-foreground">
                 Assess your threat responses in work and professional contexts.
               </p>
             </CardContent>
           </Card>
           <Card
-            className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              recommended === 'personal'
+                ? "border-primary ring-1 ring-primary/30"
+                : "hover:border-primary/50"
+            }`}
             onClick={() => onSelect('personal')}
           >
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Personal / Social</h3>
+              {recommended === 'personal' && (
+                <span className="inline-block mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  Suggested by your practitioner
+                </span>
+              )}
               <p className="text-sm text-muted-foreground">
                 Assess your threat and reward responses in personal and social contexts.
               </p>
             </CardContent>
           </Card>
           <Card
-            className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-md"
+            className={`cursor-pointer transition-all hover:shadow-md ${
+              recommended === 'both'
+                ? "border-primary ring-1 ring-primary/30"
+                : "hover:border-primary/50"
+            }`}
             onClick={() => onSelect('both')}
           >
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Both</h3>
+              {recommended === 'both' && (
+                <span className="inline-block mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  Suggested by your practitioner
+                </span>
+              )}
               <p className="text-sm text-muted-foreground">
                 Complete the full 89-question assessment covering all contexts.
               </p>
