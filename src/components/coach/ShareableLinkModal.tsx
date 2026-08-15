@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, Copy, Link as LinkIcon } from "lucide-react";
 
 const INSTRUMENTS = [
@@ -45,6 +46,9 @@ export default function ShareableLinkModal({
   const [coachNote, setCoachNote] = useState("");
   const [resultLink, setResultLink] = useState<string | null>(null);
   const [resultExpiresAt, setResultExpiresAt] = useState<string | null>(null);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [resultsReleased, setResultsReleased] = useState(false);
+
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
