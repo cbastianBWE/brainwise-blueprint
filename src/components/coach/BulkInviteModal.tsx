@@ -15,6 +15,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { Trash2, Upload, Plus, Loader2 } from "lucide-react";
 
 const INSTRUMENTS = [
@@ -84,6 +85,8 @@ export default function BulkInviteModal({
   const [confirmReviewed, setConfirmReviewed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [resultsReleased, setResultsReleased] = useState(false);
 
   const allowedInstruments = useMemo(
     () => INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id)),
