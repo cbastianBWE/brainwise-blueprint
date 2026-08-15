@@ -9,6 +9,7 @@ import { usePairedProfile, type PairedFacetResult } from "@/hooks/usePairedProfi
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { HighlightableText, PairedReportHighlightProvider } from "@/components/results/ReportHighlight";
+import { ReportChatPanel } from "@/components/results/ReportChatPanel";
 import ExportPdfModal, { type PairedPdfSectionsUi } from "@/components/results/ExportPdfModal";
 import LeadershipModal, { type LeadershipItem } from "@/components/results/LeadershipModal";
 import AddReportCommitmentModal from "@/components/development-plan/AddReportCommitmentModal";
@@ -1082,6 +1083,9 @@ export default function PairedReport() {
   return (
     <div style={{ background: SAND, color: NAVY, fontFamily: 'Montserrat, system-ui, sans-serif', lineHeight: 1.6, fontSize: 16, minHeight: "100vh" }}>
       <PairedReportHighlightProvider pairedProfileId={pairedProfileId} enabled={canHighlight}>
+      <div style={{ display: "flex", justifyContent: "flex-end", maxWidth: 1040, margin: "0 auto", padding: "12px 20px 0" }}>
+        <ReportChatPanel reportType="paired" reportId={pairedProfileId} />
+      </div>
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "0 18px 80px" }}>
         {/* Hero */}
         <div style={{ background: NAVY, color: "#fff", borderRadius: "0 0 20px 20px", margin: "0 -18px 0", padding: "30px 28px 56px" }}>
