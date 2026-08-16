@@ -65,7 +65,7 @@ function statusVariant(status: string | null): "default" | "secondary" | "destru
   return "outline";
 }
 
-export default function PractitionerDirectory() {
+export default function PractitionerDirectoryPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
