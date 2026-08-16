@@ -403,12 +403,14 @@ export default function CoachManagement() {
     <div className="space-y-6 p-6">
       <h1 className="text-2xl font-bold">Practitioner Management</h1>
 
-      <Tabs defaultValue="invitations">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="tracking">Client &amp; Actor Tracking</TabsTrigger>
           <TabsTrigger value="cohorts">Cohorts &amp; Sessions</TabsTrigger>
+          <TabsTrigger value="directory">Directory</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="invitations" className="space-y-6">
           {/* Section 1 — Invite */}
