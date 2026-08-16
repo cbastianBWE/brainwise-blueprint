@@ -9,10 +9,10 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import { setPageMeta } from "@/components/marketing/newsletter/setPageMeta";
+import PractitionerHeadshot from "@/components/PractitionerHeadshot";
 import { meta, certLabel } from "@/content/marketing/practitionerDirectoryContent";
 import {
   headshotUrl,
-  initialsOf,
   locationOf,
   type PublicPractitioner,
 } from "@/lib/publicDirectory";
