@@ -231,9 +231,33 @@ function DirectoryForm({
   };
 
   const connectLinkedIn = async () => {
-    const { error } = await supabase.auth.linkIdentity({ provider: "linkedin_oidc" as any });
+    const { error } = await supabase.auth.linkIdentity({
+      provider: "linkedin_oidc" as any,
+      options: { redirectTo: `${window.location.origin}/coach/profile?linkedin=connected` },
+    });
     if (error) toast({ title: "Could not connect LinkedIn", description: error.message, variant: "destructive" });
   };
+
+  // After returning from LinkedIn, prefill the display name if it is still empty.
+  const [nameFromLinkedIn, setNameFromLinkedIn] = useState(false);
+  const linkedInReturnHandled = useRef(false);
+
+  useEffect(() => {
+    if (linkedInReturnHandled.current) return;
+    if (new URLSearchParams(window.location.search).get("linkedin") !== "connected") return;
+    linkedInReturnHandled.current = true;
+    (async () => {
+      const { data } = await supabase.auth.getUserIdentities();
+      const li = data?.identities?.find((i) => i.provider === "linkedin_oidc");
+      const name = (li?.identity_data as { name?: string } | undefined)?.name?.trim();
+      if (!name) return;
+      if ((p?.display_name ?? "").trim()) return;
+      set("display_name", name);
+      setNameFromLinkedIn(true);
+    })();
+  }, [p?.display_name]);
+
+
 
   const importHeadshot = async () => {
     setImporting(true);
@@ -259,6 +283,7 @@ function DirectoryForm({
 
   // ---- bio generator ----
   const [oneLiners, setOneLiners] = useState<string[]>(["", "", ""]);
+  const [linkedinAbout, setLinkedinAbout] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genNotes, setGenNotes] = useState<string[]>([]);
   const [genDisclaimer, setGenDisclaimer] = useState<string | null>(null);
@@ -271,10 +296,14 @@ function DirectoryForm({
     [form.city, form.region, form.country],
   );
 
+  const hasGenInput =
+    oneLiners.some((l) => l.trim().length > 0) || linkedinAbout.trim().length > 0;
+
   const generateBio = async () => {
     const liners = oneLiners.map((l) => l.trim()).filter(Boolean);
-    if (liners.length === 0) {
-      toast({ title: "Add a one-liner first", description: "The draft is built from what you type here.", variant: "destructive" });
+    const about = linkedinAbout.trim();
+    if (liners.length === 0 && !about) {
+      toast({ title: "Add something to work from", description: "Type at least one one-liner, or paste your LinkedIn About section.", variant: "destructive" });
       return;
     }
     setGenerating(true);
@@ -282,6 +311,7 @@ function DirectoryForm({
     const { data, error } = await supabase.functions.invoke("generate-practitioner-bio", {
       body: {
         one_liners: liners,
+        linkedin_about: about || undefined,
         display_name: form.display_name || undefined,
         headline: form.headline || undefined,
         location: location || undefined,
@@ -432,6 +462,17 @@ function DirectoryForm({
         </div>
       </div>
 
+      {nameFromLinkedIn && (
+        <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-muted/40 p-3">
+          <p className="text-xs text-muted-foreground">
+            We filled in your display name from your LinkedIn account. Edit it if you would rather show something else.
+          </p>
+          <Button variant="ghost" size="sm" onClick={() => setNameFromLinkedIn(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {field("display_name", "Display name", { requiredKey: "display_name" })}
         {field("headline", "Headline", { placeholder: "Executive coach for first-time founders" })}
@@ -455,6 +496,23 @@ function DirectoryForm({
             you type below — it does not read your LinkedIn profile.
           </p>
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="pd-linkedin-about">Paste your LinkedIn About section (optional)</Label>
+          <Textarea
+            id="pd-linkedin-about"
+            rows={6}
+            value={linkedinAbout}
+            onChange={(e) => setLinkedinAbout(e.target.value.slice(0, 5000))}
+            placeholder="Paste the text of your LinkedIn About section here"
+          />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              If you have an About section on LinkedIn, paste it here and we will use the facts in it. We cannot read
+              your profile ourselves.
+            </p>
+            <span className="shrink-0 text-xs text-muted-foreground">{linkedinAbout.length}/5000</span>
+          </div>
+        </div>
         <div className="space-y-2">
           {oneLiners.map((val, i) => (
             <Input
@@ -473,7 +531,8 @@ function DirectoryForm({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" size="sm" onClick={generateBio} disabled={generating || genBlocked}>
+          <Button variant="outline" size="sm" onClick={generateBio} disabled={generating || genBlocked || !hasGenInput}>
+
             {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
             Generate a first draft from these notes
           </Button>

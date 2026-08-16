@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ import { Plus, Trash2, Download, Upload, Loader2, Copy } from "lucide-react";
 import * as XLSX from "xlsx";
 import CoachClientTrackingSection from "@/components/super-admin/CoachClientTrackingSection";
 import CohortsSessionsSection from "@/components/super-admin/CohortsSessionsSection";
+import PractitionerDirectoryPanel from "@/components/super-admin/PractitionerDirectoryPanel";
 
 const CERT_TYPES = [
   { value: "ptp_coach", label: "PTP Certified Practitioner" },
@@ -338,6 +340,15 @@ function UploadExcelTab() {
 // ─── Main Page ───
 export default function CoachManagement() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const VALID_TABS = ["invitations", "tracking", "cohorts", "directory"];
+  const activeTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "invitations";
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -392,12 +403,14 @@ export default function CoachManagement() {
     <div className="space-y-6 p-6">
       <h1 className="text-2xl font-bold">Practitioner Management</h1>
 
-      <Tabs defaultValue="invitations">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="tracking">Client &amp; Actor Tracking</TabsTrigger>
           <TabsTrigger value="cohorts">Cohorts &amp; Sessions</TabsTrigger>
+          <TabsTrigger value="directory">Directory</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="invitations" className="space-y-6">
           {/* Section 1 — Invite */}
@@ -487,6 +500,11 @@ export default function CoachManagement() {
         <TabsContent value="cohorts">
           <CohortsSessionsSection />
         </TabsContent>
+
+        <TabsContent value="directory">
+          <PractitionerDirectoryPanel />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
