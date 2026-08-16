@@ -340,6 +340,15 @@ function UploadExcelTab() {
 // ─── Main Page ───
 export default function CoachManagement() {
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const VALID_TABS = ["invitations", "tracking", "cohorts", "directory"];
+  const activeTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "invitations";
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
 
