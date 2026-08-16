@@ -15,13 +15,15 @@ const navLinks = [
 
 export default function MarketingNav() {
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
-  const [isNarrowDesktop, setIsNarrowDesktop] = useState(typeof window !== "undefined" ? window.innerWidth < 1280 : false);
+  const [isNarrowDesktop, setIsNarrowDesktop] = useState(typeof window !== "undefined" ? window.innerWidth < 1440 : false);
+  const [showWordmark, setShowWordmark] = useState(typeof window !== "undefined" ? window.innerWidth >= 1200 : true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const onResize = () => {
       setIsMobile(window.innerWidth < 768);
-      setIsNarrowDesktop(window.innerWidth < 1280);
+      setIsNarrowDesktop(window.innerWidth < 1440);
+      setShowWordmark(window.innerWidth >= 1200);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -47,7 +49,7 @@ export default function MarketingNav() {
     >
       <Link to="/" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <img src="/brain-icon.png" alt="BrainWise Enterprises" style={{ height: 36, width: 36 }} />
-        {!isMobile && (
+        {!isMobile && showWordmark && (
           <span
             style={{
               fontFamily: "'Poppins', sans-serif",
