@@ -485,34 +485,7 @@ function PractitionerCard({ p }: { p: PublicPractitioner }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        {img ? (
-          <img
-            src={img}
-            alt={p.display_name}
-            loading="lazy"
-            style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              background: "var(--bw-cream)",
-              border: "1px solid var(--bw-cream-300)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: "'Poppins', sans-serif",
-              fontWeight: 700,
-              fontSize: 22,
-              color: "var(--bw-navy)",
-              flexShrink: 0,
-            }}
-          >
-            {initialsOf(p.display_name)}
-          </div>
-        )}
+        <PractitionerHeadshot src={img} name={p.display_name} size={72} fontSize={22} />
         <div style={{ minWidth: 0 }}>
           <h3
             style={{
