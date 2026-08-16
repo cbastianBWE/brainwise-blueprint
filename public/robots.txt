@@ -14,4 +14,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/newsletter-sitemap
+Sitemap: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/practitioner-sitemap
 LLMs: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/newsletter-llms
