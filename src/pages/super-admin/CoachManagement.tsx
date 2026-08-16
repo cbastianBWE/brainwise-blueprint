@@ -500,6 +500,11 @@ export default function CoachManagement() {
         <TabsContent value="cohorts">
           <CohortsSessionsSection />
         </TabsContent>
+
+        <TabsContent value="directory">
+          <PractitionerDirectoryPanel />
+        </TabsContent>
+
       </Tabs>
     </div>
   );
