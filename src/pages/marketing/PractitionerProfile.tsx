@@ -9,10 +9,10 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import { setPageMeta } from "@/components/marketing/newsletter/setPageMeta";
+import PractitionerHeadshot from "@/components/PractitionerHeadshot";
 import { meta, certLabel } from "@/content/marketing/practitionerDirectoryContent";
 import {
   headshotUrl,
-  initialsOf,
   locationOf,
   type PublicPractitioner,
 } from "@/lib/publicDirectory";
@@ -217,32 +217,14 @@ export default function PractitionerProfile() {
                   marginTop: 28,
                 }}
               >
-                {img ? (
-                  <img
-                    src={img}
-                    alt={p.display_name}
-                    style={{ width: 180, height: 180, borderRadius: "50%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 180,
-                      height: 180,
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.08)",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "'Poppins', sans-serif",
-                      fontWeight: 700,
-                      fontSize: 48,
-                      color: "#fff",
-                    }}
-                  >
-                    {initialsOf(p.display_name)}
-                  </div>
-                )}
+                <PractitionerHeadshot
+                  src={img}
+                  name={p.display_name}
+                  size={180}
+                  fontSize={48}
+                  tone="dark"
+                  loading="eager"
+                />
                 <div>
                   <Eyebrow>Certified Practitioner</Eyebrow>
                   <h1

@@ -21007,6 +21007,7 @@ export type Database = {
       }
       pd_generate_slug: { Args: { p_user_id: string }; Returns: string }
       pd_get_my_directory_state: { Args: never; Returns: Json }
+      pd_normalize_url: { Args: { p_url: string }; Returns: string }
       pd_profile_missing_fields: {
         Args: { p_user_id: string }
         Returns: string[]

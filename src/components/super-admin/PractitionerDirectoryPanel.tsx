@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import PractitionerHeadshot from "@/components/PractitionerHeadshot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -187,9 +188,11 @@ function PayloadPanel({ title, payload }: { title: string; payload: Record<strin
         <p className="text-sm text-muted-foreground">Not currently live.</p>
       ) : (
         <div className="space-y-2 text-sm">
-          {headshotUrl && (
-            <img src={headshotUrl} alt={`${title} headshot`} className="h-20 w-20 rounded-full object-cover border" />
-          )}
+          <PractitionerHeadshot
+            src={headshotUrl}
+            name={String(payload.display_name ?? title)}
+            size={80}
+          />
           {EDITABLE_FIELDS.map(({ key, label }) => (
             payload[key] ? (
               <div key={key}>
