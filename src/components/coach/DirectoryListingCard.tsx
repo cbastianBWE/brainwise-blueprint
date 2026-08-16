@@ -251,14 +251,12 @@ function DirectoryForm({
       const li = data?.identities?.find((i) => i.provider === "linkedin_oidc");
       const name = (li?.identity_data as { name?: string } | undefined)?.name?.trim();
       if (!name) return;
-      setForm((f) => {
-        if (f.display_name.trim()) return f;
-        setDirty(true);
-        setNameFromLinkedIn(true);
-        return { ...f, display_name: name };
-      });
+      if ((p?.display_name ?? "").trim()) return;
+      set("display_name", name);
+      setNameFromLinkedIn(true);
     })();
-  }, []);
+  }, [p?.display_name]);
+
 
 
   const importHeadshot = async () => {
