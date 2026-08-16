@@ -462,6 +462,17 @@ function DirectoryForm({
         </div>
       </div>
 
+      {nameFromLinkedIn && (
+        <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-muted/40 p-3">
+          <p className="text-xs text-muted-foreground">
+            We filled in your display name from your LinkedIn account. Edit it if you would rather show something else.
+          </p>
+          <Button variant="ghost" size="sm" onClick={() => setNameFromLinkedIn(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {field("display_name", "Display name", { requiredKey: "display_name" })}
         {field("headline", "Headline", { placeholder: "Executive coach for first-time founders" })}
@@ -485,6 +496,23 @@ function DirectoryForm({
             you type below — it does not read your LinkedIn profile.
           </p>
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="pd-linkedin-about">Paste your LinkedIn About section (optional)</Label>
+          <Textarea
+            id="pd-linkedin-about"
+            rows={6}
+            value={linkedinAbout}
+            onChange={(e) => setLinkedinAbout(e.target.value.slice(0, 5000))}
+            placeholder="Paste the text of your LinkedIn About section here"
+          />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              If you have an About section on LinkedIn, paste it here and we will use the facts in it. We cannot read
+              your profile ourselves.
+            </p>
+            <span className="shrink-0 text-xs text-muted-foreground">{linkedinAbout.length}/5000</span>
+          </div>
+        </div>
         <div className="space-y-2">
           {oneLiners.map((val, i) => (
             <Input
@@ -503,7 +531,8 @@ function DirectoryForm({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" size="sm" onClick={generateBio} disabled={generating || genBlocked}>
+          <Button variant="outline" size="sm" onClick={generateBio} disabled={generating || genBlocked || !hasGenInput}>
+
             {generating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
             Generate a first draft from these notes
           </Button>
