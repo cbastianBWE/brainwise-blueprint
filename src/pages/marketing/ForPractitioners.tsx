@@ -388,11 +388,11 @@ export default function ForPractitioners() {
           <Eyebrow>Certified Practitioners</Eyebrow>
           <h2 style={h2Style}>See our certified practitioners</h2>
           <p style={{ ...bodyStyle, fontSize: 16, marginTop: 20, maxWidth: 680 }}>
-            Our directory of certified practitioners is coming soon. Looking for an introduction to a practitioner now? Get in touch and we'll connect you.
+            Browse our directory of certified practitioners. Every listing holds a live BrainWise credential, so you can see who is practicing, where they are based, and what they focus on.
           </p>
           <div style={{ marginTop: 28 }}>
-            <MarketingButton variant="primary" size="lg" onClick={() => openModal("practitioner_directory_request")}>
-              Request an introduction
+            <MarketingButton as={Link} to="/find-a-practitioner" variant="primary" size="lg">
+              Find a practitioner
             </MarketingButton>
           </div>
         </div>
