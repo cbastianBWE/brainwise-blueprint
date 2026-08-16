@@ -25,6 +25,8 @@ import Podcast from "./pages/marketing/Podcast";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
 import ForPractitioners from "./pages/marketing/ForPractitioners";
+import FindAPractitioner from "./pages/marketing/FindAPractitioner";
+import PractitionerProfile from "./pages/marketing/PractitionerProfile";
 import ForIndividuals from "./pages/marketing/ForIndividuals";
 import ForEnterprise from "./pages/marketing/ForEnterprise";
 import Certification from "./pages/marketing/Certification";
@@ -226,6 +228,8 @@ const App = () => (
             <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
             <Route path="/products" element={<Products />} />
             <Route path="/for-practitioners" element={<ForPractitioners />} />
+            <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
+            <Route path="/find-a-practitioner/:slug" element={<PractitionerProfile />} />
             <Route path="/for-individuals" element={<ForIndividuals />} />
             <Route path="/for-enterprise" element={<ForEnterprise />} />
             <Route path="/certification" element={<Certification />} />

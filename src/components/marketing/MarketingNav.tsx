@@ -4,6 +4,7 @@ import MarketingButton from "./MarketingButton";
 
 const navLinks = [
   { label: "For Practitioners", to: "/for-practitioners" },
+  { label: "Find a Practitioner", to: "/find-a-practitioner" },
   { label: "For Individuals", to: "/for-individuals" },
   { label: "For Enterprise", to: "/for-enterprise" },
   { label: "Certification", to: "/certification" },
@@ -14,10 +15,14 @@ const navLinks = [
 
 export default function MarketingNav() {
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  const [isNarrowDesktop, setIsNarrowDesktop] = useState(typeof window !== "undefined" ? window.innerWidth < 1280 : false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 768);
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsNarrowDesktop(window.innerWidth < 1280);
+    };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -33,7 +38,7 @@ export default function MarketingNav() {
         top: 0,
         zIndex: 30,
         background: "var(--bw-navy)",
-        padding: isMobile ? "14px 20px" : "18px 48px",
+        padding: isMobile ? "14px 20px" : isNarrowDesktop ? "18px 24px" : "18px 48px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -60,7 +65,7 @@ export default function MarketingNav() {
       </Link>
 
       {!isMobile && (
-        <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: isNarrowDesktop ? 16 : 24, alignItems: "center" }}>
           {navLinks.map((l) => (
             <Link
               key={l.label}
@@ -69,8 +74,9 @@ export default function MarketingNav() {
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontWeight: 600,
-                fontSize: 13,
+                fontSize: isNarrowDesktop ? 12 : 13,
                 color: "rgba(255,255,255,0.82)",
+                whiteSpace: "nowrap",
                 transition: "color var(--dur-fast)",
               }}
             >

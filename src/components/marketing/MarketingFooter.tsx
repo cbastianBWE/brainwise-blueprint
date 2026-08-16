@@ -158,6 +158,7 @@ export default function MarketingFooter() {
           </div>
           <div>
             <div style={columnHeading}>Explore</div>
+            <Link to="/find-a-practitioner" className="bw-footer-link" style={linkStyle}>Find a Practitioner</Link>
             <Link to="/newsletter" className="bw-footer-link" style={linkStyle}>Newsletter</Link>
             <Link to="/podcast" className="bw-footer-link" style={linkStyle}>Podcast</Link>
           </div>
