@@ -231,9 +231,35 @@ function DirectoryForm({
   };
 
   const connectLinkedIn = async () => {
-    const { error } = await supabase.auth.linkIdentity({ provider: "linkedin_oidc" as any });
+    const { error } = await supabase.auth.linkIdentity({
+      provider: "linkedin_oidc" as any,
+      options: { redirectTo: `${window.location.origin}/coach/profile?linkedin=connected` },
+    });
     if (error) toast({ title: "Could not connect LinkedIn", description: error.message, variant: "destructive" });
   };
+
+  // After returning from LinkedIn, prefill the display name if it is still empty.
+  const [nameFromLinkedIn, setNameFromLinkedIn] = useState(false);
+  const linkedInReturnHandled = useRef(false);
+
+  useEffect(() => {
+    if (linkedInReturnHandled.current) return;
+    if (new URLSearchParams(window.location.search).get("linkedin") !== "connected") return;
+    linkedInReturnHandled.current = true;
+    (async () => {
+      const { data } = await supabase.auth.getUserIdentities();
+      const li = data?.identities?.find((i) => i.provider === "linkedin_oidc");
+      const name = (li?.identity_data as { name?: string } | undefined)?.name?.trim();
+      if (!name) return;
+      setForm((f) => {
+        if (f.display_name.trim()) return f;
+        setDirty(true);
+        setNameFromLinkedIn(true);
+        return { ...f, display_name: name };
+      });
+    })();
+  }, []);
+
 
   const importHeadshot = async () => {
     setImporting(true);
