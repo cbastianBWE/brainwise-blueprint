@@ -16,14 +16,14 @@ const navLinks = [
 export default function MarketingNav() {
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
   const [isNarrowDesktop, setIsNarrowDesktop] = useState(typeof window !== "undefined" ? window.innerWidth < 1440 : false);
-  const [showWordmark, setShowWordmark] = useState(typeof window !== "undefined" ? window.innerWidth >= 1200 : true);
+  const [showWordmark, setShowWordmark] = useState(typeof window !== "undefined" ? window.innerWidth >= 1440 : true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const onResize = () => {
       setIsMobile(window.innerWidth < 768);
       setIsNarrowDesktop(window.innerWidth < 1440);
-      setShowWordmark(window.innerWidth >= 1200);
+      setShowWordmark(window.innerWidth >= 1440);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
