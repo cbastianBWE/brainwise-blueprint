@@ -9,7 +9,8 @@
 // Usage:    import { opsSupabase } from "@/integrations/supabase/operations-types";
 //           const { data } = await opsSupabase.from("customers").select("*");
 
-import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Json =
   | string
@@ -1897,26 +1898,18 @@ export type OperationsDatabase = {
   }
 }
 
-const SUPABASE_URL = "https://svprhtzawnbzmumxnhsq.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2cHJodHphd25iem11bXhuaHNxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2Nzc2MDQsImV4cCI6MjA5MTI1MzYwNH0.R9WzFR4olqp1tdWa-pj-2WSL2L0Mjcf2tSA8LhOWclA";
+// Operations data access. This intentionally does NOT construct a second Supabase
+// browser client: two clients sharing one auth storage key each run their own GoTrue
+// instance and clobber each other's refresh tokens. Instead we reuse the shared
+// singleton and narrow the PostgREST schema to `operations`, while auth and storage
+// come straight from the singleton.
+const opsDb = (supabase as unknown as {
+  schema: (name: "operations") => SupabaseClient<OperationsDatabase, "operations">;
+}).schema("operations");
 
-// Dedicated client whose default schema is `operations`. It shares the auth session with the
-// primary public client via the SAME storageKey, and disables its own token refresh so only the
-// primary client drives refresh (avoids two clients dueling over the token). Because it reads the
-// same logged-in user's JWT, operations RLS applies exactly as it does for the main client.
-// `supabase-js` will emit a "Multiple GoTrueClient instances" console warning. That is expected
-// and harmless given the shared storageKey.
-export const opsSupabase = createClient<OperationsDatabase>(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY,
-  {
-    db: { schema: "operations" },
-    auth: {
-      storage: localStorage,
-      storageKey: "sb-svprhtzawnbzmumxnhsq-auth-token",
-      persistSession: true,
-      autoRefreshToken: false,
-    },
-  },
-);
+export const opsSupabase = {
+  from: opsDb.from.bind(opsDb),
+  rpc: opsDb.rpc.bind(opsDb),
+  auth: supabase.auth,
+  storage: supabase.storage,
+};
