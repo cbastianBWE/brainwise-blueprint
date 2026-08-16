@@ -283,6 +283,7 @@ function DirectoryForm({
 
   // ---- bio generator ----
   const [oneLiners, setOneLiners] = useState<string[]>(["", "", ""]);
+  const [linkedinAbout, setLinkedinAbout] = useState("");
   const [generating, setGenerating] = useState(false);
   const [genNotes, setGenNotes] = useState<string[]>([]);
   const [genDisclaimer, setGenDisclaimer] = useState<string | null>(null);
@@ -295,10 +296,14 @@ function DirectoryForm({
     [form.city, form.region, form.country],
   );
 
+  const hasGenInput =
+    oneLiners.some((l) => l.trim().length > 0) || linkedinAbout.trim().length > 0;
+
   const generateBio = async () => {
     const liners = oneLiners.map((l) => l.trim()).filter(Boolean);
-    if (liners.length === 0) {
-      toast({ title: "Add a one-liner first", description: "The draft is built from what you type here.", variant: "destructive" });
+    const about = linkedinAbout.trim();
+    if (liners.length === 0 && !about) {
+      toast({ title: "Add something to work from", description: "Type at least one one-liner, or paste your LinkedIn About section.", variant: "destructive" });
       return;
     }
     setGenerating(true);
@@ -306,6 +311,7 @@ function DirectoryForm({
     const { data, error } = await supabase.functions.invoke("generate-practitioner-bio", {
       body: {
         one_liners: liners,
+        linkedin_about: about || undefined,
         display_name: form.display_name || undefined,
         headline: form.headline || undefined,
         location: location || undefined,
