@@ -187,9 +187,11 @@ function PayloadPanel({ title, payload }: { title: string; payload: Record<strin
         <p className="text-sm text-muted-foreground">Not currently live.</p>
       ) : (
         <div className="space-y-2 text-sm">
-          {headshotUrl && (
-            <img src={headshotUrl} alt={`${title} headshot`} className="h-20 w-20 rounded-full object-cover border" />
-          )}
+          <PractitionerHeadshot
+            src={headshotUrl}
+            name={String(payload.display_name ?? title)}
+            size={80}
+          />
           {EDITABLE_FIELDS.map(({ key, label }) => (
             payload[key] ? (
               <div key={key}>
