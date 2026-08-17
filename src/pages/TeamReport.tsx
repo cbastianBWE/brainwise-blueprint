@@ -1423,7 +1423,7 @@ export default function TeamReport() {
                           <td style={tdStyle} data-label="Driver"><b style={{ color: NAVY, fontSize: 16 }}>{driverName}</b></td>
                           <td style={tdStyle} data-label="Risk"><HighlightableText blockKey={`leader:risk:${i}`} text={r.risk_to_work} /></td>
                           <td style={tdStyle} data-label="The move"><HighlightableText blockKey={`leader:move:${i}`} text={r.the_move} /></td>
-                          <td style={{ ...tdStyle, color: GRAY }} data-label="Owner">{r.potential_owner}</td>
+                          <td style={{ ...tdStyle, color: GRAY }} data-label="Owner"><HighlightableText blockKey={`leader:owner:${i}`} text={r.potential_owner} /></td>
                         </tr>
                       );
                     })}
@@ -1539,6 +1539,23 @@ export default function TeamReport() {
 
       {/* Tooltip */}
       <TipLayer tip={tip} />
+      {/* inside the highlight provider: the modal reads its context */}
+      {hasLeadership && (
+        <LeadershipModal
+          open={leadershipOpen}
+          onOpenChange={setLeadershipOpen}
+          items={leadership!}
+          renderFacets={(facets) => (
+            <TeamChipRow
+              facets={facets}
+              lookupFacet={lookupFacetByName}
+              inOverlay
+              onCloseOverlay={() => setLeadershipOpen(false)}
+            />
+          )}
+          blockKeyPrefix="leadership"
+        />
+      )}
       </TeamReportHighlightProvider>
       <ArchiveReportDialog
         open={archiveOpen}
@@ -1557,21 +1574,6 @@ export default function TeamReport() {
         leadershipAvailable={hasLeadership}
         onExportTeam={handleExportTeam}
       />
-      {hasLeadership && (
-        <LeadershipModal
-          open={leadershipOpen}
-          onOpenChange={setLeadershipOpen}
-          items={leadership!}
-          renderFacets={(facets) => (
-            <TeamChipRow
-              facets={facets}
-              lookupFacet={lookupFacetByName}
-              inOverlay
-              onCloseOverlay={() => setLeadershipOpen(false)}
-            />
-          )}
-        />
-      )}
       {teamProfileId && (
         <AddReportCommitmentModal
           open={commitOpen}
