@@ -13,7 +13,10 @@ interface Props {
   loading?: "lazy" | "eager";
   /** Palette for the initials fallback. */
   tone?: "light" | "dark";
+  /** Crop anchor. Defaults to the face-safe "center 20%". */
+  objectPosition?: string;
   style?: CSSProperties;
+
 }
 
 /**
