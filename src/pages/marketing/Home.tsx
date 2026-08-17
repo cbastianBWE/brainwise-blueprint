@@ -7,6 +7,7 @@ import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
 import BriefingModal from "@/components/marketing/BriefingModal";
+import TestimonialSection from "@/components/marketing/TestimonialSection";
 
 const stats = [
   { value: "89", label: "Facets the PTP measures across five dimensions", citation: "", color: "var(--bw-orange)" },
@@ -343,6 +344,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <TestimonialSection placement="home" background="white" />
+
+
 
       {/* CTA */}
       <section style={{ background: "var(--bw-navy)", padding: `${isMobile ? 72 : 96}px ${padX}px`, position: "relative", overflow: "hidden" }}>
