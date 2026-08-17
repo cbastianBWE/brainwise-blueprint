@@ -118,6 +118,7 @@ const superAdminNav: NavItem[] = [
   { title: "Version Management", url: "/super-admin/versions", icon: GitBranch },
   { title: "Content Authoring", url: "/super-admin/content-authoring", icon: Library },
   { title: "Newsletter", url: "/super-admin/newsletter", icon: Newspaper },
+  { title: "Marketing", url: "/super-admin/marketing", icon: Megaphone },
   
   { title: "My Learning", url: "/my-learning", icon: GraduationCap },
   { title: "Resources", url: "/resources", icon: BookOpen },

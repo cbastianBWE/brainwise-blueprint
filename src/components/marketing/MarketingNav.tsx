@@ -10,6 +10,7 @@ const navLinks = [
   { label: "Certification", to: "/certification" },
   { label: "Podcast", to: "/podcast" },
   { label: "Newsletter", to: "/newsletter" },
+  { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
 ];
 

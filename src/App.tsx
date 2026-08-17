@@ -22,6 +22,7 @@ import InternationalCompliance from "./pages/marketing/InternationalCompliance";
 import Services from "./pages/marketing/Services";
 import OurApproach from "./pages/marketing/OurApproach";
 import Podcast from "./pages/marketing/Podcast";
+import About from "./pages/marketing/About";
 import Contact from "./pages/marketing/Contact";
 import Products from "./pages/marketing/Products";
 import ForPractitioners from "./pages/marketing/ForPractitioners";
@@ -117,6 +118,7 @@ import LessonBlocksEditor from "./pages/super-admin/LessonBlocksEditor";
 import LessonBuilderList from "./pages/super-admin/LessonBuilderList";
 import QuizQuestionsEditor from "./pages/super-admin/QuizQuestionsEditor";
 import AdminResourceAuthoring from "./pages/super-admin/AdminResourceAuthoring";
+import AdminMarketing from "./pages/super-admin/AdminMarketing";
 import AdminNewsletter from "./pages/super-admin/AdminNewsletter";
 import AdminNewsletterArticle from "./pages/super-admin/AdminNewsletterArticle";
 import CompCouponsManagement from "./pages/super-admin/CompCouponsManagement";
@@ -226,6 +228,7 @@ const App = () => (
             <Route path="/newsletter/confirm/:token" element={<NewsletterConfirm />} />
             <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribe />} />
             <Route path="/newsletter/:slug" element={<NewsletterArticle />} />
+            <Route path="/about" element={<About />} />
             <Route path="/products" element={<Products />} />
             <Route path="/for-practitioners" element={<ForPractitioners />} />
             <Route path="/find-a-practitioner" element={<FindAPractitioner />} />
@@ -335,6 +338,7 @@ const App = () => (
              <Route path="/super-admin/resource-engagement" element={<Navigate to="/super-admin/health?tab=resource-engagement" replace />} />
               <Route path="/super-admin/learning-admin" element={<Navigate to="/super-admin/members" replace />} />
               <Route path="/super-admin/resources" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminResourceAuthoring /></SuperAdminSessionProvider></RoleGuard>} />
+              <Route path="/super-admin/marketing" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminMarketing /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/newsletter" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminNewsletter /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/newsletter/:articleId" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><AdminNewsletterArticle /></SuperAdminSessionProvider></RoleGuard>} />
               <Route path="/super-admin/coupons" element={<RoleGuard allowedRoles={["brainwise_super_admin"]}><SuperAdminSessionProvider><CompCouponsManagement /></SuperAdminSessionProvider></RoleGuard>} />
