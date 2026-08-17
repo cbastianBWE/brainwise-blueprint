@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import "@/styles/marketing-tokens.css";
 import MarketingNav from "@/components/marketing/MarketingNav";
 import MarketingFooter from "@/components/marketing/MarketingFooter";
+import TestimonialSection from "@/components/marketing/TestimonialSection";
 import MarketingButton from "@/components/marketing/MarketingButton";
 import Eyebrow from "@/components/marketing/Eyebrow";
 import DotArc from "@/components/marketing/DotArc";
@@ -444,6 +445,8 @@ export default function ForPractitioners() {
           </div>
         </div>
       </section>
+
+      <TestimonialSection placement="for_practitioners" heading="What people say" background="cream" />
 
       <MarketingFooter />
 

@@ -13,7 +13,10 @@ interface Props {
   loading?: "lazy" | "eager";
   /** Palette for the initials fallback. */
   tone?: "light" | "dark";
+  /** Crop anchor. Defaults to the face-safe "center 20%". */
+  objectPosition?: string;
   style?: CSSProperties;
+
 }
 
 /**
@@ -29,6 +32,7 @@ export default function PractitionerHeadshot({
   fontSize,
   loading = "lazy",
   tone = "light",
+  objectPosition = "center 20%",
   style,
 }: Props) {
   const [errored, setErrored] = useState(false);
@@ -87,7 +91,7 @@ export default function PractitionerHeadshot({
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          objectPosition: "center 20%",
+          objectPosition,
           display: "block",
         }}
       />
