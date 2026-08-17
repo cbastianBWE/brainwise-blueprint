@@ -261,7 +261,7 @@ export default function About() {
               </div>
             ) : (
               team.map((m, i) => (
-                <FounderCard key={m.slug} m={m} flip={!isTablet && i % 2 === 1} isMobile={isMobile} isTablet={isTablet} />
+                <FounderCard key={m.slug} m={m} flip={!isTablet && i % 2 === 1} isMobile={isMobile} />
               ))
             )}
           </div>
@@ -323,12 +323,10 @@ function FounderCard({
   m,
   flip,
   isMobile,
-  isTablet,
 }: {
   m: TeamMember;
   flip: boolean;
   isMobile: boolean;
-  isTablet: boolean;
 }) {
   const img = publicUrl(m.headshot_bucket, m.headshot_path);
   const paras = paragraphsOf(m.bio);
@@ -398,7 +396,7 @@ function FounderCard({
             {m.role_title}
           </p>
         )}
-        {m.headline && (
+        {m.headline && m.headline.trim() !== (m.role_title ?? "").trim() && (
           <p
             style={{
               fontFamily: "'Montserrat', sans-serif",
