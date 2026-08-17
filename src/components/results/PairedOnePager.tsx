@@ -29,6 +29,7 @@ import {
   type FacetEntry,
 } from "@/components/results/pairedFacetChip";
 import { generatePairedOnePagerPdf } from "@/lib/generatePairedOnePagerPdf";
+import { HighlightableText } from "@/components/results/ReportHighlight";
 
 const COLOR_A = NAVY;
 const COLOR_B = MUSTARD;
@@ -223,7 +224,9 @@ export default function PairedOnePager({
             </div>
             {/* first person, quoted speech — no name substitution here by design */}
             <div style={{ fontSize: 15, lineHeight: 1.5, color: NAVY }}>
-              {`“${text}”`}
+              {"\u201C"}
+              <HighlightableText blockKey={`one_pager:voice:${who}:${key}`} text={text} />
+              {"\u201D"}
             </div>
           </div>
         );
@@ -292,7 +295,7 @@ export default function PairedOnePager({
                   marginTop: 12,
                 }}
               >
-                {nm(data.opening)}
+                <HighlightableText blockKey="one_pager:opening" text={nm(data.opening)} />
               </div>
             )}
 
@@ -315,7 +318,9 @@ export default function PairedOnePager({
                     <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 14, color: NAVY }}>
                       {label}
                     </div>
-                    <div style={{ fontSize: 15, lineHeight: 1.55 }}>{nm(text)}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.55 }}>
+                      <HighlightableText blockKey={`one_pager:shared:${key}`} text={nm(text)} />
+                    </div>
                   </div>
                 );
               })}
@@ -334,9 +339,11 @@ export default function PairedOnePager({
                   {watch.slice(0, 2).map((w, i) => (
                     <div key={i} style={{ borderLeft: `3px solid ${protectiveFirst && i === 0 ? PURPLE : AMBER}`, paddingLeft: 12 }}>
                       <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: protectiveFirst && i === 0 ? PURPLE : MUSTARD }}>
-                        {nm(w.point ?? "")}
+                        <HighlightableText blockKey={`one_pager:watch:${i}:point`} text={nm(w.point ?? "")} />
                       </div>
-                      <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 3 }}>{nm(w.body ?? "")}</div>
+                      <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 3 }}>
+                        <HighlightableText blockKey={`one_pager:watch:${i}:body`} text={nm(w.body ?? "")} />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -401,7 +408,9 @@ export default function PairedOnePager({
                     >
                       {i + 1}
                     </span>
-                    <span style={{ fontSize: 15, lineHeight: 1.55 }}>{nm(t)}</span>
+                    <span style={{ fontSize: 15, lineHeight: 1.55 }}>
+                      <HighlightableText blockKey={`one_pager:talk_about:${i}`} text={nm(t)} />
+                    </span>
                   </div>
                 ))}
               </div>
@@ -419,10 +428,15 @@ export default function PairedOnePager({
                         {i + 1}
                       </span>
                       <span style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: NAVY }}>
-                        {nm(p.heading ?? p.section ?? "")}
+                        <HighlightableText
+                          blockKey={`one_pager:preview:${i}:heading`}
+                          text={nm(p.heading ?? p.section ?? "")}
+                        />
                       </span>
                     </div>
-                    <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 4 }}>{nm(p.text ?? "")}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 4 }}>
+                      <HighlightableText blockKey={`one_pager:preview:${i}:text`} text={nm(p.text ?? "")} />
+                    </div>
                     {Array.isArray(p.facets) && p.facets.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 7 }}>
                         {p.facets.map((f, j) => (

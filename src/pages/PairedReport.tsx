@@ -1592,6 +1592,16 @@ export default function PairedReport() {
 
       {/* tooltip */}
       <TipLayer tip={tip} />
+      {/* inside the highlight provider: the modal reads its context */}
+      {hasLeaderActions && (
+        <LeadershipModal
+          open={leaderActionsOpen}
+          onOpenChange={setLeaderActionsOpen}
+          items={leaderActions!}
+          transform={nm}
+          blockKeyPrefix="leader_actions"
+        />
+      )}
       </PairedReportHighlightProvider>
       <ArchiveReportDialog
         open={archiveOpen}
@@ -1611,14 +1621,6 @@ export default function PairedReport() {
         leaderActionsAvailable={hasLeaderActions}
         onExportPaired={handleExportPaired}
       />
-      {hasLeaderActions && (
-        <LeadershipModal
-          open={leaderActionsOpen}
-          onOpenChange={setLeaderActionsOpen}
-          items={leaderActions!}
-          transform={nm}
-        />
-      )}
       {pairedProfileId && (
         <AddReportCommitmentModal
           open={commitOpen}

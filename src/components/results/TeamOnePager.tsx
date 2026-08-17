@@ -34,6 +34,7 @@ import {
   type LeaderOnePagerSection,
   type TeamOnePagerCard,
 } from "@/lib/generateTeamOnePagerPdf";
+import { HighlightableText } from "@/components/results/ReportHighlight";
 
 export type { TeamOnePagerSection, LeaderOnePagerSection };
 
@@ -164,7 +165,16 @@ export default function TeamOnePager({
     );
   };
 
-  const Card = ({ card, accent }: { card: TeamOnePagerCard; accent: string }) => (
+  const Card = ({
+    card,
+    accent,
+    blockKey,
+  }: {
+    card: TeamOnePagerCard;
+    accent: string;
+    /** prefix only — this component appends :point and :body */
+    blockKey: string;
+  }) => (
     <div
       style={{
         background: CARD_BG,
@@ -177,17 +187,28 @@ export default function TeamOnePager({
     >
       {text(card.point) && (
         <div style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: NAVY }}>
-          {card.point}
+          <HighlightableText blockKey={`${blockKey}:point`} text={card.point ?? ""} />
         </div>
       )}
       {text(card.body) && (
-        <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 3 }}>{card.body}</div>
+        <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 3 }}>
+          <HighlightableText blockKey={`${blockKey}:body`} text={card.body ?? ""} />
+        </div>
       )}
       <Chips list={card.facets} />
     </div>
   );
 
-  const Numbered = ({ items, cols }: { items: string[]; cols: 1 | 2 }) => (
+  const Numbered = ({
+    items,
+    cols,
+    blockKey,
+  }: {
+    items: string[];
+    cols: 1 | 2;
+    /** prefix only — this component appends :${i} */
+    blockKey: string;
+  }) => (
     <div className={`grid gap-3 ${cols === 2 ? "md:grid-cols-2" : ""}`}>
       {items.map((t, i) => (
         <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -209,7 +230,9 @@ export default function TeamOnePager({
           >
             {i + 1}
           </span>
-          <span style={{ fontSize: 15, lineHeight: 1.55 }}>{t}</span>
+          <span style={{ fontSize: 15, lineHeight: 1.55 }}>
+            <HighlightableText blockKey={`${blockKey}:${i}`} text={t} />
+          </span>
         </div>
       ))}
     </div>
@@ -301,7 +324,7 @@ export default function TeamOnePager({
                     marginTop: 12,
                   }}
                 >
-                  {team.opening}
+                  <HighlightableText blockKey="one_pager_team:opening" text={text(team.opening)} />
                 </div>
               )}
 
@@ -324,7 +347,12 @@ export default function TeamOnePager({
                           {row.label}
                         </div>
                         <div>
-                          <div style={{ fontSize: 15, lineHeight: 1.55 }}>{row.line?.text}</div>
+                          <div style={{ fontSize: 15, lineHeight: 1.55 }}>
+                            <HighlightableText
+                              blockKey={`one_pager_team:shared:${row.key}`}
+                              text={text(row.line?.text)}
+                            />
+                          </div>
                           <Chips list={row.line?.facets} />
                         </div>
                       </div>
@@ -338,7 +366,7 @@ export default function TeamOnePager({
                   <Head>Where you divide</Head>
                   <div className="grid gap-4 md:grid-cols-2">
                     {split.map((c, i) => (
-                      <Card key={i} card={c} accent={MUSTARD} />
+                      <Card key={i} card={c} accent={MUSTARD} blockKey={`one_pager_team:split:${i}`} />
                     ))}
                   </div>
                 </>
@@ -349,7 +377,7 @@ export default function TeamOnePager({
                   <Head>Keep an eye on</Head>
                   <div className="grid gap-4 md:grid-cols-2">
                     {watch.map((c, i) => (
-                      <Card key={i} card={c} accent={AMBER} />
+                      <Card key={i} card={c} accent={AMBER} blockKey={`one_pager_team:watch:${i}`} />
                     ))}
                   </div>
                 </>
@@ -358,7 +386,7 @@ export default function TeamOnePager({
               {talkAbout.length > 0 && (
                 <>
                   <Head>Talk about this together</Head>
-                  <Numbered items={talkAbout} cols={2} />
+                  <Numbered items={talkAbout} cols={2} blockKey="one_pager_team:talk_about" />
                 </>
               )}
 
@@ -377,10 +405,18 @@ export default function TeamOnePager({
                             {i + 1}
                           </span>
                           <span style={{ fontFamily: POPPINS, fontWeight: 700, fontSize: 15, color: NAVY }}>
-                            {text(p.heading) || text(p.section)}
+                            <HighlightableText
+                              blockKey={`one_pager_team:preview:${i}:heading`}
+                              text={text(p.heading) || text(p.section)}
+                            />
                           </span>
                         </div>
-                        <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 4 }}>{text(p.text)}</div>
+                        <div style={{ fontSize: 15, lineHeight: 1.55, marginTop: 4 }}>
+                          <HighlightableText
+                            blockKey={`one_pager_team:preview:${i}:text`}
+                            text={text(p.text)}
+                          />
+                        </div>
                         <Chips list={p.facets} />
                       </div>
                     ))}
@@ -414,7 +450,7 @@ export default function TeamOnePager({
                     marginTop: 12,
                   }}
                 >
-                  {leader.opening}
+                  <HighlightableText blockKey="one_pager_leader:opening" text={text(leader.opening)} />
                 </div>
               )}
 
@@ -423,7 +459,7 @@ export default function TeamOnePager({
                   <Head>Lean on this</Head>
                   <div className="grid gap-4 md:grid-cols-2">
                     {leanOn.map((c, i) => (
-                      <Card key={i} card={c} accent={TEAL} />
+                      <Card key={i} card={c} accent={TEAL} blockKey={`one_pager_leader:lean_on:${i}`} />
                     ))}
                   </div>
                 </>
@@ -434,7 +470,7 @@ export default function TeamOnePager({
                   <Head>What will bite you</Head>
                   <div className="grid gap-4 md:grid-cols-2">
                     {willBite.map((c, i) => (
-                      <Card key={i} card={c} accent={MUSTARD} />
+                      <Card key={i} card={c} accent={MUSTARD} blockKey={`one_pager_leader:will_bite:${i}`} />
                     ))}
                   </div>
                 </>
@@ -446,6 +482,7 @@ export default function TeamOnePager({
                   <Card
                     card={{ point: "", body: text(leader.fault_lines?.text), facets: leader.fault_lines?.facets }}
                     accent={PURPLE}
+                    blockKey="one_pager_leader:fault_lines"
                   />
                 </>
               )}
@@ -455,7 +492,7 @@ export default function TeamOnePager({
                   <Head>Your first moves</Head>
                   <div className="grid gap-4 md:grid-cols-2">
                     {firstMoves.map((c, i) => (
-                      <Card key={i} card={c} accent={NAVY} />
+                      <Card key={i} card={c} accent={NAVY} blockKey={`one_pager_leader:first_moves:${i}`} />
                     ))}
                   </div>
                 </>
@@ -464,7 +501,7 @@ export default function TeamOnePager({
               {watchFor.length > 0 && (
                 <>
                   <Head>Watch for these in the room</Head>
-                  <Numbered items={watchFor} cols={1} />
+                  <Numbered items={watchFor} cols={1} blockKey="one_pager_leader:watch_for" />
                 </>
               )}
 
