@@ -1385,6 +1385,63 @@ export type Database = {
         }
         Relationships: []
       }
+      bw_house_style_terms: {
+        Row: {
+          created_at: string
+          id: number
+          is_active: boolean
+          note: string | null
+          pattern: string
+          replacement: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          note?: string | null
+          pattern: string
+          replacement: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          note?: string | null
+          pattern?: string
+          replacement?: string
+        }
+        Relationships: []
+      }
+      bw_prompt_ab_snapshot: {
+        Row: {
+          arm: string
+          id: number
+          owner_id: string
+          payload: Json | null
+          section_type: string
+          source_table: string
+          taken_at: string
+        }
+        Insert: {
+          arm: string
+          id?: number
+          owner_id: string
+          payload?: Json | null
+          section_type: string
+          source_table: string
+          taken_at?: string
+        }
+        Update: {
+          arm?: string
+          id?: number
+          owner_id?: string
+          payload?: Json | null
+          section_type?: string
+          source_table?: string
+          taken_at?: string
+        }
+        Relationships: []
+      }
       cafes_ptp_mapping: {
         Row: {
           coaching_questions: Json
@@ -6596,6 +6653,33 @@ export type Database = {
         }
         Relationships: []
       }
+      facet_interpretations_pre_run_on_regen_backup: {
+        Row: {
+          assessment_result_id: string | null
+          backed_up_at: string | null
+          facet_data: Json | null
+          generated_at: string | null
+          id: string | null
+          section_type: string | null
+        }
+        Insert: {
+          assessment_result_id?: string | null
+          backed_up_at?: string | null
+          facet_data?: Json | null
+          generated_at?: string | null
+          id?: string | null
+          section_type?: string | null
+        }
+        Update: {
+          assessment_result_id?: string | null
+          backed_up_at?: string | null
+          facet_data?: Json | null
+          generated_at?: string | null
+          id?: string | null
+          section_type?: string | null
+        }
+        Relationships: []
+      }
       feedback_templates: {
         Row: {
           created_at: string
@@ -7787,6 +7871,114 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_team_members: {
+        Row: {
+          bio: string | null
+          booking_url: string | null
+          created_at: string
+          credentials: string | null
+          display_name: string
+          headline: string | null
+          headshot_bucket: string
+          headshot_path: string | null
+          id: string
+          is_published: boolean
+          linkedin_url: string | null
+          role_title: string | null
+          short_bio: string | null
+          slug: string
+          sort_order: number
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          booking_url?: string | null
+          created_at?: string
+          credentials?: string | null
+          display_name: string
+          headline?: string | null
+          headshot_bucket?: string
+          headshot_path?: string | null
+          id?: string
+          is_published?: boolean
+          linkedin_url?: string | null
+          role_title?: string | null
+          short_bio?: string | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          booking_url?: string | null
+          created_at?: string
+          credentials?: string | null
+          display_name?: string
+          headline?: string | null
+          headshot_bucket?: string
+          headshot_path?: string | null
+          id?: string
+          is_published?: boolean
+          linkedin_url?: string | null
+          role_title?: string | null
+          short_bio?: string | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      marketing_testimonials: {
+        Row: {
+          attribution_name: string
+          attribution_org: string | null
+          attribution_title: string | null
+          created_at: string
+          headshot_bucket: string
+          headshot_path: string | null
+          id: string
+          is_featured: boolean
+          is_published: boolean
+          placements: string[]
+          quote: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          attribution_name: string
+          attribution_org?: string | null
+          attribution_title?: string | null
+          created_at?: string
+          headshot_bucket?: string
+          headshot_path?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          placements?: string[]
+          quote: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          attribution_name?: string
+          attribution_org?: string | null
+          attribution_title?: string | null
+          created_at?: string
+          headshot_bucket?: string
+          headshot_path?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          placements?: string[]
+          quote?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       member_feature_overrides: {
         Row: {
@@ -18154,6 +18346,14 @@ export type Database = {
         Args: { p_token: string }
         Returns: boolean
       }
+      bw_fire_paired_narrative: {
+        Args: { p_profile: string; p_section: string }
+        Returns: number
+      }
+      bw_fire_ptp_section: {
+        Args: { p_context: string; p_result: string; p_section: string }
+        Returns: number
+      }
       bw_fire_team_narrative: {
         Args: { p_profile: string; p_section: string }
         Returns: number
@@ -18264,6 +18464,12 @@ export type Database = {
           user_id: string
         }[]
       }
+      bw_match_case: {
+        Args: { p_original: string; p_replacement: string }
+        Returns: string
+      }
+      bw_normalize_house_style: { Args: { p_text: string }; Returns: string }
+      bw_normalize_house_style_jsonb: { Args: { p: Json }; Returns: Json }
       bw_paired_profile_subjects: {
         Args: { p_profile: string }
         Returns: {
@@ -19812,6 +20018,38 @@ export type Database = {
         Returns: Json
       }
       mint_trusted_device: { Args: { p_label?: string }; Returns: string }
+      mk_about_team: {
+        Args: never
+        Returns: {
+          bio: string
+          booking_url: string
+          credentials: string
+          display_name: string
+          headline: string
+          headshot_bucket: string
+          headshot_path: string
+          linkedin_url: string
+          role_title: string
+          short_bio: string
+          slug: string
+          sort_order: number
+          website_url: string
+        }[]
+      }
+      mk_testimonials: {
+        Args: { p_featured_only?: boolean; p_placement?: string }
+        Returns: {
+          attribution_name: string
+          attribution_org: string
+          attribution_title: string
+          headshot_bucket: string
+          headshot_path: string
+          id: string
+          is_featured: boolean
+          quote: string
+          sort_order: number
+        }[]
+      }
       module_entitlement_admin_list: {
         Args: { p_org_id: string; p_principal_type: string; p_user_id: string }
         Returns: Json
