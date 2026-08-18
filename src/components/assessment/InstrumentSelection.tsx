@@ -711,6 +711,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 );
               }
 
+              // The results-based badge wins if both apply; the practitioner
+              // suggestion is then carried by the button label alone.
+              const showPractitionerBadge = usedPreferred && !isRecommended;
+
               return (
                 <Card
                   key={inst.instrument_id}
@@ -723,7 +727,14 @@ export default function InstrumentSelection({ onSelect }: Props) {
                       </Badge>
                     </div>
                   )}
-                  <CardHeader className={isRecommended ? "pt-8" : ""}>
+                  {showPractitionerBadge && (
+                    <div className="absolute -top-3 left-4">
+                      <Badge className="bg-primary text-primary-foreground">
+                        Your practitioner suggests starting here
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className={isRecommended || showPractitionerBadge ? "pt-8" : ""}>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{inst.short_name}</CardTitle>
                       {inst.tier === "premium" && (
