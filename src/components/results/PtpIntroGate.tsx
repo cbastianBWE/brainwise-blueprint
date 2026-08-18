@@ -409,39 +409,76 @@ export default function PtpIntroGate({
   const current = videos[Math.min(idx, videos.length - 1)];
   const isLast = idx >= videos.length - 1;
   const thumbUrl = thumbsQuery.data?.get(current.resource_id);
+  const showingOffer = phase === "offer";
 
   return (
-    <Dialog open={open} onOpenChange={() => { /* non-dismissable */ }}>
-      <DialogContent
-        className="max-w-2xl [&>button.absolute]:hidden"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>{current.card_title}</DialogTitle>
-          <DialogDescription className="sr-only">
-            Introductory video {idx + 1} of {videos.length}
-          </DialogDescription>
-        </DialogHeader>
-        <VideoStep
-          key={current.gate_video_id}
-          video={current}
-          thumbUrl={thumbUrl}
-          isLast={isLast}
-          onDone={advance}
-        />
-        <div className="flex justify-center gap-1 pt-2">
-          {videos.map((_, i) => (
-            <span
-              key={i}
-              className={`h-1.5 w-6 rounded-full ${
-                i < idx ? "bg-[var(--bw-forest)]" : i === idx ? "bg-[var(--bw-orange)]" : "bg-muted"
-              }`}
+    <>
+      <Dialog open={open} onOpenChange={() => { /* non-dismissable */ }}>
+        <DialogContent
+          className="max-w-2xl [&>button.absolute]:hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {showingOffer ? "Would you like a guided walkthrough?" : current.card_title}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {showingOffer
+                ? "Optional guided walkthrough of your report"
+                : `Introductory video ${idx + 1} of ${videos.length}`}
+            </DialogDescription>
+          </DialogHeader>
+          {showingOffer && assessmentResultId ? (
+            <WalkthroughOfferStep
+              assessmentResultId={assessmentResultId}
+              onAccept={() => {
+                setOpen(false);
+                setWalkthroughOpen(true);
+              }}
+              onDecline={() => setOpen(false)}
             />
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <VideoStep
+              key={current.gate_video_id}
+              video={current}
+              thumbUrl={thumbUrl}
+              isLast={isLast}
+              onDone={advance}
+            />
+          )}
+          <div className="flex justify-center gap-1 pt-2">
+            {videos.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-6 rounded-full ${
+                  showingOffer || i < idx
+                    ? "bg-[var(--bw-forest)]"
+                    : i === idx
+                    ? "bg-[var(--bw-orange)]"
+                    : "bg-muted"
+                }`}
+              />
+            ))}
+            {assessmentResultId && (
+              <span
+                className={`h-1.5 w-6 rounded-full ${
+                  showingOffer ? "bg-[var(--bw-orange)]" : "bg-muted"
+                }`}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {walkthroughOpen && assessmentResultId && (
+        <PtpWalkthroughPanel
+          assessmentResultId={assessmentResultId}
+          steps={offerSteps}
+          open={walkthroughOpen}
+          onOpenChange={setWalkthroughOpen}
+        />
+      )}
+    </>
   );
 }
