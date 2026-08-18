@@ -109,18 +109,14 @@ export function focusReportSection(reportSection: string | null | undefined) {
 }
 
 
-/** step id -> report_section token string, straight from the active definition. */
+/** step id -> report_section token string, from the active definition. */
 export async function fetchStepSections(): Promise<Record<string, string | null>> {
-  const { data, error } = await supabase.rpc("bw_walkthrough_active_definition" as never);
+  const { data, error } = await supabase.rpc("bw_walkthrough_step_sections" as never);
   if (error) {
-    console.error("[ptp-walkthrough] bw_walkthrough_active_definition failed", error);
+    console.error("[ptp-walkthrough] bw_walkthrough_step_sections failed", error);
     return {};
   }
-  const row = Array.isArray(data) ? (data as any[])[0] : (data as any);
-  const steps = (row?.steps ?? []) as any[];
-  const out: Record<string, string | null> = {};
-  for (const s of steps) out[s.id] = s.report_section ?? null;
-  return out;
+  return (data ?? {}) as Record<string, string | null>;
 }
 
 /**
