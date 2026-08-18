@@ -13,6 +13,7 @@ import {
   Presentation,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { dictationHint } from "@/components/coaching/MultimodalField";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
