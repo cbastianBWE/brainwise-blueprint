@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
+import PtpWalkthroughPanel from "./PtpWalkthroughPanel";
+import {
+  readWalkthroughError,
+  walkthroughErrorCopy,
+  type WalkthroughOffer,
+} from "./ptpWalkthroughShared";
 
 interface GateVideo {
   gate_video_id: string;
@@ -255,7 +261,69 @@ function VideoStep({
   );
 }
 
-export default function PtpIntroGate() {
+function WalkthroughOfferStep({
+  assessmentResultId,
+  onAccept,
+  onDecline,
+}: {
+  assessmentResultId: string;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const accept = async () => {
+    setBusy(true);
+    setNotice(null);
+    // The panel itself starts the run; the gate only hands over.
+    setBusy(false);
+    onAccept();
+  };
+
+  const decline = async () => {
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("ptp-walkthrough", {
+      body: { action: "decline", assessment_result_id: assessmentResultId },
+    });
+    const err = readWalkthroughError(error, data);
+    setBusy(false);
+    if (err) setNotice(walkthroughErrorCopy(err));
+    onDecline();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Before you read your report, you can have an optional guided walkthrough of it. It
+          takes about twenty minutes, it moves at your pace, and you can stop at any point.
+          Your report is yours either way, and you can start the walkthrough later from the
+          top of the report.
+        </p>
+      </div>
+      {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <Button variant="outline" onClick={decline} disabled={busy}>
+          No thanks, take me to my report
+        </Button>
+        <Button
+          onClick={accept}
+          disabled={busy}
+          className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+        >
+          Yes, walk me through it
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default function PtpIntroGate({
+  assessmentResultId,
+}: {
+  assessmentResultId?: string;
+}) {
   const statusQuery = useQuery({
     queryKey: ["ptp-intro-gate-status"],
     staleTime: Infinity,
@@ -275,6 +343,10 @@ export default function PtpIntroGate() {
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(0);
   const initedRef = useRef(false);
+  // Terminal offer step, shown after the last video instead of just closing.
+  const [phase, setPhase] = useState<"videos" | "offer">("videos");
+  const [walkthroughOpen, setWalkthroughOpen] = useState(false);
+  const [offerSteps, setOfferSteps] = useState<WalkthroughOffer["steps"]>([]);
 
   useEffect(() => {
     if (initedRef.current) return;
@@ -297,12 +369,26 @@ export default function PtpIntroGate() {
     queryFn: () => resolveTierThumbnailUrls("resource", resourceIds),
   });
 
+  const maybeShowOffer = async (): Promise<boolean> => {
+    if (!assessmentResultId) return false;
+    const { data, error } = await supabase.functions.invoke("ptp-walkthrough", {
+      body: { action: "offer", assessment_result_id: assessmentResultId },
+    });
+    if (readWalkthroughError(error, data)) return false;
+    const o = data as WalkthroughOffer;
+    if (!o?.offer && !o?.resume_session_id) return false;
+    setOfferSteps(o.steps ?? []);
+    setPhase("offer");
+    return true;
+  };
+
   const advance = async () => {
     if (idx >= videos.length - 1) {
       try {
         const { data, error } = await supabase.rpc("ptp_intro_gate_resolve" as never);
         if (error) throw error;
         if ((data as any)?.resolved) {
+          if (await maybeShowOffer()) return;
           setOpen(false);
           return;
         }
@@ -323,39 +409,76 @@ export default function PtpIntroGate() {
   const current = videos[Math.min(idx, videos.length - 1)];
   const isLast = idx >= videos.length - 1;
   const thumbUrl = thumbsQuery.data?.get(current.resource_id);
+  const showingOffer = phase === "offer";
 
   return (
-    <Dialog open={open} onOpenChange={() => { /* non-dismissable */ }}>
-      <DialogContent
-        className="max-w-2xl [&>button.absolute]:hidden"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>{current.card_title}</DialogTitle>
-          <DialogDescription className="sr-only">
-            Introductory video {idx + 1} of {videos.length}
-          </DialogDescription>
-        </DialogHeader>
-        <VideoStep
-          key={current.gate_video_id}
-          video={current}
-          thumbUrl={thumbUrl}
-          isLast={isLast}
-          onDone={advance}
-        />
-        <div className="flex justify-center gap-1 pt-2">
-          {videos.map((_, i) => (
-            <span
-              key={i}
-              className={`h-1.5 w-6 rounded-full ${
-                i < idx ? "bg-[var(--bw-forest)]" : i === idx ? "bg-[var(--bw-orange)]" : "bg-muted"
-              }`}
+    <>
+      <Dialog open={open} onOpenChange={() => { /* non-dismissable */ }}>
+        <DialogContent
+          className="max-w-2xl [&>button.absolute]:hidden"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {showingOffer ? "Would you like a guided walkthrough?" : current.card_title}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              {showingOffer
+                ? "Optional guided walkthrough of your report"
+                : `Introductory video ${idx + 1} of ${videos.length}`}
+            </DialogDescription>
+          </DialogHeader>
+          {showingOffer && assessmentResultId ? (
+            <WalkthroughOfferStep
+              assessmentResultId={assessmentResultId}
+              onAccept={() => {
+                setOpen(false);
+                setWalkthroughOpen(true);
+              }}
+              onDecline={() => setOpen(false)}
             />
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <VideoStep
+              key={current.gate_video_id}
+              video={current}
+              thumbUrl={thumbUrl}
+              isLast={isLast}
+              onDone={advance}
+            />
+          )}
+          <div className="flex justify-center gap-1 pt-2">
+            {videos.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-6 rounded-full ${
+                  showingOffer || i < idx
+                    ? "bg-[var(--bw-forest)]"
+                    : i === idx
+                    ? "bg-[var(--bw-orange)]"
+                    : "bg-muted"
+                }`}
+              />
+            ))}
+            {assessmentResultId && (
+              <span
+                className={`h-1.5 w-6 rounded-full ${
+                  showingOffer ? "bg-[var(--bw-orange)]" : "bg-muted"
+                }`}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {walkthroughOpen && assessmentResultId && (
+        <PtpWalkthroughPanel
+          assessmentResultId={assessmentResultId}
+          steps={offerSteps}
+          open={walkthroughOpen}
+          onOpenChange={setWalkthroughOpen}
+        />
+      )}
+    </>
   );
 }
