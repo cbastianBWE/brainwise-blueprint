@@ -544,6 +544,9 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 rawPreferred === "professional" || rawPreferred === "personal" ? rawPreferred : undefined;
               const preferredLabel = preferredCtx === "professional" ? "Professional" : "Personal";
 
+              // Set only when the suggestion actually drives the rendered button.
+              let usedPreferred = false;
+
               // Fresh-start button for an entitlement branch: honours the
               // practitioner's suggestion when present, otherwise unchanged.
               const freshStartButton = (
@@ -558,6 +561,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 }
+                usedPreferred = true;
                 return (
                   <div className="space-y-1">
                     <Button className={className} onClick={() => handleSelect(inst, preferredCtx, source)}>
