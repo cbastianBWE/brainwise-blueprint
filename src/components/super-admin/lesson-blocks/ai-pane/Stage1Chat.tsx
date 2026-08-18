@@ -524,7 +524,7 @@ export function Stage1Chat(props: Props) {
                   ? dictation.isListening
                     ? "Click to stop"
                     : "Click to dictate"
-                  : "Voice dictation not supported in this browser. Try Chrome, Edge, or Safari."
+                  : `This browser cannot dictate directly into the page. ${dictationHint()}`
               }
               onClick={() => (dictation.isListening ? dictation.stop() : dictation.start())}
               className={cn(dictation.isListening && "animate-pulse")}
