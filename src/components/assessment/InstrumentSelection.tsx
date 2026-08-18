@@ -543,6 +543,8 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const preferredCtx: 'professional' | 'personal' | undefined =
                 rawPreferred === "professional" || rawPreferred === "personal" ? rawPreferred : undefined;
               const preferredLabel = preferredCtx === "professional" ? "Professional" : "Personal";
+              // A "both" suggestion doesn't change the button, but should still be surfaced.
+              const suggestedBoth = rawPreferred === "both" && !isInProgress;
 
               // Set only when the suggestion actually drives the rendered button.
               let usedPreferred = false;
@@ -709,7 +711,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
 
               // The results-based badge wins if both apply; the practitioner
               // suggestion is then carried by the button label alone.
-              const showPractitionerBadge = usedPreferred && !isRecommended;
+              const showPractitionerBadge = (usedPreferred || suggestedBoth) && !isRecommended;
 
               return (
                 <Card
