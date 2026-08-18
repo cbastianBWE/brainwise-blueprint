@@ -1050,7 +1050,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
     <div className="p-6 space-y-8 max-w-5xl mx-auto">
       {!isCoachView && !adminView && !targetUserId &&
         (selected?.result.instrument_id ?? "") === "INST-001" && (
-          <PtpIntroGate />
+          <PtpIntroGate assessmentResultId={selected?.result.id} />
         )}
       {!isCoachView && !adminView && !targetUserId && selected?.isPTP && (
         <PtpWalkthroughEntry assessmentResultId={selected.result.id} />
