@@ -38,14 +38,31 @@ export default function PtpOnePagers({
   assessmentResultId,
   userName,
   dateTaken,
+  open: openProp,
+  onOpenChange,
+  audience,
 }: {
   assessmentResultId: string;
   userName: string;
   dateTaken?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  audience?: string;
 }) {
   const [pagers, setPagers] = useState<OnePager[]>([]);
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [tab, setTab] = useState<string | null>(audience ?? null);
   const [downloading, setDownloading] = useState<OnePager["audience"] | null>(null);
+
+  const open = openProp !== undefined ? openProp : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
+
+  useEffect(() => {
+    if (audience) setTab(audience);
+  }, [audience]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +86,19 @@ export default function PtpOnePagers({
     };
   }, [assessmentResultId]);
 
+  // The walkthrough asks this section to open itself (reveal only, never close).
+  useEffect(() => {
+    return onSectionReveal("onepager", (detail) => {
+      if (detail.audience) setTab(detail.audience);
+      setOpen(true);
+    });
+  });
+
   if (pagers.length === 0) return null;
+
+  const activeTab =
+    (tab && pagers.some((p) => p.audience === tab) ? tab : null) ?? pagers[0].audience;
+
 
   const download = async (p: OnePager) => {
     setDownloading(p.audience);
