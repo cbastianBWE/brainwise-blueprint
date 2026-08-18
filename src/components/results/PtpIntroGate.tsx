@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveTierThumbnailUrls } from "@/lib/assetUrls";
+import PtpWalkthroughPanel from "./PtpWalkthroughPanel";
+import {
+  readWalkthroughError,
+  walkthroughErrorCopy,
+  type WalkthroughOffer,
+} from "./ptpWalkthroughShared";
 
 interface GateVideo {
   gate_video_id: string;
@@ -249,6 +255,64 @@ function VideoStep({
           className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
         >
           Play
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function WalkthroughOfferStep({
+  assessmentResultId,
+  onAccept,
+  onDecline,
+}: {
+  assessmentResultId: string;
+  onAccept: () => void;
+  onDecline: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const accept = async () => {
+    setBusy(true);
+    setNotice(null);
+    // The panel itself starts the run; the gate only hands over.
+    setBusy(false);
+    onAccept();
+  };
+
+  const decline = async () => {
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke("ptp-walkthrough", {
+      body: { action: "decline", assessment_result_id: assessmentResultId },
+    });
+    const err = readWalkthroughError(error, data);
+    setBusy(false);
+    if (err) setNotice(walkthroughErrorCopy(err));
+    onDecline();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Before you read your report, you can have an optional guided walkthrough of it. It
+          takes about twenty minutes, it moves at your pace, and you can stop at any point.
+          Your report is yours either way, and you can start the walkthrough later from the
+          top of the report.
+        </p>
+      </div>
+      {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <Button variant="outline" onClick={decline} disabled={busy}>
+          No thanks, take me to my report
+        </Button>
+        <Button
+          onClick={accept}
+          disabled={busy}
+          className="bg-[var(--bw-orange)] hover:bg-[var(--bw-orange-600)] text-white"
+        >
+          Yes, walk me through it
         </Button>
       </div>
     </div>
