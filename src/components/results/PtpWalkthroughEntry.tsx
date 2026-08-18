@@ -21,6 +21,8 @@ export default function PtpWalkthroughEntry({
   const [open, setOpen] = useState(false);
   const [resumeId, setResumeId] = useState<string | undefined>(undefined);
 
+  console.info("[ptp-walkthrough] entry mounted", assessmentResultId);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -30,14 +32,24 @@ export default function PtpWalkthroughEntry({
       const err = readWalkthroughError(error, data);
       if (cancelled) return;
       if (err) {
-        if (err.code === "no_responses_on_result") {
-          console.warn("ptp-walkthrough offer: no responses on result", assessmentResultId);
-        }
+        console.error("[ptp-walkthrough] offer failed", {
+          assessmentResultId,
+          code: err.code,
+          status: err.status,
+          message: err.message,
+        });
         setHidden(true);
         return;
       }
       const o = data as WalkthroughOffer;
       setOffer(o);
+      console.info("[ptp-walkthrough] offer ok", {
+        assessmentResultId,
+        offer: o.offer,
+        resume: o.resume_session_id,
+        freeUsed: o.free_walkthrough_used,
+        steps: o.steps?.length ?? 0,
+      });
       setResumeId(o.resume_session_id ?? undefined);
     })();
     return () => {
@@ -49,7 +61,14 @@ export default function PtpWalkthroughEntry({
 
   const canResume = Boolean(offer.resume_session_id);
   const available = canResume || offer.offer;
-  if (!available) return null;
+  if (!available) {
+    console.warn("[ptp-walkthrough] offer declined by server", {
+      assessmentResultId,
+      offer: offer.offer,
+      resume: offer.resume_session_id,
+    });
+    return null;
+  }
 
   const title = canResume
     ? "Continue your guided walkthrough"
