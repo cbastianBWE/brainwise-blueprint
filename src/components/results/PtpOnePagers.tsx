@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import { generateOnePagerPdf, type OnePager } from "@/lib/generateOnePagerPdf";
+import { onSectionReveal } from "@/components/results/ptpWalkthroughShared";
 
 const ORDER: OnePager["audience"][] = ["work", "therapist", "partner", "friend"];
 const LABEL: Record<OnePager["audience"], string> = {
@@ -123,7 +124,7 @@ export default function PtpOnePagers({
               read it here, or download it as a branded one-page PDF.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue={pagers[0].audience} className="w-full">
+          <Tabs value={activeTab} onValueChange={setTab} className="w-full">
             <TabsList
               className="grid w-full"
               style={{ gridTemplateColumns: `repeat(${pagers.length}, minmax(0, 1fr))` }}
