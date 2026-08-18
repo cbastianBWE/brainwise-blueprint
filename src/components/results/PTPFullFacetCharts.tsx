@@ -21,6 +21,7 @@ const REWARD_DIMENSION_IDS = new Set(["DIM-PTP-04", "DIM-PTP-05"]);
 
 import { facetDisplayLabel } from "@/lib/pairedSectionTypes";
 import { PTP_ITEM_FACET_NAMES } from "@/lib/ptpFacetNames";
+import { onSectionReveal } from "@/components/results/ptpWalkthroughShared";
 
 interface FacetDataItem {
   itemNumber: number;
@@ -47,6 +48,9 @@ export default function PTPFullFacetCharts({
   const [loading, setLoading] = useState(true);
   const [allFacets, setAllFacets] = useState<FacetDataItem[]>([]);
   const [outerExpanded, setOuterExpanded] = useState(false);
+
+  // Walkthrough reveal: open only, never collapse; idempotent.
+  useEffect(() => onSectionReveal("full_facet_charts", () => setOuterExpanded(true)), []);
 
   useEffect(() => {
     const fetchData = async () => {
