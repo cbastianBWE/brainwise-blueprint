@@ -711,7 +711,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
 
               // The results-based badge wins if both apply; the practitioner
               // suggestion is then carried by the button label alone.
-              const showPractitionerBadge = usedPreferred && !isRecommended;
+              const showPractitionerBadge = (usedPreferred || suggestedBoth) && !isRecommended;
 
               return (
                 <Card
