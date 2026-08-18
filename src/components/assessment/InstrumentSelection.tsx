@@ -615,13 +615,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 } else {
-                  buttonContent = (
-                    <Button
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
-                    >
-                      {isInProgress ? "Continue Assessment" : "Start Assessment (Practitioner Paid)"}
-                    </Button>
+                  buttonContent = freshStartButton(
+                    'coach_paid_client',
+                    isInProgress ? "Continue Assessment" : "Start Assessment (Practitioner Paid)",
+                    "w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary",
                   );
                 }
               } else if (hasFreeGrant) {
