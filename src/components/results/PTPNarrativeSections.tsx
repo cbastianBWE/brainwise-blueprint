@@ -10,6 +10,7 @@ import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopment
 import { HighlightableText } from "@/components/results/ReportHighlight";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
+import { onSectionReveal } from "@/components/results/ptpWalkthroughShared";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
