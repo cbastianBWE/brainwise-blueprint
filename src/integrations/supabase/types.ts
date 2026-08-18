@@ -1442,6 +1442,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bw_walkthrough_config: {
+        Row: {
+          free_exchange_budget: number
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          free_exchange_budget?: number
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          free_exchange_budget?: number
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bw_walkthrough_definition: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          notes: string | null
+          steps: Json
+          system_prompt: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          notes?: string | null
+          steps: Json
+          system_prompt: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          notes?: string | null
+          steps?: Json
+          system_prompt?: string
+          version?: number
+        }
+        Relationships: []
+      }
       cafes_ptp_mapping: {
         Row: {
           coaching_questions: Json
@@ -12159,6 +12204,128 @@ export type Database = {
           },
         ]
       }
+      ptp_walkthrough_sessions: {
+        Row: {
+          assessment_result_id: string
+          completed_at: string | null
+          created_at: string
+          current_step: string | null
+          declined_count: number
+          exchange_budget: number | null
+          exchanges_spent: number
+          funding: string | null
+          id: string
+          last_activity_at: string | null
+          narrative_context: string
+          offered_at: string
+          opening_intent: string | null
+          outcome_at_offer: string | null
+          parent_session_id: string | null
+          responses: Json
+          run_number: number
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assessment_result_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_step?: string | null
+          declined_count?: number
+          exchange_budget?: number | null
+          exchanges_spent?: number
+          funding?: string | null
+          id?: string
+          last_activity_at?: string | null
+          narrative_context?: string
+          offered_at?: string
+          opening_intent?: string | null
+          outcome_at_offer?: string | null
+          parent_session_id?: string | null
+          responses?: Json
+          run_number?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assessment_result_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_step?: string | null
+          declined_count?: number
+          exchange_budget?: number | null
+          exchanges_spent?: number
+          funding?: string | null
+          id?: string
+          last_activity_at?: string | null
+          narrative_context?: string
+          offered_at?: string
+          opening_intent?: string | null
+          outcome_at_offer?: string | null
+          parent_session_id?: string | null
+          responses?: Json
+          run_number?: number
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_assessment_result_id_fkey"
+            columns: ["assessment_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_parent_session_id_fkey"
+            columns: ["parent_session_id"]
+            isOneToOne: false
+            referencedRelation: "bw_walkthrough_usage"
+            referencedColumns: ["session_id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_parent_session_id_fkey"
+            columns: ["parent_session_id"]
+            isOneToOne: false
+            referencedRelation: "ptp_walkthrough_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_answer_options: {
         Row: {
           archived_at: string | null
@@ -17105,6 +17272,64 @@ export type Database = {
           },
         ]
       }
+      bw_walkthrough_usage: {
+        Row: {
+          account_type: string | null
+          assessment_result_id: string | null
+          completed_at: string | null
+          current_step: string | null
+          duration: string | null
+          exchange_budget: number | null
+          exchanges_remaining: number | null
+          exchanges_spent: number | null
+          funding: string | null
+          narrative_context: string | null
+          outcome_at_offer: string | null
+          pct_budget_used: number | null
+          run_number: number | null
+          session_id: string | null
+          started_at: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_assessment_result_id_fkey"
+            columns: ["assessment_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ptp_walkthrough_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_clients_client_view: {
         Row: {
           assessment_id: string | null
@@ -18358,6 +18583,7 @@ export type Database = {
         Args: { p_profile: string; p_section: string }
         Returns: number
       }
+      bw_fire_walkthrough: { Args: { p_body: Json }; Returns: number }
       bw_get_active_price: {
         Args: { p_billing_period?: string; p_tier: string }
         Returns: {
@@ -18481,6 +18707,18 @@ export type Database = {
         Args: { p_tier: string; p_user: string }
         Returns: string
       }
+      bw_ptp_driving_facets: {
+        Args: { p_context?: string; p_result: string }
+        Returns: {
+          context_type: string
+          dimension_id: string
+          facet_name: string
+          item_number: number
+          rank: number
+          side: string
+          value: number
+        }[]
+      }
       bw_relationship_pair_role: {
         Args: { p_relationship: string; p_user?: string }
         Returns: string
@@ -18529,6 +18767,34 @@ export type Database = {
         Returns: {
           item_number: number
           scores: number[]
+        }[]
+      }
+      bw_walkthrough_active_definition: {
+        Args: never
+        Returns: {
+          steps: Json
+          system_prompt: string
+          version: number
+        }[]
+      }
+      bw_walkthrough_close: {
+        Args: { p_session: string; p_status?: string }
+        Returns: string
+      }
+      bw_walkthrough_decline: { Args: { p_result: string }; Returns: number }
+      bw_walkthrough_save: {
+        Args: { p_patch?: Json; p_session: string; p_step: string }
+        Returns: Json
+      }
+      bw_walkthrough_spend: { Args: { p_session: string }; Returns: number }
+      bw_walkthrough_start: {
+        Args: { p_context?: string; p_result: string }
+        Returns: {
+          exchange_budget: number
+          funding: string
+          outcome_at_offer: string
+          run_number: number
+          session_id: string
         }[]
       }
       calculate_nai_readiness_index: {
