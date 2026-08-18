@@ -488,6 +488,19 @@ function PTPContextSelection({
   onSelect: (ctx: 'professional' | 'personal' | 'both') => void;
   recommended?: 'professional' | 'personal' | 'both' | null;
 }) {
+  const cardClass = (ctx: 'professional' | 'personal' | 'both') =>
+    `cursor-pointer transition-all hover:shadow-md ${
+      recommended === ctx
+        ? "border-accent border-2 ring-2 ring-accent/40 bg-accent/5 shadow-md"
+        : "hover:border-accent/50"
+    }`;
+
+  const SuggestedBadge = () => (
+    <span className="inline-block mb-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
+      Suggested by your practitioner
+    </span>
+  );
+
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-3xl mx-auto">
@@ -498,7 +511,7 @@ function PTPContextSelection({
           </p>
         </div>
         {recommended && (
-          <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-foreground">
+          <div className="mb-6 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-foreground">
             Your practitioner suggested starting with{" "}
             <strong>
               {recommended === "professional"
@@ -511,61 +524,28 @@ function PTPContextSelection({
           </div>
         )}
         <div className="grid gap-4">
-          <Card
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              recommended === 'professional'
-                ? "border-primary ring-1 ring-primary/30"
-                : "hover:border-primary/50"
-            }`}
-            onClick={() => onSelect('professional')}
-          >
+          <Card className={cardClass('professional')} onClick={() => onSelect('professional')}>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Corporate / Professional</h3>
-              {recommended === 'professional' && (
-                <span className="inline-block mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  Suggested by your practitioner
-                </span>
-              )}
+              {recommended === 'professional' && <SuggestedBadge />}
               <p className="text-sm text-muted-foreground">
                 Assess your threat responses in work and professional contexts.
               </p>
             </CardContent>
           </Card>
-          <Card
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              recommended === 'personal'
-                ? "border-primary ring-1 ring-primary/30"
-                : "hover:border-primary/50"
-            }`}
-            onClick={() => onSelect('personal')}
-          >
+          <Card className={cardClass('personal')} onClick={() => onSelect('personal')}>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Personal / Social</h3>
-              {recommended === 'personal' && (
-                <span className="inline-block mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  Suggested by your practitioner
-                </span>
-              )}
+              {recommended === 'personal' && <SuggestedBadge />}
               <p className="text-sm text-muted-foreground">
                 Assess your threat and reward responses in personal and social contexts.
               </p>
             </CardContent>
           </Card>
-          <Card
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              recommended === 'both'
-                ? "border-primary ring-1 ring-primary/30"
-                : "hover:border-primary/50"
-            }`}
-            onClick={() => onSelect('both')}
-          >
+          <Card className={cardClass('both')} onClick={() => onSelect('both')}>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-1">Both</h3>
-              {recommended === 'both' && (
-                <span className="inline-block mb-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                  Suggested by your practitioner
-                </span>
-              )}
+              {recommended === 'both' && <SuggestedBadge />}
               <p className="text-sm text-muted-foreground">
                 Complete the full 89-question assessment covering all contexts.
               </p>
@@ -576,3 +556,4 @@ function PTPContextSelection({
     </div>
   );
 }
+
