@@ -18797,6 +18797,7 @@ export type Database = {
           session_id: string
         }[]
       }
+      bw_walkthrough_step_sections: { Args: never; Returns: Json }
       calculate_nai_readiness_index: {
         Args: { p_dimension_scores: Json }
         Returns: number
