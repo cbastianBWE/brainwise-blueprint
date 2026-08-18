@@ -642,14 +642,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 } else {
-                  buttonContent = (
-                    <Button
-                      className="w-full"
-                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
-                    >
-                      {startLabel}
-                    </Button>
-                  );
+                  buttonContent = freshStartButton('coach_paid_client', startLabel);
                 }
               } else if (purchaseAccess) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
@@ -666,11 +659,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 } else {
-                  buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
-                      {startLabel}
-                    </Button>
-                  );
+                  buttonContent = freshStartButton('paid_purchase', startLabel);
                 }
               } else if (hasFreeCertPool) {
                 buttonContent = (
