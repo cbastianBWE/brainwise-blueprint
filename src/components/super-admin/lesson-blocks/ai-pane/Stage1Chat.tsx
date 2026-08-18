@@ -13,6 +13,7 @@ import {
   Presentation,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { dictationHint } from "@/components/coaching/MultimodalField";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -524,7 +525,7 @@ export function Stage1Chat(props: Props) {
                   ? dictation.isListening
                     ? "Click to stop"
                     : "Click to dictate"
-                  : "Voice dictation not supported in this browser. Try Chrome, Edge, or Safari."
+                  : `This browser cannot dictate directly into the page. ${dictationHint()}`
               }
               onClick={() => (dictation.isListening ? dictation.stop() : dictation.start())}
               className={cn(dictation.isListening && "animate-pulse")}
