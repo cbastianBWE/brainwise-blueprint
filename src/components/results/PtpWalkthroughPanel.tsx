@@ -45,6 +45,7 @@ export default function PtpWalkthroughPanel({
   const [notice, setNotice] = useState<string | null>(null);
   const [ended, setEnded] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
+  const [funding, setFunding] = useState<string | null>(null);
   const [nextStep, setNextStep] = useState<NextStep | null>(null);
   const [isGate, setIsGate] = useState(false);
   const [stepSections, setStepSections] = useState<Record<string, string | null>>({});
@@ -91,6 +92,7 @@ export default function PtpWalkthroughPanel({
     if (!data) return;
     setMessages((prev) => [...prev, { role: "assistant", content: data.reply ?? "" }]);
     if (typeof data.exchanges_remaining === "number") setRemaining(data.exchanges_remaining);
+    if (typeof data.funding === "string") setFunding(data.funding);
     setIsGate(Boolean(data.is_gate));
     setNextStep(data.next_step ?? null);
     if (!data.next_step && !data.is_gate) {
@@ -136,6 +138,7 @@ export default function PtpWalkthroughPanel({
       setRemaining(
         typeof data.exchanges_remaining === "number" ? data.exchanges_remaining : null,
       );
+      if (typeof data.funding === "string") setFunding(data.funding);
       const first = data.step;
       setStepId(first?.id ?? null);
       setStepTitle(first?.title ?? null);
@@ -162,6 +165,7 @@ export default function PtpWalkthroughPanel({
     if (!data) return;
     setMessages((prev) => [...prev, { role: "assistant", content: data.reply ?? "" }]);
     if (typeof data.exchanges_remaining === "number") setRemaining(data.exchanges_remaining);
+    if (typeof data.funding === "string") setFunding(data.funding);
     setIsGate(Boolean(data.is_gate));
     setNextStep(data.next_step ?? null);
   };
@@ -317,7 +321,9 @@ export default function PtpWalkthroughPanel({
 
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                {remaining !== null ? `${remaining} exchanges left in this walkthrough` : ""}
+                {funding !== "granted" && remaining !== null
+                  ? `${remaining} exchanges left in this walkthrough`
+                  : ""}
               </p>
               {!ended && (
                 <Button variant="ghost" size="sm" onClick={() => finish("abandoned")}>
