@@ -66,6 +66,7 @@ export function MediaRecorderPane({
   /** Which session table the recording belongs to. Presentational no-op here; kept for API parity. */
   sessionKind?: "coaching" | "relationship";
 }) {
+  const block = captureSupport();
   const [permError, setPermError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
