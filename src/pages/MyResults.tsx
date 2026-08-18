@@ -47,6 +47,7 @@ import { format } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DrivingFacetScores from "@/components/results/DrivingFacetScores";
 import PtpIntroGate from "@/components/results/PtpIntroGate";
+import PtpWalkthroughEntry from "@/components/results/PtpWalkthroughEntry";
 import {
   PTPProfileOverviewSection,
   PTPDimensionHighlightsSection,
@@ -1359,7 +1360,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
           )}
 
           {/* SECTION 2 - Profile Chart */}
-          <section>
+          <section id="ptp-section-dimension-scores">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Dimension Scores</CardTitle>
@@ -1547,20 +1548,20 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                     <span>Tip: select any text in this report to highlight it, and add a comment to anything you want to remember or discuss. Your highlights and notes are saved to your view.</span>
                   </div>
                 )}
-                <section>
+                <section id="ptp-section-profile-overview">
                   <PTPProfileOverviewSection {...ptpNarrativeProps} />
                 </section>
-                <section>
+                <section id="ptp-section-dimension-highlights">
                   <PTPDimensionHighlightsSection {...ptpNarrativeProps} />
                 </section>
-                <section>
+                <section id="ptp-section-driving-facets">
                   <DrivingFacetScores
                     assessmentId={effectiveSelected.result.assessment_id}
                     additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
                     contextFilter={isBothAssessment && ptpContextTab !== 'combined' ? ptpContextTab as 'professional' | 'personal' : undefined}
                   />
                 </section>
-                <section>
+                <section id="ptp-section-facet-insights">
                   <PTPFacetInsightsElevatedSection {...ptpNarrativeProps} />
                 </section>
                 <section>
@@ -1595,7 +1596,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                     </Card>
                   </section>
                 )}
-                <section>
+                <section id="ptp-section-full-facets">
                   <PTPFullFacetCharts
                     assessmentId={effectiveSelected.result.assessment_id}
                     additionalAssessmentId={ptpContextTab === 'combined' && !isBothAssessment && hasPtpTabs ? ptpPersonalResults[0]?.result.assessment_id : undefined}
@@ -1603,7 +1604,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
                     ptpContextTab={ptpContextTab}
                   />
                 </section>
-                <section>
+                <section id="ptp-section-responses">
                   <PTPAssessmentResponsesSection {...ptpNarrativeProps} />
                 </section>
               </PTPNarrativeProvider>
