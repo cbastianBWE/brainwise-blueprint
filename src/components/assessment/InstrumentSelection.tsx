@@ -593,11 +593,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   </Button>
                 );
               } else if (subscriptionAccess) {
-                buttonContent = (
-                  <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
-                    {startLabel}
-                  </Button>
-                );
+                buttonContent = freshStartButton('paid_purchase', startLabel);
               } else if (coachPaid) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
                 if (ptpCtx === "professional_done") {
