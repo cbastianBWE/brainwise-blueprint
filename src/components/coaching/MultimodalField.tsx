@@ -133,11 +133,22 @@ export function MediaRecorderPane({
       }, 250);
       setRecording(true);
     } catch (e: any) {
-      setPermError(
-        e?.name === "NotAllowedError"
-          ? `Permission to use the ${kind === "audio" ? "microphone" : "camera"} was denied. You can answer as text instead.`
-          : e?.message || "Could not start recording.",
-      );
+      console.error("MediaRecorderPane start failed", e);
+      const device = kind === "audio" ? "microphone" : "camera";
+      const name = e?.name;
+      let msg: string;
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        msg = `Permission to use the ${device} was denied. You can answer as text instead.`;
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        msg = `No ${device} was found on this device. You can answer as text instead.`;
+      } else if (name === "NotReadableError" || name === "TrackStartError") {
+        msg = `Your ${device} is being used by another app. Close it and try again, or answer as text instead.`;
+      } else if (name === "OverconstrainedError") {
+        msg = `Recording could not start with the settings this ${device} supports. You can answer as text instead.`;
+      } else {
+        msg = "Recording could not be started here. You can answer as text instead.";
+      }
+      setPermError(msg);
       cleanupStream();
     }
   };
@@ -147,6 +158,19 @@ export function MediaRecorderPane({
     if (rec && rec.state !== "inactive") rec.stop();
     setRecording(false);
   };
+
+  if (block) {
+    return (
+      <p className="text-xs text-muted-foreground flex items-start gap-1.5">
+        {kind === "audio" ? (
+          <Mic className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+        ) : (
+          <VideoIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+        )}
+        <span>{captureBlockMessage(block, kind)}</span>
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-3">
