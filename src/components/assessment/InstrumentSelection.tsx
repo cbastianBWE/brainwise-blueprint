@@ -251,24 +251,35 @@ export default function InstrumentSelection({ onSelect }: Props) {
       }
 
       // Build per-instrument context_progress map (PTP only in practice).
+      // Both coach_clients queries are ordered created_at desc, and consider()
+      // is first-wins, so the most recent coach relationship wins.
       {
         const ctxMap = new Map<string, string>();
+        const prefMap = new Map<string, string>();
         const consider = (instrumentId: string | null | undefined, ctx: string | null | undefined) => {
           if (!instrumentId || !ctx) return;
           const existing = ctxMap.get(instrumentId);
           if (!existing) ctxMap.set(instrumentId, ctx);
         };
-        (coachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
-          consider(r.instrument_id, r.context_progress)
-        );
-        (selfPayCoachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
-          consider(r.instrument_id, r.context_progress)
-        );
+        const considerPref = (instrumentId: string | null | undefined, pref: string | null | undefined) => {
+          if (!instrumentId || !pref) return;
+          if (!prefMap.has(instrumentId)) prefMap.set(instrumentId, pref);
+        };
+        type CoachRow = { instrument_id?: string | null; context_progress?: string | null; preferred_first_context?: string | null };
+        (coachClientsRes.data ?? []).forEach((r: CoachRow) => {
+          consider(r.instrument_id, r.context_progress);
+          considerPref(r.instrument_id, r.preferred_first_context);
+        });
+        (selfPayCoachClientsRes.data ?? []).forEach((r: CoachRow) => {
+          consider(r.instrument_id, r.context_progress);
+          considerPref(r.instrument_id, r.preferred_first_context);
+        });
         (purchasesRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) => {
           if (!r.instrument_id) return;
           r.instrument_id.split(",").forEach((id: string) => consider(id.trim(), r.context_progress));
         });
         setPtpContextProgress(ctxMap);
+        setPtpPreferredContext(prefMap);
       }
 
       if (user) {
