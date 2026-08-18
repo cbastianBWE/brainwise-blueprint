@@ -319,7 +319,11 @@ function WalkthroughOfferStep({
   );
 }
 
-export default function PtpIntroGate() {
+export default function PtpIntroGate({
+  assessmentResultId,
+}: {
+  assessmentResultId?: string;
+}) {
   const statusQuery = useQuery({
     queryKey: ["ptp-intro-gate-status"],
     staleTime: Infinity,
