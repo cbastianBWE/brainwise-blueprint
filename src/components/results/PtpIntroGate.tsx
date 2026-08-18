@@ -343,6 +343,10 @@ export default function PtpIntroGate({
   const [open, setOpen] = useState(false);
   const [idx, setIdx] = useState(0);
   const initedRef = useRef(false);
+  // Terminal offer step, shown after the last video instead of just closing.
+  const [phase, setPhase] = useState<"videos" | "offer">("videos");
+  const [walkthroughOpen, setWalkthroughOpen] = useState(false);
+  const [offerSteps, setOfferSteps] = useState<WalkthroughOffer["steps"]>([]);
 
   useEffect(() => {
     if (initedRef.current) return;
