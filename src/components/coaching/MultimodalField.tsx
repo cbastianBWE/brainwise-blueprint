@@ -28,6 +28,30 @@ function formatElapsed(ms: number) {
   return `${m}:${rem.toString().padStart(2, "0")}`;
 }
 
+// ---- Capture capability detection ----
+// Kept beside dictationHint() on purpose: all detection for this feature lives
+// in one file. Keep the option visible and explain it, never hide the chip.
+export type CaptureBlock = null | "insecure" | "no-devices" | "no-recorder";
+
+export function captureSupport(): CaptureBlock {
+  if (typeof window === "undefined") return null;
+  if (!window.isSecureContext) return "insecure";
+  if (!navigator?.mediaDevices?.getUserMedia) return "no-devices";
+  if (typeof MediaRecorder === "undefined") return "no-recorder";
+  return null;
+}
+
+function captureBlockMessage(block: Exclude<CaptureBlock, null>, kind: "audio" | "video"): string {
+  const device = kind === "audio" ? "microphone" : "camera";
+  if (block === "insecure") {
+    return `Recording is turned off because of the address this page was opened from, so the ${device} cannot be used here. You can type your answer instead.`;
+  }
+  if (block === "no-devices") {
+    return `This browser will not give the page access to your ${device}. You can type your answer instead, or use your device's own dictation: ${dictationHint()}`;
+  }
+  return `This browser cannot record inside the page. You can type your answer instead, or use your device's own dictation: ${dictationHint()}`;
+}
+
 // ---- MediaRecorderPane (extracted verbatim) ----
 export function MediaRecorderPane({
   kind,
