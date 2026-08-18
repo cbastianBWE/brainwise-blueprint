@@ -120,11 +120,14 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
+        // Ordered newest-first: most recent coach relationship wins for
+        // preferred_first_context / context_progress accumulation.
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, context_progress, invitation_source")
+          .select("instrument_id, context_progress, invitation_source, preferred_first_context")
           .eq("client_user_id", user.id)
           .is("stripe_payment_intent_id", null)
-          .in("invitation_status", ["sent", "opened", "partially_completed"]),
+          .in("invitation_status", ["sent", "opened", "partially_completed"])
+          .order("created_at", { ascending: false }),
         supabase.from("assessments")
           .select("id, completed_at")
           .eq("user_id", user.id)
