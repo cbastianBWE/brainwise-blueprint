@@ -97,6 +97,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [actorDebriefInstrumentIds, setActorDebriefInstrumentIds] = useState<Set<string>>(new Set());
   const [freeGrantInstrumentIds, setFreeGrantInstrumentIds] = useState<Set<string>>(new Set());
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
+  const [ptpPreferredContext, setPtpPreferredContext] = useState<Map<string, string>>(new Map());
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
   const [freeCertPoolInstrumentIds, setFreeCertPoolInstrumentIds] = useState<Set<string>>(new Set());
@@ -108,20 +109,26 @@ export default function InstrumentSelection({ onSelect }: Props) {
         supabase.from("users").select("subscription_tier, subscription_status").eq("id", user.id).single(),
         supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
         supabase.from("assessment_results").select("overall_profile").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1),
+        // Ordered newest-first: when a client has multiple coach relationships,
+        // the most recent one's preferred_first_context wins (deterministic).
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id, invitation_source")
+          .select("instrument_id, stripe_payment_intent_id, assessment_id, context_progress, paired_assessment_id, invitation_source, preferred_first_context")
           .eq("client_user_id", user.id)
           .not("stripe_payment_intent_id", "is", null)
-          .in("invitation_status", ["sent", "opened", "partially_completed"]),
+          .in("invitation_status", ["sent", "opened", "partially_completed"])
+          .order("created_at", { ascending: false }),
         supabase.from("assessment_purchases").select("instrument_id, context_progress").eq("user_id", user.id).is("consumed_at", null).is("coach_client_id", null),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "completed"),
         supabase.from("assessments").select("instrument_id").eq("user_id", user.id).eq("status", "in_progress"),
         supabase.from("subscription_plans").select("plan_name, tier, billing_period, price_usd, stripe_price_id").eq("is_active", true),
+        // Ordered newest-first: most recent coach relationship wins for
+        // preferred_first_context / context_progress accumulation.
         supabase.from("coach_clients_client_view")
-          .select("instrument_id, context_progress, invitation_source")
+          .select("instrument_id, context_progress, invitation_source, preferred_first_context")
           .eq("client_user_id", user.id)
           .is("stripe_payment_intent_id", null)
-          .in("invitation_status", ["sent", "opened", "partially_completed"]),
+          .in("invitation_status", ["sent", "opened", "partially_completed"])
+          .order("created_at", { ascending: false }),
         supabase.from("assessments")
           .select("id, completed_at")
           .eq("user_id", user.id)
@@ -245,24 +252,35 @@ export default function InstrumentSelection({ onSelect }: Props) {
       }
 
       // Build per-instrument context_progress map (PTP only in practice).
+      // Both coach_clients queries are ordered created_at desc, and consider()
+      // is first-wins, so the most recent coach relationship wins.
       {
         const ctxMap = new Map<string, string>();
+        const prefMap = new Map<string, string>();
         const consider = (instrumentId: string | null | undefined, ctx: string | null | undefined) => {
           if (!instrumentId || !ctx) return;
           const existing = ctxMap.get(instrumentId);
           if (!existing) ctxMap.set(instrumentId, ctx);
         };
-        (coachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
-          consider(r.instrument_id, r.context_progress)
-        );
-        (selfPayCoachClientsRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) =>
-          consider(r.instrument_id, r.context_progress)
-        );
+        const considerPref = (instrumentId: string | null | undefined, pref: string | null | undefined) => {
+          if (!instrumentId || !pref) return;
+          if (!prefMap.has(instrumentId)) prefMap.set(instrumentId, pref);
+        };
+        type CoachRow = { instrument_id?: string | null; context_progress?: string | null; preferred_first_context?: string | null };
+        (coachClientsRes.data ?? []).forEach((r: CoachRow) => {
+          consider(r.instrument_id, r.context_progress);
+          considerPref(r.instrument_id, r.preferred_first_context);
+        });
+        (selfPayCoachClientsRes.data ?? []).forEach((r: CoachRow) => {
+          consider(r.instrument_id, r.context_progress);
+          considerPref(r.instrument_id, r.preferred_first_context);
+        });
         (purchasesRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) => {
           if (!r.instrument_id) return;
           r.instrument_id.split(",").forEach((id: string) => consider(id.trim(), r.context_progress));
         });
         setPtpContextProgress(ctxMap);
+        setPtpPreferredContext(prefMap);
       }
 
       if (user) {
@@ -518,6 +536,49 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
 
+              // Practitioner's suggested starting half (PTP only). Only a concrete
+              // half is actionable; "both"/null/anything else falls through to the
+              // unchanged default button.
+              const rawPreferred = inst.instrument_id === "INST-001" ? ptpPreferredContext.get(instrumentUuid) : undefined;
+              const preferredCtx: 'professional' | 'personal' | undefined =
+                rawPreferred === "professional" || rawPreferred === "personal" ? rawPreferred : undefined;
+              const preferredLabel = preferredCtx === "professional" ? "Professional" : "Personal";
+
+              // Set only when the suggestion actually drives the rendered button.
+              let usedPreferred = false;
+
+              // Fresh-start button for an entitlement branch: honours the
+              // practitioner's suggestion when present, otherwise unchanged.
+              const freshStartButton = (
+                source: EntitlementSource,
+                defaultLabel: string,
+                className = "w-full",
+              ): React.ReactNode => {
+                if (!preferredCtx || isInProgress) {
+                  return (
+                    <Button className={className} onClick={() => handleSelect(inst, undefined, source)}>
+                      {defaultLabel}
+                    </Button>
+                  );
+                }
+                usedPreferred = true;
+                return (
+                  <div className="space-y-1">
+                    <Button className={className} onClick={() => handleSelect(inst, preferredCtx, source)}>
+                      Start with your {preferredLabel} half
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="w-full text-muted-foreground"
+                      onClick={() => handleSelect(inst, undefined, source)}
+                    >
+                      Choose a different starting point
+                    </Button>
+                  </div>
+                );
+              };
+
               let buttonContent: React.ReactNode;
               if (canBypassAssessmentPaywall) {
                 buttonContent = (
@@ -558,13 +619,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 } else {
-                  buttonContent = (
-                    <Button
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary"
-                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
-                    >
-                      {isInProgress ? "Continue Assessment" : "Start Assessment (Practitioner Paid)"}
-                    </Button>
+                  buttonContent = freshStartButton(
+                    'coach_paid_client',
+                    isInProgress ? "Continue Assessment" : "Start Assessment (Practitioner Paid)",
+                    "w-full bg-accent text-accent-foreground hover:bg-accent/90 border border-primary",
                   );
                 }
               } else if (hasFreeGrant) {
@@ -588,14 +646,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 } else {
-                  buttonContent = (
-                    <Button
-                      className="w-full"
-                      onClick={() => handleSelect(inst, undefined, 'coach_paid_client')}
-                    >
-                      {startLabel}
-                    </Button>
-                  );
+                  buttonContent = freshStartButton('coach_paid_client', startLabel);
                 }
               } else if (purchaseAccess) {
                 const ptpCtx = inst.instrument_id === "INST-001" ? ptpContextProgress.get(instrumentUuid) : undefined;
@@ -612,11 +663,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                     </Button>
                   );
                 } else {
-                  buttonContent = (
-                    <Button className="w-full" onClick={() => handleSelect(inst, undefined, 'paid_purchase')}>
-                      {startLabel}
-                    </Button>
-                  );
+                  buttonContent = freshStartButton('paid_purchase', startLabel);
                 }
               } else if (hasFreeCertPool) {
                 buttonContent = (
@@ -664,6 +711,10 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 );
               }
 
+              // The results-based badge wins if both apply; the practitioner
+              // suggestion is then carried by the button label alone.
+              const showPractitionerBadge = usedPreferred && !isRecommended;
+
               return (
                 <Card
                   key={inst.instrument_id}
@@ -676,7 +727,14 @@ export default function InstrumentSelection({ onSelect }: Props) {
                       </Badge>
                     </div>
                   )}
-                  <CardHeader className={isRecommended ? "pt-8" : ""}>
+                  {showPractitionerBadge && (
+                    <div className="absolute -top-3 left-4">
+                      <Badge className="bg-primary text-primary-foreground">
+                        Your practitioner suggests starting here
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className={isRecommended || showPractitionerBadge ? "pt-8" : ""}>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg">{inst.short_name}</CardTitle>
                       {inst.tier === "premium" && (
