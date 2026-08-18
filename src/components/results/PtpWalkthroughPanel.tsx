@@ -185,6 +185,14 @@ export default function PtpWalkthroughPanel({
     await runTurnFor(target, "");
   };
 
+  // On a gate the server may not hand us a successor. "Yes, keep going" then
+  // simply re-issues a turn on the step we are on, rather than being dead.
+  const keepGoing = async () => {
+    if (nextStep) return advance();
+    setIsGate(false);
+    if (stepId) await runTurnFor(stepId, "");
+  };
+
   const finish = async (status: "completed" | "abandoned") => {
     if (sessionId && !ended) {
       await invoke({ action: "close", session_id: sessionId, status });
@@ -194,108 +202,132 @@ export default function PtpWalkthroughPanel({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
-        <SheetHeader className="px-4 py-3 border-b border-border text-left">
-          <SheetTitle className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            {stepTitle ?? "Guided walkthrough"}
-          </SheetTitle>
-          <SheetDescription>
-            {position && stepList.length
-              ? `Step ${position} of ${stepList.length}. Your report stays open behind this panel.`
-              : "Your report stays open behind this panel."}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {messages.length === 0 && !busy && (
-            <p className="text-sm text-muted-foreground text-center py-8">
-              Getting your walkthrough ready…
-            </p>
-          )}
-          {messages.map((m, i) => (
-            <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-              <div
-                className={
-                  m.role === "user"
-                    ? "max-w-[85%] rounded-lg px-3 py-2 text-sm bg-primary text-primary-foreground whitespace-pre-wrap"
-                    : "max-w-[85%] rounded-lg px-3 py-2 text-sm bg-muted whitespace-pre-wrap"
-                }
-              >
-                {m.role === "assistant" ? renderBold(m.content) : m.content}
-              </div>
-            </div>
-          ))}
-          {busy && (
-            <div className="flex justify-start">
-              <div className="rounded-lg px-3 py-2 bg-muted">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            </div>
-          )}
-          <div ref={endRef} />
-        </div>
-
-        {notice && <p className="px-4 pb-2 text-sm text-muted-foreground">{notice}</p>}
-
-        <div className="border-t border-border p-3 space-y-2">
-          {ended ? (
-            <Button className="w-full" onClick={() => onOpenChange(false)}>
-              Back to my report
-            </Button>
-          ) : isGate ? (
-            <div className="flex flex-col gap-2">
-              <Button onClick={advance} disabled={busy || !nextStep}>
-                Yes, keep going
-              </Button>
-              <Button variant="outline" onClick={() => finish("completed")} disabled={busy}>
-                That's enough for now
-              </Button>
-            </div>
-          ) : nextStep ? (
-            <Button className="w-full" onClick={advance} disabled={busy}>
-              Continue
-            </Button>
-          ) : (
-            <div className="flex gap-2 items-end">
-              <Textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                disabled={busy}
-                placeholder="Type your answer…"
-                rows={2}
-                className="flex-1 resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-              />
-              <div className="flex flex-col gap-1">
-                <Button onClick={send} disabled={busy || !text.trim()}>
-                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-                <DictateButton
-                  onFinal={(t) => setText((cur) => (cur ? cur + " " : "") + t)}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              {remaining !== null ? `${remaining} exchanges left in this walkthrough` : ""}
-            </p>
-            {!ended && (
-              <Button variant="ghost" size="sm" onClick={() => finish("abandoned")}>
-                Finish here
-              </Button>
-            )}
+    // Non-modal: no scroll lock, no overlay, so the report behind stays usable.
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} modal={false}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Content
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          className="fixed inset-y-0 right-0 z-50 h-full w-full sm:max-w-md flex flex-col border-l border-border bg-background shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
+        >
+          <div className="px-4 py-3 border-b border-border text-left pr-10">
+            <DialogPrimitive.Title className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <Sparkles className="h-4 w-4 text-primary" />
+              {stepTitle ?? "Guided walkthrough"}
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="text-sm text-muted-foreground">
+              {position && stepList.length
+                ? `Step ${position} of ${stepList.length}. Your report stays open behind this panel.`
+                : "Your report stays open behind this panel."}
+            </DialogPrimitive.Description>
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.length === 0 && !busy && (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Getting your walkthrough ready…
+              </p>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
+                <div
+                  className={
+                    m.role === "user"
+                      ? "max-w-[85%] rounded-lg px-3 py-2 text-sm bg-primary text-primary-foreground whitespace-pre-wrap"
+                      : "max-w-[85%] rounded-lg px-3 py-2 text-sm bg-muted whitespace-pre-wrap"
+                  }
+                >
+                  {m.role === "assistant" ? renderBold(m.content) : m.content}
+                </div>
+              </div>
+            ))}
+            {busy && (
+              <div className="flex justify-start">
+                <div className="rounded-lg px-3 py-2 bg-muted">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
+          </div>
+
+          {notice && <p className="px-4 pb-2 text-sm text-muted-foreground">{notice}</p>}
+
+          <div className="border-t border-border p-3 space-y-2">
+            {ended ? (
+              <Button className="w-full" onClick={() => onOpenChange(false)}>
+                Back to my report
+              </Button>
+            ) : isGate ? (
+              <div className="flex flex-col gap-2">
+                <Button onClick={keepGoing} disabled={busy}>
+                  Yes, keep going
+                </Button>
+                <Button variant="outline" onClick={() => finish("completed")} disabled={busy}>
+                  That's enough for now
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2 items-end">
+                  <Textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    disabled={busy}
+                    placeholder="Type your answer…"
+                    rows={2}
+                    className="flex-1 resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        send();
+                      }
+                    }}
+                  />
+                  <div className="flex flex-col gap-1">
+                    <Button onClick={send} disabled={busy || !text.trim()}>
+                      {busy ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <DictateButton
+                      onFinal={(t) => setText((cur) => (cur ? cur + " " : "") + t)}
+                    />
+                  </div>
+                </div>
+                {nextStep && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-muted-foreground"
+                    onClick={advance}
+                    disabled={busy}
+                  >
+                    {nextStep.title ? `Skip ahead to ${nextStep.title}` : "Skip ahead"}
+                  </Button>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {remaining !== null ? `${remaining} exchanges left in this walkthrough` : ""}
+              </p>
+              {!ended && (
+                <Button variant="ghost" size="sm" onClick={() => finish("abandoned")}>
+                  Finish here
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
