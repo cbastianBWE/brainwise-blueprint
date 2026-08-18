@@ -369,12 +369,26 @@ export default function PtpIntroGate({
     queryFn: () => resolveTierThumbnailUrls("resource", resourceIds),
   });
 
+  const maybeShowOffer = async (): Promise<boolean> => {
+    if (!assessmentResultId) return false;
+    const { data, error } = await supabase.functions.invoke("ptp-walkthrough", {
+      body: { action: "offer", assessment_result_id: assessmentResultId },
+    });
+    if (readWalkthroughError(error, data)) return false;
+    const o = data as WalkthroughOffer;
+    if (!o?.offer && !o?.resume_session_id) return false;
+    setOfferSteps(o.steps ?? []);
+    setPhase("offer");
+    return true;
+  };
+
   const advance = async () => {
     if (idx >= videos.length - 1) {
       try {
         const { data, error } = await supabase.rpc("ptp_intro_gate_resolve" as never);
         if (error) throw error;
         if ((data as any)?.resolved) {
+          if (await maybeShowOffer()) return;
           setOpen(false);
           return;
         }
