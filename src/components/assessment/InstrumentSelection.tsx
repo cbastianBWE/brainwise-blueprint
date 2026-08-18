@@ -536,6 +536,45 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
 
+              // Practitioner's suggested starting half (PTP only). Only a concrete
+              // half is actionable; "both"/null/anything else falls through to the
+              // unchanged default button.
+              const rawPreferred = inst.instrument_id === "INST-001" ? ptpPreferredContext.get(instrumentUuid) : undefined;
+              const preferredCtx: 'professional' | 'personal' | undefined =
+                rawPreferred === "professional" || rawPreferred === "personal" ? rawPreferred : undefined;
+              const preferredLabel = preferredCtx === "professional" ? "Professional" : "Personal";
+
+              // Fresh-start button for an entitlement branch: honours the
+              // practitioner's suggestion when present, otherwise unchanged.
+              const freshStartButton = (
+                source: EntitlementSource,
+                defaultLabel: string,
+                className = "w-full",
+              ): React.ReactNode => {
+                if (!preferredCtx || isInProgress) {
+                  return (
+                    <Button className={className} onClick={() => handleSelect(inst, undefined, source)}>
+                      {defaultLabel}
+                    </Button>
+                  );
+                }
+                return (
+                  <div className="space-y-1">
+                    <Button className={className} onClick={() => handleSelect(inst, preferredCtx, source)}>
+                      Start with your {preferredLabel} half
+                    </Button>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="w-full text-muted-foreground"
+                      onClick={() => handleSelect(inst, undefined, source)}
+                    >
+                      Choose a different starting point
+                    </Button>
+                  </div>
+                );
+              };
+
               let buttonContent: React.ReactNode;
               if (canBypassAssessmentPaywall) {
                 buttonContent = (
