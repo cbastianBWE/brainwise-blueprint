@@ -309,7 +309,7 @@ export default function PtpWalkthroughPanel({
                     onClick={advance}
                     disabled={busy}
                   >
-                    {nextStep.title ? `Skip ahead to ${nextStep.title}` : "Skip ahead"}
+                    {nextStep.title ? `Next: ${nextStep.title}` : "Next"}
                   </Button>
                 )}
               </div>
