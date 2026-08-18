@@ -221,9 +221,11 @@ All colors MUST be HSL.
 
 /* Brief, subtle wash applied when the guided walkthrough points at a section. */
 .ptp-walkthrough-focus {
-  outline: 2px solid hsl(var(--primary) / 0.5);
+  outline: 3px solid hsl(var(--primary) / 0.7);
   outline-offset: 6px;
   border-radius: 12px;
-  background-color: hsl(var(--primary) / 0.04);
-  transition: outline-color 300ms ease, background-color 300ms ease;
+  background-color: hsl(var(--primary) / 0.10);
+  transition: outline-color 300ms ease, outline-width 300ms ease,
+    outline-offset 300ms ease, background-color 300ms ease;
 }
+
