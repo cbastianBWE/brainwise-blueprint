@@ -38,17 +38,76 @@ export const SECTION_ELEMENT_IDS: Record<string, string> = {
   assessment_responses: "ptp-section-responses",
 };
 
+export const PTP_SECTION_REVEAL_EVENT = "ptp-walkthrough:reveal";
+
+export type SectionRevealDetail = {
+  /** report_section token, e.g. "onepager" */
+  token: string;
+  /** one-pagers only: work | therapist | partner | friend */
+  audience?: string;
+};
+
+export function requestSectionReveal(detail: SectionRevealDetail): void {
+  window.dispatchEvent(
+    new CustomEvent<SectionRevealDetail>(PTP_SECTION_REVEAL_EVENT, { detail }),
+  );
+}
+
+/** Subscribe to reveal requests for one token. Returns an unsubscribe fn. */
+export function onSectionReveal(
+  token: string,
+  handler: (detail: SectionRevealDetail) => void,
+): () => void {
+  const listener = (e: Event) => {
+    const detail = (e as CustomEvent<SectionRevealDetail>).detail;
+    if (!detail?.token) return;
+    const parts = detail.token.split(",").map((t) => t.trim());
+    if (!parts.includes(token)) return;
+    handler(detail);
+  };
+  window.addEventListener(PTP_SECTION_REVEAL_EVENT, listener);
+  return () => window.removeEventListener(PTP_SECTION_REVEAL_EVENT, listener);
+}
+
 export function focusReportSection(reportSection: string | null | undefined) {
   if (!reportSection) return;
-  const token = reportSection.split(",")[0]?.trim();
-  const elId = token ? SECTION_ELEMENT_IDS[token] : undefined;
-  if (!elId) return;
-  const el = document.getElementById(elId);
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
-  el.classList.add("ptp-walkthrough-focus");
-  window.setTimeout(() => el.classList.remove("ptp-walkthrough-focus"), 2000);
+  const tokens = reportSection
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (tokens.length === 0) return;
+
+  // Ask every named section to open itself first.
+  tokens.forEach((t) => {
+    if (!SECTION_ELEMENT_IDS[t]) {
+      console.warn("[ptp-walkthrough] unmapped report_section token", t);
+    }
+    requestSectionReveal({ token: t });
+  });
+
+  // Let a newly expanded section settle before measuring where to scroll.
+  window.setTimeout(() => {
+    let el: HTMLElement | null = null;
+    for (const t of tokens) {
+      const elId = SECTION_ELEMENT_IDS[t];
+      if (!elId) continue;
+      const candidate = document.getElementById(elId);
+      if (candidate) {
+        el = candidate;
+        break;
+      }
+      console.warn("[ptp-walkthrough] no element for section id", elId, "token", t);
+    }
+    if (!el) {
+      console.warn("[ptp-walkthrough] nothing to scroll to for", reportSection);
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.add("ptp-walkthrough-focus");
+    window.setTimeout(() => el!.classList.remove("ptp-walkthrough-focus"), 2000);
+  }, 120);
 }
+
 
 /** step id -> report_section token string, straight from the active definition. */
 export async function fetchStepSections(): Promise<Record<string, string | null>> {
