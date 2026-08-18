@@ -186,6 +186,8 @@ function usePTPNarrativeData(props: PTPNarrativeSectionsProps) {
   const [narrativeSections, setNarrativeSections] = useState<NarrativeSectionsShape | null>(null);
   const [loadingNarrativeSections, setLoadingNarrativeSections] = useState(false);
   const [responsesExpanded, setResponsesExpanded] = useState(false);
+  // Walkthrough reveal: open only, never collapse; idempotent.
+  useEffect(() => onSectionReveal("assessment_responses", () => setResponsesExpanded(true)), []);
   const [assessmentResponses, setAssessmentResponses] = useState<{
     itemNumber: number;
     facetName: string;
@@ -1294,12 +1296,6 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
 
 export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) {
   const data = usePTPNarrativeContext();
-  const setResponsesExpandedRef = data.setResponsesExpanded;
-  // Walkthrough reveal: open only, never collapse.
-  useEffect(
-    () => onSectionReveal("assessment_responses", () => setResponsesExpandedRef(true)),
-    [setResponsesExpandedRef],
-  );
   if (isCoachLimited(props)) return null;
   const {
     responsesExpanded,
