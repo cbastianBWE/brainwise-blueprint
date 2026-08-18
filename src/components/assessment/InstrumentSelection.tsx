@@ -543,6 +543,8 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const preferredCtx: 'professional' | 'personal' | undefined =
                 rawPreferred === "professional" || rawPreferred === "personal" ? rawPreferred : undefined;
               const preferredLabel = preferredCtx === "professional" ? "Professional" : "Personal";
+              // A "both" suggestion doesn't change the button, but should still be surfaced.
+              const suggestedBoth = rawPreferred === "both" && !isInProgress;
 
               // Set only when the suggestion actually drives the rendered button.
               let usedPreferred = false;
