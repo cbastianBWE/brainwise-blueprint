@@ -10,6 +10,7 @@ import { AddToDevelopmentPlanModal } from "@/components/results/AddToDevelopment
 import { HighlightableText } from "@/components/results/ReportHighlight";
 import { useNarrativeGenerator } from "@/hooks/useNarrativeGenerator";
 import { selectDrivingFacets } from "@/lib/selectDrivingFacets";
+import { onSectionReveal } from "@/components/results/ptpWalkthroughShared";
 
 const PTP_DIMENSION_NAMES: Record<string, string> = {
   "DIM-PTP-01": "Protection",
@@ -1192,6 +1193,23 @@ function FacetList({
 
 export function PTPFacetInsightsElevatedSection(props: PTPNarrativeSectionsProps) {
   const data = usePTPNarrativeContext();
+  const { setExpandedFacets } = data;
+  // Walkthrough reveal: open the first two rows only, never collapse.
+  useEffect(() => {
+    const reveal = () =>
+      setExpandedFacets((prev) => {
+        const next = new Set(prev);
+        next.add("elevated-0");
+        next.add("elevated-1");
+        return next;
+      });
+    const offAll = onSectionReveal("facet_insights_all", reveal);
+    const off = onSectionReveal("facet_insights", reveal);
+    return () => {
+      offAll();
+      off();
+    };
+  }, [setExpandedFacets]);
   if (isCoachLimited(props)) return null;
   if (data.loadingFacets || data.elevatedFacets.length === 0) return null;
   return (
@@ -1276,6 +1294,12 @@ export function PTPCrossAssessmentSection(props: PTPNarrativeSectionsProps) {
 
 export function PTPAssessmentResponsesSection(props: PTPNarrativeSectionsProps) {
   const data = usePTPNarrativeContext();
+  const setResponsesExpandedRef = data.setResponsesExpanded;
+  // Walkthrough reveal: open only, never collapse.
+  useEffect(
+    () => onSectionReveal("assessment_responses", () => setResponsesExpandedRef(true)),
+    [setResponsesExpandedRef],
+  );
   if (isCoachLimited(props)) return null;
   const {
     responsesExpanded,
