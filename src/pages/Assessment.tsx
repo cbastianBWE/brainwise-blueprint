@@ -254,11 +254,15 @@ export default function Assessment() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { if (!cancelled) setPtpContextLoading(false); return; }
 
+      // coach_clients stores the instrument UUID, not the "INST-001" short code.
+      const ptpUuid = getInstrumentByInstrumentId(selectedInstrument.instrument_id)?.uuid;
+
       const [ccRes, purchaseRes] = await Promise.all([
         supabase
           .from("coach_clients_client_view")
           .select("context_progress, preferred_first_context, created_at")
-          .eq("instrument_id", selectedInstrument.instrument_id)
+          .eq("client_user_id", user.id)
+          .eq("instrument_id", ptpUuid ?? selectedInstrument.instrument_id)
           .order("created_at", { ascending: false }),
         supabase
           .from("assessment_purchases")
