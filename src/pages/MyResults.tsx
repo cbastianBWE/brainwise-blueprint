@@ -1052,6 +1052,9 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
         (selected?.result.instrument_id ?? "") === "INST-001" && (
           <PtpIntroGate />
         )}
+      {!isCoachView && !adminView && !targetUserId && selected?.isPTP && (
+        <PtpWalkthroughEntry assessmentResultId={selected.result.id} />
+      )}
       {/* Assessment selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h1 className="text-2xl font-bold text-foreground">
@@ -1250,10 +1253,12 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               <FileText className="mr-2 h-4 w-4" /> Export PDF
             </Button>
             {effectiveSelected?.isPTP && displayName && (
+              <div id="ptp-section-onepagers">
               <PtpOnePagers
                 assessmentResultId={effectiveSelected.result.id}
                 userName={displayName}
               />
+              </div>
             )}
             {!isCoachView && canTakeAssessments && (
               <>
