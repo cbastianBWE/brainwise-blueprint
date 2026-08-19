@@ -162,7 +162,40 @@ export default function CoachProfile() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Guided walkthrough</CardTitle>
+          <CardDescription>
+            An optional AI walkthrough that reads a client through their own report before
+            they meet you. Off by default, because many practitioners prefer to do that part
+            themselves.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="space-y-0.5 pr-4">
+              <Label className="text-sm">Offer the guided walkthrough to new clients</Label>
+              <p className="text-xs text-muted-foreground">
+                This sets the default for clients you invite from now on. It does not change
+                clients you already have — every existing client was switched on when this
+                shipped. You can override it for any individual client on your Clients page.
+              </p>
+            </div>
+            {settingsLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <Switch
+                checked={!!coachSettings?.walkthrough_default}
+                disabled={walkthroughBusy}
+                onCheckedChange={setWalkthroughDefault}
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <DirectoryListingCard />
+
     </div>
   );
 }
