@@ -112,6 +112,8 @@ export default function BulkInviteModal({
     setSubmitting(false);
     setPreferredContext(null);
     setResultsReleased(false);
+    setWalkthroughChoice("default");
+
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -234,6 +236,8 @@ export default function BulkInviteModal({
     const payload = {
       preferred_first_context: preferredContext,
       results_released: resultsReleased,
+      walkthrough_enabled: walkthroughValue(),
+
       rows: validRows.map(r => ({
         client_email: r.email.trim().toLowerCase(),
         client_first_name: r.first_name.trim() || null,
