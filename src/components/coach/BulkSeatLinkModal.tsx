@@ -44,7 +44,7 @@ async function readFnError(err: unknown): Promise<{ code: string | null; status:
 }
 
 export default function BulkSeatLinkModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault,
 }: Props) {
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
@@ -53,6 +53,10 @@ export default function BulkSeatLinkModal({
   const [pendingLinkId, setPendingLinkId] = useState<string | null>(null);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
+
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -64,7 +68,9 @@ export default function BulkSeatLinkModal({
     setPendingLinkId(null);
     setPreferredContext(null);
     setResultsReleased(false);
+    setWalkthroughChoice("default");
   };
+
 
   const handleOpenChange = (o: boolean) => {
     if (!o) resetAll();
