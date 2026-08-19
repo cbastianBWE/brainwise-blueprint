@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Copy, Link as LinkIcon } from "lucide-react";
+import WalkthroughChoice from "@/components/coach/WalkthroughChoice";
 
 const INSTRUMENTS = [
   { id: "PTP",   uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile" },
@@ -29,8 +30,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   allowedInstrumentIds: Set<string>;
   perAssessmentPrice: number | null;
+  coachWalkthroughDefault: boolean | null;
   onComplete: () => void;
 }
+
 
 type Stage = "form" | "submitting" | "result";
 
