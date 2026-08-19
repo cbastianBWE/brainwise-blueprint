@@ -128,7 +128,9 @@ export default function BulkSeatLinkModal({
       if (code === "bulk_link_not_payable") {
         toast.success("This seat link is already paid and active. Find it in the Active Seat Links list.");
         resetAll();
-        onOpenChange(false);
+        // onComplete closes the modal AND refetches the seat-link list. The toast
+        // points the coach at a list that would otherwise not show the link yet.
+        onComplete();
         return;
       }
 
