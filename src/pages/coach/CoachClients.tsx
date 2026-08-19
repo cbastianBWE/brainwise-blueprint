@@ -134,6 +134,8 @@ export default function CoachClients() {
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
+
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
