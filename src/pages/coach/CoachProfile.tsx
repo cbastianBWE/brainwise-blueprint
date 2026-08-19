@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { DirectoryListingCard } from "@/components/coach/DirectoryListingCard";
+
 
 interface AcceptanceRow {
   id: string;
@@ -42,10 +46,48 @@ export default function CoachProfile() {
     },
   });
 
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [walkthroughBusy, setWalkthroughBusy] = useState(false);
+
+  const { data: coachSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["coach-settings-walkthrough", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("bw_get_my_coach_settings");
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return { walkthrough_default: !!row?.walkthrough_default };
+    },
+  });
+
+  const setWalkthroughDefault = async (enabled: boolean) => {
+    setWalkthroughBusy(true);
+    const { error } = await (supabase.rpc as any)("bw_set_my_walkthrough_default", {
+      p_enabled: enabled,
+    });
+    setWalkthroughBusy(false);
+    if (error) {
+      toast({
+        title: "Could not save your choice",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["coach-settings-walkthrough", user?.id] });
+    toast({
+      title: enabled
+        ? "New clients will be offered the guided walkthrough"
+        : "You'll walk new clients through their reports yourself",
+    });
+  };
+
   const mostRecent = acceptances?.[0];
 
   const fmt = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -120,7 +162,40 @@ export default function CoachProfile() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Guided walkthrough</CardTitle>
+          <CardDescription>
+            An optional AI walkthrough that reads a client through their own report before
+            they meet you. Off by default, because many practitioners prefer to do that part
+            themselves.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between rounded-md border p-3">
+            <div className="space-y-0.5 pr-4">
+              <Label className="text-sm">Offer the guided walkthrough to new clients</Label>
+              <p className="text-xs text-muted-foreground">
+                This sets the default for clients you invite from now on. It does not change
+                clients you already have — every existing client was switched on when this
+                shipped. You can override it for any individual client on your Clients page.
+              </p>
+            </div>
+            {settingsLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <Switch
+                checked={!!coachSettings?.walkthrough_default}
+                disabled={walkthroughBusy}
+                onCheckedChange={setWalkthroughDefault}
+              />
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <DirectoryListingCard />
+
     </div>
   );
 }

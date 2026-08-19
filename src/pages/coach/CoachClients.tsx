@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -73,6 +74,7 @@ interface ClientRow {
   results_released: boolean;
   revoked_at: string | null;
   expires_at: string | null;
+  walkthrough_enabled: boolean | null;
 }
 
 interface UniqueClient {
@@ -152,12 +154,25 @@ export default function CoachClients() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await (supabase.rpc as any)("bw_get_my_coach_settings");
+      if (cancelled || error) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      setWalkthroughDefault(!!row?.walkthrough_default);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [perAssessmentPrice, setPerAssessmentPrice] = useState<number | null>(null);
   const [perAssessmentPriceId, setPerAssessmentPriceId] = useState<string | null>(null);
   const [actorCert, setActorCert] = useState<{ id: string; certification_type: string; status: string; free_uses_expire_at: string | null } | null>(null);
   const [actorsUsed, setActorsUsed] = useState<number>(0);
   const [isActorDebrief, setIsActorDebrief] = useState(false);
   const [freePool, setFreePool] = useState<Record<string, number>>({});
+  const [walkthroughDefault, setWalkthroughDefault] = useState<boolean | null>(null);
+  const [walkthroughBusy, setWalkthroughBusy] = useState(false);
   const [isFreeGrant, setIsFreeGrant] = useState(false);
 
   const hasAnyFreeBalance = Object.values(freePool).some((b) => b > 0);
@@ -179,7 +194,7 @@ export default function CoachClients() {
     try {
       const { data: ccRows, error: ccError } = await supabase
         .from("coach_clients")
-        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
+        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at, walkthrough_enabled")
         .eq("coach_user_id", user.id)
         .order("created_at", { ascending: false });
       if (ccError) throw new Error(ccError.message);
@@ -251,6 +266,7 @@ export default function CoachClients() {
           results_released: cc.results_released,
           revoked_at: cc.revoked_at,
           expires_at: cc.expires_at,
+          walkthrough_enabled: (cc as { walkthrough_enabled?: boolean | null }).walkthrough_enabled ?? null,
         });
       }
 
@@ -1491,6 +1507,53 @@ export default function CoachClients() {
                 <Plus className="h-3 w-3" aria-hidden="true" /> Order Assessment for This Client
               </Button>
             </div>
+            {(() => {
+              const rows = clients.filter(c => c.client_email === selectedClientEmail && c.revoked_at === null);
+              const current = rows.length ? rows[0].walkthrough_enabled : null;
+              const value = current === null ? "default" : current ? "on" : "off";
+              const onChange = async (v: string) => {
+                if (!selectedClientEmail) return;
+                setWalkthroughBusy(true);
+                const { error } = await (supabase.rpc as any)("bw_set_client_walkthrough", {
+                  p_client_email: selectedClientEmail,
+                  p_enabled: v === "default" ? null : v === "on",
+                });
+                setWalkthroughBusy(false);
+                if (error) {
+                  toast.error(error.message || "Could not save your choice");
+                  return;
+                }
+                await fetchClients();
+                toast.success(
+                  v === "default"
+                    ? "This client now follows your practice default"
+                    : v === "on"
+                      ? "This client will be offered the guided walkthrough"
+                      : "You'll walk this client through their report yourself",
+                );
+              };
+              return (
+                <div className="pt-4 space-y-1.5 max-w-md">
+                  <Label className="text-sm">Guided walkthrough</Label>
+                  <p className="text-xs text-muted-foreground">
+                    An optional AI walkthrough that reads this client through their own report
+                    before you meet. Choose whichever fits how you want to run the debrief.
+                  </p>
+                  <Select value={value} onValueChange={onChange} disabled={walkthroughBusy}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        Use my default{walkthroughDefault === null ? "" : walkthroughDefault ? " (currently on)" : " (currently off)"}
+                      </SelectItem>
+                      <SelectItem value="on">On for this client</SelectItem>
+                      <SelectItem value="off">Off for this client</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              );
+            })()}
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
