@@ -46,10 +46,48 @@ export default function CoachProfile() {
     },
   });
 
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [walkthroughBusy, setWalkthroughBusy] = useState(false);
+
+  const { data: coachSettings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["coach-settings-walkthrough", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)("bw_get_my_coach_settings");
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return { walkthrough_default: !!row?.walkthrough_default };
+    },
+  });
+
+  const setWalkthroughDefault = async (enabled: boolean) => {
+    setWalkthroughBusy(true);
+    const { error } = await (supabase.rpc as any)("bw_set_my_walkthrough_default", {
+      p_enabled: enabled,
+    });
+    setWalkthroughBusy(false);
+    if (error) {
+      toast({
+        title: "Could not save your choice",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["coach-settings-walkthrough", user?.id] });
+    toast({
+      title: enabled
+        ? "New clients will be offered the guided walkthrough"
+        : "You'll walk new clients through their reports yourself",
+    });
+  };
+
   const mostRecent = acceptances?.[0];
 
   const fmt = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
