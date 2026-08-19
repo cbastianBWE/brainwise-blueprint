@@ -80,8 +80,9 @@ function emptyRow(prev?: BulkRow): BulkRow {
 }
 
 export default function BulkInviteModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, onComplete,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault, onComplete,
 }: Props) {
+
   const [stage, setStage] = useState<Stage>("validate");
   const [rows, setRows] = useState<BulkRow[]>([]);
   const [rpcResults, setRpcResults] = useState<any[]>([]);
