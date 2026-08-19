@@ -26,9 +26,26 @@ export default function PtpWalkthroughEntry({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data, error } = await supabase.functions.invoke("ptp-walkthrough", {
-        body: { action: "offer", assessment_result_id: assessmentResultId },
-      });
+      const [{ data, error }, allowedRes] = await Promise.all([
+        supabase.functions.invoke("ptp-walkthrough", {
+          body: { action: "offer", assessment_result_id: assessmentResultId },
+        }),
+        supabase.rpc("bw_walkthrough_allowed" as never, { p_result: assessmentResultId } as never),
+      ]);
+
+      if (cancelled) return;
+
+      if (allowedRes.error) {
+        console.error("[ptp-walkthrough] allowed check failed", allowedRes.error);
+        setHidden(true);
+        return;
+      }
+      if (allowedRes.data !== true) {
+        console.info("[ptp-walkthrough] disabled by practitioner", assessmentResultId);
+        setHidden(true);
+        return;
+      }
+
       const err = readWalkthroughError(error, data);
       if (cancelled) return;
       if (err) {
