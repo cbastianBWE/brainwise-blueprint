@@ -252,7 +252,7 @@ export default function BulkSeatLinkModal({
                     type="button"
                     size="sm"
                     variant={preferredContext === opt.v ? "default" : "outline"}
-                    onClick={() => setPreferredContext(opt.v)}
+                    onClick={() => { setPendingLinkId(null); setPreferredContext(opt.v); }}
                   >
                     {opt.label}
                   </Button>
