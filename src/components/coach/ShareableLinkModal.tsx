@@ -104,7 +104,10 @@ export default function ShareableLinkModal({
         p_instrument_ids: instrumentUuids,
         p_coach_note: coachNote.trim() || null,
         p_preferred_first_context: preferredContext,
+        p_results_released: resultsReleased,
+        p_walkthrough_enabled: walkthroughValue(),
       };
+
       console.log("[ShareableLinkModal] coach_shareable_link_self_pay params:", params);
       const { data, error } = await supabase.rpc("coach_shareable_link_self_pay" as any, params as any);
       console.log("[ShareableLinkModal] coach_shareable_link_self_pay response:", { data, error });
