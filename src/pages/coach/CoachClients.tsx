@@ -29,6 +29,8 @@ import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
 import BulkSeatLinkModal from "@/components/coach/BulkSeatLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
+import WalkthroughChoice from "@/components/coach/WalkthroughChoice";
+
 import CouplesTab from "@/components/coach/relationship/CouplesTab";
 import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
 import { escHtml } from "@/lib/escHtml";
@@ -1069,6 +1071,12 @@ export default function CoachClients() {
           </div>
         </div>
       )}
+      <WalkthroughChoice
+        value={walkthroughChoice}
+        onChange={setWalkthroughChoice}
+        coachDefault={walkthroughDefault}
+      />
+
       {canOfferActorDebrief && (
         <div className="flex items-center justify-between rounded-md border p-3">
           <div className="space-y-0.5 pr-3">
