@@ -256,6 +256,14 @@ export default function BulkSeatLinkModal({
             </div>
           )}
 
+          <WalkthroughChoice
+            value={walkthroughChoice}
+            onChange={(v) => { setPendingLinkId(null); setWalkthroughChoice(v); }}
+            coachDefault={coachWalkthroughDefault}
+          />
+
+
+
           <div className="rounded-md bg-muted/50 p-3 text-sm">
             {priceMissing ? (
               <span className="text-muted-foreground">Loading price…</span>
