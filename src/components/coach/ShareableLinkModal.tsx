@@ -38,7 +38,7 @@ interface Props {
 type Stage = "form" | "submitting" | "result";
 
 export default function ShareableLinkModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, onComplete,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault, onComplete,
 }: Props) {
   const [stage, setStage] = useState<Stage>("form");
   const [firstName, setFirstName] = useState("");
@@ -51,7 +51,10 @@ export default function ShareableLinkModal({
   const [resultExpiresAt, setResultExpiresAt] = useState<string | null>(null);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
 
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -65,7 +68,9 @@ export default function ShareableLinkModal({
     setResultExpiresAt(null);
     setPreferredContext(null);
     setResultsReleased(false);
+    setWalkthroughChoice("default");
   };
+
 
   const handleOpenChange = (o: boolean) => {
     if (!o) resetAll();
