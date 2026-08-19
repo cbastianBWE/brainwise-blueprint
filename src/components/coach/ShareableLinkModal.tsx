@@ -278,6 +278,14 @@ export default function ShareableLinkModal({
               </div>
             )}
 
+            <WalkthroughChoice
+              value={walkthroughChoice}
+              onChange={setWalkthroughChoice}
+              coachDefault={coachWalkthroughDefault}
+            />
+
+
+
             {paymentMode === "coach_paid" && selectedInstrumentShortIds.length > 0 && (
               <p className="text-sm text-muted-foreground">
                 Total: {total !== null ? `$${total}` : "loading…"}
