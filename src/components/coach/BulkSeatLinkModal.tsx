@@ -44,7 +44,7 @@ async function readFnError(err: unknown): Promise<{ code: string | null; status:
 }
 
 export default function BulkSeatLinkModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault, onComplete,
 }: Props) {
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
