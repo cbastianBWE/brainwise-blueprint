@@ -44,7 +44,7 @@ async function readFnError(err: unknown): Promise<{ code: string | null; status:
 }
 
 export default function BulkSeatLinkModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault, onComplete,
 }: Props) {
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
@@ -128,7 +128,9 @@ export default function BulkSeatLinkModal({
       if (code === "bulk_link_not_payable") {
         toast.success("This seat link is already paid and active. Find it in the Active Seat Links list.");
         resetAll();
-        onOpenChange(false);
+        // onComplete closes the modal AND refetches the seat-link list. The toast
+        // points the coach at a list that would otherwise not show the link yet.
+        onComplete();
         return;
       }
 
@@ -224,7 +226,10 @@ export default function BulkSeatLinkModal({
               <Label className="text-sm">Allow client to see results immediately</Label>
               <p className="text-xs text-muted-foreground">If off, client must wait for practitioner debrief before viewing results</p>
             </div>
-            <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+            <Switch
+              checked={resultsReleased}
+              onCheckedChange={(v) => { setPendingLinkId(null); setResultsReleased(v); }}
+            />
           </div>
 
           {instrumentShortId === "PTP" && (
@@ -247,7 +252,7 @@ export default function BulkSeatLinkModal({
                     type="button"
                     size="sm"
                     variant={preferredContext === opt.v ? "default" : "outline"}
-                    onClick={() => setPreferredContext(opt.v)}
+                    onClick={() => { setPendingLinkId(null); setPreferredContext(opt.v); }}
                   >
                     {opt.label}
                   </Button>
