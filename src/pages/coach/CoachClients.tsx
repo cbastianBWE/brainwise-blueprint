@@ -73,6 +73,7 @@ interface ClientRow {
   results_released: boolean;
   revoked_at: string | null;
   expires_at: string | null;
+  walkthrough_enabled: boolean | null;
 }
 
 interface UniqueClient {
@@ -179,7 +180,7 @@ export default function CoachClients() {
     try {
       const { data: ccRows, error: ccError } = await supabase
         .from("coach_clients")
-        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at")
+        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at, walkthrough_enabled")
         .eq("coach_user_id", user.id)
         .order("created_at", { ascending: false });
       if (ccError) throw new Error(ccError.message);
@@ -251,6 +252,7 @@ export default function CoachClients() {
           results_released: cc.results_released,
           revoked_at: cc.revoked_at,
           expires_at: cc.expires_at,
+          walkthrough_enabled: (cc as { walkthrough_enabled?: boolean | null }).walkthrough_enabled ?? null,
         });
       }
 
