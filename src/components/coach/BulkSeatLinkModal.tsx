@@ -101,6 +101,8 @@ export default function BulkSeatLinkModal({
         p_coach_note: coachNote.trim() || null,
         p_preferred_first_context: preferredContext,
         p_results_released: resultsReleased,
+        p_walkthrough_enabled: walkthroughValue(),
+
       } as any);
       if (error) {
         toast.error("Could not create link: " + error.message);
