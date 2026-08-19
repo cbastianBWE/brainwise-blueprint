@@ -463,6 +463,15 @@ export default function BulkInviteModal({
                 </div>
               )}
 
+              <WalkthroughChoice
+                plural
+                value={walkthroughChoice}
+                onChange={setWalkthroughChoice}
+                coachDefault={coachWalkthroughDefault}
+              />
+
+
+
               <div className="flex items-center justify-between pt-2">
                 <Button
                   size="sm"
