@@ -92,6 +92,11 @@ export default function BulkInviteModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
+
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
+
 
   const allowedInstruments = useMemo(
     () => INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id)),
