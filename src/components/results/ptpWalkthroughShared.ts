@@ -181,6 +181,9 @@ export function walkthroughErrorCopy(e: WalkthroughError): string {
   if (e.code === "no_responses_on_result") {
     return "This report doesn't have answers attached to it yet.";
   }
+  if (e.code === "walkthrough_disabled_by_practitioner") {
+    return "This isn't available on your report right now. Your practitioner will go through it with you.";
+  }
   if (e.status === 402) {
     return "You have no AI messages remaining. Your practitioner can help, or you can upgrade for more.";
   }
@@ -193,6 +196,7 @@ export function isGracefulEnd(e: WalkthroughError): boolean {
   return (
     e.code === "walkthrough_budget_exhausted" ||
     e.code === "account_allowance_exhausted" ||
-    e.code === "free_walkthrough_already_used"
+    e.code === "free_walkthrough_already_used" ||
+    e.code === "walkthrough_disabled_by_practitioner"
   );
 }
