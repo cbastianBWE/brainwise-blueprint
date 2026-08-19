@@ -2301,6 +2301,7 @@ export type Database = {
           stripe_coupon_id: string | null
           stripe_payment_intent_id: string | null
           stripe_refund_id: string | null
+          walkthrough_enabled: boolean | null
         }
         Insert: {
           actor_id?: string | null
@@ -2335,6 +2336,7 @@ export type Database = {
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_refund_id?: string | null
+          walkthrough_enabled?: boolean | null
         }
         Update: {
           actor_id?: string | null
@@ -2369,6 +2371,7 @@ export type Database = {
           stripe_coupon_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_refund_id?: string | null
+          walkthrough_enabled?: boolean | null
         }
         Relationships: [
           {
@@ -3070,6 +3073,56 @@ export type Database = {
             foreignKeyName: "coach_pending_bulk_batches_coach_user_id_fkey"
             columns: ["coach_user_id"]
             isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_settings: {
+        Row: {
+          coach_user_id: string
+          created_at: string
+          updated_at: string
+          walkthrough_default: boolean
+        }
+        Insert: {
+          coach_user_id: string
+          created_at?: string
+          updated_at?: string
+          walkthrough_default?: boolean
+        }
+        Update: {
+          coach_user_id?: string
+          created_at?: string
+          updated_at?: string
+          walkthrough_default?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_settings_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settings_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_settings_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_settings_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -18593,6 +18646,12 @@ export type Database = {
         }[]
       }
       bw_get_ms_graph_secret: { Args: never; Returns: string }
+      bw_get_my_coach_settings: {
+        Args: never
+        Returns: {
+          walkthrough_default: boolean
+        }[]
+      }
       bw_get_my_plan_status: {
         Args: never
         Returns: {
@@ -18742,12 +18801,20 @@ export type Database = {
         Returns: Json
       }
       bw_scan_platform_tickets: { Args: never; Returns: Json }
+      bw_set_client_walkthrough: {
+        Args: { p_client_email: string; p_enabled: boolean }
+        Returns: number
+      }
       bw_set_coach_comp: {
         Args: { p_coach: string; p_comped: boolean; p_reason?: string }
         Returns: Json
       }
       bw_set_lifecycle_email_opt_out: {
         Args: { p_opt_out: boolean }
+        Returns: boolean
+      }
+      bw_set_my_walkthrough_default: {
+        Args: { p_enabled: boolean }
         Returns: boolean
       }
       bw_set_report_label: {
@@ -18777,6 +18844,7 @@ export type Database = {
           version: number
         }[]
       }
+      bw_walkthrough_allowed: { Args: { p_result: string }; Returns: boolean }
       bw_walkthrough_close: {
         Args: { p_session: string; p_status?: string }
         Returns: string
