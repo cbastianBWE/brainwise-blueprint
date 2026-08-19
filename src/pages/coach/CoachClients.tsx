@@ -459,9 +459,14 @@ export default function CoachClients() {
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
     setPreferredContext(null);
+    setWalkthroughChoice("default");
     setIsActorDebrief(false);
     setIsFreeGrant(false);
   };
+
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
+
 
   const toggleInstrument = (instrumentId: string) => {
     setInstrumentError(false);
