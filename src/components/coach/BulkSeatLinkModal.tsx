@@ -226,7 +226,10 @@ export default function BulkSeatLinkModal({
               <Label className="text-sm">Allow client to see results immediately</Label>
               <p className="text-xs text-muted-foreground">If off, client must wait for practitioner debrief before viewing results</p>
             </div>
-            <Switch checked={resultsReleased} onCheckedChange={setResultsReleased} />
+            <Switch
+              checked={resultsReleased}
+              onCheckedChange={(v) => { setPendingLinkId(null); setResultsReleased(v); }}
+            />
           </div>
 
           {instrumentShortId === "PTP" && (
