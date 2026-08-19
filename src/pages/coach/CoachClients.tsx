@@ -1255,6 +1255,7 @@ export default function CoachClients() {
           onOpenChange={setBulkModalOpen}
           allowedInstrumentIds={allowedInstrumentIds}
           perAssessmentPrice={perAssessmentPrice}
+          coachWalkthroughDefault={walkthroughDefault}
           onComplete={() => { setBulkModalOpen(false); fetchClients(); }}
         />
 
@@ -1263,6 +1264,7 @@ export default function CoachClients() {
           onOpenChange={setShareableModalOpen}
           allowedInstrumentIds={allowedInstrumentIds}
           perAssessmentPrice={perAssessmentPrice}
+          coachWalkthroughDefault={walkthroughDefault}
           onComplete={() => { setShareableModalOpen(false); fetchClients(); }}
         />
 
@@ -1271,7 +1273,9 @@ export default function CoachClients() {
           onOpenChange={setSeatLinkModalOpen}
           allowedInstrumentIds={allowedInstrumentIds}
           perAssessmentPrice={perAssessmentPrice}
+          coachWalkthroughDefault={walkthroughDefault}
           onComplete={() => { setSeatLinkModalOpen(false); fetchSeatLinks(); }}
+
         />
       </div>
 
