@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Trash2, Upload, Plus, Loader2 } from "lucide-react";
+import WalkthroughChoice from "@/components/coach/WalkthroughChoice";
+
 
 const INSTRUMENTS = [
   { id: "PTP",   uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile" },
@@ -44,7 +46,9 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   allowedInstrumentIds: Set<string>;
   perAssessmentPrice: number | null;
+  coachWalkthroughDefault: boolean | null;
   onComplete: () => void;
+
 }
 
 type Stage = "validate" | "preview" | "dispatching" | "results";
@@ -76,8 +80,9 @@ function emptyRow(prev?: BulkRow): BulkRow {
 }
 
 export default function BulkInviteModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, onComplete,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault, onComplete,
 }: Props) {
+
   const [stage, setStage] = useState<Stage>("validate");
   const [rows, setRows] = useState<BulkRow[]>([]);
   const [rpcResults, setRpcResults] = useState<any[]>([]);
@@ -87,6 +92,11 @@ export default function BulkInviteModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
+
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
+
 
   const allowedInstruments = useMemo(
     () => INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id)),
@@ -102,6 +112,8 @@ export default function BulkInviteModal({
     setSubmitting(false);
     setPreferredContext(null);
     setResultsReleased(false);
+    setWalkthroughChoice("default");
+
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -224,6 +236,8 @@ export default function BulkInviteModal({
     const payload = {
       preferred_first_context: preferredContext,
       results_released: resultsReleased,
+      walkthrough_enabled: walkthroughValue(),
+
       rows: validRows.map(r => ({
         client_email: r.email.trim().toLowerCase(),
         client_first_name: r.first_name.trim() || null,
@@ -448,6 +462,15 @@ export default function BulkInviteModal({
                   </div>
                 </div>
               )}
+
+              <WalkthroughChoice
+                plural
+                value={walkthroughChoice}
+                onChange={setWalkthroughChoice}
+                coachDefault={coachWalkthroughDefault}
+              />
+
+
 
               <div className="flex items-center justify-between pt-2">
                 <Button

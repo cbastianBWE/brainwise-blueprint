@@ -29,6 +29,8 @@ import BulkInviteModal from "@/components/coach/BulkInviteModal";
 import ShareableLinkModal from "@/components/coach/ShareableLinkModal";
 import BulkSeatLinkModal from "@/components/coach/BulkSeatLinkModal";
 import PendingInvitations from "@/components/coach/PendingInvitations";
+import WalkthroughChoice from "@/components/coach/WalkthroughChoice";
+
 import CouplesTab from "@/components/coach/relationship/CouplesTab";
 import { INSTRUMENTS as CANONICAL_INSTRUMENTS } from "@/lib/instruments";
 import { escHtml } from "@/lib/escHtml";
@@ -134,6 +136,8 @@ export default function CoachClients() {
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
+
   const [allowedInstrumentIds, setAllowedInstrumentIds] = useState<Set<string>>(new Set());
   const [certsLoaded, setCertsLoaded] = useState(false);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
@@ -457,9 +461,14 @@ export default function CoachClients() {
     setSelectedInstruments([]); setInstrumentError(false);
     setResultsReleased(false);
     setPreferredContext(null);
+    setWalkthroughChoice("default");
     setIsActorDebrief(false);
     setIsFreeGrant(false);
   };
+
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
+
 
   const toggleInstrument = (instrumentId: string) => {
     setInstrumentError(false);
@@ -505,6 +514,8 @@ export default function CoachClients() {
         coach_note: note,
         results_released: resultsReleased,
         preferred_first_context: preferredContext,
+        walkthrough_enabled: walkthroughValue(),
+
       };
       console.log("[CoachClients] create-checkout payload:", JSON.stringify(payload, null, 2));
 
@@ -565,6 +576,8 @@ export default function CoachClients() {
         instrument_id: uuid,
         results_released: resultsReleased,
         preferred_first_context: uuid === PTP_UUID ? preferredContext : null,
+        walkthrough_enabled: walkthroughValue(),
+
       });
       if (error) {
         toast.error("Failed to create client record: " + error.message);
@@ -713,6 +726,8 @@ export default function CoachClients() {
       p_email_html: html,
       p_results_released: resultsReleased,
       p_preferred_first_context: preferredContext,
+      p_walkthrough_enabled: walkthroughValue(),
+
     });
     const result = data as unknown as CreateActorDebriefOrderResult | null;
     if (error) {
@@ -769,6 +784,8 @@ export default function CoachClients() {
       p_coach_note: note || null,
       p_results_released: resultsReleased,
       p_preferred_first_context: preferredContext,
+      p_walkthrough_enabled: walkthroughValue(),
+
     } as any);
 
     if (error) {
@@ -1054,6 +1071,12 @@ export default function CoachClients() {
           </div>
         </div>
       )}
+      <WalkthroughChoice
+        value={walkthroughChoice}
+        onChange={setWalkthroughChoice}
+        coachDefault={walkthroughDefault}
+      />
+
       {canOfferActorDebrief && (
         <div className="flex items-center justify-between rounded-md border p-3">
           <div className="space-y-0.5 pr-3">
@@ -1232,6 +1255,7 @@ export default function CoachClients() {
           onOpenChange={setBulkModalOpen}
           allowedInstrumentIds={allowedInstrumentIds}
           perAssessmentPrice={perAssessmentPrice}
+          coachWalkthroughDefault={walkthroughDefault}
           onComplete={() => { setBulkModalOpen(false); fetchClients(); }}
         />
 
@@ -1240,6 +1264,7 @@ export default function CoachClients() {
           onOpenChange={setShareableModalOpen}
           allowedInstrumentIds={allowedInstrumentIds}
           perAssessmentPrice={perAssessmentPrice}
+          coachWalkthroughDefault={walkthroughDefault}
           onComplete={() => { setShareableModalOpen(false); fetchClients(); }}
         />
 
@@ -1248,7 +1273,9 @@ export default function CoachClients() {
           onOpenChange={setSeatLinkModalOpen}
           allowedInstrumentIds={allowedInstrumentIds}
           perAssessmentPrice={perAssessmentPrice}
+          coachWalkthroughDefault={walkthroughDefault}
           onComplete={() => { setSeatLinkModalOpen(false); fetchSeatLinks(); }}
+
         />
       </div>
 

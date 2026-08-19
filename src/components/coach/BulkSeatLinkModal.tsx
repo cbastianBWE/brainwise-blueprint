@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Loader2 } from "lucide-react";
+import WalkthroughChoice from "@/components/coach/WalkthroughChoice";
 
 const INSTRUMENTS = [
   { id: "PTP",   uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile" },
@@ -24,8 +25,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   allowedInstrumentIds: Set<string>;
   perAssessmentPrice: number | null;
+  coachWalkthroughDefault: boolean | null;
   onComplete: () => void;
 }
+
 
 type Stage = "form" | "submitting";
 
@@ -41,7 +44,7 @@ async function readFnError(err: unknown): Promise<{ code: string | null; status:
 }
 
 export default function BulkSeatLinkModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault,
 }: Props) {
   const [stage, setStage] = useState<Stage>("form");
   const [instrumentShortId, setInstrumentShortId] = useState<string>("");
@@ -50,6 +53,10 @@ export default function BulkSeatLinkModal({
   const [pendingLinkId, setPendingLinkId] = useState<string | null>(null);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
+
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -61,7 +68,9 @@ export default function BulkSeatLinkModal({
     setPendingLinkId(null);
     setPreferredContext(null);
     setResultsReleased(false);
+    setWalkthroughChoice("default");
   };
+
 
   const handleOpenChange = (o: boolean) => {
     if (!o) resetAll();
@@ -92,6 +101,8 @@ export default function BulkSeatLinkModal({
         p_coach_note: coachNote.trim() || null,
         p_preferred_first_context: preferredContext,
         p_results_released: resultsReleased,
+        p_walkthrough_enabled: walkthroughValue(),
+
       } as any);
       if (error) {
         toast.error("Could not create link: " + error.message);
@@ -244,6 +255,14 @@ export default function BulkSeatLinkModal({
               </div>
             </div>
           )}
+
+          <WalkthroughChoice
+            value={walkthroughChoice}
+            onChange={(v) => { setPendingLinkId(null); setWalkthroughChoice(v); }}
+            coachDefault={coachWalkthroughDefault}
+          />
+
+
 
           <div className="rounded-md bg-muted/50 p-3 text-sm">
             {priceMissing ? (

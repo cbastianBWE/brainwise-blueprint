@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Copy, Link as LinkIcon } from "lucide-react";
+import WalkthroughChoice from "@/components/coach/WalkthroughChoice";
 
 const INSTRUMENTS = [
   { id: "PTP",   uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile" },
@@ -29,13 +30,15 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   allowedInstrumentIds: Set<string>;
   perAssessmentPrice: number | null;
+  coachWalkthroughDefault: boolean | null;
   onComplete: () => void;
 }
+
 
 type Stage = "form" | "submitting" | "result";
 
 export default function ShareableLinkModal({
-  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, onComplete,
+  open, onOpenChange, allowedInstrumentIds, perAssessmentPrice, coachWalkthroughDefault, onComplete,
 }: Props) {
   const [stage, setStage] = useState<Stage>("form");
   const [firstName, setFirstName] = useState("");
@@ -48,7 +51,10 @@ export default function ShareableLinkModal({
   const [resultExpiresAt, setResultExpiresAt] = useState<string | null>(null);
   const [preferredContext, setPreferredContext] = useState<'professional' | 'personal' | 'both' | null>(null);
   const [resultsReleased, setResultsReleased] = useState(false);
+  const [walkthroughChoice, setWalkthroughChoice] = useState<"default" | "on" | "off">("default");
 
+  const walkthroughValue = (): boolean | null =>
+    walkthroughChoice === "default" ? null : walkthroughChoice === "on";
 
   const allowedInstruments = INSTRUMENTS.filter(i => allowedInstrumentIds.has(i.id));
 
@@ -62,7 +68,9 @@ export default function ShareableLinkModal({
     setResultExpiresAt(null);
     setPreferredContext(null);
     setResultsReleased(false);
+    setWalkthroughChoice("default");
   };
+
 
   const handleOpenChange = (o: boolean) => {
     if (!o) resetAll();
@@ -96,7 +104,10 @@ export default function ShareableLinkModal({
         p_instrument_ids: instrumentUuids,
         p_coach_note: coachNote.trim() || null,
         p_preferred_first_context: preferredContext,
+        p_results_released: resultsReleased,
+        p_walkthrough_enabled: walkthroughValue(),
       };
+
       console.log("[ShareableLinkModal] coach_shareable_link_self_pay params:", params);
       const { data, error } = await supabase.rpc("coach_shareable_link_self_pay" as any, params as any);
       console.log("[ShareableLinkModal] coach_shareable_link_self_pay response:", { data, error });
@@ -123,6 +134,8 @@ export default function ShareableLinkModal({
       p_coach_note: coachNote.trim() || null,
       p_preferred_first_context: preferredContext,
       p_results_released: resultsReleased,
+      p_walkthrough_enabled: walkthroughValue(),
+
     };
     console.log("[ShareableLinkModal] coach_shareable_link_coach_paid params:", params);
     const { data: rpcData, error: rpcError } = await supabase.rpc("coach_shareable_link_coach_paid" as any, params as any);
@@ -264,6 +277,14 @@ export default function ShareableLinkModal({
                 </div>
               </div>
             )}
+
+            <WalkthroughChoice
+              value={walkthroughChoice}
+              onChange={setWalkthroughChoice}
+              coachDefault={coachWalkthroughDefault}
+            />
+
+
 
             {paymentMode === "coach_paid" && selectedInstrumentShortIds.length > 0 && (
               <p className="text-sm text-muted-foreground">

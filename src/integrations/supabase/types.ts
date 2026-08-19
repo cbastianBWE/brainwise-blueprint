@@ -1943,6 +1943,7 @@ export type Database = {
           stripe_payment_intent_id: string | null
           token: string
           total_amount: number | null
+          walkthrough_enabled: boolean | null
         }
         Insert: {
           coach_note?: string | null
@@ -1960,6 +1961,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           token: string
           total_amount?: number | null
+          walkthrough_enabled?: boolean | null
         }
         Update: {
           coach_note?: string | null
@@ -1977,6 +1979,7 @@ export type Database = {
           stripe_payment_intent_id?: string | null
           token?: string
           total_amount?: number | null
+          walkthrough_enabled?: boolean | null
         }
         Relationships: [
           {
@@ -3022,6 +3025,7 @@ export type Database = {
           status: string
           stripe_session_id: string | null
           total_amount: number
+          walkthrough_enabled: boolean | null
         }
         Insert: {
           coach_user_id: string
@@ -3034,6 +3038,7 @@ export type Database = {
           status?: string
           stripe_session_id?: string | null
           total_amount: number
+          walkthrough_enabled?: boolean | null
         }
         Update: {
           coach_user_id?: string
@@ -3046,6 +3051,7 @@ export type Database = {
           status?: string
           stripe_session_id?: string | null
           total_amount?: number
+          walkthrough_enabled?: boolean | null
         }
         Relationships: [
           {
@@ -18911,6 +18917,7 @@ export type Database = {
           p_preferred_first_context?: string
           p_results_released?: boolean
           p_seats: number
+          p_walkthrough_enabled?: boolean
         }
         Returns: {
           link_id: string
@@ -18972,6 +18979,7 @@ export type Database = {
           p_instrument_ids: string[]
           p_preferred_first_context?: string
           p_results_released?: boolean
+          p_walkthrough_enabled?: boolean
         }
         Returns: {
           batch_id: string
@@ -18987,6 +18995,7 @@ export type Database = {
           p_coach_note: string
           p_instrument_ids: string[]
           p_preferred_first_context?: string
+          p_walkthrough_enabled?: boolean
         }
         Returns: {
           coach_client_id: string
@@ -19202,6 +19211,7 @@ export type Database = {
           p_email_html: string
           p_preferred_first_context?: string
           p_results_released: boolean
+          p_walkthrough_enabled?: boolean
         }
         Returns: Json
       }
@@ -19225,6 +19235,7 @@ export type Database = {
           p_instrument_ids: string[]
           p_preferred_first_context?: string
           p_results_released: boolean
+          p_walkthrough_enabled?: boolean
         }
         Returns: Json
       }
