@@ -134,6 +134,8 @@ export default function ShareableLinkModal({
       p_coach_note: coachNote.trim() || null,
       p_preferred_first_context: preferredContext,
       p_results_released: resultsReleased,
+      p_walkthrough_enabled: walkthroughValue(),
+
     };
     console.log("[ShareableLinkModal] coach_shareable_link_coach_paid params:", params);
     const { data: rpcData, error: rpcError } = await supabase.rpc("coach_shareable_link_coach_paid" as any, params as any);
