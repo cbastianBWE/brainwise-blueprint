@@ -105,9 +105,9 @@ export default function CoachingActivityRunner() {
   const [waitingForTranscripts, setWaitingForTranscripts] = useState(false);
   const [coachingRemaining, setCoachingRemaining] = useState<number | null>(null);
 
-  const [coachUserId, setCoachUserId] = useState<string | null>(null);
-  const [existingShare, setExistingShare] = useState<{ id: string; mode: string } | null>(null);
-  const [alwaysShare, setAlwaysShare] = useState(false);
+  const coachingShare = useCoachingShare();
+  const { coachUserId, alwaysShare, hasSnapshotShare } = coachingShare;
+
   const [accessDenial, setAccessDenial] = useState<string | null>(null);
   const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
   const { oneTimePrice } = useSubscriptionPlans();
