@@ -265,6 +265,27 @@ export default function ForPractitioners() {
         </div>
       </section>
 
+      {/* WHERE THE MAP CAME FROM */}
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          <Eyebrow>Where the map came from</Eyebrow>
+          <h2 style={h2Style}>Forty years of noticing which conversations keep happening.</h2>
+          <p style={introStyle}>
+            In the mid-eighties Phil Dixon watched an OD practitioner named Jim Ewing consult to Apple University, and noticed that every meeting Ewing sat in became more productive. He asked how. Ewing shrugged and said he just asked a few questions.
+          </p>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 18, maxWidth: 780 }}>
+            Those questions turned out to be carefully built, open ended, and aimed at a specific outcome, and that combination has been the spine of Phil's coaching practice ever since. Over forty years of using it, a pattern emerged. The same territory came up in almost every coaching conversation, whoever the client was. People talked about their purpose and the future they wanted. They talked about where they stood now. They always, without being asked, talked about their past. And two more subjects arrived on their own every time: the resolve the change was going to take, and the support they would need from other people.
+          </p>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 18, maxWidth: 780 }}>
+            Those seven areas became the first version of the map. Others were added as they proved themselves: first experimental steps, the barriers people expect, the weight of the recent past, and a set of tools that came up so often they earned their own place. Alongside the map Phil built a library of several hundred modules covering transitions, life phases, and the mental models people carry that decide how much change they can take on.
+          </p>
+          <p style={{ ...bodyStyle, fontSize: 16, marginTop: 18, maxWidth: 780 }}>
+            Phil and Cole Bastian have spent the last few years curating that library and pairing it with an AI assistant. The assistant reads each module through the participant's own Personal Threat &amp; Reward Profile, and keeps adjusting as the participant works, using what they have already written. What a practitioner is handed is not a worksheet pack. It is forty years of pattern recognition, with something on top that remembers every answer.
+          </p>
+        </div>
+      </section>
+
+
       {/* THE PROGRAM YOU'LL RUN */}
       <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px`, borderBottom: "1px solid var(--divider)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
