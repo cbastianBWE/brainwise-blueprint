@@ -15,6 +15,7 @@ import { resolveTierThumbnailUrls, type ThumbnailMeta } from "@/lib/assetUrls";
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import PaidEnrollmentNudgeModal from "./PaidEnrollmentNudgeModal";
+import MyNotesSection from "./MyNotesSection";
 import type { UpgradeEntityType } from "./types";
 
 // ---------------------------------------------------------------------------
