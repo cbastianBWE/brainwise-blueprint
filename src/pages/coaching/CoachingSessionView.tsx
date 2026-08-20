@@ -223,6 +223,11 @@ export default function CoachingSessionView() {
             <RotateCcw className="h-4 w-4" />
             Do it again
           </Button>
+          {coachUserId && alwaysShare && (
+            <p className="self-center text-sm text-muted-foreground">
+              Everything you complete is already being shared with your practitioner.
+            </p>
+          )}
           {coachUserId && !alwaysShare && (
             <Button
               variant="outline"
