@@ -263,6 +263,55 @@ export default function Products() {
           >
             The PTP is grounded in Oxford Brain Institute research on threat-reward neural patterns, across 89 facets in five dimensions.
           </p>
+          <h2 style={{ ...h2Style, marginTop: 56 }}>Built because the assessments we had could not explain conflict.</h2>
+          <p
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: isMobile ? 16 : 17,
+              color: "var(--bw-slate)",
+              lineHeight: 1.6,
+              maxWidth: 780,
+              marginTop: 20,
+            }}
+          >
+            Phil Dixon spent decades using the standard instruments, from Social Styles at the simple end to Birkman at the complex end. Each had its uses. But one thing none of them explained kept showing up. Two people with nearly identical profiles would behave completely differently, want different things, and end up in conflicts their profiles gave no account of.
+          </p>
+          <p
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: isMobile ? 16 : 17,
+              color: "var(--bw-slate)",
+              lineHeight: 1.6,
+              maxWidth: 780,
+              marginTop: 18,
+            }}
+          >
+            What was missing was granularity, and a basis in how the brain actually works. So he went back to the structure he had developed while writing about threat and reward, and turned it into an instrument. Every facet can register as either a threat or a reward, and every person carries a different sensitivity to each one. The 89 facets sit inside five domains: Protection, Participation, Prediction, Purpose and Pleasure.
+          </p>
+          <p
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: isMobile ? 16 : 17,
+              color: "var(--bw-slate)",
+              lineHeight: 1.6,
+              maxWidth: 780,
+              marginTop: 18,
+            }}
+          >
+            The first version ran to 47 questions and stayed deliberately close to working life, concentrating on Protection, Participation and Prediction, because in corporate settings most external signals get read as threat. Phil and Cole Bastian later returned to the original work and added the 42 questions that had been left out, filling in Purpose and Pleasure and deepening the first three. That is the 89-question Personal Threat &amp; Reward Profile in use today.
+          </p>
+          <p
+            style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: isMobile ? 16 : 17,
+              color: "var(--bw-slate)",
+              lineHeight: 1.6,
+              maxWidth: 780,
+              marginTop: 18,
+            }}
+          >
+            Each facet is read at one of three levels: low from 0 to 39, medium from 40 to 69, and high from 70 to 100. Every facet and level combination carries its own impact matrix, describing what it does for you and what it does to the people around you. Read across a whole profile there are 389 possible combinations and interactions. That is more than any practitioner can hold in their head during a debrief, and exactly the kind of work an AI does well. So the PTP reads the profile for you, and the session goes on the conversation instead of the arithmetic.
+          </p>
           <p
             style={{
               fontFamily: "'Montserrat', sans-serif",
