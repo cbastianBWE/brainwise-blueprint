@@ -464,6 +464,8 @@ export default function CoachClients() {
     setWalkthroughChoice("default");
     setIsActorDebrief(false);
     setIsFreeGrant(false);
+    setOrderTab("coach-pays");
+
   };
 
   const walkthroughValue = (): boolean | null =>
