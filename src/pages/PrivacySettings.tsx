@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox, Share2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import CoachingShareControl from "@/components/coaching/CoachingShareControl";
+import { useCoachingShare } from "@/hooks/useCoachingShare";
 import PtpSharingControls, {
   PtpAudienceKey,
   PtpAudienceContent,
@@ -117,6 +119,7 @@ export default function PrivacySettings() {
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedKey, setSavedKey] = useState<string | null>(null);
+  const coachingShare = useCoachingShare();
 
   const hasCoach = coachId !== null;
   const hasConsent = demo !== null && demo.consent_granted_at !== null && demo.consent_withdrawn_at === null;
@@ -491,7 +494,7 @@ export default function PrivacySettings() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Lock className="h-4 w-4" /> Data Sharing
           </CardTitle>
-          <CardDescription>Choose who can view your assessment results</CardDescription>
+          <CardDescription>Choose who can view your assessment results and your coaching work</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className={`p-4 rounded-lg border ${!hasCoach ? "opacity-50" : ""}`}>
@@ -536,6 +539,17 @@ export default function PrivacySettings() {
               </div>
             )}
           </div>
+
+          <CoachingShareControl
+            variant="card"
+            share={coachingShare}
+            trailing={
+              savedKey === "coaching_share" ? (
+                <Badge variant="secondary" className="text-xs animate-in fade-in">Saved</Badge>
+              ) : null
+            }
+            onChanged={() => showSaved("coaching_share")}
+          />
         </CardContent>
       </Card>
 

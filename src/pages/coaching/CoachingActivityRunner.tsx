@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo, CoachingRecordingPlayer, IkigaiRegionsView, IKIGAI_LENSES, type IkigaiMap, type IkigaiLens, InnerTeamCircleView, TEAM_LAYERS, effectiveTeamLayer, type InnerTeamMap, type InnerTeamCharacter, type TeamLayer } from "@/components/coaching/CoachingViews";
 import TransitionMapWalkthrough from "@/components/coaching/TransitionMapWalkthrough";
+import CoachingShareControl from "@/components/coaching/CoachingShareControl";
+import { useCoachingShare } from "@/hooks/useCoachingShare";
 import {
   MultimodalField,
   MediaRecorderPane,
@@ -105,9 +105,9 @@ export default function CoachingActivityRunner() {
   const [waitingForTranscripts, setWaitingForTranscripts] = useState(false);
   const [coachingRemaining, setCoachingRemaining] = useState<number | null>(null);
 
-  const [coachUserId, setCoachUserId] = useState<string | null>(null);
-  const [existingShare, setExistingShare] = useState<{ id: string; mode: string } | null>(null);
-  const [alwaysShare, setAlwaysShare] = useState(false);
+  const coachingShare = useCoachingShare();
+  const { coachUserId, alwaysShare, hasSnapshotShare } = coachingShare;
+
   const [accessDenial, setAccessDenial] = useState<string | null>(null);
   const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
   const { oneTimePrice } = useSubscriptionPlans();
@@ -231,33 +231,9 @@ export default function CoachingActivityRunner() {
     };
   }, [user, activityId, forceFresh, navigate]);
 
-  // Load coach info + existing share
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data: cc } = await supabase
-        .from("coach_clients")
-        .select("coach_user_id")
-        .eq("client_user_id", user.id)
-        .is("revoked_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const cid = cc?.coach_user_id || null;
-      setCoachUserId(cid);
-      if (!cid) return;
-      const { data: shares } = await supabase
-        .from("coaching_activity_shares")
-        .select("id,mode,revoked_at")
-        .eq("owner_user_id", user.id)
-        .eq("viewer_user_id", cid)
-        .is("revoked_at", null);
-      const always = (shares || []).find((s: any) => s.mode === "always");
-      const snap = (shares || []).find((s: any) => s.mode === "snapshot");
-      setAlwaysShare(!!always);
-      setExistingShare(always || snap ? { id: (always || snap).id, mode: (always || snap).mode } : null);
-    })();
-  }, [user]);
+  // Practitioner lookup + share state now live in useCoachingShare().
+
+
 
   const steps: Step[] = useMemo(() => {
     const s = activity?.definition?.steps;
@@ -378,61 +354,14 @@ export default function CoachingActivityRunner() {
   );
 
   const shareSnapshot = useCallback(async () => {
-    if (!user || !coachUserId) return;
-    const { data, error } = await supabase
-      .from("coaching_activity_shares")
-      .insert({
-        owner_user_id: user.id,
-        viewer_user_id: coachUserId,
-        mode: "snapshot",
-      })
-      .select("id,mode")
-      .single();
-    if (error) {
+    const ok = await coachingShare.shareSnapshot();
+    if (!ok) {
       toast.error("Couldn't share with your practitioner.");
       return;
     }
-    setExistingShare({ id: data.id, mode: data.mode });
     toast.success("Shared with your practitioner.");
-  }, [user, coachUserId]);
+  }, [coachingShare]);
 
-  const toggleAlwaysShare = useCallback(
-    async (checked: boolean) => {
-      if (!user || !coachUserId) return;
-      setAlwaysShare(checked);
-      if (checked) {
-        // Look for existing revoked or non-existent
-        const { data: existing } = await supabase
-          .from("coaching_activity_shares")
-          .select("id")
-          .eq("owner_user_id", user.id)
-          .eq("viewer_user_id", coachUserId)
-          .eq("mode", "always")
-          .maybeSingle();
-        if (existing) {
-          await supabase
-            .from("coaching_activity_shares")
-            .update({ revoked_at: null, granted_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("coaching_activity_shares").insert({
-            owner_user_id: user.id,
-            viewer_user_id: coachUserId,
-            mode: "always",
-          });
-        }
-      } else {
-        await supabase
-          .from("coaching_activity_shares")
-          .update({ revoked_at: new Date().toISOString() })
-          .eq("owner_user_id", user.id)
-          .eq("viewer_user_id", coachUserId)
-          .eq("mode", "always")
-          .is("revoked_at", null);
-      }
-    },
-    [user, coachUserId],
-  );
 
   if (loading) {
     return (
@@ -712,26 +641,21 @@ export default function CoachingActivityRunner() {
                 <CardTitle className="text-base">Share with your practitioner</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button onClick={shareSnapshot} disabled={!!existingShare}>
-                    <Share2 className="h-4 w-4" />
-                    {existingShare ? "Shared" : "Share with my practitioner"}
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="always-share">Always share my coaching with my practitioner</Label>
-                    <p className="text-xs text-muted-foreground">
-                      New completed activities will be shared automatically.
-                    </p>
+                {alwaysShare ? (
+                  <p className="text-sm text-muted-foreground">
+                    Everything you complete is already being shared with your practitioner.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button onClick={shareSnapshot} disabled={hasSnapshotShare || coachingShare.pending}>
+                      <Share2 className="h-4 w-4" />
+                      {hasSnapshotShare ? "Shared" : "Share with my practitioner"}
+                    </Button>
                   </div>
-                  <Switch
-                    id="always-share"
-                    checked={alwaysShare}
-                    onCheckedChange={toggleAlwaysShare}
-                  />
-                </div>
+                )}
+                <CoachingShareControl variant="section" share={coachingShare} />
               </CardContent>
+
             </Card>
           )}
 

@@ -13,6 +13,7 @@ import {
   ChatTranscript,
   type Responses,
 } from "@/components/coaching/CoachingViews";
+import { useCoachingShare } from "@/hooks/useCoachingShare";
 
 interface SessionRow {
   id: string;
@@ -37,9 +38,8 @@ export default function CoachingSessionView() {
 
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<SessionRow | null>(null);
-  const [coachUserId, setCoachUserId] = useState<string | null>(null);
-  const [existingShareId, setExistingShareId] = useState<string | null>(null);
-  const [sharing, setSharing] = useState(false);
+  const coachingShare = useCoachingShare();
+  const { coachUserId, alwaysShare, hasSnapshotShare } = coachingShare;
 
   useEffect(() => {
     if (!user || !sessionId) return;
@@ -67,52 +67,15 @@ export default function CoachingSessionView() {
     };
   }, [user, sessionId]);
 
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data: cc } = await supabase
-        .from("coach_clients")
-        .select("coach_user_id")
-        .eq("client_user_id", user.id)
-        .limit(1)
-        .maybeSingle();
-      const cid = cc?.coach_user_id || null;
-      setCoachUserId(cid);
-      if (!cid) return;
-      const { data: shares } = await supabase
-        .from("coaching_activity_shares")
-        .select("id,revoked_at")
-        .eq("owner_user_id", user.id)
-        .eq("viewer_user_id", cid)
-        .is("revoked_at", null)
-        .limit(1);
-      const first = (shares || [])[0];
-      setExistingShareId(first ? (first as any).id : null);
-    })();
-  }, [user]);
+  // Practitioner lookup + share state now live in useCoachingShare().
 
   const shareWithCoach = async () => {
-    if (!user || !coachUserId) return;
-    setSharing(true);
-    try {
-      const { data, error } = await supabase
-        .from("coaching_activity_shares")
-        .insert({
-          owner_user_id: user.id,
-          viewer_user_id: coachUserId,
-          mode: "snapshot",
-        })
-        .select("id")
-        .single();
-      if (error) {
-        toast.error("Couldn't share with your practitioner.");
-        return;
-      }
-      setExistingShareId((data as any).id);
-      toast.success("Shared with your practitioner.");
-    } finally {
-      setSharing(false);
+    const ok = await coachingShare.shareSnapshot();
+    if (!ok) {
+      toast.error("Couldn't share with your practitioner.");
+      return;
     }
+    toast.success("Shared with your practitioner.");
   };
 
   if (loading) {
@@ -260,20 +223,25 @@ export default function CoachingSessionView() {
             <RotateCcw className="h-4 w-4" />
             Do it again
           </Button>
-          {coachUserId && (
+          {coachUserId && alwaysShare && (
+            <p className="self-center text-sm text-muted-foreground">
+              Everything you complete is already being shared with your practitioner.
+            </p>
+          )}
+          {coachUserId && !alwaysShare && (
             <Button
               variant="outline"
               onClick={shareWithCoach}
-              disabled={!!existingShareId || sharing}
+              disabled={hasSnapshotShare || coachingShare.pending}
             >
-              {existingShareId ? (
+              {hasSnapshotShare ? (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
                   Shared
                 </>
               ) : (
                 <>
-                  {sharing ? (
+                  {coachingShare.pending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Share2 className="h-4 w-4" />

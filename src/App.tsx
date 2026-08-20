@@ -199,6 +199,7 @@ const App = () => (
             <ImpersonationChrome />
             <Routes>
             {/* Public routes */}
+            
             <Route path="/" element={<Home />} />
             <Route path="/pay/:token" element={<PublicInvoicePay />} />
             <Route path="/claim/:token" element={<ClaimInvitation />} />
