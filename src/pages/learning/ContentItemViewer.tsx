@@ -365,6 +365,9 @@ export default function ContentItemViewer() {
       {/* Viewer */}
       <section className="px-4 sm:px-6">{renderViewer()}</section>
 
+      {/* Personal notes — all item types */}
+      {contentItemId && <NotesPanel contentItemId={contentItemId} />}
+
       {/* Prev / Next footer */}
       <div className="px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
         {moduleCrumb ? (
