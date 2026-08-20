@@ -47,6 +47,7 @@ import SkillsPracticeViewer from "@/components/learning/viewers/SkillsPracticeVi
 import FileUploadViewer from "@/components/learning/viewers/FileUploadViewer";
 import LiveEventViewer from "@/components/learning/viewers/LiveEventViewer";
 import LessonBlockViewer from "@/components/learning/viewers/LessonBlockViewer";
+import NotesPanel from "@/components/learning/NotesPanel";
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
@@ -363,6 +364,9 @@ export default function ContentItemViewer() {
 
       {/* Viewer */}
       <section className="px-4 sm:px-6">{renderViewer()}</section>
+
+      {/* Personal notes — all item types */}
+      {contentItemId && <NotesPanel contentItemId={contentItemId} />}
 
       {/* Prev / Next footer */}
       <div className="px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t">
