@@ -8056,6 +8056,117 @@ export type Database = {
           },
         ]
       }
+      learning_notes: {
+        Row: {
+          body: string
+          content_item_id: string
+          created_at: string
+          id: string
+          shared_at: string | null
+          shared_with_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          content_item_id: string
+          created_at?: string
+          id?: string
+          shared_at?: string | null
+          shared_with_user_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          content_item_id?: string
+          created_at?: string
+          id?: string
+          shared_at?: string | null
+          shared_with_user_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_notes_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_notes_shared_with_user_id_fkey"
+            columns: ["shared_with_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_notes_shared_with_user_id_fkey"
+            columns: ["shared_with_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "learning_notes_shared_with_user_id_fkey"
+            columns: ["shared_with_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_notes_shared_with_user_id_fkey"
+            columns: ["shared_with_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "learning_notes_shared_with_user_id_fkey"
+            columns: ["shared_with_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "learning_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "learning_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_audio_generations: {
         Row: {
           asset_id: string | null
@@ -20225,6 +20336,44 @@ export type Database = {
         Returns: boolean
       }
       bw_is_team_leader_of: { Args: { p_member: string }; Returns: boolean }
+      bw_learning_note_save: {
+        Args: { p_body: string; p_content_item_id: string }
+        Returns: {
+          body: string
+          content_item_id: string
+          created_at: string
+          id: string
+          shared_at: string | null
+          shared_with_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "learning_notes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      bw_learning_note_set_share: {
+        Args: { p_content_item_id: string; p_share: boolean }
+        Returns: {
+          body: string
+          content_item_id: string
+          created_at: string
+          id: string
+          shared_at: string | null
+          shared_with_user_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "learning_notes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       bw_list_my_report_orders: {
         Args: never
         Returns: {
@@ -20295,6 +20444,27 @@ export type Database = {
       bw_match_case: {
         Args: { p_original: string; p_replacement: string }
         Returns: string
+      }
+      bw_my_learning_notes: {
+        Args: never
+        Returns: {
+          body: string
+          certification_path_id: string
+          certification_path_name: string
+          content_item_id: string
+          content_item_title: string
+          created_at: string
+          curriculum_id: string
+          curriculum_name: string
+          is_shared: boolean
+          item_archived: boolean
+          item_type: string
+          module_id: string
+          module_name: string
+          note_id: string
+          shared_at: string
+          updated_at: string
+        }[]
       }
       bw_normalize_house_style: { Args: { p_text: string }; Returns: string }
       bw_normalize_house_style_jsonb: { Args: { p: Json }; Returns: Json }
