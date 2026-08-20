@@ -1257,21 +1257,52 @@ export default function CoachingActivities() {
               Nothing here yet. Check back soon.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-              {groupActivities.map((a) => (
-                <CoachingActivityCard
-                  key={a.id}
-                  activity={a}
-                  access={access[a.id]}
-                  inProgress={inProgressSet.has(a.id)}
-                  onOpenBriefing={() => setOpenActivity(a)}
-                  onResume={() => navigate(`/coaching/${a.id}`)}
-                  canBuyProducts={canBuyProducts}
-                  priceForTier={priceForTier}
-                />
-              ))}
-            </div>
+            <>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {(["All", "Foundational", "Typical", "Advanced"] as const)
+                  .filter((t) => t === "All" || tierCounts[t] > 0)
+                  .map((t) => {
+                    const count = t === "All" ? groupActivities.length : tierCounts[t];
+                    const activeChip = tierFilter === t;
+                    return (
+                      <Button
+                        key={t}
+                        type="button"
+                        size="sm"
+                        variant={activeChip ? "default" : "outline"}
+                        className="rounded-full"
+                        aria-pressed={activeChip}
+                        onClick={() => setTierFilter(t)}
+                      >
+                        {t} ({count})
+                      </Button>
+                    );
+                  })}
+              </div>
+              {filteredGroupActivities.length === 0 ? (
+                <div className="py-16 text-center text-sm text-muted-foreground">
+                  No {tierFilter} activities in {selectedGroup}. Choose All to see everything in this
+                  group.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  {filteredGroupActivities.map((a) => (
+                    <CoachingActivityCard
+                      key={a.id}
+                      activity={a}
+                      access={access[a.id]}
+                      inProgress={inProgressSet.has(a.id)}
+                      onOpenBriefing={() => setOpenActivity(a)}
+                      onResume={() => navigate(`/coaching/${a.id}`)}
+                      canBuyProducts={canBuyProducts}
+                      priceForTier={priceForTier}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
+
         </DialogContent>
       </Dialog>
 
