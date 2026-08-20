@@ -177,8 +177,26 @@ export default function About() {
         </div>
       </section>
 
+      {/* THE ORIGIN STORY */}
+      <section
+        style={{
+          background: "var(--bw-cream)",
+          padding: `${isMobile ? 80 : 112}px ${padX}px`,
+          borderBottom: "1px solid var(--divider)",
+        }}
+      >
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <Eyebrow>{meta.originEyebrow}</Eyebrow>
+          <h2 style={h2Style}>{meta.originTitle}</h2>
+          <p style={{ ...bodyStyle, marginTop: 22 }}>{meta.originBodyOne}</p>
+          <p style={{ ...bodyStyle, marginTop: 18 }}>{meta.originBodyTwo}</p>
+          <p style={{ ...bodyStyle, marginTop: 18 }}>{meta.originBodyThree}</p>
+          <p style={{ ...bodyStyle, marginTop: 18 }}>{meta.originBodyFour}</p>
+        </div>
+      </section>
+
       {/* FOUNDERS */}
-      <section style={{ background: "var(--bw-cream)", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
+      <section style={{ background: "#fff", padding: `${isMobile ? 80 : 112}px ${padX}px` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <Eyebrow>{meta.foundersEyebrow}</Eyebrow>
           <h2 style={h2Style}>{meta.foundersTitle}</h2>
