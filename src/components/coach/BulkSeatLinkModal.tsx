@@ -229,7 +229,13 @@ export default function BulkSeatLinkModal({
 
           <div className="space-y-2">
             <Label htmlFor="coach-note">Personal Note (optional)</Label>
-            <Textarea id="coach-note" value={coachNote} onChange={(e) => setCoachNote(e.target.value)} rows={2} />
+            <Textarea
+              id="coach-note"
+              value={coachNote}
+              onChange={(e) => { setPendingLinkId(null); setCoachNote(e.target.value); }}
+              rows={2}
+            />
+
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
