@@ -297,16 +297,9 @@ export default function BulkSeatLinkModal({
             You pay for all seats now. Seats are not refunded automatically if
             unused. After payment, copy your link from the Active Seat Links list.
           </p>
-
-          <div className="flex justify-end pt-1">
-            <Button onClick={handleSubmit} disabled={submitDisabled}>
-              {stage === "submitting" ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</>
-              ) : pendingLinkId ? "Retry Payment" : "Continue to Payment"}
-            </Button>
-          </div>
         </div>
-      </DialogContent>
+      </FormDialogShell>
+
     </Dialog>
   );
 }
