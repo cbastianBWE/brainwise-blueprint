@@ -710,6 +710,59 @@ export default function CoachingActivityRunner() {
             </CardContent>
           </Card>
 
+          {recsLoading ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Where to go next</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Finding activities based on what you just wrote…
+                </div>
+              </CardContent>
+            </Card>
+          ) : recs.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Where to go next</CardTitle>
+                <p className="text-sm text-muted-foreground">Based on what you just wrote.</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recs.map((r) => (
+                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
+                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
+                      {r.module_group && (
+                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
+                      )}
+                    </div>
+                    {r.allowed ? (
+                      <Link
+                        to={`/coaching/${r.activity_id}`}
+                        className="block text-base font-medium leading-snug hover:underline"
+                      >
+                        {r.title}
+                      </Link>
+                    ) : (
+                      <p className="text-base font-medium leading-snug text-muted-foreground">
+                        {r.title}
+                      </p>
+                    )}
+                    {r.because_snippet && (
+                      <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
+                        You wrote: “{r.because_snippet}”
+                      </blockquote>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+
+
+
           {coachUserId && (
             <Card>
               <CardHeader>
