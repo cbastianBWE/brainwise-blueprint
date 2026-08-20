@@ -239,6 +239,8 @@ export default function CoachingActivityRunner() {
         .from("coach_clients")
         .select("coach_user_id")
         .eq("client_user_id", user.id)
+        .is("revoked_at", null)
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       const cid = cc?.coach_user_id || null;
