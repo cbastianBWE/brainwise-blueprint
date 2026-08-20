@@ -302,12 +302,6 @@ export default function ShareableLinkModal({
                 Total: {total !== null ? `$${total}` : "loading…"}
               </p>
             )}
-
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleSubmit} disabled={submitDisabled}>
-                {paymentMode === "self_pay" ? "Generate Link" : "Continue to Payment"}
-              </Button>
-            </div>
           </div>
         )}
 
