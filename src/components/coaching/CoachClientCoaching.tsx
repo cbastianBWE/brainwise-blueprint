@@ -28,14 +28,50 @@ export default function CoachClientCoaching({ clientUserId }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: err } = await supabase
+      const { data: sessions, error: err } = await supabase
         .from("coaching_activity_sessions")
-        .select("id, activity_id, completed_at, coaching_activities(title, tier)")
+        .select("id, activity_id, completed_at")
         .eq("user_id", clientUserId)
         .eq("status", "completed")
         .order("completed_at", { ascending: false });
       if (err) throw new Error(err.message);
-      setRows((data as unknown as CoachingSessionRow[]) ?? []);
+
+      const sessionRows = (sessions ?? []) as Array<{
+        id: string;
+        activity_id: string;
+        completed_at: string | null;
+      }>;
+
+      if (sessionRows.length === 0) {
+        setRows([]);
+        return;
+      }
+
+      const ids = Array.from(new Set(sessionRows.map((s) => s.activity_id).filter(Boolean)));
+      const { data: activities, error: actErr } = await supabase
+        .from("coaching_activities_public")
+        .select("id, title, tier")
+        .in("id", ids);
+      if (actErr) throw new Error(actErr.message);
+
+      const byId = new Map(
+        ((activities ?? []) as Array<{ id: string; title: string | null; tier: string | null }>).map(
+          (a) => [a.id, a],
+        ),
+      );
+
+      setRows(
+        sessionRows.map((s) => {
+          const a = byId.get(s.activity_id);
+          return {
+            ...s,
+            coaching_activities: {
+              title: a?.title ?? "Coaching activity",
+              tier: a?.tier ?? null,
+            },
+          };
+        }),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load coaching sessions");
       setRows([]);
