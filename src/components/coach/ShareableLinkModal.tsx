@@ -353,13 +353,10 @@ export default function ShareableLinkModal({
             <p className="text-xs text-muted-foreground">
               Anyone with this link can sign up using this email address. The link will be removed from your pending invitations after 30 days or after redemption.
             </p>
-
-            <div className="flex justify-end">
-              <Button onClick={() => { onComplete(); resetAll(); }}>Done</Button>
-            </div>
           </div>
         )}
-      </DialogContent>
+      </FormDialogShell>
+
     </Dialog>
   );
 }
