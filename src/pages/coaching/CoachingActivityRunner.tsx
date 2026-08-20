@@ -84,11 +84,33 @@ function coachingProductTier(activityTier: string | null | undefined): string | 
 }
 
 
+// ---- "Where to go next" ----
+// Shape returned by bw_recommend_next_activities. Ordering, exclusions and the
+// quoted reason all come from the RPC; nothing here re-ranks or rewrites them.
+interface NextRec {
+  activity_id: string;
+  code: string | null;
+  title: string;
+  module_group: string | null;
+  tier: string | null;
+  description: string | null;
+  thumbnail_url: string | null;
+  similarity: number | null;
+  because_key: string | null;
+  because_snippet: string | null;
+  allowed: boolean;
+  reason: string | null;
+}
 
-
-
+// Same treatment as the activities page.
+const tierBadgeVariant = (tier: string | null): "default" | "secondary" | "outline" => {
+  if (tier === "Foundational") return "secondary";
+  if (tier === "Advanced") return "default";
+  return "outline";
+};
 
 // ---- Main page ----
+
 
 
 export default function CoachingActivityRunner() {
