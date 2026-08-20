@@ -149,19 +149,105 @@ export interface ChatMsg {
   content: string;
 }
 
+export interface AnalysisBlock {
+  point?: string;
+  body?: string;
+}
+
+export interface CoachingAnalysis {
+  format?: string;
+  opening?: string | null;
+  blocks?: AnalysisBlock[];
+  closing?: string | null;
+  html?: string;
+  [k: string]: unknown;
+}
+
 export interface Responses {
   action?: MMValueView;
   positives?: MMValueView[];
   positiveAction?: MMValueView;
   negatives?: Negative[];
-  analysis?: { html?: string; [k: string]: unknown };
+  analysis?: CoachingAnalysis;
   chat?: ChatMsg[];
   [k: string]: unknown;
 }
 
-export function AiAnalysisPanel({ html }: { html?: string }) {
-  if (!html) return null;
-  let src = html.trim();
+/**
+ * Renders the coach plan. Structured `blocks_v1` analyses render as cards;
+ * everything else (older sessions, "raw" fallbacks, every relationship
+ * activity) keeps rendering the sanitized HTML exactly as before.
+ */
+export function AiAnalysisPanel({
+  analysis,
+  html,
+}: {
+  analysis?: CoachingAnalysis | null;
+  html?: string;
+}) {
+  const blocks = (analysis?.blocks || []).filter(
+    (b) => !!b && !!((b.point ?? "").trim() || (b.body ?? "").trim()),
+  );
+
+  if (blocks.length > 0) {
+    const opening = (analysis?.opening ?? "").trim();
+    const closing = (analysis?.closing ?? "").trim();
+    return (
+      <div className="rounded-lg border bg-muted/30 p-4">
+        {opening && <p className="mb-3 text-sm text-muted-foreground">{opening}</p>}
+        <div className="grid gap-[10px]">
+          {blocks.map((b, i) => {
+            const point = (b.point ?? "").trim();
+            const body = (b.body ?? "").trim();
+            return (
+              <div
+                key={i}
+                className="rounded-xl bg-white p-[12px_13px]"
+                style={{
+                  border: "1px solid rgba(2,31,54,.10)",
+                  borderLeft: "4px solid var(--bw-orange)",
+                  borderRadius: 12,
+                  padding: "12px 13px",
+                }}
+              >
+                {point && (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display, 'Poppins', system-ui, sans-serif)",
+                      fontWeight: 700,
+                      fontSize: 14.5,
+                      lineHeight: 1.4,
+                      color: "var(--bw-navy, #021F36)",
+                    }}
+                  >
+                    {point}
+                  </div>
+                )}
+                {body && (
+                  <div
+                    style={{
+                      fontSize: 13.5,
+                      lineHeight: 1.6,
+                      color: "var(--bw-slate, #6D6875)",
+                      marginTop: point ? 4 : 0,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {body}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {closing && <p className="mt-3 text-sm text-muted-foreground">{closing}</p>}
+      </div>
+    );
+  }
+
+  const source = analysis?.html ?? html;
+  if (!source) return null;
+  let src = source.trim();
   if (src.startsWith("```"))
     src = src.replace(/^```[a-zA-Z]*\s*/, "").replace(/```\s*$/, "").trim();
   const clean = DOMPurify.sanitize(src, {
@@ -175,6 +261,7 @@ export function AiAnalysisPanel({ html }: { html?: string }) {
     />
   );
 }
+
 
 function isRec(v: unknown): v is { media_id: string } {
   return !!v && typeof v === "object" && typeof (v as any).media_id === "string";
