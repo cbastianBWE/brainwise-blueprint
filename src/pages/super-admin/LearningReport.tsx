@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -128,6 +128,7 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
   const [bulkReason, setBulkReason] = useState("");
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [includeInternal, setIncludeInternal] = useState(false);
 
   // Translate filter state to RPC params
   const rpcTier = tier === "all" ? null : tier;
@@ -147,17 +148,34 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
 
   // Users list
   const usersQuery = useQuery({
-    queryKey: ["lr-users"],
+    queryKey: ["lr-users", includeInternal],
     queryFn: async () => {
+      if (includeInternal) {
+        const { data, error } = await (supabase as any)
+          .from("users")
+          .select("id,email,full_name")
+          .is("deleted_at", null)
+          .order("full_name", { ascending: true });
+        if (error) throw error;
+        return (data ?? []) as Array<{ id: string; email: string | null; full_name: string | null }>;
+      }
       const { data, error } = await (supabase as any)
-        .from("users")
-        .select("id,email,full_name")
-        .is("deleted_at", null)
+        .from("reporting_users")
+        .select("id:user_id,email,full_name")
         .order("full_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Array<{ id: string; email: string | null; full_name: string | null }>;
     },
   });
+
+  useEffect(() => {
+    if (userId === "all") return;
+    const list = usersQuery.data ?? [];
+    if (list.length > 0 && !list.some((u) => u.id === userId)) {
+      setUserId("all");
+      setPage(0);
+    }
+  }, [usersQuery.data, userId]);
 
   // Cert type map
   const certTypeQuery = useQuery({
@@ -177,13 +195,14 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
 
   // Summary
   const summaryQuery = useQuery({
-    queryKey: ["lr-summary", rpcTier, rpcTargetId, rpcTargetName, userId],
+    queryKey: ["lr-summary", rpcTier, rpcTargetId, rpcTargetName, userId, includeInternal],
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc("get_learning_report_summary", {
         p_tier: rpcTier,
         p_target_id: rpcTargetId,
         p_target_name: rpcTargetName,
         p_user_ids: rpcUserIds,
+        p_include_internal: includeInternal,
       });
       if (error) throw error;
       return (data ?? []) as SummaryRow[];
@@ -196,7 +215,7 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
 
   // Detail (paged)
   const detailQuery = useQuery({
-    queryKey: ["lr-detail", rpcTier, rpcTargetId, rpcTargetName, userId, rpcStatus, page],
+    queryKey: ["lr-detail", rpcTier, rpcTargetId, rpcTargetName, userId, rpcStatus, page, includeInternal],
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc("get_learning_report_detail", {
         p_tier: rpcTier,
@@ -206,6 +225,7 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
         p_status: rpcStatus,
         p_limit: PAGE_SIZE,
         p_offset: page * PAGE_SIZE,
+        p_include_internal: includeInternal,
       });
       if (error) throw error;
       return (data ?? []) as DetailRow[];
@@ -218,7 +238,7 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
 
   // Count (for pagination)
   const countQuery = useQuery({
-    queryKey: ["lr-count", rpcTier, rpcTargetId, rpcTargetName, userId, rpcStatus],
+    queryKey: ["lr-count", rpcTier, rpcTargetId, rpcTargetName, userId, rpcStatus, includeInternal],
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc("get_learning_report_detail", {
         p_tier: rpcTier,
@@ -228,6 +248,7 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
         p_status: rpcStatus,
         p_limit: null,
         p_offset: 0,
+        p_include_internal: includeInternal,
       });
       if (error) throw error;
       return (data ?? []).length as number;
@@ -361,6 +382,7 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
         p_status: rpcStatus,
         p_limit: null,
         p_offset: 0,
+        p_include_internal: includeInternal,
       });
       if (error) throw error;
       const rows = (data ?? []) as DetailRow[];
@@ -476,6 +498,12 @@ export default function LearningReport({ embedded = false }: { embedded?: boolea
         </div>
         )}
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => { setIncludeInternal((v) => !v); setPage(0); setSelectedRowKeys(new Set()); }}
+          >
+            {includeInternal ? "Hide test accounts" : "Show test accounts"}
+          </Button>
           <Button variant="outline" onClick={refreshAll} disabled={summaryQuery.isFetching || detailQuery.isFetching}>
             <RefreshCw className={`h-4 w-4 ${summaryQuery.isFetching || detailQuery.isFetching ? "animate-spin" : ""}`} />
             Refresh
