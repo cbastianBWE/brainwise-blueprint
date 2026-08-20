@@ -171,14 +171,26 @@ export default function BulkSeatLinkModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create Prepaid Seat Link</DialogTitle>
-          <DialogDescription>
+      <FormDialogShell
+        className="max-w-lg"
+        title="Create Prepaid Seat Link"
+        description={
+          <>
             Pay for a set number of assessment seats up front, then share one link.
             Each person who signs up through it uses one seat until they're gone.
-          </DialogDescription>
-        </DialogHeader>
+          </>
+        }
+        footer={
+          <div className="flex justify-end">
+            <Button onClick={handleSubmit} disabled={submitDisabled}>
+              {stage === "submitting" ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</>
+              ) : pendingLinkId ? "Retry Payment" : "Continue to Payment"}
+            </Button>
+          </div>
+        }
+      >
+
 
         <div className="space-y-4">
           <div className="space-y-2">
