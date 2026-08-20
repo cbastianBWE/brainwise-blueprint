@@ -295,15 +295,22 @@ export default function BulkInviteModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Bulk Invite Clients</DialogTitle>
-          <DialogDescription>
-            Invite up to 75 clients at once. Mix self-pay and practitioner-paid invitations in a single batch.
-          </DialogDescription>
-        </DialogHeader>
+      <FormDialogShell
+        className="max-w-4xl"
+        title="Bulk Invite Clients"
+        description="Invite up to 75 clients at once. Mix self-pay and practitioner-paid invitations in a single batch."
+        footer={
+          stage === "results" ? (
+            <div className="flex justify-end">
+              <Button onClick={() => { onComplete(); resetAll(); }}>
+                Done
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
+        <div>
 
-        <div className="max-h-[70vh] overflow-y-auto pr-2">
           {stage === "validate" && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2 justify-between">
