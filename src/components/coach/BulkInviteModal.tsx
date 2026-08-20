@@ -665,16 +665,11 @@ export default function BulkInviteModal({
                   These practitioner-client records were created but the email did not send. The client can still sign up at the URL, you may want to contact them directly.
                 </div>
               )}
-
-              <div className="flex justify-end pt-2">
-                <Button onClick={() => { onComplete(); resetAll(); }}>
-                  Done
-                </Button>
-              </div>
             </div>
           )}
         </div>
-      </DialogContent>
+      </FormDialogShell>
+
     </Dialog>
   );
 }
