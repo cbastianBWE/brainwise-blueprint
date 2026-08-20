@@ -48,6 +48,6 @@ export function RecapWidget({
       </div>
     );
   }
-  if (recap?.html) return <AiAnalysisPanel html={recap.html} />;
+  if (recap?.html) return <AiAnalysisPanel analysis={recap} />;
   return null;
 }

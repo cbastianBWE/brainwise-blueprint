@@ -202,8 +202,8 @@ export function AiAnalysisPanel({
             return (
               <div
                 key={i}
-                className="rounded-xl bg-white p-[12px_13px]"
-                style={{
+                                style={{
+                  background: "#fff",
                   border: "1px solid rgba(2,31,54,.10)",
                   borderLeft: "4px solid var(--bw-orange)",
                   borderRadius: 12,

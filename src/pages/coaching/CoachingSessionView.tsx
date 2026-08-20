@@ -238,7 +238,7 @@ export default function CoachingSessionView() {
             <CardTitle className="text-base">Coaching plan</CardTitle>
           </CardHeader>
           <CardContent>
-            <AiAnalysisPanel html={analysisHtml} />
+            <AiAnalysisPanel analysis={responses.analysis} />
           </CardContent>
         </Card>
       )}
