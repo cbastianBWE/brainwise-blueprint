@@ -701,14 +701,49 @@ export default function CoachingActivityRunner() {
                   <AiAnalysisPanel html={responses.analysis.html} />
                 </div>
               )}
-              {responses.chat && responses.chat.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Conversation</h3>
-                  <ChatTranscript chat={responses.chat} />
-                </div>
-              )}
             </CardContent>
           </Card>
+
+          {coachUserId && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Share with your practitioner</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={shareSnapshot} disabled={!!existingShare}>
+                    <Share2 className="h-4 w-4" />
+                    {existingShare ? "Shared" : "Share with my practitioner"}
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <Label htmlFor="always-share">Always share my coaching with my practitioner</Label>
+                    <p className="text-xs text-muted-foreground">
+                      New completed activities will be shared automatically.
+                    </p>
+                  </div>
+                  <Switch
+                    id="always-share"
+                    checked={alwaysShare}
+                    onCheckedChange={toggleAlwaysShare}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {responses.chat && responses.chat.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Conversation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChatTranscript chat={responses.chat} />
+              </CardContent>
+            </Card>
+          )}
+
 
           <Card>
             <CardHeader>
