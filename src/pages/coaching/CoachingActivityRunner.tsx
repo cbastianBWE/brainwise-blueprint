@@ -777,29 +777,6 @@ export default function CoachingActivityRunner() {
                   <Button variant="outline" onClick={() => restart(true)}>Reuse my answers</Button>
                 </div>
               )}
-              {coachUserId && (
-                <div className="space-y-3 border-t pt-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button onClick={shareSnapshot} disabled={!!existingShare}>
-                      <Share2 className="h-4 w-4" />
-                      {existingShare ? "Shared" : "Share with my practitioner"}
-                    </Button>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
-                      <Label htmlFor="always-share">Always share my coaching with my practitioner</Label>
-                      <p className="text-xs text-muted-foreground">
-                        New completed activities will be shared automatically.
-                      </p>
-                    </div>
-                    <Switch
-                      id="always-share"
-                      checked={alwaysShare}
-                      onCheckedChange={toggleAlwaysShare}
-                    />
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </>
