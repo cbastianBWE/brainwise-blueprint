@@ -13,7 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Plus, Users, Eye, EyeOff, Loader2, Archive } from "lucide-react";
+
 import { toast } from "sonner";
 import GenerateReportDialog from "@/components/reports/GenerateReportDialog";
 import ManageReportAccessDialog from "@/components/reports/ManageReportAccessDialog";
@@ -205,6 +209,30 @@ export default function TeamPairedReports() {
     [rows],
   );
 
+  // Archived rows stay reachable behind a toggle: restore lives on them and nowhere else.
+  const [showArchived, setShowArchived] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const visibleRows = useMemo(() => {
+    const base = showArchived ? sortedRows : sortedRows.filter((r) => !r.archived_at);
+    const q = search.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter((r) => {
+      const haystack = [
+        r.subjects ?? "",
+        typeLabelFor(r.kind, r.relationship_mode),
+        showArchived && r.archived_at ? r.archive_reason ?? "" : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [sortedRows, showArchived, search]);
+
+  const archivedCount = useMemo(() => rows.filter((r) => r.archived_at).length, [rows]);
+  const allArchived = rows.length > 0 && archivedCount === rows.length;
+
+
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const toggleRelease = async (r: ReportRow) => {
     setReleasingId(r.report_id);
@@ -373,8 +401,30 @@ export default function TeamPairedReports() {
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Your reports</CardTitle>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>
+            {showArchived ? "All reports" : "Your reports"}
+            {!loading && rows.length > 0 && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                {visibleRows.length}
+              </span>
+            )}
+          </CardTitle>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search participants or type"
+              className="sm:w-64"
+              aria-label="Search reports"
+            />
+            <div className="flex items-center gap-2">
+              <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
+              <Label htmlFor="show-archived" className="cursor-pointer">
+                Show archived reports
+              </Label>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -385,6 +435,23 @@ export default function TeamPairedReports() {
               <Button variant="outline" onClick={() => setDialogOpen(true)}>
                 Generate your first report
               </Button>
+            </div>
+          ) : !showArchived && allArchived ? (
+            <div className="py-10 text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                All {archivedCount} of your reports are archived. Turn on Show archived reports to
+                see them.
+              </p>
+            </div>
+          ) : visibleRows.length === 0 ? (
+            <div className="py-10 text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                No reports match “{search.trim()}”.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Search covers the reports loaded on this page, which is capped at the 100 most
+                recent.
+              </p>
             </div>
           ) : (
             <Table>
@@ -398,7 +465,8 @@ export default function TeamPairedReports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedRows.map((r) => {
+                {visibleRows.map((r) => {
+
                   const archived = !!r.archived_at;
                   const typeLabel = typeLabelFor(r.kind, r.relationship_mode);
                   const href =

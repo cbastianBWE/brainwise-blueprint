@@ -52,12 +52,10 @@ export default function PairedReportsSharedWithMe() {
     const { data, error } = await supabase.rpc("bw_list_my_reports");
     if (!error) {
       const all = (data as ReportRow[]) ?? [];
-      // Archived reports sort last; the database decides who sees them at all.
-      setRows(
-        all
-          .filter((r) => r.kind === "paired")
-          .sort((a, b) => Number(!!a.archived_at) - Number(!!b.archived_at)),
-      );
+      // Archived reports are hidden outright here: restore is super admin only and
+      // lives on the main Team & Paired Reports page, so there is nothing to act on.
+      setRows(all.filter((r) => r.kind === "paired" && !r.archived_at));
+
     }
     setLoading(false);
   }, []);
