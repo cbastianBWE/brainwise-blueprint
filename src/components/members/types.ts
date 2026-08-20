@@ -14,6 +14,7 @@ export interface MemberRow {
   show_coach_tab: boolean;
   is_coach_actor?: boolean | null;
   is_coach_client?: boolean | null;
+  is_internal_test?: boolean | null;
   total_count: number;
 }
 
@@ -29,6 +30,7 @@ export interface MembersFilterState {
   has_supervisor: boolean | null;
   is_coach_actor: boolean | null;
   is_coach_client: boolean | null;
+  include_internal: boolean;
 }
 
 export interface MembersSortState {
@@ -102,6 +104,7 @@ export const SYSTEM_DEFAULT_FILTERS: MembersFilterState = {
   has_supervisor: null,
   is_coach_actor: null,
   is_coach_client: null,
+  include_internal: false,
 };
 
 export const SYSTEM_DEFAULT_SORT: MembersSortState = {

@@ -134,7 +134,7 @@ export default function Members() {
         const initial = views.find((v) => v.id === def);
         if (initial) {
           setActiveViewId(initial.id);
-          setFilters(initial.filters);
+          setFilters({ ...SYSTEM_DEFAULT_FILTERS, ...initial.filters });
           setSort(initial.sort);
           setVisibleColumns(
             (initial.columns as MemberColumnId[]).filter((c) =>
@@ -184,6 +184,7 @@ export default function Members() {
         p_sort_column: sort.column,
         p_sort_direction: sort.direction,
         p_specific_user_id: null,
+        p_include_internal: filters.include_internal,
       } as any);
       if (error) throw error;
       return (data ?? []) as unknown as MemberRow[];
@@ -234,6 +235,7 @@ export default function Members() {
         p_sort_column: null,
         p_sort_direction: null,
         p_specific_user_id: routeUserId,
+        p_include_internal: true,
       } as any);
       if (error) throw error;
       const arr = (data ?? []) as unknown as MemberRow[];
@@ -344,7 +346,7 @@ export default function Members() {
     const v = savedViews.find((x) => x.id === viewId);
     if (!v) return;
     setActiveViewId(viewId);
-    setFilters(v.filters);
+    setFilters({ ...SYSTEM_DEFAULT_FILTERS, ...v.filters });
     setSort(v.sort);
     setVisibleColumns(
       (v.columns as MemberColumnId[]).filter((c) =>
@@ -355,7 +357,7 @@ export default function Members() {
 
   const handleDiscardChanges = () => {
     if (!activeView) return;
-    setFilters(activeView.filters);
+    setFilters({ ...SYSTEM_DEFAULT_FILTERS, ...activeView.filters });
     setSort(activeView.sort);
     setVisibleColumns(
       (activeView.columns as MemberColumnId[]).filter((c) =>

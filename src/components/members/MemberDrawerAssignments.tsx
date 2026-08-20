@@ -379,6 +379,7 @@ function AssignMentorLauncher({ userId, fullName, open, onOpenChange }: Launcher
         p_sort_column: "name",
         p_sort_direction: "asc",
         p_specific_user_id: null,
+        p_include_internal: true,
       } as any);
       if (error) throw error;
       return (data ?? []) as Array<{
