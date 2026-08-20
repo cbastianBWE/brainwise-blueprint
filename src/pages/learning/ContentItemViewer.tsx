@@ -48,6 +48,9 @@ import FileUploadViewer from "@/components/learning/viewers/FileUploadViewer";
 import LiveEventViewer from "@/components/learning/viewers/LiveEventViewer";
 import LessonBlockViewer from "@/components/learning/viewers/LessonBlockViewer";
 import NotesPanel from "@/components/learning/NotesPanel";
+import NotesDrawer from "@/components/learning/NotesDrawer";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
@@ -100,6 +103,8 @@ function PlaceholderViewer({ label }: PlaceholderProps) {
 export default function ContentItemViewer() {
   const { contentItemId } = useParams<{ contentItemId: string }>();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+
   const userId = user?.id ?? null;
   const navigate = useNavigate();
 
@@ -336,15 +341,19 @@ export default function ContentItemViewer() {
               )}
             </div>
           </div>
-          {isCompleted && (
-            <span
-              className="rounded-full px-3 py-1 text-xs font-semibold text-white flex items-center gap-1 shrink-0"
-              style={{ backgroundColor: "var(--bw-forest)" }}
-            >
-              <CircleCheck className="h-3.5 w-3.5" /> Completed
-            </span>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {isCompleted && (
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold text-white flex items-center gap-1 shrink-0"
+                style={{ backgroundColor: "var(--bw-forest)" }}
+              >
+                <CircleCheck className="h-3.5 w-3.5" /> Completed
+              </span>
+            )}
+            {contentItemId && <NotesDrawer contentItemId={contentItemId} />}
+          </div>
         </div>
+
 
         <div className="flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs text-muted-foreground bg-muted border border-border">
@@ -365,8 +374,9 @@ export default function ContentItemViewer() {
       {/* Viewer */}
       <section className="px-4 sm:px-6">{renderViewer()}</section>
 
-      {/* Personal notes — all item types */}
-      {contentItemId && <NotesPanel contentItemId={contentItemId} />}
+      {/* Personal notes — stacked card below md; a docked drawer above md */}
+      {contentItemId && isMobile && <NotesPanel contentItemId={contentItemId} />}
+
 
       {/* Prev / Next footer */}
       <div className="px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t">

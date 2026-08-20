@@ -6,12 +6,16 @@ import React from "react";
 const rpc = vi.fn();
 const maybeSingle = vi.fn();
 
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ user: { id: "u-1" }, session: null, loading: false, signOut: async () => {} }),
+}));
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     rpc: (...a: unknown[]) => rpc(...a),
     from: () => ({
       select: () => ({
-        eq: () => ({ maybeSingle: () => maybeSingle() }),
+        eq: () => ({ eq: () => ({ maybeSingle: () => maybeSingle() }) }),
       }),
     }),
   },
