@@ -231,33 +231,9 @@ export default function CoachingActivityRunner() {
     };
   }, [user, activityId, forceFresh, navigate]);
 
-  // Load coach info + existing share
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data: cc } = await supabase
-        .from("coach_clients")
-        .select("coach_user_id")
-        .eq("client_user_id", user.id)
-        .is("revoked_at", null)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const cid = cc?.coach_user_id || null;
-      setCoachUserId(cid);
-      if (!cid) return;
-      const { data: shares } = await supabase
-        .from("coaching_activity_shares")
-        .select("id,mode,revoked_at")
-        .eq("owner_user_id", user.id)
-        .eq("viewer_user_id", cid)
-        .is("revoked_at", null);
-      const always = (shares || []).find((s: any) => s.mode === "always");
-      const snap = (shares || []).find((s: any) => s.mode === "snapshot");
-      setAlwaysShare(!!always);
-      setExistingShare(always || snap ? { id: (always || snap).id, mode: (always || snap).mode } : null);
-    })();
-  }, [user]);
+  // Practitioner lookup + share state now live in useCoachingShare().
+
+
 
   const steps: Step[] = useMemo(() => {
     const s = activity?.definition?.steps;
