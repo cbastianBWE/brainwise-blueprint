@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import CoachingShareControl from "@/components/coaching/CoachingShareControl";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Compass, Lock, History, Search, Send, RotateCcw, Sparkles, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1170,6 +1171,8 @@ export default function CoachingActivities() {
           </Button>
         </div>
       </div>
+
+      <CoachingShareControl variant="inline" />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "activities" | "history")}>
         <TabsList>

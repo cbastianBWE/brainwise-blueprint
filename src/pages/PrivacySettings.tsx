@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Shield, Lock, UserCircle, Pencil, MessageSquare, Users2, Inbox, Share2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import CoachingShareControl from "@/components/coaching/CoachingShareControl";
+import { useCoachingShare } from "@/hooks/useCoachingShare";
 import PtpSharingControls, {
   PtpAudienceKey,
   PtpAudienceContent,
