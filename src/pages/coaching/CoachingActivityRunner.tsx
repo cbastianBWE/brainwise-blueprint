@@ -354,61 +354,14 @@ export default function CoachingActivityRunner() {
   );
 
   const shareSnapshot = useCallback(async () => {
-    if (!user || !coachUserId) return;
-    const { data, error } = await supabase
-      .from("coaching_activity_shares")
-      .insert({
-        owner_user_id: user.id,
-        viewer_user_id: coachUserId,
-        mode: "snapshot",
-      })
-      .select("id,mode")
-      .single();
-    if (error) {
+    const ok = await coachingShare.shareSnapshot();
+    if (!ok) {
       toast.error("Couldn't share with your practitioner.");
       return;
     }
-    setExistingShare({ id: data.id, mode: data.mode });
     toast.success("Shared with your practitioner.");
-  }, [user, coachUserId]);
+  }, [coachingShare]);
 
-  const toggleAlwaysShare = useCallback(
-    async (checked: boolean) => {
-      if (!user || !coachUserId) return;
-      setAlwaysShare(checked);
-      if (checked) {
-        // Look for existing revoked or non-existent
-        const { data: existing } = await supabase
-          .from("coaching_activity_shares")
-          .select("id")
-          .eq("owner_user_id", user.id)
-          .eq("viewer_user_id", coachUserId)
-          .eq("mode", "always")
-          .maybeSingle();
-        if (existing) {
-          await supabase
-            .from("coaching_activity_shares")
-            .update({ revoked_at: null, granted_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("coaching_activity_shares").insert({
-            owner_user_id: user.id,
-            viewer_user_id: coachUserId,
-            mode: "always",
-          });
-        }
-      } else {
-        await supabase
-          .from("coaching_activity_shares")
-          .update({ revoked_at: new Date().toISOString() })
-          .eq("owner_user_id", user.id)
-          .eq("viewer_user_id", coachUserId)
-          .eq("mode", "always")
-          .is("revoked_at", null);
-      }
-    },
-    [user, coachUserId],
-  );
 
   if (loading) {
     return (
