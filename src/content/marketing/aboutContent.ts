@@ -5,7 +5,7 @@ export const meta = {
   heroEyebrow: "About BrainWise",
   heroTitle: "Change fails for brain reasons, not strategy reasons.",
   heroSubhead:
-    "BrainWise Enterprises builds assessments, coaching, and certification around how people actually change — so leaders stop guessing and start seeing what drives behavior.",
+    "BrainWise Enterprises builds assessments, coaching, and certification around how people actually change, so leaders stop guessing and start seeing what drives behavior.",
 
   premiseEyebrow: "Why BrainWise exists",
   premiseTitle: "People do not resist change. Their brains resist threat.",
