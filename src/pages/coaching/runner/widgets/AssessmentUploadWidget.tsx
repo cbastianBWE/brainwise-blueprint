@@ -344,7 +344,7 @@ export function AssessmentUploadWidget({
           <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
             How this lines up with your PTP
           </h3>
-          <AiAnalysisPanel html={analysis.html} />
+          <AiAnalysisPanel analysis={analysis} />
         </div>
       )}
     </div>
