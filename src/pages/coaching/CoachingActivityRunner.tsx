@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2, Check, X, Mic, Video as VideoIcon, Square, Upload as UploadIcon, RotateCcw } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Loader2, ArrowLeft, ArrowRight, Plus, Trash2, Send, Share2, CheckCircle2, Check, X, Mic, Video as VideoIcon, Square, Upload as UploadIcon, RotateCcw, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,11 +84,33 @@ function coachingProductTier(activityTier: string | null | undefined): string | 
 }
 
 
+// ---- "Where to go next" ----
+// Shape returned by bw_recommend_next_activities. Ordering, exclusions and the
+// quoted reason all come from the RPC; nothing here re-ranks or rewrites them.
+interface NextRec {
+  activity_id: string;
+  code: string | null;
+  title: string;
+  module_group: string | null;
+  tier: string | null;
+  description: string | null;
+  thumbnail_url: string | null;
+  similarity: number | null;
+  because_key: string | null;
+  because_snippet: string | null;
+  allowed: boolean;
+  reason: string | null;
+}
 
-
-
+// Same treatment as the activities page.
+const tierBadgeVariant = (tier: string | null): "default" | "secondary" | "outline" => {
+  if (tier === "Foundational") return "secondary";
+  if (tier === "Advanced") return "default";
+  return "outline";
+};
 
 // ---- Main page ----
+
 
 
 export default function CoachingActivityRunner() {
@@ -112,8 +134,42 @@ export default function CoachingActivityRunner() {
   const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
   const { oneTimePrice } = useSubscriptionPlans();
 
+  // "Where to go next" — read-only suggestions from bw_recommend_next_activities.
+  const [recs, setRecs] = useState<NextRec[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
+  // Set while `finish` is running the extractor, so the completed-view effect
+  // does not race it with a second (empty) RPC call.
+  const finishingRef = useRef(false);
+  const recsLoadedForRef = useRef<string | null>(null);
+
+  const loadRecs = useCallback(async (sessionId: string) => {
+    setRecsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("bw_recommend_next_activities", {
+        p_session_id: sessionId,
+        p_match_count: 4,
+      });
+      if (error) throw error;
+      setRecs((data as unknown as NextRec[]) || []);
+    } catch {
+      setRecs([]);
+    } finally {
+      setRecsLoading(false);
+    }
+  }, []);
+
+  // Returning to an activity finished earlier: recommendations only, no extraction.
+  useEffect(() => {
+    if (!session || session.status !== "completed") return;
+    if (finishingRef.current) return;
+    if (recsLoadedForRef.current === session.id) return;
+    recsLoadedForRef.current = session.id;
+    void loadRecs(session.id);
+  }, [session?.id, session?.status, loadRecs]);
+
 
   const freshHandledRef = useRef(false);
+
 
   // Load activity + session
   useEffect(() => {
@@ -289,6 +345,8 @@ export default function CoachingActivityRunner() {
 
   const finish = useCallback(async () => {
     if (!session) return;
+    finishingRef.current = true;
+    recsLoadedForRef.current = session.id;
     await supabase
       .from("coaching_activity_sessions")
       .update({
@@ -303,9 +361,26 @@ export default function CoachingActivityRunner() {
     // Fire and forget
     supabase.functions
       .invoke("coaching-activity-summary", { body: { session_id: session.id } })
-      .catch(() => {});
+      .catch((e) => {
+        console.error("[coaching] summary update failed", { session_id: session.id, error: e });
+      });
     toast.success("Coaching activity completed.");
-  }, [session, currentStep, responses]);
+
+    // Recommendations depend on extracts, so this one is awaited. A failed
+    // extraction costs the recommendations, never the completion.
+    setRecsLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke("coaching-extract-responses", {
+        body: { session_id: session.id },
+      });
+      if (error) throw error;
+    } catch (e) {
+      console.error("[coaching] response extraction failed", { session_id: session.id, error: e });
+    }
+    await loadRecs(session.id);
+    finishingRef.current = false;
+  }, [session, currentStep, responses, loadRecs]);
+
 
   const restart = useCallback(
     async (reuseAnswers: boolean) => {
@@ -634,6 +709,59 @@ export default function CoachingActivityRunner() {
               )}
             </CardContent>
           </Card>
+
+          {recsLoading ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Where to go next</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Finding activities based on what you just wrote…
+                </div>
+              </CardContent>
+            </Card>
+          ) : recs.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Where to go next</CardTitle>
+                <p className="text-sm text-muted-foreground">Based on what you just wrote.</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recs.map((r) => (
+                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
+                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
+                      {r.module_group && (
+                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
+                      )}
+                    </div>
+                    {r.allowed ? (
+                      <Link
+                        to={`/coaching/${r.activity_id}`}
+                        className="block text-base font-medium leading-snug hover:underline"
+                      >
+                        {r.title}
+                      </Link>
+                    ) : (
+                      <p className="text-base font-medium leading-snug text-muted-foreground">
+                        {r.title}
+                      </p>
+                    )}
+                    {r.because_snippet && (
+                      <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
+                        You wrote: “{r.because_snippet}”
+                      </blockquote>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
+
+
 
           {coachUserId && (
             <Card>

@@ -3914,6 +3914,99 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_response_extracts: {
+        Row: {
+          activity_id: string
+          content: string
+          created_at: string
+          embedding: string | null
+          id: string
+          response_key: string
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          content: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          response_key: string
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          response_key?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_response_extracts_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coaching_response_extracts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_response_media: {
         Row: {
           activity_code: string | null
@@ -20278,6 +20371,17 @@ export type Database = {
         Args: { p_token: string }
         Returns: boolean
       }
+      bw_coaching_extract_coverage: {
+        Args: never
+        Returns: {
+          extract_rows: number
+          newest_extract: string
+          oldest_extract: string
+          rows_missing_vector: number
+          sessions_extracted: number
+          sessions_with_content: number
+        }[]
+      }
       bw_fire_paired_narrative: {
         Args: { p_profile: string; p_section: string }
         Returns: number
@@ -20482,6 +20586,27 @@ export type Database = {
           rank: number
           side: string
           value: number
+        }[]
+      }
+      bw_recommend_next_activities: {
+        Args: {
+          p_match_count?: number
+          p_min_similarity?: number
+          p_session_id: string
+        }
+        Returns: {
+          activity_id: string
+          allowed: boolean
+          because_key: string
+          because_snippet: string
+          code: string
+          description: string
+          module_group: string
+          reason: string
+          similarity: number
+          thumbnail_url: string
+          tier: string
+          title: string
         }[]
       }
       bw_relationship_pair_role: {
@@ -24282,6 +24407,25 @@ export type Database = {
           total_count: number
           user_id: string
           worst_certification_status: string
+        }[]
+      }
+      search_my_coaching_extracts: {
+        Args: {
+          p_match_count?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          activity_code: string
+          activity_id: string
+          activity_title: string
+          content: string
+          extract_id: string
+          module_group: string
+          response_key: string
+          session_id: string
+          similarity: number
+          updated_at: string
         }[]
       }
       search_relationship_activities: {
