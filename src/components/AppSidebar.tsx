@@ -250,11 +250,13 @@ export function AppSidebar() {
     (async () => {
       const { data, error } = await supabase.rpc("bw_list_my_reports");
       if (cancelled || error) return;
-      const rows = (data as Array<{ kind: string }>) ?? [];
+      const rows = (data as Array<{ kind: string; archived_at: string | null }>) ?? [];
+      // An archived report is not usable, so it must not put a nav entry on screen.
       setSharedReports({
-        team: rows.some((r) => r.kind === "team"),
-        paired: rows.some((r) => r.kind === "paired"),
+        team: rows.some((r) => r.kind === "team" && !r.archived_at),
+        paired: rows.some((r) => r.kind === "paired" && !r.archived_at),
       });
+
     })();
     return () => { cancelled = true; };
   }, [user, isPrivilegedForReports]);
