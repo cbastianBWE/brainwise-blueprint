@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +10,10 @@ import { Switch } from "@/components/ui/switch";
 
 interface NotesPanelProps {
   contentItemId: string;
+  /** Render the inner content only (no <section> wrapper / card chrome). */
+  bare?: boolean;
 }
+
 
 interface NoteRow {
   id: string;
@@ -30,21 +34,29 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export default function NotesPanel({ contentItemId }: NotesPanelProps) {
-  // Read approach: direct SELECT on learning_notes filtered to this content item.
-  // SELECT is granted; writes go exclusively through the RPCs below.
+export default function NotesPanel({ contentItemId, bare }: NotesPanelProps) {
+  const { user } = useAuth();
+
+  // Read approach: direct SELECT on learning_notes for this content item.
+  // The user_id filter is REQUIRED: RLS on learning_notes also exposes notes
+  // shared with the caller (as a mentor) and grants super admins every row, so
+  // an unfiltered read can return someone else's private note — or several rows,
+  // which would break maybeSingle(). Writes go exclusively through the RPCs.
   const noteQuery = useQuery({
-    queryKey: ["learning-note", contentItemId],
+    queryKey: ["learning-note", contentItemId, user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("learning_notes")
         .select("id, body, shared_with_user_id, shared_at, updated_at")
         .eq("content_item_id", contentItemId)
+        .eq("user_id", user!.id)
         .maybeSingle();
       if (error) throw error;
       return (data as NoteRow | null) ?? null;
     },
   });
+
 
   const [body, setBody] = useState("");
   const [hydrated, setHydrated] = useState(false);
@@ -58,14 +70,16 @@ export default function NotesPanel({ contentItemId }: NotesPanelProps) {
   const [sharePending, setSharePending] = useState(false);
 
   // Hydrate once from the server, then let local edits own the textarea.
+  const ready = !!user?.id && !noteQuery.isPending;
   useEffect(() => {
-    if (hydrated || noteQuery.isLoading) return;
+    if (hydrated || !ready) return;
     const n = noteQuery.data;
     setBody(n?.body ?? "");
     setIsShared(!!n?.shared_with_user_id);
     setSharedAt(n?.shared_at ?? null);
     setHydrated(true);
-  }, [hydrated, noteQuery.isLoading, noteQuery.data]);
+  }, [hydrated, ready, noteQuery.data]);
+
 
   // Debounced autosave — mirrors useDebouncedSave in
   // src/pages/coaching/runner/shared.tsx (timer ref + flush-on-unmount).
@@ -152,30 +166,30 @@ export default function NotesPanel({ contentItemId }: NotesPanelProps) {
       setIsShared(false);
       return;
     }
-    const row = (Array.isArray(data) ? data[0] : data) as NoteRow | null;
+    const row = (Array.isArray(data) ? data[0] : data) as unknown as NoteRow | null;
     setIsShared(!!row?.shared_with_user_id);
     setSharedAt(row?.shared_at ?? null);
   };
 
-  if (noteQuery.isLoading) {
+  if (!ready) {
+    const spinner = (
+      <div className="p-6 flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+    if (bare) return spinner;
     return (
       <section className="px-4 sm:px-6 pt-6">
         <Card>
-          <CardContent className="p-6 flex items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </CardContent>
+          <CardContent className="p-0">{spinner}</CardContent>
         </Card>
       </section>
     );
   }
 
-  return (
-    <section className="px-4 sm:px-6 pt-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">My notes</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+  const inner = (
+    <div className="space-y-3">
+
           {archived ? (
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
@@ -230,8 +244,20 @@ export default function NotesPanel({ contentItemId }: NotesPanelProps) {
             </p>
           )}
           {shareError && <p className="text-xs text-muted-foreground">{shareError}</p>}
-        </CardContent>
+    </div>
+  );
+
+  if (bare) return inner;
+
+  return (
+    <section className="px-4 sm:px-6 pt-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">My notes</CardTitle>
+        </CardHeader>
+        <CardContent>{inner}</CardContent>
       </Card>
     </section>
   );
+
 }

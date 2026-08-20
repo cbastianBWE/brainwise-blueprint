@@ -20360,19 +20360,12 @@ export type Database = {
         Returns: {
           body: string
           content_item_id: string
-          created_at: string
-          id: string
-          shared_at: string | null
-          shared_with_user_id: string | null
+          is_shared: boolean
+          note_id: string
+          shared_at: string
+          shared_with_name: string
           updated_at: string
-          user_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "learning_notes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        }[]
       }
       bw_list_my_report_orders: {
         Args: never

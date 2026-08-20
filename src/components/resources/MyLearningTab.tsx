@@ -15,8 +15,8 @@ import { resolveTierThumbnailUrls, type ThumbnailMeta } from "@/lib/assetUrls";
 import { enrolledStatusToCompletionStatus } from "@/lib/learningStatus";
 import UpgradeNudgeModal from "./UpgradeNudgeModal";
 import PaidEnrollmentNudgeModal from "./PaidEnrollmentNudgeModal";
-import MyNotesSection from "./MyNotesSection";
 import type { UpgradeEntityType } from "./types";
+
 
 // ---------------------------------------------------------------------------
 // RPC return shape types (§111 wrapper-shape discipline)
@@ -1045,11 +1045,9 @@ export default function MyLearningTab() {
         </>
       )}
 
-      <MyNotesSection />
-
       <UpgradeNudgeModal
-
         open={upgradeState.open}
+
         onOpenChange={(open) => setUpgradeState((s) => ({ ...s, open }))}
         entityType={upgradeState.entityType}
         entityName={upgradeState.entityName}
