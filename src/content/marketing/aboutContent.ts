@@ -1,5 +1,5 @@
 // Static copy for the public About page.
-// Last updated: August 17, 2026
+// Last updated: August 20, 2026
 
 export const meta = {
   heroEyebrow: "About BrainWise",
