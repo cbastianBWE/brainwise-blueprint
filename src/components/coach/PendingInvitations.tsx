@@ -11,7 +11,9 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Copy, Trash2, Loader2, Mail } from "lucide-react";
+
 
 const INSTRUMENTS = [
   { id: "PTP",   uuid: "02618e9a-d411-44cf-b316-fe368edeac03", name: "Personal Threat Profile" },
@@ -246,29 +248,55 @@ export default function PendingInvitations({ coachUserId, onChanged }: Props) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={!r.invite_token}
-                            onClick={() => copyLink(r)}
-                          >
-                            <Copy className="h-3 w-3 mr-1" /> Copy link
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1"
-                            disabled={resendingId === r.id}
-                            onClick={() => handleResend(r)}
-                          >
-                            <Mail className="h-3 w-3" />
-                            {resendingId === r.id ? "Sending..." : "Resend"}
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => setRevokeTarget(r)}>
-                            <Trash2 className="h-3 w-3 mr-1" /> Revoke
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                aria-label="Copy link"
+                                disabled={!r.invite_token}
+                                onClick={() => copyLink(r)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Copy link</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8"
+                                aria-label="Resend invitation"
+                                disabled={resendingId === r.id}
+                                onClick={() => handleResend(r)}
+                              >
+                                {resendingId === r.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Mail className="h-4 w-4" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Resend invitation</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="destructive"
+                                className="h-8 w-8"
+                                aria-label="Revoke invitation"
+                                onClick={() => setRevokeTarget(r)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Revoke invitation</TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
+
                     </TableRow>
                   );
                 })}

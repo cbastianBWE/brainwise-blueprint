@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import FormDialogShell from "@/components/coach/FormDialogShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -172,14 +171,26 @@ export default function BulkSeatLinkModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create Prepaid Seat Link</DialogTitle>
-          <DialogDescription>
+      <FormDialogShell
+        className="max-w-lg"
+        title="Create Prepaid Seat Link"
+        description={
+          <>
             Pay for a set number of assessment seats up front, then share one link.
             Each person who signs up through it uses one seat until they're gone.
-          </DialogDescription>
-        </DialogHeader>
+          </>
+        }
+        footer={
+          <div className="flex justify-end">
+            <Button onClick={handleSubmit} disabled={submitDisabled}>
+              {stage === "submitting" ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</>
+              ) : pendingLinkId ? "Retry Payment" : "Continue to Payment"}
+            </Button>
+          </div>
+        }
+      >
+
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -218,7 +229,13 @@ export default function BulkSeatLinkModal({
 
           <div className="space-y-2">
             <Label htmlFor="coach-note">Personal Note (optional)</Label>
-            <Textarea id="coach-note" value={coachNote} onChange={(e) => setCoachNote(e.target.value)} rows={2} />
+            <Textarea
+              id="coach-note"
+              value={coachNote}
+              onChange={(e) => { setPendingLinkId(null); setCoachNote(e.target.value); }}
+              rows={2}
+            />
+
           </div>
 
           <div className="flex items-center justify-between rounded-md border p-3">
@@ -286,16 +303,9 @@ export default function BulkSeatLinkModal({
             You pay for all seats now. Seats are not refunded automatically if
             unused. After payment, copy your link from the Active Seat Links list.
           </p>
-
-          <div className="flex justify-end pt-1">
-            <Button onClick={handleSubmit} disabled={submitDisabled}>
-              {stage === "submitting" ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</>
-              ) : pendingLinkId ? "Retry Payment" : "Continue to Payment"}
-            </Button>
-          </div>
         </div>
-      </DialogContent>
+      </FormDialogShell>
+
     </Dialog>
   );
 }

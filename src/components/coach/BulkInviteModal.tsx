@@ -2,9 +2,8 @@ import { useState, useRef, useMemo } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import FormDialogShell from "@/components/coach/FormDialogShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -296,15 +295,22 @@ export default function BulkInviteModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Bulk Invite Clients</DialogTitle>
-          <DialogDescription>
-            Invite up to 75 clients at once. Mix self-pay and practitioner-paid invitations in a single batch.
-          </DialogDescription>
-        </DialogHeader>
+      <FormDialogShell
+        className="max-w-4xl"
+        title="Bulk Invite Clients"
+        description="Invite up to 75 clients at once. Mix self-pay and practitioner-paid invitations in a single batch."
+        footer={
+          stage === "results" ? (
+            <div className="flex justify-end">
+              <Button onClick={() => { onComplete(); resetAll(); }}>
+                Done
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
+        <div>
 
-        <div className="max-h-[70vh] overflow-y-auto pr-2">
           {stage === "validate" && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2 justify-between">
@@ -659,16 +665,11 @@ export default function BulkInviteModal({
                   These practitioner-client records were created but the email did not send. The client can still sign up at the URL, you may want to contact them directly.
                 </div>
               )}
-
-              <div className="flex justify-end pt-2">
-                <Button onClick={() => { onComplete(); resetAll(); }}>
-                  Done
-                </Button>
-              </div>
             </div>
           )}
         </div>
-      </DialogContent>
+      </FormDialogShell>
+
     </Dialog>
   );
 }

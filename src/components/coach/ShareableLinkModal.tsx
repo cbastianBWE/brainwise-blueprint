@@ -3,9 +3,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/ui/dialog";
+import FormDialogShell from "@/components/coach/FormDialogShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -175,15 +174,26 @@ export default function ShareableLinkModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Generate Shareable Link</DialogTitle>
-          <DialogDescription>
-            Create a signup link you can share with your client by email, text, or QR code.
-          </DialogDescription>
-        </DialogHeader>
-
+      <FormDialogShell
+        className="max-w-md"
+        title="Generate Shareable Link"
+        description="Create a signup link you can share with your client by email, text, or QR code."
+        footer={
+          stage === "form" ? (
+            <div className="flex justify-end">
+              <Button onClick={handleSubmit} disabled={submitDisabled}>
+                {paymentMode === "self_pay" ? "Generate Link" : "Continue to Payment"}
+              </Button>
+            </div>
+          ) : stage === "result" && resultLink ? (
+            <div className="flex justify-end">
+              <Button onClick={() => { onComplete(); resetAll(); }}>Done</Button>
+            </div>
+          ) : undefined
+        }
+      >
         {stage === "form" && (
+
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
@@ -291,12 +301,6 @@ export default function ShareableLinkModal({
                 Total: {total !== null ? `$${total}` : "loading…"}
               </p>
             )}
-
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleSubmit} disabled={submitDisabled}>
-                {paymentMode === "self_pay" ? "Generate Link" : "Continue to Payment"}
-              </Button>
-            </div>
           </div>
         )}
 
@@ -342,13 +346,10 @@ export default function ShareableLinkModal({
             <p className="text-xs text-muted-foreground">
               Anyone with this link can sign up using this email address. The link will be removed from your pending invitations after 30 days or after redemption.
             </p>
-
-            <div className="flex justify-end">
-              <Button onClick={() => { onComplete(); resetAll(); }}>Done</Button>
-            </div>
           </div>
         )}
-      </DialogContent>
+      </FormDialogShell>
+
     </Dialog>
   );
 }

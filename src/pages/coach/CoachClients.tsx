@@ -17,6 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription,
 } from "@/components/ui/dialog";
+import FormDialogShell from "@/components/coach/FormDialogShell";
+
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
@@ -124,6 +126,8 @@ export default function CoachClients() {
   const [clientsError, setClientsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [orderTab, setOrderTab] = useState<"coach-pays" | "client-pays">("coach-pays");
+
 
   // Form state
   const [firstName, setFirstName] = useState("");
@@ -464,6 +468,8 @@ export default function CoachClients() {
     setWalkthroughChoice("default");
     setIsActorDebrief(false);
     setIsFreeGrant(false);
+    setOrderTab("coach-pays");
+
   };
 
   const walkthroughValue = (): boolean | null =>
@@ -1201,52 +1207,54 @@ export default function CoachClients() {
         )}
 
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Order Assessment</DialogTitle>
-              <DialogDescription>Set up an assessment for a new or existing client</DialogDescription>
-            </DialogHeader>
+          <FormDialogShell
+            className="max-w-lg"
+            title="Order Assessment"
+            description="Set up an assessment for a new or existing client"
+            footer={
+              isFreeGrant ? (
+                <Button className="w-full gap-2" onClick={handleOrderFreeGrant} disabled={submitting || !email}>
+                  <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Free Assessment"}
+                </Button>
+              ) : isActorDebrief ? (
+                <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email}>
+                  <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
+                </Button>
+              ) : orderTab === "coach-pays" ? (
+                <Button className="w-full gap-2" onClick={handleOrderCoachPays}
+                        disabled={submitting || !email || !perAssessmentPriceId}>
+                  <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
+                  {submitting ? "Processing..." : "Proceed to Payment"}
+                </Button>
+              ) : (
+                <Button className="w-full gap-2" onClick={handleOrderClientPays}
+                        disabled={submitting || !email}>
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                  {submitting ? "Sending..." : "Send Invitation"}
+                </Button>
+              )
+            }
+          >
             {isFreeGrant ? (
               <div className="mt-2">
                 {sharedFormFields}
-                <div className="mt-4">
-                  <Button className="w-full gap-2" onClick={handleOrderFreeGrant} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Free Assessment"}
-                  </Button>
-                </div>
               </div>
             ) : isActorDebrief ? (
               <div className="mt-2">
                 {sharedFormFields}
-                <div className="mt-4">
-                  <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
-                  </Button>
-                </div>
               </div>
             ) : (
-              <Tabs defaultValue="coach-pays" className="mt-2">
+              <Tabs value={orderTab} onValueChange={(v) => setOrderTab(v as "coach-pays" | "client-pays")} className="mt-2">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="coach-pays">I'll Pay for My Client</TabsTrigger>
                   <TabsTrigger value="client-pays">Client Pays Themselves</TabsTrigger>
                 </TabsList>
 
                 {sharedFormFields}
-
-                <TabsContent value="coach-pays" className="mt-4">
-                  <Button className="w-full gap-2" onClick={handleOrderCoachPays} disabled={submitting || !email || !perAssessmentPriceId}>
-                    <ClipboardCheck className="h-4 w-4" aria-hidden="true" /> {submitting ? "Processing..." : "Proceed to Payment"}
-                  </Button>
-                </TabsContent>
-
-                <TabsContent value="client-pays" className="mt-4">
-                  <Button className="w-full gap-2" onClick={handleOrderClientPays} disabled={submitting || !email}>
-                    <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Invitation"}
-                  </Button>
-                </TabsContent>
               </Tabs>
             )}
-          </DialogContent>
+          </FormDialogShell>
+
         </Dialog>
 
 
