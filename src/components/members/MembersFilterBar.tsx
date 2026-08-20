@@ -125,6 +125,8 @@ export default function MembersFilterBar({
 
   const actorLabel = filters.is_coach_actor === null ? "Practitioner actor: All" : filters.is_coach_actor ? "Practitioner actor: Yes" : "Practitioner actor: No";
   const clientLabel = filters.is_coach_client === null ? "Practitioner client: All" : filters.is_coach_client ? "Practitioner client: Yes" : "Practitioner client: No";
+  const internalLabel = filters.include_internal ? "Test accounts: Shown" : "Test accounts: Hidden";
+
 
   const accountTypesSelected = filters.account_types ?? [];
   const accountTypeLabel =
@@ -265,6 +267,19 @@ export default function MembersFilterBar({
             <DropdownMenuItem onClick={() => update({ is_coach_client: false })}>Not practitioner client</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Test accounts */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">{internalLabel}<ChevronDown className="h-3.5 w-3.5 ml-1" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => update({ include_internal: false })}>Hide test accounts</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => update({ include_internal: true })}>Show test accounts</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+
 
         {/* More filters (cycle 1 stub) */}
         <Tooltip>

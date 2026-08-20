@@ -72,6 +72,7 @@ interface ReportResult {
   scope: "per_user" | "aggregate";
   row_count: number;
   truncated: boolean;
+  include_internal: boolean;
   filters: Record<string, unknown>;
   rows: PerUserRow[] | AggregateRow[];
 }
@@ -134,6 +135,7 @@ export default function ResourceEngagementReport({ embedded = false }: { embedde
   const [page, setPage] = useState(0);
   const [sortKey, setSortKey] = useState<SortKey>("last_at");
   const [sortAsc, setSortAsc] = useState(false);
+  const [includeInternal, setIncludeInternal] = useState(false);
 
   const resourcesQuery = useQuery({
     queryKey: ["rer-resources"],
@@ -150,13 +152,14 @@ export default function ResourceEngagementReport({ embedded = false }: { embedde
   });
 
   const reportQuery = useQuery({
-    queryKey: ["rer-report", source, resourceId, limit],
+    queryKey: ["rer-report", source, resourceId, limit, includeInternal],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("resource_engagement_report" as never, {
         p_resource_id: resourceId === "all" ? null : resourceId,
         p_user_id: null,
         p_source: source === "all" ? null : source,
         p_limit: Number(limit),
+        p_include_internal: includeInternal,
       } as never);
       if (error) throw error;
       return data as unknown as ReportResult;
@@ -333,6 +336,12 @@ export default function ResourceEngagementReport({ embedded = false }: { embedde
         </div>
         )}
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => { setIncludeInternal((v) => !v); setPage(0); }}
+          >
+            {includeInternal ? "Hide test accounts" : "Show test accounts"}
+          </Button>
           <Button
             variant="outline"
             onClick={() => reportQuery.refetch()}

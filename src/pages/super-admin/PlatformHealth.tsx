@@ -6,18 +6,21 @@ import LearningReport from "@/pages/super-admin/LearningReport";
 import ResourceEngagementReport from "@/pages/super-admin/ResourceEngagementReport";
 import PlatformTicketsTab from "@/components/super-admin/PlatformTicketsTab";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Users, ClipboardCheck, Calendar, CreditCard, GitBranch, Award,
 } from "lucide-react";
 
 interface Stats {
-  totalUsers: number;
-  totalCompleted: number;
-  completedThisMonth: number;
-  tierCounts: Record<string, number>;
-  activePlatformVersion: string;
-  activeAiVersion: string;
-  certificationCounts: Record<string, { in_progress: number; certified: number }>;
+  include_internal: boolean;
+  total_users: number;
+  staff_users: number;
+  total_completed: number;
+  completed_this_month: number;
+  tier_counts: Record<string, number>;
+  certification_counts: Record<string, { in_progress: number; certified: number }>;
+  active_platform_version: string;
+  active_ai_version: string;
 }
 
 const TABS = [
@@ -72,51 +75,27 @@ function OverviewTab() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [includeInternal, setIncludeInternal] = useState(false);
+
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
-      const [usersRes, completedRes, monthRes, tiersRes, pvRes, aiRes, certRes] = await Promise.all([
-        supabase.from("users").select("id", { count: "exact", head: true }),
-        supabase.from("assessments").select("id", { count: "exact", head: true }).eq("status", "completed"),
-        supabase.from("assessments").select("id", { count: "exact", head: true })
-          .eq("status", "completed")
-          .gte("completed_at", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-        supabase.from("users").select("subscription_tier").eq("subscription_status", "active"),
-        supabase.from("platform_versions").select("version_string").eq("is_active", true).limit(1).single(),
-        supabase.from("ai_versions").select("version_string").eq("is_active", true).limit(1).single(),
-        supabase.from("coach_certifications").select("certification_type, status"),
-      ]);
-
-      const tierCounts: Record<string, number> = {};
-      if (tiersRes.data) {
-        for (const row of tiersRes.data) {
-          const t = row.subscription_tier || "base";
-          tierCounts[t] = (tierCounts[t] || 0) + 1;
-        }
+      setLoading(true);
+      const { data, error } = await supabase.rpc("platform_health_overview" as never, {
+        p_include_internal: includeInternal,
+      } as never);
+      if (cancelled) return;
+      if (error) {
+        console.error("platform_health_overview failed", error);
+        setStats(null);
+      } else {
+        setStats(data as unknown as Stats);
       }
-
-      const certificationCounts: Record<string, { in_progress: number; certified: number }> = {};
-      if (certRes.data) {
-        for (const row of certRes.data) {
-          const type = row.certification_type || "unknown";
-          if (!certificationCounts[type]) certificationCounts[type] = { in_progress: 0, certified: 0 };
-          if (row.status === "certified") certificationCounts[type].certified++;
-          else if (row.status === "in_progress") certificationCounts[type].in_progress++;
-        }
-      }
-
-      setStats({
-        totalUsers: usersRes.count || 0,
-        totalCompleted: completedRes.count || 0,
-        completedThisMonth: monthRes.count || 0,
-        tierCounts,
-        activePlatformVersion: pvRes.data?.version_string || "None",
-        activeAiVersion: aiRes.data?.version_string || "None",
-        certificationCounts,
-      });
       setLoading(false);
     };
     load();
-  }, []);
+    return () => { cancelled = true; };
+  }, [includeInternal]);
 
   if (loading) {
     return (
@@ -129,13 +108,24 @@ function OverviewTab() {
   if (!stats) return null;
 
   const cards = [
-    { icon: Users, label: "Total Registered Users", value: stats.totalUsers },
-    { icon: ClipboardCheck, label: "Total Completed Assessments", value: stats.totalCompleted },
-    { icon: Calendar, label: "Completed This Month", value: stats.completedThisMonth },
+    { icon: Users, label: "Registered Users", value: stats.total_users },
+    { icon: ClipboardCheck, label: "Total Completed Assessments", value: stats.total_completed },
+    { icon: Calendar, label: "Completed This Month", value: stats.completed_this_month },
   ];
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+        <p className="text-xs text-muted-foreground">
+          {includeInternal
+            ? "Including internal test accounts and test organizations."
+            : `Excluding internal test accounts. ${stats.staff_users} BrainWise staff account${stats.staff_users === 1 ? "" : "s"} not counted above.`}
+        </p>
+        <Button variant="outline" size="sm" onClick={() => setIncludeInternal((v) => !v)}>
+          {includeInternal ? "Hide test accounts" : "Show test accounts"}
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {cards.map(c => (
           <Card key={c.label}>
@@ -151,8 +141,8 @@ function OverviewTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {Object.entries(stats.tierCounts).length > 0 ? (
-          Object.entries(stats.tierCounts).map(([tier, count]) => (
+        {Object.entries(stats.tier_counts).length > 0 ? (
+          Object.entries(stats.tier_counts).map(([tier, count]) => (
             <Card key={tier}>
               <CardContent className="flex items-center gap-3 py-4">
                 <div className="rounded-lg bg-accent/10 p-2"><CreditCard className="h-5 w-5 text-accent" /></div>
@@ -174,7 +164,7 @@ function OverviewTab() {
 
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-3">Practitioner Certifications</h2>
-        {Object.keys(stats.certificationCounts).length === 0 ? (
+        {Object.keys(stats.certification_counts).length === 0 ? (
           <Card>
             <CardContent className="py-4">
               <p className="text-sm text-muted-foreground">No practitioner certifications found.</p>
@@ -182,7 +172,7 @@ function OverviewTab() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(stats.certificationCounts).map(([type, counts]) => (
+            {Object.entries(stats.certification_counts).map(([type, counts]) => (
               <Card key={type}>
                 <CardContent className="py-4 space-y-2">
                   <div className="flex items-center gap-2">
@@ -213,7 +203,7 @@ function OverviewTab() {
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-primary/10 p-2"><GitBranch className="h-5 w-5 text-primary" /></div>
             <div>
-              <p className="text-lg font-semibold text-foreground">{stats.activePlatformVersion}</p>
+              <p className="text-lg font-semibold text-foreground">{stats.active_platform_version}</p>
               <p className="text-xs text-muted-foreground">Active Platform Version</p>
             </div>
           </CardContent>
@@ -222,7 +212,7 @@ function OverviewTab() {
           <CardContent className="flex items-center gap-3 py-4">
             <div className="rounded-lg bg-primary/10 p-2"><img src="/brain-icon.png" alt="" className="h-5 w-5" /></div>
             <div>
-              <p className="text-lg font-semibold text-foreground">{stats.activeAiVersion}</p>
+              <p className="text-lg font-semibold text-foreground">{stats.active_ai_version}</p>
               <p className="text-xs text-muted-foreground">Active AI Version</p>
             </div>
           </CardContent>
