@@ -1005,13 +1005,46 @@ export default function CoachingActivities() {
   const lockedGroups = MAP_GROUPS.filter((g) => !groupAccess[g]?.accessible);
   const introAccessible = !!groupAccess["Intro"]?.accessible;
 
-  const groupActivities = useMemo(
-    () =>
-      selectedGroup
-        ? activities.filter((a) => a.module_group === selectedGroup)
-        : [],
-    [activities, selectedGroup],
+  // Tier is the pricing axis, so order the dialog Foundational -> Typical -> Advanced.
+  // Sorting on the tier string would put Advanced first, which is the opposite.
+  const TIER_RANK: Record<string, number> = {
+    Foundational: 0,
+    Typical: 1,
+    Advanced: 2,
+  };
+  const tierRank = (t: string | null | undefined) =>
+    t && t in TIER_RANK ? TIER_RANK[t] : 3; // unknown/missing tier sorts last, never dropped
+
+  const groupActivities = useMemo(() => {
+    if (!selectedGroup) return [];
+    const inGroup = activities.filter((a) => a.module_group === selectedGroup);
+    // Decorate-sort-undecorate keeps the query's sequence order stable inside a tier.
+    return inGroup
+      .map((a, i) => ({ a, i }))
+      .sort((x, y) => tierRank(x.a.tier) - tierRank(y.a.tier) || x.i - y.i)
+      .map((x) => x.a);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activities, selectedGroup]);
+
+  const [tierFilter, setTierFilter] = useState<"All" | "Foundational" | "Typical" | "Advanced">("All");
+  // Opening another region must not inherit the previous region's filter.
+  useEffect(() => {
+    setTierFilter("All");
+  }, [selectedGroup]);
+
+  const tierCounts = useMemo(() => {
+    const c: Record<string, number> = { Foundational: 0, Typical: 0, Advanced: 0 };
+    for (const a of groupActivities) {
+      if (a.tier && a.tier in c) c[a.tier] += 1;
+    }
+    return c;
+  }, [groupActivities]);
+
+  const filteredGroupActivities = useMemo(
+    () => (tierFilter === "All" ? groupActivities : groupActivities.filter((a) => a.tier === tierFilter)),
+    [groupActivities, tierFilter],
   );
+
 
   const onSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
