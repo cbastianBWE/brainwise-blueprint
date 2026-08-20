@@ -37,6 +37,7 @@ import NewsletterConfirm from "./pages/marketing/NewsletterConfirm";
 import NewsletterUnsubscribe from "./pages/marketing/NewsletterUnsubscribe";
 import PricingRouter from "./pages/PricingRouter";
 import TilePreview from "./pages/_dev/TilePreview";
+import AnalysisProbe from "./pages/_dev/AnalysisProbe";
 import CoupleWidgetPreview from "./pages/couples/WidgetPreview";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/SignUp";
@@ -238,6 +239,7 @@ const App = () => (
             <Route path="/certification" element={<Certification />} />
             <Route path="/pricing" element={<PricingRouter />} />
             <Route path="/_dev/tile-preview" element={<TilePreview />} />
+            <Route path="/_dev/analysis-probe" element={<AnalysisProbe />} />
             <Route path="/dev/couple-widgets" element={<CoupleWidgetPreview />} />
 
 
