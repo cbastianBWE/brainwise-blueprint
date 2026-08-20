@@ -205,6 +205,30 @@ export default function TeamPairedReports() {
     [rows],
   );
 
+  // Archived rows stay reachable behind a toggle: restore lives on them and nowhere else.
+  const [showArchived, setShowArchived] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const visibleRows = useMemo(() => {
+    const base = showArchived ? sortedRows : sortedRows.filter((r) => !r.archived_at);
+    const q = search.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter((r) => {
+      const haystack = [
+        r.subjects ?? "",
+        typeLabelFor(r.kind, r.relationship_mode),
+        showArchived && r.archived_at ? r.archive_reason ?? "" : "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [sortedRows, showArchived, search]);
+
+  const archivedCount = useMemo(() => rows.filter((r) => r.archived_at).length, [rows]);
+  const allArchived = rows.length > 0 && archivedCount === rows.length;
+
+
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const toggleRelease = async (r: ReportRow) => {
     setReleasingId(r.report_id);
