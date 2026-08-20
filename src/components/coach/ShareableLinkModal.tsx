@@ -175,15 +175,26 @@ export default function ShareableLinkModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Generate Shareable Link</DialogTitle>
-          <DialogDescription>
-            Create a signup link you can share with your client by email, text, or QR code.
-          </DialogDescription>
-        </DialogHeader>
-
+      <FormDialogShell
+        className="max-w-md"
+        title="Generate Shareable Link"
+        description="Create a signup link you can share with your client by email, text, or QR code."
+        footer={
+          stage === "form" ? (
+            <div className="flex justify-end">
+              <Button onClick={handleSubmit} disabled={submitDisabled}>
+                {paymentMode === "self_pay" ? "Generate Link" : "Continue to Payment"}
+              </Button>
+            </div>
+          ) : stage === "result" && resultLink ? (
+            <div className="flex justify-end">
+              <Button onClick={() => { onComplete(); resetAll(); }}>Done</Button>
+            </div>
+          ) : undefined
+        }
+      >
         {stage === "form" && (
+
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
