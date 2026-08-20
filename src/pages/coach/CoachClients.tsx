@@ -124,6 +124,8 @@ export default function CoachClients() {
   const [clientsError, setClientsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [orderTab, setOrderTab] = useState<"coach-pays" | "client-pays">("coach-pays");
+
 
   // Form state
   const [firstName, setFirstName] = useState("");
