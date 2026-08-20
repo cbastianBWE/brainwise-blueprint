@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ShareProbe from "@/pages/_dev/ShareProbe";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -199,6 +200,7 @@ const App = () => (
             <ImpersonationChrome />
             <Routes>
             {/* Public routes */}
+            <Route path="/_dev/share-probe" element={<ShareProbe />} />
             <Route path="/" element={<Home />} />
             <Route path="/pay/:token" element={<PublicInvoicePay />} />
             <Route path="/claim/:token" element={<ClaimInvitation />} />
