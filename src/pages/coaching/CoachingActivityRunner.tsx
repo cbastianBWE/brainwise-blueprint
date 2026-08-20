@@ -323,6 +323,8 @@ export default function CoachingActivityRunner() {
 
   const finish = useCallback(async () => {
     if (!session) return;
+    finishingRef.current = true;
+    recsLoadedForRef.current = session.id;
     await supabase
       .from("coaching_activity_sessions")
       .update({
@@ -337,9 +339,26 @@ export default function CoachingActivityRunner() {
     // Fire and forget
     supabase.functions
       .invoke("coaching-activity-summary", { body: { session_id: session.id } })
-      .catch(() => {});
+      .catch((e) => {
+        console.error("[coaching] summary update failed", { session_id: session.id, error: e });
+      });
     toast.success("Coaching activity completed.");
-  }, [session, currentStep, responses]);
+
+    // Recommendations depend on extracts, so this one is awaited. A failed
+    // extraction costs the recommendations, never the completion.
+    setRecsLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke("coaching-extract-responses", {
+        body: { session_id: session.id },
+      });
+      if (error) throw error;
+    } catch (e) {
+      console.error("[coaching] response extraction failed", { session_id: session.id, error: e });
+    }
+    await loadRecs(session.id);
+    finishingRef.current = false;
+  }, [session, currentStep, responses, loadRecs]);
+
 
   const restart = useCallback(
     async (reuseAnswers: boolean) => {
