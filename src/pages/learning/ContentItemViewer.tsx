@@ -47,6 +47,7 @@ import SkillsPracticeViewer from "@/components/learning/viewers/SkillsPracticeVi
 import FileUploadViewer from "@/components/learning/viewers/FileUploadViewer";
 import LiveEventViewer from "@/components/learning/viewers/LiveEventViewer";
 import LessonBlockViewer from "@/components/learning/viewers/LessonBlockViewer";
+import NotesPanel from "@/components/learning/NotesPanel";
 
 function getItemTypeIcon(itemType: string): { Icon: LucideIcon; color: string } {
   const map: Record<string, { Icon: LucideIcon; color: string }> = {
