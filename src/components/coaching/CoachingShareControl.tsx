@@ -38,9 +38,7 @@ export default function CoachingShareControl({ variant = "section", share, trail
   const wrapper =
     variant === "card"
       ? "p-4 rounded-lg border"
-      : variant === "inline"
-        ? "rounded-lg border p-3"
-        : "flex items-center justify-between rounded-lg border p-3";
+      : "rounded-lg border p-3";
 
   if (variant === "card") {
     return (
