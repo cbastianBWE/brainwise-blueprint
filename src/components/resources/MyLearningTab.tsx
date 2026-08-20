@@ -1044,7 +1044,10 @@ export default function MyLearningTab() {
         </>
       )}
 
+      <MyNotesSection />
+
       <UpgradeNudgeModal
+
         open={upgradeState.open}
         onOpenChange={(open) => setUpgradeState((s) => ({ ...s, open }))}
         entityType={upgradeState.entityType}
