@@ -112,8 +112,42 @@ export default function CoachingActivityRunner() {
   const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
   const { oneTimePrice } = useSubscriptionPlans();
 
+  // "Where to go next" — read-only suggestions from bw_recommend_next_activities.
+  const [recs, setRecs] = useState<NextRec[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
+  // Set while `finish` is running the extractor, so the completed-view effect
+  // does not race it with a second (empty) RPC call.
+  const finishingRef = useRef(false);
+  const recsLoadedForRef = useRef<string | null>(null);
+
+  const loadRecs = useCallback(async (sessionId: string) => {
+    setRecsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc("bw_recommend_next_activities", {
+        p_session_id: sessionId,
+        p_match_count: 4,
+      });
+      if (error) throw error;
+      setRecs((data as unknown as NextRec[]) || []);
+    } catch {
+      setRecs([]);
+    } finally {
+      setRecsLoading(false);
+    }
+  }, []);
+
+  // Returning to an activity finished earlier: recommendations only, no extraction.
+  useEffect(() => {
+    if (!session || session.status !== "completed") return;
+    if (finishingRef.current) return;
+    if (recsLoadedForRef.current === session.id) return;
+    recsLoadedForRef.current = session.id;
+    void loadRecs(session.id);
+  }, [session?.id, session?.status, loadRecs]);
+
 
   const freshHandledRef = useRef(false);
+
 
   // Load activity + session
   useEffect(() => {
