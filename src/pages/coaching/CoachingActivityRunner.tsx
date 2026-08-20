@@ -641,26 +641,21 @@ export default function CoachingActivityRunner() {
                 <CardTitle className="text-base">Share with your practitioner</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button onClick={shareSnapshot} disabled={!!existingShare}>
-                    <Share2 className="h-4 w-4" />
-                    {existingShare ? "Shared" : "Share with my practitioner"}
-                  </Button>
-                </div>
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <Label htmlFor="always-share">Always share my coaching with my practitioner</Label>
-                    <p className="text-xs text-muted-foreground">
-                      New completed activities will be shared automatically.
-                    </p>
+                {alwaysShare ? (
+                  <p className="text-sm text-muted-foreground">
+                    Everything you complete is already being shared with your practitioner.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button onClick={shareSnapshot} disabled={hasSnapshotShare || coachingShare.pending}>
+                      <Share2 className="h-4 w-4" />
+                      {hasSnapshotShare ? "Shared" : "Share with my practitioner"}
+                    </Button>
                   </div>
-                  <Switch
-                    id="always-share"
-                    checked={alwaysShare}
-                    onCheckedChange={toggleAlwaysShare}
-                  />
-                </div>
+                )}
+                <CoachingShareControl variant="section" share={coachingShare} />
               </CardContent>
+
             </Card>
           )}
 
