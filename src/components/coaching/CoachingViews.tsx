@@ -324,7 +324,7 @@ export function AiAnalysisPanel({
                     </div>
                   )}
                 </div>
-                {sessionId && (
+                {sessionId && feedbackEditable && (
                   <div className="flex flex-col gap-1 pt-1">
                     <Button
                       type="button"
@@ -350,10 +350,31 @@ export function AiAnalysisPanel({
                     </Button>
                   </div>
                 )}
+                {sessionId && !feedbackEditable && verdict && (
+                  <div
+                    className="flex flex-col gap-1 pt-1"
+                    aria-label={verdict === "agree" ? "Marked as resonates" : "Marked as not quite right"}
+                    title={verdict === "agree" ? "Marked as resonates" : "Marked as not quite right"}
+                  >
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center ${
+                        verdict === "agree" ? "text-primary" : "text-destructive"
+                      }`}
+                    >
+                      {verdict === "agree" ? (
+                        <ThumbsUp className="h-4 w-4" />
+                      ) : (
+                        <ThumbsDown className="h-4 w-4" />
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
+        )}
+
         {closing && <p className="mt-3 text-sm text-muted-foreground">{closing}</p>}
       </div>
     );
