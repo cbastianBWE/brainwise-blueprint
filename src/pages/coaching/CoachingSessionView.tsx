@@ -201,7 +201,7 @@ export default function CoachingSessionView() {
             <CardTitle className="text-base">Coaching plan</CardTitle>
           </CardHeader>
           <CardContent>
-            <AiAnalysisPanel analysis={responses.analysis} />
+            <AiAnalysisPanel analysis={responses.analysis} sessionId={sessionId} />
           </CardContent>
         </Card>
       )}

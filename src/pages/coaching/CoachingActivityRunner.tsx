@@ -1075,7 +1075,7 @@ export default function CoachingActivityRunner() {
 
             {step?.widget === "ai_panel" && (
               <div className="space-y-4">
-                <AiAnalysisPanel analysis={responses.analysis} />
+                <AiAnalysisPanel analysis={responses.analysis} sessionId={session.id} feedbackEditable />
                 {step.chat && (
                   <ChatWidget
                     sessionId={session.id}
