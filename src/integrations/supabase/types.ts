@@ -3917,37 +3917,119 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_plan_block_feedback: {
+        Row: {
+          block_index: number
+          created_at: string
+          id: string
+          session_id: string
+          updated_at: string
+          user_id: string
+          verdict: string
+        }
+        Insert: {
+          block_index: number
+          created_at?: string
+          id?: string
+          session_id: string
+          updated_at?: string
+          user_id: string
+          verdict: string
+        }
+        Update: {
+          block_index?: number
+          created_at?: string
+          id?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_plan_block_feedback_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_plan_block_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_plan_block_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_plan_block_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_plan_block_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coaching_plan_block_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_response_extracts: {
         Row: {
           activity_id: string
           content: string
+          context: string | null
           created_at: string
           embedding: string | null
           id: string
+          item_index: number
           response_key: string
           session_id: string
+          source: string
           updated_at: string
           user_id: string
         }
         Insert: {
           activity_id: string
           content: string
+          context?: string | null
           created_at?: string
           embedding?: string | null
           id?: string
+          item_index?: number
           response_key: string
           session_id: string
+          source?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           activity_id?: string
           content?: string
+          context?: string | null
           created_at?: string
           embedding?: string | null
           id?: string
+          item_index?: number
           response_key?: string
           session_id?: string
+          source?: string
           updated_at?: string
           user_id?: string
         }
@@ -10463,6 +10545,7 @@ export type Database = {
           importance_band: string
           is_v1_active: boolean
           notification_type: string
+          suppress_on_safety_concern: boolean
           user_configurable: boolean
         }
         Insert: {
@@ -10473,6 +10556,7 @@ export type Database = {
           importance_band: string
           is_v1_active?: boolean
           notification_type: string
+          suppress_on_safety_concern?: boolean
           user_configurable: boolean
         }
         Update: {
@@ -10483,6 +10567,7 @@ export type Database = {
           importance_band?: string
           is_v1_active?: boolean
           notification_type?: string
+          suppress_on_safety_concern?: boolean
           user_configurable?: boolean
         }
         Relationships: []
@@ -20462,6 +20547,13 @@ export type Database = {
           subscription_status: string
         }[]
       }
+      bw_get_plan_block_feedback: {
+        Args: { p_session_id: string }
+        Returns: {
+          block_index: number
+          verdict: string
+        }[]
+      }
       bw_has_product: {
         Args: { p_tier: string; p_user: string }
         Returns: boolean
@@ -20634,8 +20726,10 @@ export type Database = {
         Returns: {
           activity_id: string
           allowed: boolean
+          because_context: string
           because_key: string
           because_snippet: string
+          because_source: string
           code: string
           description: string
           module_group: string
@@ -20684,6 +20778,10 @@ export type Database = {
       bw_set_my_walkthrough_default: {
         Args: { p_enabled: boolean }
         Returns: boolean
+      }
+      bw_set_plan_block_feedback: {
+        Args: { p_block_index: number; p_session_id: string; p_verdict: string }
+        Returns: Json
       }
       bw_set_report_label: {
         Args: { p_label: string; p_profile: string }
@@ -22328,7 +22426,26 @@ export type Database = {
         Args: { p_payload: Json; p_with_activity?: boolean }
         Returns: string
       }
+      mr_notify: {
+        Args: {
+          p_about_user?: string
+          p_dedup_key?: string
+          p_notification_type: string
+          p_payload?: Json
+          p_recipient: string
+          p_relationship?: string
+        }
+        Returns: Json
+      }
       mr_partner_label: { Args: { p_payload: Json }; Returns: string }
+      mr_partner_progress_suppressed: {
+        Args: {
+          p_about_user: string
+          p_recipient: string
+          p_relationship: string
+        }
+        Returns: string
+      }
       mr_safety_alert_body: { Args: { p_payload: Json }; Returns: string }
       my_access_history: {
         Args: { p_limit?: number; p_offset?: number }
@@ -24421,7 +24538,6 @@ export type Database = {
         Args: {
           p_match_count?: number
           p_min_similarity?: number
-          p_min_standout?: number
           p_query_embedding: string
           p_query_text?: string
         }
@@ -24432,7 +24548,6 @@ export type Database = {
           lexical_rank: number
           module_group: string
           similarity: number
-          standout: number
           thumbnail_url: string
           tier: string
           title: string
@@ -24502,7 +24617,6 @@ export type Database = {
         Args: {
           p_match_count?: number
           p_min_similarity?: number
-          p_min_standout?: number
           p_query_embedding: string
           p_query_text?: string
         }
@@ -24514,7 +24628,6 @@ export type Database = {
           lexical_rank: number
           module_number: number
           similarity: number
-          standout: number
           tags: string[]
           title: string
         }[]
