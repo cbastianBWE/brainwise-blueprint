@@ -169,25 +169,29 @@ export default function CoachingActivityRunner() {
   const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
   const { oneTimePrice } = useSubscriptionPlans();
 
-  // "Where to go next" — read-only suggestions from bw_recommend_next_activities.
+  // "Where to go next" — read-only suggestions from coaching-next-recommendations.
   const [recs, setRecs] = useState<NextRec[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
+  const [recsOpen, setRecsOpen] = useState(false);
   // Set while `finish` is running the extractor, so the completed-view effect
-  // does not race it with a second (empty) RPC call.
+  // does not race it with a second (empty) call.
   const finishingRef = useRef(false);
   const recsLoadedForRef = useRef<string | null>(null);
 
-  const loadRecs = useCallback(async (sessionId: string) => {
+  const loadRecs = useCallback(async (sessionId: string): Promise<NextRec[]> => {
     setRecsLoading(true);
     try {
-      const { data, error } = await supabase.rpc("bw_recommend_next_activities", {
-        p_session_id: sessionId,
-        p_match_count: 4,
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "coaching-next-recommendations",
+        { body: { session_id: sessionId, match_count: 4 } },
+      );
       if (error) throw error;
-      setRecs((data as unknown as NextRec[]) || []);
+      const results = ((data as { results?: NextRec[] } | null)?.results || []) as NextRec[];
+      setRecs(results);
+      return results;
     } catch {
       setRecs([]);
+      return [];
     } finally {
       setRecsLoading(false);
     }
