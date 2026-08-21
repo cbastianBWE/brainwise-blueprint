@@ -372,10 +372,25 @@ export default function CoachingActivityRunner() {
         }
         return false;
       }
-      const html = (data as any)?.analysis_html || "";
       const remaining = (data as any)?.coaching_remaining;
       if (typeof remaining === "number") setCoachingRemaining(remaining);
-      setResponses((r) => ({ ...r, analysis: { ...(r.analysis || {}), html } }));
+
+      // The function returns only the HTML. The structured blocks it also wrote are
+      // in the database, so read them back rather than rendering a partial copy.
+      const { data: fresh } = await supabase
+        .from("coaching_activity_sessions")
+        .select("responses")
+        .eq("id", session.id)
+        .maybeSingle();
+
+      const stored = (fresh?.responses as any)?.analysis;
+      if (stored) {
+        setResponses((r) => ({ ...r, analysis: stored }));
+      } else {
+        // Fall back to what the response gave us, so a failed read still shows a plan.
+        const html = (data as any)?.analysis_html || "";
+        setResponses((r) => ({ ...r, analysis: { ...(r.analysis || {}), html } }));
+      }
       return true;
     } finally {
       setAnalyzing(false);
