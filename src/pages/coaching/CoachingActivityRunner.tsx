@@ -416,7 +416,9 @@ export default function CoachingActivityRunner() {
     } catch (e) {
       console.error("[coaching] response extraction failed", { session_id: session.id, error: e });
     }
-    await loadRecs(session.id);
+    const results = await loadRecs(session.id);
+    // Only ever opened at the moment of finishing, and never empty.
+    if (results.length > 0) setRecsOpen(true);
     finishingRef.current = false;
   }, [session, currentStep, responses, loadRecs]);
 
