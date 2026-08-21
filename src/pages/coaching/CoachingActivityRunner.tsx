@@ -745,7 +745,7 @@ export default function CoachingActivityRunner() {
                   <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
                     Your coaching plan
                   </h3>
-                  <AiAnalysisPanel analysis={responses.analysis} />
+                  <AiAnalysisPanel analysis={responses.analysis} sessionId={session.id} />
                 </div>
               )}
             </CardContent>
@@ -791,16 +791,78 @@ export default function CoachingActivityRunner() {
                         {r.title}
                       </p>
                     )}
-                    {r.because_snippet && (
-                      <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
-                        You wrote: “{r.because_snippet}”
-                      </blockquote>
-                    )}
+                    <RecQuote rec={r} />
                   </div>
                 ))}
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-sm"
+                  onClick={() => setRecsOpen(true)}
+                >
+                  See these in detail
+                </Button>
               </CardContent>
             </Card>
           ) : null}
+
+          <Dialog open={recsOpen} onOpenChange={setRecsOpen}>
+            <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Where to go next</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {recs.map((r) => (
+                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
+                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
+                      {r.module_group && (
+                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
+                      )}
+                    </div>
+                    {r.thumbnail_url && (
+                      <img
+                        src={r.thumbnail_url}
+                        alt=""
+                        className="h-24 w-full rounded-md object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    {r.allowed ? (
+                      <Link
+                        to={`/coaching/${r.activity_id}`}
+                        onClick={() => setRecsOpen(false)}
+                        className="block text-base font-medium leading-snug hover:underline"
+                      >
+                        {r.title}
+                      </Link>
+                    ) : (
+                      <p className="text-base font-medium leading-snug text-muted-foreground">
+                        {r.title}
+                      </p>
+                    )}
+                    {r.why && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Why we are suggesting this
+                        </p>
+                        <p className="text-sm">{r.why}</p>
+                      </div>
+                    )}
+                    {r.what_you_gain && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          What you may learn
+                        </p>
+                        <p className="text-sm">{r.what_you_gain}</p>
+                      </div>
+                    )}
+                    <RecQuote rec={r} />
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
 
 
 
