@@ -187,18 +187,23 @@ export function AiAnalysisPanel({
   analysis,
   html,
   sessionId,
+  feedbackEditable = false,
+  hideDisagreed = false,
 }: {
   analysis?: CoachingAnalysis | null;
   html?: string;
   sessionId?: string;
+  feedbackEditable?: boolean;
+  hideDisagreed?: boolean;
 }) {
   // The index the backend stores feedback against is the index into the
-  // *original* blocks array, so it is captured before the filter runs.
+  // *original* blocks array, so it is captured before any filter runs.
   const blocks = (analysis?.blocks || [])
     .map((block, originalIndex) => ({ block, originalIndex }))
     .filter(
       ({ block: b }) => !!b && !!((b.point ?? "").trim() || (b.body ?? "").trim()),
     );
+
 
   const [verdicts, setVerdicts] = useState<Record<number, "agree" | "disagree">>({});
 
@@ -224,7 +229,8 @@ export function AiAnalysisPanel({
   }, [sessionId]);
 
   const vote = async (originalIndex: number, verdict: "agree" | "disagree") => {
-    if (!sessionId) return;
+    if (!sessionId || !feedbackEditable) return;
+
     const prev = verdicts[originalIndex];
     const next = prev === verdict ? null : verdict;
     setVerdicts((v) => {
@@ -260,11 +266,22 @@ export function AiAnalysisPanel({
   if (blocks.length > 0) {
     const opening = (analysis?.opening ?? "").trim();
     const closing = (analysis?.closing ?? "").trim();
+    // Presentation-only filter. `analysis` is never mutated. Unmarked blocks
+    // (no verdict at all) always survive; only an explicit "disagree" hides.
+    const visibleBlocks = hideDisagreed
+      ? blocks.filter(({ originalIndex }) => verdicts[originalIndex] !== "disagree")
+      : blocks;
     return (
       <div className="rounded-lg border bg-muted/30 p-4">
         {opening && <p className="mb-3 text-sm text-muted-foreground">{opening}</p>}
+        {visibleBlocks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            You marked all of these as not quite right.
+          </p>
+        ) : (
         <div className="grid gap-[10px]">
-          {blocks.map(({ block: b, originalIndex }) => {
+          {visibleBlocks.map(({ block: b, originalIndex }) => {
+
             const point = (b.point ?? "").trim();
             const body = (b.body ?? "").trim();
             const verdict = verdicts[originalIndex];
@@ -307,7 +324,7 @@ export function AiAnalysisPanel({
                     </div>
                   )}
                 </div>
-                {sessionId && (
+                {sessionId && feedbackEditable && (
                   <div className="flex flex-col gap-1 pt-1">
                     <Button
                       type="button"
@@ -333,10 +350,31 @@ export function AiAnalysisPanel({
                     </Button>
                   </div>
                 )}
+                {sessionId && !feedbackEditable && verdict && (
+                  <div
+                    className="flex flex-col gap-1 pt-1"
+                    aria-label={verdict === "agree" ? "Marked as resonates" : "Marked as not quite right"}
+                    title={verdict === "agree" ? "Marked as resonates" : "Marked as not quite right"}
+                  >
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center ${
+                        verdict === "agree" ? "text-primary" : "text-destructive"
+                      }`}
+                    >
+                      {verdict === "agree" ? (
+                        <ThumbsUp className="h-4 w-4" />
+                      ) : (
+                        <ThumbsDown className="h-4 w-4" />
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
+        )}
+
         {closing && <p className="mt-3 text-sm text-muted-foreground">{closing}</p>}
       </div>
     );

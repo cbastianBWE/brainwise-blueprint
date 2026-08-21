@@ -760,7 +760,7 @@ export default function CoachingActivityRunner() {
                   <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
                     Your coaching plan
                   </h3>
-                  <AiAnalysisPanel analysis={responses.analysis} sessionId={session.id} />
+                  <AiAnalysisPanel analysis={responses.analysis} sessionId={session.id} feedbackEditable hideDisagreed />
                 </div>
               )}
             </CardContent>
@@ -1075,7 +1075,7 @@ export default function CoachingActivityRunner() {
 
             {step?.widget === "ai_panel" && (
               <div className="space-y-4">
-                <AiAnalysisPanel analysis={responses.analysis} />
+                <AiAnalysisPanel analysis={responses.analysis} sessionId={session.id} feedbackEditable />
                 {step.chat && (
                   <ChatWidget
                     sessionId={session.id}
