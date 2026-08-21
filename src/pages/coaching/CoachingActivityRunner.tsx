@@ -85,8 +85,9 @@ function coachingProductTier(activityTier: string | null | undefined): string | 
 
 
 // ---- "Where to go next" ----
-// Shape returned by bw_recommend_next_activities. Ordering, exclusions and the
-// quoted reason all come from the RPC; nothing here re-ranks or rewrites them.
+// Shape returned by the coaching-next-recommendations edge function. Ordering,
+// exclusions, the quote and both written lines are all decided server-side;
+// nothing here re-ranks or re-words them.
 interface NextRec {
   activity_id: string;
   code: string | null;
@@ -98,8 +99,42 @@ interface NextRec {
   similarity: number | null;
   because_key: string | null;
   because_snippet: string | null;
+  because_source: "authored" | "selected" | "endorsed" | null;
+  because_context: string | null;
+  why: string | null;
+  what_you_gain: string | null;
   allowed: boolean;
   reason: string | null;
+}
+
+// Never say "You wrote" about something they picked from a library.
+const attributionLabel = (source: NextRec["because_source"]): string => {
+  switch (source) {
+    case "selected":
+      return "You chose:";
+    case "endorsed":
+      return "You agreed with:";
+    case "authored":
+      return "You wrote:";
+    default:
+      return "You wrote:";
+  }
+};
+
+function RecQuote({ rec }: { rec: NextRec }) {
+  if (!rec.because_snippet) return null;
+  return (
+    <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
+      <span>
+        {attributionLabel(rec.because_source)} “{rec.because_snippet}”
+      </span>
+      {rec.because_context && (
+        <span className="mt-1 block text-xs text-muted-foreground/80">
+          on: “{rec.because_context}”
+        </span>
+      )}
+    </blockquote>
+  );
 }
 
 // Same treatment as the activities page.
