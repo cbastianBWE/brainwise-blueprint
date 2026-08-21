@@ -85,8 +85,9 @@ function coachingProductTier(activityTier: string | null | undefined): string | 
 
 
 // ---- "Where to go next" ----
-// Shape returned by bw_recommend_next_activities. Ordering, exclusions and the
-// quoted reason all come from the RPC; nothing here re-ranks or rewrites them.
+// Shape returned by the coaching-next-recommendations edge function. Ordering,
+// exclusions, the quote and both written lines are all decided server-side;
+// nothing here re-ranks or re-words them.
 interface NextRec {
   activity_id: string;
   code: string | null;
@@ -98,8 +99,42 @@ interface NextRec {
   similarity: number | null;
   because_key: string | null;
   because_snippet: string | null;
+  because_source: "authored" | "selected" | "endorsed" | null;
+  because_context: string | null;
+  why: string | null;
+  what_you_gain: string | null;
   allowed: boolean;
   reason: string | null;
+}
+
+// Never say "You wrote" about something they picked from a library.
+const attributionLabel = (source: NextRec["because_source"]): string => {
+  switch (source) {
+    case "selected":
+      return "You chose:";
+    case "endorsed":
+      return "You agreed with:";
+    case "authored":
+      return "You wrote:";
+    default:
+      return "You wrote:";
+  }
+};
+
+function RecQuote({ rec }: { rec: NextRec }) {
+  if (!rec.because_snippet) return null;
+  return (
+    <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
+      <span>
+        {attributionLabel(rec.because_source)} “{rec.because_snippet}”
+      </span>
+      {rec.because_context && (
+        <span className="mt-1 block text-xs text-muted-foreground/80">
+          on: “{rec.because_context}”
+        </span>
+      )}
+    </blockquote>
+  );
 }
 
 // Same treatment as the activities page.
@@ -134,25 +169,29 @@ export default function CoachingActivityRunner() {
   const [repurchase, setRepurchase] = useState<{ tier: string } | null>(null);
   const { oneTimePrice } = useSubscriptionPlans();
 
-  // "Where to go next" — read-only suggestions from bw_recommend_next_activities.
+  // "Where to go next" — read-only suggestions from coaching-next-recommendations.
   const [recs, setRecs] = useState<NextRec[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
+  const [recsOpen, setRecsOpen] = useState(false);
   // Set while `finish` is running the extractor, so the completed-view effect
-  // does not race it with a second (empty) RPC call.
+  // does not race it with a second (empty) call.
   const finishingRef = useRef(false);
   const recsLoadedForRef = useRef<string | null>(null);
 
-  const loadRecs = useCallback(async (sessionId: string) => {
+  const loadRecs = useCallback(async (sessionId: string): Promise<NextRec[]> => {
     setRecsLoading(true);
     try {
-      const { data, error } = await supabase.rpc("bw_recommend_next_activities", {
-        p_session_id: sessionId,
-        p_match_count: 4,
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "coaching-next-recommendations",
+        { body: { session_id: sessionId, match_count: 4 } },
+      );
       if (error) throw error;
-      setRecs((data as unknown as NextRec[]) || []);
+      const results = ((data as { results?: NextRec[] } | null)?.results || []) as NextRec[];
+      setRecs(results);
+      return results;
     } catch {
       setRecs([]);
+      return [];
     } finally {
       setRecsLoading(false);
     }
@@ -377,7 +416,9 @@ export default function CoachingActivityRunner() {
     } catch (e) {
       console.error("[coaching] response extraction failed", { session_id: session.id, error: e });
     }
-    await loadRecs(session.id);
+    const results = await loadRecs(session.id);
+    // Only ever opened at the moment of finishing, and never empty.
+    if (results.length > 0) setRecsOpen(true);
     finishingRef.current = false;
   }, [session, currentStep, responses, loadRecs]);
 
@@ -704,7 +745,7 @@ export default function CoachingActivityRunner() {
                   <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
                     Your coaching plan
                   </h3>
-                  <AiAnalysisPanel analysis={responses.analysis} />
+                  <AiAnalysisPanel analysis={responses.analysis} sessionId={session.id} />
                 </div>
               )}
             </CardContent>
@@ -750,16 +791,78 @@ export default function CoachingActivityRunner() {
                         {r.title}
                       </p>
                     )}
-                    {r.because_snippet && (
-                      <blockquote className="border-l-2 pl-3 text-sm text-muted-foreground">
-                        You wrote: “{r.because_snippet}”
-                      </blockquote>
-                    )}
+                    <RecQuote rec={r} />
                   </div>
                 ))}
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-sm"
+                  onClick={() => setRecsOpen(true)}
+                >
+                  See these in detail
+                </Button>
               </CardContent>
             </Card>
           ) : null}
+
+          <Dialog open={recsOpen} onOpenChange={setRecsOpen}>
+            <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Where to go next</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {recs.map((r) => (
+                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
+                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
+                      {r.module_group && (
+                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
+                      )}
+                    </div>
+                    {r.thumbnail_url && (
+                      <img
+                        src={r.thumbnail_url}
+                        alt=""
+                        className="h-24 w-full rounded-md object-cover"
+                        loading="lazy"
+                      />
+                    )}
+                    {r.allowed ? (
+                      <Link
+                        to={`/coaching/${r.activity_id}`}
+                        onClick={() => setRecsOpen(false)}
+                        className="block text-base font-medium leading-snug hover:underline"
+                      >
+                        {r.title}
+                      </Link>
+                    ) : (
+                      <p className="text-base font-medium leading-snug text-muted-foreground">
+                        {r.title}
+                      </p>
+                    )}
+                    {r.why && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Why we are suggesting this
+                        </p>
+                        <p className="text-sm">{r.why}</p>
+                      </div>
+                    )}
+                    {r.what_you_gain && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          What you may learn
+                        </p>
+                        <p className="text-sm">{r.what_you_gain}</p>
+                      </div>
+                    )}
+                    <RecQuote rec={r} />
+                  </div>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
 
 
 
