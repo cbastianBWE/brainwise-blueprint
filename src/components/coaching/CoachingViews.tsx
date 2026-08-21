@@ -178,17 +178,84 @@ export interface Responses {
  * Renders the coach plan. Structured `blocks_v1` analyses render as cards;
  * everything else (older sessions, "raw" fallbacks, every relationship
  * activity) keeps rendering the sanitized HTML exactly as before.
+ *
+ * `sessionId` is opt-in: pass it only where the signed-in person owns the plan.
+ * Coach-facing screens render client plans through this same component and must
+ * never get the feedback controls.
  */
 export function AiAnalysisPanel({
   analysis,
   html,
+  sessionId,
 }: {
   analysis?: CoachingAnalysis | null;
   html?: string;
+  sessionId?: string;
 }) {
-  const blocks = (analysis?.blocks || []).filter(
-    (b) => !!b && !!((b.point ?? "").trim() || (b.body ?? "").trim()),
-  );
+  // The index the backend stores feedback against is the index into the
+  // *original* blocks array, so it is captured before the filter runs.
+  const blocks = (analysis?.blocks || [])
+    .map((block, originalIndex) => ({ block, originalIndex }))
+    .filter(
+      ({ block: b }) => !!b && !!((b.point ?? "").trim() || (b.body ?? "").trim()),
+    );
+
+  const [verdicts, setVerdicts] = useState<Record<number, "agree" | "disagree">>({});
+
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.rpc("bw_get_plan_block_feedback", {
+        p_session_id: sessionId,
+      });
+      if (cancelled || !Array.isArray(data)) return;
+      const next: Record<number, "agree" | "disagree"> = {};
+      for (const row of data as { block_index: number; verdict: string }[]) {
+        if (row?.verdict === "agree" || row?.verdict === "disagree") {
+          next[row.block_index] = row.verdict;
+        }
+      }
+      setVerdicts(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId]);
+
+  const vote = async (originalIndex: number, verdict: "agree" | "disagree") => {
+    if (!sessionId) return;
+    const prev = verdicts[originalIndex];
+    const next = prev === verdict ? null : verdict;
+    setVerdicts((v) => {
+      const copy = { ...v };
+      if (next) copy[originalIndex] = next;
+      else delete copy[originalIndex];
+      return copy;
+    });
+    const { error } = await supabase.rpc("bw_set_plan_block_feedback", {
+      p_session_id: sessionId,
+      p_block_index: originalIndex,
+      p_verdict: next,
+    });
+    if (error) {
+      // Revert this one control only.
+      setVerdicts((v) => {
+        const copy = { ...v };
+        if (prev) copy[originalIndex] = prev;
+        else delete copy[originalIndex];
+        return copy;
+      });
+      toast.error("Could not save that. Please try again.");
+      return;
+    }
+    // Background re-extract so an agreed block can feed the recommender.
+    supabase.functions
+      .invoke("coaching-extract-responses", { body: { session_id: sessionId } })
+      .catch((e) => {
+        console.error("[coaching] re-extract after plan feedback failed", { sessionId, error: e });
+      });
+  };
 
   if (blocks.length > 0) {
     const opening = (analysis?.opening ?? "").trim();
@@ -197,44 +264,73 @@ export function AiAnalysisPanel({
       <div className="rounded-lg border bg-muted/30 p-4">
         {opening && <p className="mb-3 text-sm text-muted-foreground">{opening}</p>}
         <div className="grid gap-[10px]">
-          {blocks.map((b, i) => {
+          {blocks.map(({ block: b, originalIndex }) => {
             const point = (b.point ?? "").trim();
             const body = (b.body ?? "").trim();
+            const verdict = verdicts[originalIndex];
             return (
-              <div
-                key={i}
-                                style={{
-                  background: "#fff",
-                  border: "1px solid rgba(2,31,54,.10)",
-                  borderLeft: "4px solid var(--bw-orange)",
-                  borderRadius: 12,
-                  padding: "12px 13px",
-                }}
-              >
-                {point && (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-display, 'Poppins', system-ui, sans-serif)",
-                      fontWeight: 700,
-                      fontSize: 14.5,
-                      lineHeight: 1.4,
-                      color: "var(--bw-navy, #021F36)",
-                    }}
-                  >
-                    {point}
-                  </div>
-                )}
-                {body && (
-                  <div
-                    style={{
-                      fontSize: 13.5,
-                      lineHeight: 1.6,
-                      color: "var(--bw-slate, #6D6875)",
-                      marginTop: point ? 4 : 0,
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
-                    {body}
+              <div key={originalIndex} className="flex items-start gap-2">
+                <div
+                  className="flex-1"
+                  style={{
+                    background: "#fff",
+                    border: "1px solid rgba(2,31,54,.10)",
+                    borderLeft: "4px solid var(--bw-orange)",
+                    borderRadius: 12,
+                    padding: "12px 13px",
+                  }}
+                >
+                  {point && (
+                    <div
+                      style={{
+                        fontFamily: "var(--font-display, 'Poppins', system-ui, sans-serif)",
+                        fontWeight: 700,
+                        fontSize: 14.5,
+                        lineHeight: 1.4,
+                        color: "var(--bw-navy, #021F36)",
+                      }}
+                    >
+                      {point}
+                    </div>
+                  )}
+                  {body && (
+                    <div
+                      style={{
+                        fontSize: 13.5,
+                        lineHeight: 1.6,
+                        color: "var(--bw-slate, #6D6875)",
+                        marginTop: point ? 4 : 0,
+                        whiteSpace: "pre-wrap",
+                      }}
+                    >
+                      {body}
+                    </div>
+                  )}
+                </div>
+                {sessionId && (
+                  <div className="flex flex-col gap-1 pt-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Agree with this"
+                      aria-pressed={verdict === "agree"}
+                      className={`h-7 w-7 ${verdict === "agree" ? "text-primary" : "text-muted-foreground"}`}
+                      onClick={() => void vote(originalIndex, "agree")}
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Disagree with this"
+                      aria-pressed={verdict === "disagree"}
+                      className={`h-7 w-7 ${verdict === "disagree" ? "text-destructive" : "text-muted-foreground"}`}
+                      onClick={() => void vote(originalIndex, "disagree")}
+                    >
+                      <ThumbsDown className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
