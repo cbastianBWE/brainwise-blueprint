@@ -3477,18 +3477,21 @@ export type Database = {
           activity_id: string
           content: string
           embedding: string | null
+          search_tsv: unknown
           updated_at: string
         }
         Insert: {
           activity_id: string
           content: string
           embedding?: string | null
+          search_tsv?: unknown
           updated_at?: string
         }
         Update: {
           activity_id?: string
           content?: string
           embedding?: string | null
+          search_tsv?: unknown
           updated_at?: string
         }
         Relationships: [
@@ -7161,6 +7164,36 @@ export type Database = {
             referencedColumns: ["instrument_id"]
           },
         ]
+      }
+      dp_nudge_runs: {
+        Row: {
+          channel: string
+          detail: Json
+          dormant_skipped: number
+          id: number
+          ran_at: string
+          users_considered: number
+          users_notified: number
+        }
+        Insert: {
+          channel: string
+          detail?: Json
+          dormant_skipped?: number
+          id?: never
+          ran_at?: string
+          users_considered?: number
+          users_notified?: number
+        }
+        Update: {
+          channel?: string
+          detail?: Json
+          dormant_skipped?: number
+          id?: never
+          ran_at?: string
+          users_considered?: number
+          users_notified?: number
+        }
+        Relationships: []
       }
       email_logs: {
         Row: {
@@ -14272,18 +14305,21 @@ export type Database = {
           activity_id: string
           content: string
           embedding: string
+          search_tsv: unknown
           updated_at: string
         }
         Insert: {
           activity_id: string
           content: string
           embedding: string
+          search_tsv?: unknown
           updated_at?: string
         }
         Update: {
           activity_id?: string
           content?: string
           embedding?: string
+          search_tsv?: unknown
           updated_at?: string
         }
         Relationships: [
@@ -20565,6 +20601,7 @@ export type Database = {
       }
       bw_normalize_house_style: { Args: { p_text: string }; Returns: string }
       bw_normalize_house_style_jsonb: { Args: { p: Json }; Returns: Json }
+      bw_or_tsquery: { Args: { p_text: string }; Returns: unknown }
       bw_paired_profile_subjects: {
         Args: { p_profile: string }
         Returns: {
@@ -21283,7 +21320,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      dp_progress_nudge_body: { Args: { p_payload: Json }; Returns: string }
       dp_run_due_date_scan: { Args: never; Returns: Json }
+      dp_run_progress_nudge: {
+        Args: {
+          p_dormant_days?: number
+          p_dry_run?: boolean
+          p_force?: boolean
+          p_min_gap_days?: number
+          p_stale_days?: number
+        }
+        Returns: Json
+      }
       dp_set_coach_share: {
         Args: { p_coach_user_id: string; p_enabled: boolean }
         Returns: Json
@@ -22265,6 +22313,8 @@ export type Database = {
         Args: { p_force?: boolean; p_limit?: number }
         Returns: number
       }
+      mr_gentle_nudge_body: { Args: { p_payload: Json }; Returns: string }
+      mr_gentle_nudge_title: { Args: { p_payload: Json }; Returns: string }
       mr_ingest_media: {
         Args: {
           p_category: string
@@ -22274,6 +22324,12 @@ export type Database = {
         }
         Returns: number
       }
+      mr_notification_url: {
+        Args: { p_payload: Json; p_with_activity?: boolean }
+        Returns: string
+      }
+      mr_partner_label: { Args: { p_payload: Json }; Returns: string }
+      mr_safety_alert_body: { Args: { p_payload: Json }; Returns: string }
       my_access_history: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
@@ -22337,6 +22393,16 @@ export type Database = {
       notify_user: {
         Args: {
           p_dedup_key?: string
+          p_notification_type: string
+          p_payload?: Json
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      notify_user_with_channel: {
+        Args: {
+          p_dedup_key?: string
+          p_default_channel?: string
           p_notification_type: string
           p_payload?: Json
           p_user_id: string
@@ -24355,14 +24421,18 @@ export type Database = {
         Args: {
           p_match_count?: number
           p_min_similarity?: number
+          p_min_standout?: number
           p_query_embedding: string
+          p_query_text?: string
         }
         Returns: {
           activity_id: string
           code: string
           description: string
+          lexical_rank: number
           module_group: string
           similarity: number
+          standout: number
           thumbnail_url: string
           tier: string
           title: string
@@ -24432,15 +24502,19 @@ export type Database = {
         Args: {
           p_match_count?: number
           p_min_similarity?: number
+          p_min_standout?: number
           p_query_embedding: string
+          p_query_text?: string
         }
         Returns: {
           activity_id: string
           code: string
           description: string
           hero_image_url: string
+          lexical_rank: number
           module_number: number
           similarity: number
+          standout: number
           tags: string[]
           title: string
         }[]

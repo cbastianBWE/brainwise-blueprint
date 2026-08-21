@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -148,20 +148,78 @@ export default function CoachClients() {
   const [shareableModalOpen, setShareableModalOpen] = useState(false);
   const [seatLinkModalOpen, setSeatLinkModalOpen] = useState(false);
   const [seatLinks, setSeatLinks] = useState<Array<{ id: string; token: string; instrument_id: string; seats_total: number; seats_claimed: number; status: string; coach_note: string | null; created_at: string }>>([]);
-  const [activeTab, setActiveTab] = useState<"clients" | "pending" | "couples">("clients");
+  // Tab selection is URL-driven: /coach/clients?tab=couples deep-links the
+  // Safety Inbox from a My Relationship alert.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"clients" | "pending" | "couples">(
+    tabParam === "pending" ? "pending" : "clients",
+  );
+  // `couples` is gated behind an async RPC, so it is held as an intent and only
+  // applied once access resolves — never selected against a missing trigger.
+  const [couplesIntent, setCouplesIntent] = useState(tabParam === "couples");
   // Single seam for My Relationship coach access. Today the function returns
   // true for every practitioner coach; a future purchase/entitlement rule
   // changes only that function, never this component.
   const [canAccessCouples, setCanAccessCouples] = useState(false);
+  const [couplesAccessResolved, setCouplesAccessResolved] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data } = await supabase.rpc("bw_coach_can_access_my_relationship");
-      if (!cancelled) setCanAccessCouples(data === true);
+      if (!cancelled) {
+        setCanAccessCouples(data === true);
+        setCouplesAccessResolved(true);
+      }
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // React to the `tab` parameter changing (deep link, back/forward).
+  useEffect(() => {
+    if (tabParam === "pending" || tabParam === "clients") {
+      setActiveTab(tabParam);
+      setCouplesIntent(false);
+    } else if (tabParam === "couples") {
+      setCouplesIntent(true);
+    } else {
+      setCouplesIntent(false);
+    }
+  }, [tabParam]);
+
+  // Apply (or discard) the couples intent once access is known.
+  useEffect(() => {
+    if (!couplesIntent || !couplesAccessResolved) return;
+    if (canAccessCouples) {
+      setActiveTab("couples");
+    } else {
+      setActiveTab("clients");
+      setCouplesIntent(false);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("tab");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [couplesIntent, couplesAccessResolved, canAccessCouples, setSearchParams]);
+
+  const handleTabChange = (v: string) => {
+    const value = v as "clients" | "pending" | "couples";
+    setActiveTab(value);
+    setCouplesIntent(value === "couples");
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("tab", value);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1376,7 +1434,7 @@ export default function CoachClients() {
 
 
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending" | "couples")}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className={`grid w-full max-w-2xl ${canAccessCouples ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="pending">Pending Invitations</TabsTrigger>
