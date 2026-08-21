@@ -187,18 +187,23 @@ export function AiAnalysisPanel({
   analysis,
   html,
   sessionId,
+  feedbackEditable = false,
+  hideDisagreed = false,
 }: {
   analysis?: CoachingAnalysis | null;
   html?: string;
   sessionId?: string;
+  feedbackEditable?: boolean;
+  hideDisagreed?: boolean;
 }) {
   // The index the backend stores feedback against is the index into the
-  // *original* blocks array, so it is captured before the filter runs.
+  // *original* blocks array, so it is captured before any filter runs.
   const blocks = (analysis?.blocks || [])
     .map((block, originalIndex) => ({ block, originalIndex }))
     .filter(
       ({ block: b }) => !!b && !!((b.point ?? "").trim() || (b.body ?? "").trim()),
     );
+
 
   const [verdicts, setVerdicts] = useState<Record<number, "agree" | "disagree">>({});
 
