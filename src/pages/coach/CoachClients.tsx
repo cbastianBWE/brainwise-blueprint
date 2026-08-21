@@ -1434,7 +1434,7 @@ export default function CoachClients() {
 
 
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "clients" | "pending" | "couples")}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className={`grid w-full max-w-2xl ${canAccessCouples ? "grid-cols-3" : "grid-cols-2"}`}>
           <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="pending">Pending Invitations</TabsTrigger>
