@@ -266,11 +266,22 @@ export function AiAnalysisPanel({
   if (blocks.length > 0) {
     const opening = (analysis?.opening ?? "").trim();
     const closing = (analysis?.closing ?? "").trim();
+    // Presentation-only filter. `analysis` is never mutated. Unmarked blocks
+    // (no verdict at all) always survive; only an explicit "disagree" hides.
+    const visibleBlocks = hideDisagreed
+      ? blocks.filter(({ originalIndex }) => verdicts[originalIndex] !== "disagree")
+      : blocks;
     return (
       <div className="rounded-lg border bg-muted/30 p-4">
         {opening && <p className="mb-3 text-sm text-muted-foreground">{opening}</p>}
+        {visibleBlocks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            You marked all of these as not quite right.
+          </p>
+        ) : (
         <div className="grid gap-[10px]">
-          {blocks.map(({ block: b, originalIndex }) => {
+          {visibleBlocks.map(({ block: b, originalIndex }) => {
+
             const point = (b.point ?? "").trim();
             const body = (b.body ?? "").trim();
             const verdict = verdicts[originalIndex];
