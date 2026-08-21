@@ -229,7 +229,8 @@ export function AiAnalysisPanel({
   }, [sessionId]);
 
   const vote = async (originalIndex: number, verdict: "agree" | "disagree") => {
-    if (!sessionId) return;
+    if (!sessionId || !feedbackEditable) return;
+
     const prev = verdicts[originalIndex];
     const next = prev === verdict ? null : verdict;
     setVerdicts((v) => {
