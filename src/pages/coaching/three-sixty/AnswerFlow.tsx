@@ -34,6 +34,12 @@ type Answer =
   | { mode: "audio" | "video"; media_id?: string }
   | { value: number };
 
+// Only `answer` is ever sent back. The prompt is written server side.
+interface Followup {
+  prompt?: string;
+  answer?: string;
+}
+
 type FieldMode = "text" | "dictate" | "audio" | "video";
 
 // Section keys are instrument copy. Humanize the key, never invent a heading.
@@ -46,16 +52,24 @@ async function saveAnswer(
   submissionId: string,
   questionKey: string,
   answer: Answer,
-): Promise<{ ok: boolean; response_id?: string; error?: string }> {
+  followup?: { answer: string } | null,
+): Promise<{ ok: boolean; response_id?: string; error?: string; note?: string }> {
   const { data, error } = await supabase.rpc("bw_360_save_answer", {
     p_submission: submissionId,
     p_question_key: questionKey,
     p_answer: answer as never,
-    // The AI follow-up is not implemented. The column is waiting.
-    p_followup: null,
+    // Never send a prompt: that column is written once by the edge function.
+    p_followup: (followup ?? null) as never,
   });
   if (error) return { ok: false, error: error.message };
-  return (data || { ok: false }) as { ok: boolean; response_id?: string; error?: string };
+  const res = (data || { ok: false }) as {
+    ok: boolean;
+    response_id?: string;
+    error?: string;
+    note?: string;
+  };
+  if (res.note) console.warn("[360] save_answer note", questionKey, res.note);
+  return res;
 }
 
 // Media hangs off three_sixty_response_id, so the response row must exist
@@ -125,14 +139,18 @@ function TextAnswer({
   q,
   submissionId,
   value,
+  followup,
   disabled,
   onSaved,
+  onFollowup,
 }: {
   q: ThreeSixtyQuestion;
   submissionId: string;
   value: Answer | undefined;
+  followup: Followup | null;
   disabled?: boolean;
   onSaved: (a: Answer) => void;
+  onFollowup: (f: Followup) => void;
 }) {
   const rec = value && "mode" in value && (value.mode === "audio" || value.mode === "video") ? value : null;
   const [mode, setMode] = useState<FieldMode>(rec ? rec.mode : "text");
@@ -142,20 +160,86 @@ function TextAnswer({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rerecording, setRerecording] = useState(false);
+  const [probing, setProbing] = useState(false);
+  const [fuText, setFuText] = useState(followup?.answer || "");
   const timer = useRef<number | null>(null);
+  const fuTimer = useRef<number | null>(null);
+  const pending = useRef<Answer | null>(null);
+  const probeInFlight = useRef(false);
+  const latestAnswer = useRef<Answer | undefined>(value);
+  latestAnswer.current = value;
+
+  // One probe per question, only after the answer is stored, never for a
+  // question that already carries a follow-up.
+  const maybeProbe = useCallback(async () => {
+    if (!q.ai_followup || followup?.prompt || probeInFlight.current) return;
+    probeInFlight.current = true;
+    setProbing(true);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke("three-sixty-followup", {
+        body: { submission_id: submissionId, question_key: q.question_key },
+      });
+      // Every ok:false, and every transport error, is simply "no follow-up".
+      if (fnErr) return;
+      const res = (data || {}) as { ok?: boolean; followup_prompt?: string; reason?: string };
+      if (res.ok && res.followup_prompt) onFollowup({ prompt: res.followup_prompt });
+    } catch {
+      /* silence is correct here */
+    } finally {
+      probeInFlight.current = false;
+      setProbing(false);
+    }
+  }, [q.ai_followup, q.question_key, followup?.prompt, submissionId, onFollowup]);
+
+  const saveNow = async (a: Answer) => {
+    const res = await saveAnswer(submissionId, q.question_key, a);
+    if (!res.ok) {
+      setError(res.error === "already_submitted" ? "Your answers are final." : "Could not save.");
+      return false;
+    }
+    setError(null);
+    onSaved(a);
+    return true;
+  };
 
   const pushText = (next: string, nextMode: FieldMode) => {
     setText(next);
+    const a: Answer = { mode: nextMode === "dictate" ? "dictate" : "text", text: next };
+    pending.current = next.trim() ? a : null;
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(async () => {
-      if (!next.trim()) return;
-      const a: Answer = { mode: nextMode === "dictate" ? "dictate" : "text", text: next };
-      const res = await saveAnswer(submissionId, q.question_key, a);
+      timer.current = null;
+      if (!pending.current) return;
+      const a2 = pending.current;
+      pending.current = null;
+      await saveNow(a2);
+    }, 800);
+  };
+
+  // Flush the pending debounced save, then probe. Blur, not keystroke.
+  const handleBlur = async () => {
+    if (timer.current) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+    }
+    let ok = true;
+    if (pending.current) {
+      const a = pending.current;
+      pending.current = null;
+      ok = await saveNow(a);
+    }
+    if (ok && text.trim()) void maybeProbe();
+  };
+
+  const pushFollowup = (next: string) => {
+    setFuText(next);
+    onFollowup({ prompt: followup?.prompt, answer: next });
+    if (fuTimer.current) window.clearTimeout(fuTimer.current);
+    fuTimer.current = window.setTimeout(async () => {
+      const main = latestAnswer.current;
+      if (!main) return;
+      const res = await saveAnswer(submissionId, q.question_key, main, { answer: next });
       if (!res.ok) setError(res.error === "already_submitted" ? "Your answers are final." : "Could not save.");
-      else {
-        setError(null);
-        onSaved(a);
-      }
     }, 800);
   };
 
@@ -176,6 +260,8 @@ function TextAnswer({
       if (!second.ok) throw new Error("Could not attach the recording.");
       onSaved(a);
       setRerecording(false);
+      // 4. Only now is there something to probe.
+      void maybeProbe();
     } catch (e: any) {
       setError(e?.message || "Upload failed. Please try again.");
     } finally {
@@ -211,6 +297,7 @@ function TextAnswer({
             disabled={disabled}
             placeholder="Type here…"
             onChange={(e) => pushText(e.target.value, mode)}
+            onBlur={handleBlur}
           />
           {mode === "dictate" && (
             <DictateButton
@@ -247,6 +334,27 @@ function TextAnswer({
           />
         ))}
 
+      {/* AI follow-up. One per question, never required, never blocking. */}
+      {probing && !followup?.prompt && (
+        <div className="flex items-center gap-2 pl-3 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Thinking of a follow-up…
+        </div>
+      )}
+      {followup?.prompt && (
+        <div className="ml-1 space-y-2 border-l-2 pl-3">
+          <p className="text-sm text-muted-foreground">
+            {followup.prompt} <span className="text-xs italic">(Optional)</span>
+          </p>
+          <Textarea
+            rows={3}
+            value={fuText}
+            disabled={disabled}
+            placeholder="Optional"
+            onChange={(e) => pushFollowup(e.target.value)}
+          />
+        </div>
+      )}
+
       {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
@@ -262,6 +370,7 @@ export function AnswerFlow({
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<ThreeSixtyQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
+  const [followups, setFollowups] = useState<Record<string, Followup>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -270,10 +379,29 @@ export function AnswerFlow({
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("bw_360_question_set", { p_submission: submissionId });
+      // Questions and any answers already saved, under the one loading flag.
+      const [{ data: qdata, error: qerr }, { data: rdata }] = await Promise.all([
+        supabase.rpc("bw_360_question_set", { p_submission: submissionId }),
+        supabase
+          .from("three_sixty_responses")
+          .select("question_key, answer, followup")
+          .eq("submission_id", submissionId),
+      ]);
       if (cancelled) return;
-      if (error) setLoadError("These questions could not be opened.");
-      else setQuestions(((data || []) as any[]).sort((a, b) => a.ordinal - b.ordinal) as ThreeSixtyQuestion[]);
+      if (qerr) {
+        setLoadError("These questions could not be opened.");
+        setLoading(false);
+        return;
+      }
+      setQuestions(((qdata || []) as any[]).sort((a, b) => a.ordinal - b.ordinal) as ThreeSixtyQuestion[]);
+      const seededAnswers: Record<string, Answer> = {};
+      const seededFollowups: Record<string, Followup> = {};
+      for (const r of (rdata || []) as any[]) {
+        if (r.answer) seededAnswers[r.question_key] = r.answer as Answer;
+        if (r.followup) seededFollowups[r.question_key] = r.followup as Followup;
+      }
+      setAnswers(seededAnswers);
+      setFollowups(seededFollowups);
       setLoading(false);
     })();
     return () => {
@@ -293,6 +421,10 @@ export function AnswerFlow({
 
   const setAnswer = useCallback((key: string, a: Answer) => {
     setAnswers((prev) => ({ ...prev, [key]: a }));
+  }, []);
+
+  const setFollowup = useCallback((key: string, f: Followup) => {
+    setFollowups((prev) => ({ ...prev, [key]: { ...prev[key], ...f } }));
   }, []);
 
   const submit = async () => {
@@ -316,6 +448,8 @@ export function AnswerFlow({
     onSubmitted?.();
   };
 
+  // Nothing renders until both reads have resolved, so TextAnswer never
+  // mounts before its saved value exists.
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -365,10 +499,11 @@ export function AnswerFlow({
                   q={q}
                   submissionId={submissionId}
                   value={answers[q.question_key]}
+                  followup={followups[q.question_key] || null}
                   onSaved={(a) => setAnswer(q.question_key, a)}
+                  onFollowup={(f) => setFollowup(q.question_key, f)}
                 />
               )}
-              {/* Space is left for the AI follow-up. It is not built. */}
             </Card>
           ))}
         </div>

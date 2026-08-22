@@ -20912,6 +20912,14 @@ export type Database = {
       bw_360_claim_invite: { Args: { p_token: string }; Returns: Json }
       bw_360_cycle_subject: { Args: { p_cycle: string }; Returns: string }
       bw_360_email_escape: { Args: { p_text: string }; Returns: string }
+      bw_360_followup_context: {
+        Args: { p_question_key: string; p_submission: string }
+        Returns: Json
+      }
+      bw_360_followup_store: {
+        Args: { p_prompt: string; p_question_key: string; p_submission: string }
+        Returns: Json
+      }
       bw_360_invitation_html: {
         Args: {
           p_due?: string
