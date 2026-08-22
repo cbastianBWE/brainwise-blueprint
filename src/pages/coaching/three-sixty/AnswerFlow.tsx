@@ -247,32 +247,87 @@ function TextAnswer({
     }, 800);
   };
 
-  // Flush the pending debounced save, then probe. Blur, not keystroke.
-  const handleBlur = async () => {
+  // Flush the pending main answer. Used by blur, dictation, unmount, unload.
+  const flushMain = async () => {
     if (timer.current) {
       window.clearTimeout(timer.current);
       timer.current = null;
     }
-    let ok = true;
-    if (pending.current) {
-      const a = pending.current;
-      pending.current = null;
-      ok = await saveNow(a);
+    if (!pending.current) return true;
+    const a = pending.current;
+    pending.current = null;
+    return await saveNow(a);
+  };
+
+  // Flush the pending follow-up answer. Same three triggers.
+  const flushFollowup = async () => {
+    if (fuTimer.current) {
+      window.clearTimeout(fuTimer.current);
+      fuTimer.current = null;
     }
-    if (ok && text.trim()) void maybeProbe();
+    const next = fuPending.current;
+    fuPending.current = null;
+    const main = latestAnswer.current;
+    if (next === null || !main) return;
+    const res = await saveAnswer(submissionId, q.question_key, main, { answer: next });
+    if (!res.ok) setError(res.error === "already_submitted" ? "Your answers are final." : "Could not save.");
+  };
+
+  // Save, then probe, serialised: a second caller waits on the first, so three
+  // quick dictation bursts cannot each start their own probe.
+  const flushAndProbe = () => {
+    const run = chain.current
+      .catch(() => {})
+      .then(async () => {
+        const ok = await flushMain();
+        if (ok && textRef.current.trim()) await maybeProbe();
+      });
+    chain.current = run;
+    return run;
+  };
+
+  const handleBlur = () => void flushAndProbe();
+
+  // Dictation has no blur. Treat the end of a segment as one, debounced by the
+  // same 800ms as the save so a burst of segments collapses into one probe.
+  const handleDictationEnd = () => {
+    if (probeDebounce.current) window.clearTimeout(probeDebounce.current);
+    probeDebounce.current = window.setTimeout(() => {
+      probeDebounce.current = null;
+      void flushAndProbe();
+    }, 800);
   };
 
   const pushFollowup = (next: string) => {
     setFuText(next);
+    fuPending.current = next;
     onFollowup({ prompt: followup?.prompt, answer: next });
     if (fuTimer.current) window.clearTimeout(fuTimer.current);
-    fuTimer.current = window.setTimeout(async () => {
-      const main = latestAnswer.current;
-      if (!main) return;
-      const res = await saveAnswer(submissionId, q.question_key, main, { answer: next });
-      if (!res.ok) setError(res.error === "already_submitted" ? "Your answers are final." : "Could not save.");
+    fuTimer.current = window.setTimeout(() => {
+      fuTimer.current = null;
+      void flushFollowup();
     }, 800);
   };
+
+  // Blur is handled inline; this covers unmount (which is also what submitting
+  // does to this component) and a tab close. Timers are cancelled either way.
+  useEffect(() => {
+    const onUnload = () => {
+      void flushMain();
+      void flushFollowup();
+    };
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      alive.current = false;
+      if (probeDebounce.current) window.clearTimeout(probeDebounce.current);
+      if (retryTimer.current) window.clearTimeout(retryTimer.current);
+      void flushMain();
+      void flushFollowup();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const confirmRecording = async (blob: Blob, kind: "audio" | "video") => {
     setUploading(true);
