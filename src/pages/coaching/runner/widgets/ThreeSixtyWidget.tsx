@@ -243,8 +243,25 @@ export function ThreeSixtyWidget({
               <h3 className="text-sm font-semibold">Who are you asking?</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Ask at least {MIN_INVITED} people. Nobody, including you, ever sees who said what.
+              A 360 is you and up to {maxInvited} others, {maxParticipants} participants in all. Ask at
+              least {minInvited} people. Nobody, including you, ever sees who said what.
             </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">
+                {participants} of {maxParticipants} participants
+              </Badge>
+              {!atCeiling && slotsLeft <= 3 && (
+                <span className="text-xs text-muted-foreground">
+                  {slotsLeft === 1 ? "1 more you can ask" : `${slotsLeft} more you can ask`}
+                </span>
+              )}
+              {atCeiling && (
+                <span className="text-xs text-muted-foreground">
+                  You can ask up to {maxInvited} people. Withdraw someone if you want to add somebody else.
+                </span>
+              )}
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor="r-name">Name</Label>
