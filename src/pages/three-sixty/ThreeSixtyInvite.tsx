@@ -66,7 +66,7 @@ export default function ThreeSixtyInvite() {
       setChecking(true);
       const { data, error } = await supabase.rpc("bw_360_invite_public_info", { p_token: token });
       if (cancelled) return;
-      setInfo(error ? { valid: false } : ((data || { valid: false }) as PublicInfo));
+      setInfo(error ? { valid: false } : ((data as unknown as PublicInfo) ?? { valid: false }));
       setChecking(false);
     })();
     return () => {

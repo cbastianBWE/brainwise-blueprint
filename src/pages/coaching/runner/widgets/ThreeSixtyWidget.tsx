@@ -71,7 +71,7 @@ export function ThreeSixtyWidget({
           .eq("is_self", true)
           .maybeSingle(),
       ]);
-      setProgress((prog || null) as Progress | null);
+      setProgress((prog as unknown as Progress) ?? null);
       setRaters(((list || []) as Rater[]).filter((r) => !r.revoked_at));
       setSelfSubmission(sub?.id ?? null);
       setSelfSubmitted(!!sub?.submitted_at);
