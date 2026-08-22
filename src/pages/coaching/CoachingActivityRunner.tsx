@@ -58,6 +58,7 @@ import { ImageDescribeWidget } from "./runner/widgets/ImageDescribeWidget";
 import { RecapWidget } from "./runner/widgets/RecapWidget";
 import { TextareaWidget } from "./runner/widgets/TextareaWidget";
 import { RiskBlocksWidget } from "./runner/widgets/RiskBlocksWidget";
+import { ThreeSixtyWidget } from "./runner/widgets/ThreeSixtyWidget";
 import { ChatWidget } from "./runner/widgets/ChatWidget";
 import { PrioritizePanel } from "./runner/widgets/PrioritizePanel";
 import { SuggestionPanel } from "./runner/widgets/SuggestionPanel";
@@ -1163,6 +1164,10 @@ export default function CoachingActivityRunner() {
 
             {step?.widget === "ptp_display" && user && (
               <PtpDisplayWidget step={step} userId={user.id} />
+            )}
+
+            {step?.widget === "three_sixty" && user && (
+              <ThreeSixtyWidget step={step} userId={user.id} sessionId={session?.id ?? null} />
             )}
 
             {step?.widget === "assessment_upload" && user && (

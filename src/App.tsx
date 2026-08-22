@@ -177,6 +177,7 @@ import Help from "./pages/Help";
 import ReportPaymentConfirmed from "./pages/ReportPaymentConfirmed";
 import Unsubscribe from "./pages/Unsubscribe";
 import ClaimInvitation from "./pages/ClaimInvitation";
+import ThreeSixtyInvite from "./pages/three-sixty/ThreeSixtyInvite";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
@@ -203,6 +204,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/pay/:token" element={<PublicInvoicePay />} />
             <Route path="/claim/:token" element={<ClaimInvitation />} />
+            <Route path="/360/invite" element={<ThreeSixtyInvite />} />
             <Route path="/estimate/:token" element={<PublicEstimateRespond />} />
             <Route path="/verify/cert/:certId" element={<VerifyCertification />} />
             <Route path="/linkedin/callback" element={<LinkedInCallback />} />
