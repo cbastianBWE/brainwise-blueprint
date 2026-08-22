@@ -219,6 +219,16 @@ export function ThreeSixtyWidget({
 
   const status = progress.status;
   const summarised = !!progress.summary_generated_at;
+  // Every count and gate comes from bw_360_progress.
+  const minInvited = progress.min_invited ?? 0;
+  const maxInvited = progress.max_invited ?? 0;
+  const participants = progress.participants ?? 0;
+  const maxParticipants = progress.max_participants ?? 0;
+  const slotsLeft = progress.slots_left ?? 0;
+  const invited = progress.invited ?? 0;
+  const atCeiling = slotsLeft <= 0;
+  const canOpen = invited >= minInvited;
+
 
   return (
     <div className="space-y-6">
