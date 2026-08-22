@@ -165,31 +165,62 @@ function TextAnswer({
   const timer = useRef<number | null>(null);
   const fuTimer = useRef<number | null>(null);
   const pending = useRef<Answer | null>(null);
+  const fuPending = useRef<string | null>(null);
   const probeInFlight = useRef(false);
+  const probeDebounce = useRef<number | null>(null);
+  const retryTimer = useRef<number | null>(null);
+  const alive = useRef(true);
   const latestAnswer = useRef<Answer | undefined>(value);
   latestAnswer.current = value;
 
   // One probe per question, only after the answer is stored, never for a
-  // question that already carries a follow-up.
-  const maybeProbe = useCallback(async () => {
-    if (!q.ai_followup || followup?.prompt || probeInFlight.current) return;
-    probeInFlight.current = true;
-    setProbing(true);
-    try {
-      const { data, error: fnErr } = await supabase.functions.invoke("three-sixty-followup", {
-        body: { submission_id: submissionId, question_key: q.question_key },
-      });
-      // Every ok:false, and every transport error, is simply "no follow-up".
-      if (fnErr) return;
-      const res = (data || {}) as { ok?: boolean; followup_prompt?: string; reason?: string };
-      if (res.ok && res.followup_prompt) onFollowup({ prompt: res.followup_prompt });
-    } catch {
-      /* silence is correct here */
-    } finally {
-      probeInFlight.current = false;
-      setProbing(false);
-    }
-  }, [q.ai_followup, q.question_key, followup?.prompt, submissionId, onFollowup]);
+  // question that already carries a follow-up. A recorded answer usually
+  // returns transcript_pending on the first call, so we retry exactly once.
+  const maybeProbe = useCallback(
+    async (attempt = 0) => {
+      if (!q.ai_followup || followup?.prompt) return;
+      if (attempt === 0 && probeInFlight.current) return;
+      probeInFlight.current = true;
+      setProbing(true);
+      try {
+        const { data, error: fnErr } = await supabase.functions.invoke("three-sixty-followup", {
+          body: { submission_id: submissionId, question_key: q.question_key },
+        });
+        // Every ok:false, and every transport error, is simply "no follow-up".
+        if (fnErr) return;
+        const res = (data || {}) as {
+          ok?: boolean;
+          followup_prompt?: string;
+          reason?: string;
+          retry_after_ms?: number;
+        };
+        if (res.ok && res.followup_prompt) {
+          onFollowup({ prompt: res.followup_prompt });
+          return;
+        }
+        // Mux has not finished the transcript yet. One retry, then silence.
+        if (res.reason === "transcript_pending" && attempt === 0 && alive.current) {
+          const wait = typeof res.retry_after_ms === "number" ? res.retry_after_ms : 10000;
+          retryTimer.current = window.setTimeout(() => {
+            retryTimer.current = null;
+            if (alive.current) void maybeProbe(1);
+          }, wait);
+          // Stay "in flight" across the wait so nothing else starts a probe.
+          return;
+        }
+      } catch {
+        /* silence is correct here */
+      } finally {
+        // Keep the flag and the spinner up while a retry is queued.
+        if (!retryTimer.current) {
+          probeInFlight.current = false;
+          setProbing(false);
+        }
+      }
+    },
+    [q.ai_followup, q.question_key, followup?.prompt, submissionId, onFollowup],
+  );
+
 
   const saveNow = async (a: Answer) => {
     const res = await saveAnswer(submissionId, q.question_key, a);
