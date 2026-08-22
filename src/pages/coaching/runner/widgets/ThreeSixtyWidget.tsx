@@ -249,6 +249,19 @@ export function ThreeSixtyWidget({
   const atCeiling = slotsLeft <= 0;
   const canOpen = invited >= minInvited;
   const selfDone = selfSubmitted || !!progress.self_submitted;
+  const dueLabel = formatDue(progress.due_at);
+
+  // The 360's own pool. Silent above 60, a quiet line from 1 to 60, and an
+  // explanation at 0 that the summary still arrives on the due date.
+  const creditNote =
+    credits === null || status === "draft" || credits > 60 ? null : credits > 0 ? (
+      <p className="text-xs text-muted-foreground">AI credits left for your 360: {credits}.</p>
+    ) : (
+      <p className="text-xs text-muted-foreground">
+        You have used all the AI credits included with your 360. Follow-up questions are turned off
+        for the rest of it, and your summary will still be written on {dueLabel}.
+      </p>
+    );
 
 
 
