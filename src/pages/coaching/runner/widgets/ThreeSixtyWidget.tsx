@@ -228,6 +228,8 @@ export function ThreeSixtyWidget({
   const invited = progress.invited ?? 0;
   const atCeiling = slotsLeft <= 0;
   const canOpen = invited >= minInvited;
+  const selfDone = selfSubmitted || !!progress.self_submitted;
+
 
 
   return (
