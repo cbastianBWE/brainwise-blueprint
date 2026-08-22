@@ -184,10 +184,21 @@ export function ThreeSixtyWidget({
       await refresh(cycleId);
       return;
     }
-    const { data: sent } = await supabase.rpc("bw_360_send_invitations", { p_cycle: cycleId });
+    // The cycle is open either way. Only the send can fail, and if it does the
+    // nightly sweep picks these raters up, so say that rather than "failed".
+    const { data: sent, error: sendErr } = await supabase.rpc("bw_360_send_invitations", {
+      p_cycle: cycleId,
+    });
     setBusy(false);
-    const s = (sent || {}) as { sent?: number };
-    toast.success(s.sent ? `Invitations sent to ${s.sent} people.` : "Your 360 is open.");
+    const s = (sent || {}) as { ok?: boolean; sent?: number };
+    if (sendErr || s.ok === false) {
+      toast.warning(
+        "Your 360 is open, but the invitations could not be sent just now. We will try again automatically within a day. You can also send them yourself with the reminder button.",
+      );
+    } else {
+      toast.success(s.sent ? `Invitations sent to ${s.sent} people.` : "Your 360 is open.");
+    }
+
     await refresh(cycleId);
   };
 

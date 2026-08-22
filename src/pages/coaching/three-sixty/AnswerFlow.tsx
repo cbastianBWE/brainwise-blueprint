@@ -165,31 +165,66 @@ function TextAnswer({
   const timer = useRef<number | null>(null);
   const fuTimer = useRef<number | null>(null);
   const pending = useRef<Answer | null>(null);
+  const fuPending = useRef<string | null>(null);
   const probeInFlight = useRef(false);
+  const probeDebounce = useRef<number | null>(null);
+  const retryTimer = useRef<number | null>(null);
+  const alive = useRef(true);
+  const chain = useRef<Promise<unknown>>(Promise.resolve());
+  const textRef = useRef(text);
+  textRef.current = text;
   const latestAnswer = useRef<Answer | undefined>(value);
   latestAnswer.current = value;
 
+
   // One probe per question, only after the answer is stored, never for a
-  // question that already carries a follow-up.
-  const maybeProbe = useCallback(async () => {
-    if (!q.ai_followup || followup?.prompt || probeInFlight.current) return;
-    probeInFlight.current = true;
-    setProbing(true);
-    try {
-      const { data, error: fnErr } = await supabase.functions.invoke("three-sixty-followup", {
-        body: { submission_id: submissionId, question_key: q.question_key },
-      });
-      // Every ok:false, and every transport error, is simply "no follow-up".
-      if (fnErr) return;
-      const res = (data || {}) as { ok?: boolean; followup_prompt?: string; reason?: string };
-      if (res.ok && res.followup_prompt) onFollowup({ prompt: res.followup_prompt });
-    } catch {
-      /* silence is correct here */
-    } finally {
-      probeInFlight.current = false;
-      setProbing(false);
-    }
-  }, [q.ai_followup, q.question_key, followup?.prompt, submissionId, onFollowup]);
+  // question that already carries a follow-up. A recorded answer usually
+  // returns transcript_pending on the first call, so we retry exactly once.
+  const maybeProbe = useCallback(
+    async (attempt = 0) => {
+      if (!q.ai_followup || followup?.prompt) return;
+      if (attempt === 0 && probeInFlight.current) return;
+      probeInFlight.current = true;
+      setProbing(true);
+      try {
+        const { data, error: fnErr } = await supabase.functions.invoke("three-sixty-followup", {
+          body: { submission_id: submissionId, question_key: q.question_key },
+        });
+        // Every ok:false, and every transport error, is simply "no follow-up".
+        if (fnErr) return;
+        const res = (data || {}) as {
+          ok?: boolean;
+          followup_prompt?: string;
+          reason?: string;
+          retry_after_ms?: number;
+        };
+        if (res.ok && res.followup_prompt) {
+          onFollowup({ prompt: res.followup_prompt });
+          return;
+        }
+        // Mux has not finished the transcript yet. One retry, then silence.
+        if (res.reason === "transcript_pending" && attempt === 0 && alive.current) {
+          const wait = typeof res.retry_after_ms === "number" ? res.retry_after_ms : 10000;
+          retryTimer.current = window.setTimeout(() => {
+            retryTimer.current = null;
+            if (alive.current) void maybeProbe(1);
+          }, wait);
+          // Stay "in flight" across the wait so nothing else starts a probe.
+          return;
+        }
+      } catch {
+        /* silence is correct here */
+      } finally {
+        // Keep the flag and the spinner up while a retry is queued.
+        if (!retryTimer.current) {
+          probeInFlight.current = false;
+          setProbing(false);
+        }
+      }
+    },
+    [q.ai_followup, q.question_key, followup?.prompt, submissionId, onFollowup],
+  );
+
 
   const saveNow = async (a: Answer) => {
     const res = await saveAnswer(submissionId, q.question_key, a);
@@ -216,32 +251,87 @@ function TextAnswer({
     }, 800);
   };
 
-  // Flush the pending debounced save, then probe. Blur, not keystroke.
-  const handleBlur = async () => {
+  // Flush the pending main answer. Used by blur, dictation, unmount, unload.
+  const flushMain = async () => {
     if (timer.current) {
       window.clearTimeout(timer.current);
       timer.current = null;
     }
-    let ok = true;
-    if (pending.current) {
-      const a = pending.current;
-      pending.current = null;
-      ok = await saveNow(a);
+    if (!pending.current) return true;
+    const a = pending.current;
+    pending.current = null;
+    return await saveNow(a);
+  };
+
+  // Flush the pending follow-up answer. Same three triggers.
+  const flushFollowup = async () => {
+    if (fuTimer.current) {
+      window.clearTimeout(fuTimer.current);
+      fuTimer.current = null;
     }
-    if (ok && text.trim()) void maybeProbe();
+    const next = fuPending.current;
+    fuPending.current = null;
+    const main = latestAnswer.current;
+    if (next === null || !main) return;
+    const res = await saveAnswer(submissionId, q.question_key, main, { answer: next });
+    if (!res.ok) setError(res.error === "already_submitted" ? "Your answers are final." : "Could not save.");
+  };
+
+  // Save, then probe, serialised: a second caller waits on the first, so three
+  // quick dictation bursts cannot each start their own probe.
+  const flushAndProbe = () => {
+    const run = chain.current
+      .catch(() => {})
+      .then(async () => {
+        const ok = await flushMain();
+        if (ok && textRef.current.trim()) await maybeProbe();
+      });
+    chain.current = run;
+    return run;
+  };
+
+  const handleBlur = () => void flushAndProbe();
+
+  // Dictation has no blur. Treat the end of a segment as one, debounced by the
+  // same 800ms as the save so a burst of segments collapses into one probe.
+  const handleDictationEnd = () => {
+    if (probeDebounce.current) window.clearTimeout(probeDebounce.current);
+    probeDebounce.current = window.setTimeout(() => {
+      probeDebounce.current = null;
+      void flushAndProbe();
+    }, 800);
   };
 
   const pushFollowup = (next: string) => {
     setFuText(next);
+    fuPending.current = next;
     onFollowup({ prompt: followup?.prompt, answer: next });
     if (fuTimer.current) window.clearTimeout(fuTimer.current);
-    fuTimer.current = window.setTimeout(async () => {
-      const main = latestAnswer.current;
-      if (!main) return;
-      const res = await saveAnswer(submissionId, q.question_key, main, { answer: next });
-      if (!res.ok) setError(res.error === "already_submitted" ? "Your answers are final." : "Could not save.");
+    fuTimer.current = window.setTimeout(() => {
+      fuTimer.current = null;
+      void flushFollowup();
     }, 800);
   };
+
+  // Blur is handled inline; this covers unmount (which is also what submitting
+  // does to this component) and a tab close. Timers are cancelled either way.
+  useEffect(() => {
+    const onUnload = () => {
+      void flushMain();
+      void flushFollowup();
+    };
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      alive.current = false;
+      if (probeDebounce.current) window.clearTimeout(probeDebounce.current);
+      if (retryTimer.current) window.clearTimeout(retryTimer.current);
+      void flushMain();
+      void flushFollowup();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const confirmRecording = async (blob: Blob, kind: "audio" | "video") => {
     setUploading(true);
@@ -302,7 +392,11 @@ function TextAnswer({
           {mode === "dictate" && (
             <DictateButton
               disabled={disabled}
-              onFinal={(t) => pushText((text ? text + " " : "") + t, "dictate")}
+              onFinal={(t) => {
+                pushText((textRef.current ? textRef.current + " " : "") + t, "dictate");
+                handleDictationEnd();
+              }}
+
             />
           )}
         </div>
@@ -351,6 +445,8 @@ function TextAnswer({
             disabled={disabled}
             placeholder="Optional"
             onChange={(e) => pushFollowup(e.target.value)}
+            onBlur={() => void flushFollowup()}
+
           />
         </div>
       )}
