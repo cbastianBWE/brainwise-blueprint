@@ -262,60 +262,85 @@ export function ThreeSixtyWidget({
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="r-name">Name</Label>
-                <Input
-                  id="r-name"
-                  value={form.full_name}
-                  onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-                />
+            <fieldset disabled={atCeiling} className="space-y-3 disabled:opacity-60">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="r-name">Name</Label>
+                  <Input
+                    id="r-name"
+                    value={form.full_name}
+                    onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="r-email">Email</Label>
+                  <Input
+                    id="r-email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="r-role">Their role (optional)</Label>
+                  <Input
+                    id="r-role"
+                    value={form.role}
+                    onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="r-rel">How you work together (optional)</Label>
+                  <Input
+                    id="r-rel"
+                    value={form.relationship}
+                    onChange={(e) => setForm((f) => ({ ...f, relationship: e.target.value }))}
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="r-email">Email</Label>
-                <Input
-                  id="r-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="r-role">Their role (optional)</Label>
-                <Input
-                  id="r-role"
-                  value={form.role}
-                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="r-rel">How you work together (optional)</Label>
-                <Input
-                  id="r-rel"
-                  value={form.relationship}
-                  onChange={(e) => setForm((f) => ({ ...f, relationship: e.target.value }))}
-                />
-              </div>
-            </div>
-            <Button type="button" onClick={addRater} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Add this person
-            </Button>
+              <Button type="button" onClick={addRater} disabled={busy || atCeiling}>
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Add this person
+              </Button>
+            </fieldset>
+          </Card>
+
+          {/* Encouragement, never a gate. There is no "this is my manager" field. */}
+          <Card className="space-y-2 p-4">
+            <h3 className="text-sm font-semibold">Include your manager</h3>
+            <p className="text-sm text-muted-foreground">
+              A 360 without the person you report to is missing the view that matters most, and their
+              answers are unattributed like everyone else's.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              A good list is your manager, two or three peers, two or three people who report to you,
+              and anyone else whose view you would act on.
+            </p>
+          </Card>
+
+          {/* The self version exists from the moment the cycle opens, so say so now. */}
+          <Card className="space-y-2 p-4">
+            <h3 className="text-sm font-semibold">You answer these questions too</h3>
+            <p className="text-sm text-muted-foreground">
+              You will answer the same questions about yourself. Your answers are compared with what
+              comes back, and that comparison is the most useful part of your summary.
+            </p>
           </Card>
 
           <RaterList raters={raters} onRevoke={revoke} busy={busy} />
 
           <div className="space-y-2 rounded-md border bg-muted/30 p-4">
             <p className="text-sm">
-              {raters.length < MIN_INVITED
-                ? `Add ${MIN_INVITED - raters.length} more before you can open your 360.`
+              {!canOpen
+                ? `Add ${minInvited - invited} more before you can open your 360.`
                 : "When you open your 360, everyone on this list is emailed an invitation."}
             </p>
-            <Button type="button" onClick={openCycle} disabled={busy || raters.length < MIN_INVITED}>
+            <Button type="button" onClick={openCycle} disabled={busy || !canOpen}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Open my 360 and send the invitations
             </Button>
           </div>
+
         </div>
       )}
 
