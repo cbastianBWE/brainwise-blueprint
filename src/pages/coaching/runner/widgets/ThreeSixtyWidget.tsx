@@ -132,17 +132,21 @@ export function ThreeSixtyWidget({
       toast.error("That person could not be added.");
       return;
     }
-    const res = (data || {}) as { ok?: boolean; error?: string };
+    const res = (data || {}) as { ok?: boolean; error?: string; max_invited?: number };
     if (!res.ok) {
       toast.error(
         res.error === "duplicate_email"
           ? "You have already asked that person."
           : res.error === "self"
             ? "You cannot ask yourself."
-            : "That person could not be added.",
+            : res.error === "too_many_raters"
+              ? `You can ask up to ${res.max_invited ?? progress?.max_invited} people. Withdraw someone if you want to add somebody else.`
+              : "That person could not be added.",
       );
+      if (res.error === "too_many_raters") await refresh(cycleId);
       return;
     }
+
     setForm({ full_name: "", email: "", role: "", relationship: "" });
     await refresh(cycleId);
   };
