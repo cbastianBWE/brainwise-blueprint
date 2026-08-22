@@ -537,6 +537,9 @@ export function AnswerFlow({
 
   const submit = async () => {
     setSubmitting(true);
+    // Every pending debounced save lands before the submit closes the set.
+    // allSettled: one failing save must not block the submit.
+    await Promise.allSettled([...flushers.current.values()].map((f) => f()));
     const { data, error } = await supabase.rpc("bw_360_submit", { p_submission: submissionId });
     setSubmitting(false);
     if (error) {
