@@ -480,6 +480,9 @@ export function AnswerFlow({
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [followups, setFollowups] = useState<Record<string, Followup>>({});
   const [submitting, setSubmitting] = useState(false);
+  // Each TextAnswer registers its flush here, keyed on question_key.
+  const flushers = useRef(new Map<string, () => Promise<void>>());
+
   const [submitted, setSubmitted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
