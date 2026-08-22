@@ -143,6 +143,7 @@ function TextAnswer({
   disabled,
   onSaved,
   onFollowup,
+  registerFlush,
 }: {
   q: ThreeSixtyQuestion;
   submissionId: string;
@@ -151,6 +152,7 @@ function TextAnswer({
   disabled?: boolean;
   onSaved: (a: Answer) => void;
   onFollowup: (f: Followup) => void;
+  registerFlush?: Map<string, () => Promise<void>>;
 }) {
   const rec = value && "mode" in value && (value.mode === "audio" || value.mode === "video") ? value : null;
   const [mode, setMode] = useState<FieldMode>(rec ? rec.mode : "text");
@@ -315,14 +317,23 @@ function TextAnswer({
 
   // Blur is handled inline; this covers unmount (which is also what submitting
   // does to this component) and a tab close. Timers are cancelled either way.
+  // It also registers this question's flush with the parent, so Submit can
+  // await every pending save before it calls bw_360_submit.
   useEffect(() => {
+    alive.current = true;
     const onUnload = () => {
       void flushMain();
       void flushFollowup();
     };
     window.addEventListener("beforeunload", onUnload);
+    const map = registerFlush;
+    map?.set(q.question_key, async () => {
+      await flushMain();
+      await flushFollowup();
+    });
     return () => {
       window.removeEventListener("beforeunload", onUnload);
+      map?.delete(q.question_key);
       alive.current = false;
       if (probeDebounce.current) window.clearTimeout(probeDebounce.current);
       if (retryTimer.current) window.clearTimeout(retryTimer.current);
@@ -331,6 +342,7 @@ function TextAnswer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   const confirmRecording = async (blob: Blob, kind: "audio" | "video") => {
@@ -468,6 +480,9 @@ export function AnswerFlow({
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [followups, setFollowups] = useState<Record<string, Followup>>({});
   const [submitting, setSubmitting] = useState(false);
+  // Each TextAnswer registers its flush here, keyed on question_key.
+  const flushers = useRef(new Map<string, () => Promise<void>>());
+
   const [submitted, setSubmitted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -525,6 +540,9 @@ export function AnswerFlow({
 
   const submit = async () => {
     setSubmitting(true);
+    // Every pending debounced save lands before the submit closes the set.
+    // allSettled: one failing save must not block the submit.
+    await Promise.allSettled([...flushers.current.values()].map((f) => f()));
     const { data, error } = await supabase.rpc("bw_360_submit", { p_submission: submissionId });
     setSubmitting(false);
     if (error) {
@@ -598,6 +616,8 @@ export function AnswerFlow({
                   followup={followups[q.question_key] || null}
                   onSaved={(a) => setAnswer(q.question_key, a)}
                   onFollowup={(f) => setFollowup(q.question_key, f)}
+                  registerFlush={flushers.current}
+
                 />
               )}
             </Card>
