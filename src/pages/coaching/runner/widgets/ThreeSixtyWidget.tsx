@@ -225,6 +225,32 @@ export function ThreeSixtyWidget({
     else toast.success("Reminders sent to anyone who has not answered.");
   };
 
+  // Asking for the summary early spends from the 360's own pool. An empty pool
+  // is not a failure: the due-date run does not refuse, so the summary still
+  // arrives. Say that rather than showing an error.
+  const buildNow = async () => {
+    if (!cycleId) return;
+    setBusy(true);
+    const { error } = await supabase.functions.invoke("three-sixty-summarise", {
+      body: { cycle_id: cycleId },
+    });
+    if (error) {
+      const status = (error as { context?: { status?: number } })?.context?.status;
+      if (status === 402) {
+        toast.info(
+          `You have used all the AI credits included with your 360. Your summary will still be written automatically on ${formatDue(progress?.due_at)}.`,
+        );
+      } else {
+        toast.error("Your summary could not be built just now.");
+      }
+      setBusy(false);
+      return;
+    }
+    await refresh(cycleId);
+    setBusy(false);
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
