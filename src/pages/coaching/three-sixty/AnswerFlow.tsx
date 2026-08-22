@@ -315,14 +315,23 @@ function TextAnswer({
 
   // Blur is handled inline; this covers unmount (which is also what submitting
   // does to this component) and a tab close. Timers are cancelled either way.
+  // It also registers this question's flush with the parent, so Submit can
+  // await every pending save before it calls bw_360_submit.
   useEffect(() => {
+    alive.current = true;
     const onUnload = () => {
       void flushMain();
       void flushFollowup();
     };
     window.addEventListener("beforeunload", onUnload);
+    const map = registerFlush;
+    map?.set(q.question_key, async () => {
+      await flushMain();
+      await flushFollowup();
+    });
     return () => {
       window.removeEventListener("beforeunload", onUnload);
+      map?.delete(q.question_key);
       alive.current = false;
       if (probeDebounce.current) window.clearTimeout(probeDebounce.current);
       if (retryTimer.current) window.clearTimeout(retryTimer.current);
@@ -331,6 +340,7 @@ function TextAnswer({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   const confirmRecording = async (blob: Blob, kind: "audio" | "video") => {
