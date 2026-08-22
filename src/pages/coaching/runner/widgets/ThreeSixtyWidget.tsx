@@ -398,6 +398,7 @@ export function ThreeSixtyWidget({
               Your summary is written once at least {progress.min_submitted ?? 3} people have answered.
               You will never be told who did.
             </p>
+            {creditNote}
             <div>
               <Button type="button" variant="outline" size="sm" onClick={remind} disabled={busy}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
