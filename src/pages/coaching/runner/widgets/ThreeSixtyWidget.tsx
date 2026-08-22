@@ -371,20 +371,38 @@ export function ThreeSixtyWidget({
             </div>
           </Card>
 
-          <RaterList raters={raters} onRevoke={revoke} busy={busy} />
+          {/* Until the subject answers their own version, this is the loudest
+              thing on the screen: the summary compares it question by question. */}
+          {selfDone ? (
+            <>
+              <RaterList raters={raters} onRevoke={revoke} busy={busy} />
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold">Your own answers</h3>
+                <p className="text-sm text-muted-foreground">
+                  You have answered your own version. It is compared with what comes back.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <Card className="space-y-3 border-primary/40 bg-primary/5 p-4">
+                <h3 className="text-base font-semibold">Answer your own version</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your summary compares your own answers with what comes back, question by question,
+                  and that comparison is the most useful part of it. Questions you skip show as
+                  "You did not answer this one."
+                </p>
+                {selfSubmission ? (
+                  <AnswerFlow submissionId={selfSubmission} onSubmitted={() => setSelfSubmitted(true)} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Your own version is not ready yet.</p>
+                )}
+              </Card>
 
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold">Your own answers</h3>
-            {selfSubmitted ? (
-              <p className="text-sm text-muted-foreground">
-                You have answered your own version. It is compared with what comes back.
-              </p>
-            ) : selfSubmission ? (
-              <AnswerFlow submissionId={selfSubmission} onSubmitted={() => setSelfSubmitted(true)} />
-            ) : (
-              <p className="text-sm text-muted-foreground">Your own version is not ready yet.</p>
-            )}
-          </div>
+              <RaterList raters={raters} onRevoke={revoke} busy={busy} />
+            </>
+          )}
+
         </div>
       )}
 
