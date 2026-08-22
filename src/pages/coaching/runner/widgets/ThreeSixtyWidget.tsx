@@ -65,11 +65,12 @@ export function ThreeSixtyWidget({
   const [selfSubmission, setSelfSubmission] = useState<string | null>(null);
   const [selfSubmitted, setSelfSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const [form, setForm] = useState({ full_name: "", email: "", role: "", relationship: "" });
 
   const refresh = useCallback(
     async (id: string) => {
-      const [{ data: prog }, { data: list }, { data: sub }] = await Promise.all([
+      const [{ data: prog }, { data: list }, { data: sub }, { data: cred }] = await Promise.all([
         supabase.rpc("bw_360_progress", { p_cycle: id }),
         supabase.rpc("bw_360_rater_list", { p_cycle: id }),
         supabase
@@ -78,11 +79,16 @@ export function ThreeSixtyWidget({
           .eq("cycle_id", id)
           .eq("is_self", true)
           .maybeSingle(),
+        // The 360 has its own pool of AI calls. Keep the balance current as
+        // raters answer; there is no self-serve top-up, so this is display only.
+        supabase.rpc("bw_360_my_credits"),
       ]);
       setProgress((prog as unknown as Progress) ?? null);
       setRaters(((list || []) as Rater[]).filter((r) => !r.revoked_at));
       setSelfSubmission(sub?.id ?? null);
       setSelfSubmitted(!!sub?.submitted_at);
+      const c = (cred as unknown as { credits?: number } | null)?.credits;
+      if (typeof c === "number") setCredits(c);
     },
     [],
   );
@@ -98,12 +104,15 @@ export function ThreeSixtyWidget({
         setLoading(false);
         return;
       }
-      const id = (data as any)?.cycle_id as string | undefined;
+      const started = (data || {}) as { cycle_id?: string; credits?: number };
+      const id = started.cycle_id;
+      if (typeof started.credits === "number") setCredits(started.credits);
       if (!id) {
         setLoading(false);
         return;
       }
       setCycleId(id);
+
       await refresh(id);
       if (!cancelled) setLoading(false);
     })();
