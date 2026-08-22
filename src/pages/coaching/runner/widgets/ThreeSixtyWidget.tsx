@@ -443,11 +443,19 @@ export function ThreeSixtyWidget({
 
       {/* ---- Ready: enough answers, summary not written yet ---- */}
       {status !== "draft" && !summarised && progress.summary_eligible && (
-        <Card className="space-y-1 p-4">
+        <Card className="space-y-2 p-4">
           <h3 className="text-sm font-semibold">Enough people have answered</h3>
           <p className="text-sm text-muted-foreground">
-            Your summary is being written. It appears here when it is ready, and you will be told.
+            Your summary is written automatically on {dueLabel}. You can have it built now if you do
+            not want to wait, and more answers arriving afterwards are still included.
           </p>
+          <div>
+            <Button type="button" variant="outline" size="sm" onClick={buildNow} disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Build it now
+            </Button>
+          </div>
+          {creditNote}
         </Card>
       )}
 
