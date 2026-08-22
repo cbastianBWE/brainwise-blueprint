@@ -4106,6 +4106,7 @@ export type Database = {
           playback_id: string | null
           question_key: string
           relationship_session_id: string | null
+          three_sixty_response_id: string | null
           transcript: string | null
           transcript_status: string
           updated_at: string
@@ -4124,6 +4125,7 @@ export type Database = {
           playback_id?: string | null
           question_key: string
           relationship_session_id?: string | null
+          three_sixty_response_id?: string | null
           transcript?: string | null
           transcript_status?: string
           updated_at?: string
@@ -4142,6 +4144,7 @@ export type Database = {
           playback_id?: string | null
           question_key?: string
           relationship_session_id?: string | null
+          three_sixty_response_id?: string | null
           transcript?: string | null
           transcript_status?: string
           updated_at?: string
@@ -4153,6 +4156,13 @@ export type Database = {
             columns: ["relationship_session_id"]
             isOneToOne: false
             referencedRelation: "relationship_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_response_media_three_sixty_response_id_fkey"
+            columns: ["three_sixty_response_id"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_responses"
             referencedColumns: ["id"]
           },
           {
@@ -7507,66 +7517,6 @@ export type Database = {
           },
         ]
       }
-      facet_interpretations_pre_name_repair_backup: {
-        Row: {
-          assessment_result_id: string | null
-          backed_up_at: string
-          facet_data: Json | null
-          generated_at: string | null
-          id: string
-          repair_note: string | null
-          section_type: string | null
-        }
-        Insert: {
-          assessment_result_id?: string | null
-          backed_up_at?: string
-          facet_data?: Json | null
-          generated_at?: string | null
-          id: string
-          repair_note?: string | null
-          section_type?: string | null
-        }
-        Update: {
-          assessment_result_id?: string | null
-          backed_up_at?: string
-          facet_data?: Json | null
-          generated_at?: string | null
-          id?: string
-          repair_note?: string | null
-          section_type?: string | null
-        }
-        Relationships: []
-      }
-      facet_interpretations_pre_polarity_regen_backup: {
-        Row: {
-          assessment_result_id: string | null
-          backed_up_at: string | null
-          facet_data: Json | null
-          generated_at: string | null
-          id: string | null
-          repair_note: string | null
-          section_type: string | null
-        }
-        Insert: {
-          assessment_result_id?: string | null
-          backed_up_at?: string | null
-          facet_data?: Json | null
-          generated_at?: string | null
-          id?: string | null
-          repair_note?: string | null
-          section_type?: string | null
-        }
-        Update: {
-          assessment_result_id?: string | null
-          backed_up_at?: string | null
-          facet_data?: Json | null
-          generated_at?: string | null
-          id?: string | null
-          repair_note?: string | null
-          section_type?: string | null
-        }
-        Relationships: []
-      }
       facet_interpretations_pre_run_on_regen_backup: {
         Row: {
           assessment_result_id: string | null
@@ -9625,6 +9575,39 @@ export type Database = {
           },
         ]
       }
+      mr_dispatch_runs: {
+        Row: {
+          considered: number
+          detail: Json
+          dry_run: boolean
+          errors: number
+          id: string
+          ran_at: string
+          sent: number
+          suppressed: number
+        }
+        Insert: {
+          considered?: number
+          detail?: Json
+          dry_run?: boolean
+          errors?: number
+          id?: string
+          ran_at?: string
+          sent?: number
+          suppressed?: number
+        }
+        Update: {
+          considered?: number
+          detail?: Json
+          dry_run?: boolean
+          errors?: number
+          id?: string
+          ran_at?: string
+          sent?: number
+          suppressed?: number
+        }
+        Relationships: []
+      }
       newsletter_ai_conversations: {
         Row: {
           article_id: string
@@ -10530,6 +10513,69 @@ export type Database = {
           {
             foreignKeyName: "newsletter_subscribers_linked_user_id_fkey"
             columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_dispatch_log: {
+        Row: {
+          channel: string
+          dedup_key: string
+          dispatched_at: string
+          id: string
+          notification_type: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          dedup_key: string
+          dispatched_at?: string
+          id?: string
+          notification_type: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          dedup_key?: string
+          dispatched_at?: string
+          id?: string
+          notification_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_dispatch_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_dispatch_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "notification_dispatch_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_dispatch_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notification_dispatch_log_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -13068,30 +13114,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      ptp_combined_reports_pre_reversal_backup: {
-        Row: {
-          captured_at: string
-          dimension_scores: Json | null
-          id: string
-          source: string | null
-          user_id: string
-        }
-        Insert: {
-          captured_at?: string
-          dimension_scores?: Json | null
-          id: string
-          source?: string | null
-          user_id: string
-        }
-        Update: {
-          captured_at?: string
-          dimension_scores?: Json | null
-          id?: string
-          source?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
       ptp_facet_types: {
         Row: {
@@ -17599,33 +17621,6 @@ export type Database = {
           },
         ]
       }
-      team_profile_b2a0fc06_pre_polarity_regen_backup: {
-        Row: {
-          backed_up_at: string
-          backup_id: number
-          payload: Json
-          record_id: string
-          record_kind: string
-          repair_note: string | null
-        }
-        Insert: {
-          backed_up_at?: string
-          backup_id?: never
-          payload: Json
-          record_id: string
-          record_kind: string
-          repair_note?: string | null
-        }
-        Update: {
-          backed_up_at?: string
-          backup_id?: never
-          payload?: Json
-          record_id?: string
-          record_kind?: string
-          repair_note?: string | null
-        }
-        Relationships: []
-      }
       team_profile_sections: {
         Row: {
           content: string | null
@@ -17952,6 +17947,457 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      three_sixty_config: {
+        Row: {
+          description: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          description: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          description?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      three_sixty_cycles: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          due_at: string | null
+          id: string
+          opened_at: string | null
+          question_set_version: number
+          run_number: number
+          status: string
+          subject_user_id: string
+          summary_attempted_at: string | null
+          summary_attempts: number
+          summary_generated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          opened_at?: string | null
+          question_set_version?: number
+          run_number?: number
+          status?: string
+          subject_user_id: string
+          summary_attempted_at?: string | null
+          summary_attempts?: number
+          summary_generated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          opened_at?: string | null
+          question_set_version?: number
+          run_number?: number
+          status?: string
+          subject_user_id?: string
+          summary_attempted_at?: string | null
+          summary_attempts?: number
+          summary_generated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_cycles_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_cycles_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "three_sixty_cycles_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_cycles_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "three_sixty_cycles_subject_user_id_fkey"
+            columns: ["subject_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      three_sixty_question_sets: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          source: string | null
+          title: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          source?: string | null
+          title: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          source?: string | null
+          title?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      three_sixty_questions: {
+        Row: {
+          ai_followup: boolean
+          answer_type: string
+          created_at: string
+          focus: string
+          id: string
+          modes: string[]
+          ordinal: number
+          prompt: string
+          prompt_self_serve: string | null
+          question_key: string
+          scale_max: number | null
+          scale_max_label: string | null
+          scale_min: number | null
+          scale_min_label: string | null
+          section: string
+          version: number
+        }
+        Insert: {
+          ai_followup?: boolean
+          answer_type?: string
+          created_at?: string
+          focus: string
+          id?: string
+          modes?: string[]
+          ordinal: number
+          prompt: string
+          prompt_self_serve?: string | null
+          question_key: string
+          scale_max?: number | null
+          scale_max_label?: string | null
+          scale_min?: number | null
+          scale_min_label?: string | null
+          section: string
+          version: number
+        }
+        Update: {
+          ai_followup?: boolean
+          answer_type?: string
+          created_at?: string
+          focus?: string
+          id?: string
+          modes?: string[]
+          ordinal?: number
+          prompt?: string
+          prompt_self_serve?: string | null
+          question_key?: string
+          scale_max?: number | null
+          scale_max_label?: string | null
+          scale_min?: number | null
+          scale_min_label?: string | null
+          section?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_questions_version_fkey"
+            columns: ["version"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_question_sets"
+            referencedColumns: ["version"]
+          },
+        ]
+      }
+      three_sixty_raters: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          cycle_id: string
+          email: string
+          expires_at: string | null
+          full_name: string
+          id: string
+          invited_at: string | null
+          invited_user_id: string | null
+          last_reminder_at: string | null
+          phone: string | null
+          relationship: string | null
+          reminder_count: number
+          revoked_at: string | null
+          role: string | null
+          submitted_at: string | null
+          token_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          cycle_id: string
+          email: string
+          expires_at?: string | null
+          full_name: string
+          id?: string
+          invited_at?: string | null
+          invited_user_id?: string | null
+          last_reminder_at?: string | null
+          phone?: string | null
+          relationship?: string | null
+          reminder_count?: number
+          revoked_at?: string | null
+          role?: string | null
+          submitted_at?: string | null
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          cycle_id?: string
+          email?: string
+          expires_at?: string | null
+          full_name?: string
+          id?: string
+          invited_at?: string | null
+          invited_user_id?: string | null
+          last_reminder_at?: string | null
+          phone?: string | null
+          relationship?: string | null
+          reminder_count?: number
+          revoked_at?: string | null
+          role?: string | null
+          submitted_at?: string | null
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_raters_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_raters_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_raters_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "three_sixty_raters_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_raters_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "three_sixty_raters_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      three_sixty_responses: {
+        Row: {
+          answer: Json
+          created_at: string
+          followup: Json | null
+          id: string
+          item_index: number
+          question_key: string
+          submission_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer?: Json
+          created_at?: string
+          followup?: Json | null
+          id?: string
+          item_index?: number
+          question_key: string
+          submission_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: Json
+          created_at?: string
+          followup?: Json | null
+          id?: string
+          item_index?: number
+          question_key?: string
+          submission_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_responses_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      three_sixty_submissions: {
+        Row: {
+          created_at: string
+          cycle_id: string
+          id: string
+          is_self: boolean
+          mode: string
+          rater_id: string | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_id: string
+          id?: string
+          is_self?: boolean
+          mode?: string
+          rater_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cycle_id?: string
+          id?: string
+          is_self?: boolean
+          mode?: string
+          rater_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_submissions_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_submissions_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_raters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      three_sixty_summaries: {
+        Row: {
+          content: Json
+          cycle_id: string
+          generated_at: string
+          id: string
+          model: string | null
+          question_key: string | null
+          scope: string
+        }
+        Insert: {
+          content?: Json
+          cycle_id: string
+          generated_at?: string
+          id?: string
+          model?: string | null
+          question_key?: string | null
+          scope: string
+        }
+        Update: {
+          content?: Json
+          cycle_id?: string
+          generated_at?: string
+          id?: string
+          model?: string | null
+          question_key?: string | null
+          scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_summaries_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "three_sixty_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      three_sixty_sweep_runs: {
+        Row: {
+          detail: Json
+          id: string
+          kind: string
+          ran_at: string
+        }
+        Insert: {
+          detail?: Json
+          id?: string
+          kind: string
+          ran_at?: string
+        }
+        Update: {
+          detail?: Json
+          id?: string
+          kind?: string
+          ran_at?: string
+        }
+        Relationships: []
       }
       trigger_failure_log: {
         Row: {
@@ -20447,6 +20893,105 @@ export type Database = {
           success: boolean
         }[]
       }
+      bw_360_add_plan_items: {
+        Args: { p_cycle: string; p_items: Json }
+        Returns: Json
+      }
+      bw_360_add_rater: {
+        Args: {
+          p_cycle: string
+          p_email: string
+          p_full_name: string
+          p_phone?: string
+          p_relationship?: string
+          p_role?: string
+        }
+        Returns: Json
+      }
+      bw_360_can_read_summary: { Args: { p_cycle: string }; Returns: boolean }
+      bw_360_claim_invite: { Args: { p_token: string }; Returns: Json }
+      bw_360_cycle_subject: { Args: { p_cycle: string }; Returns: string }
+      bw_360_email_escape: { Args: { p_text: string }; Returns: string }
+      bw_360_invitation_html: {
+        Args: {
+          p_due?: string
+          p_expires: string
+          p_invitee_first: string
+          p_reminder?: boolean
+          p_subject_first: string
+          p_subject_full: string
+          p_url: string
+        }
+        Returns: string
+      }
+      bw_360_invite_public_info: { Args: { p_token: string }; Returns: Json }
+      bw_360_is_coach_of: {
+        Args: { p_subject: string; p_user?: string }
+        Returns: boolean
+      }
+      bw_360_is_my_submission: {
+        Args: { p_submission: string }
+        Returns: boolean
+      }
+      bw_360_mint_rater_token: { Args: { p_rater: string }; Returns: string }
+      bw_360_open_cycle: { Args: { p_cycle: string }; Returns: Json }
+      bw_360_progress: { Args: { p_cycle: string }; Returns: Json }
+      bw_360_publish_to_coaching: { Args: { p_cycle: string }; Returns: Json }
+      bw_360_question_set: {
+        Args: { p_submission: string }
+        Returns: {
+          ai_followup: boolean
+          answer_type: string
+          focus: string
+          ordinal: number
+          prompt: string
+          question_key: string
+          scale_max: number
+          scale_max_label: string
+          scale_min: number
+          scale_min_label: string
+          section: string
+        }[]
+      }
+      bw_360_rater_list: {
+        Args: { p_cycle: string }
+        Returns: {
+          email: string
+          full_name: string
+          invited_at: string
+          phone: string
+          rater_id: string
+          relationship: string
+          revoked_at: string
+          role: string
+        }[]
+      }
+      bw_360_revoke_rater: { Args: { p_rater: string }; Returns: Json }
+      bw_360_run_due_summaries: {
+        Args: { p_dry_run?: boolean; p_max_attempts?: number }
+        Returns: Json
+      }
+      bw_360_run_reminders: { Args: { p_dry_run?: boolean }; Returns: Json }
+      bw_360_save_answer: {
+        Args: {
+          p_answer: Json
+          p_followup?: Json
+          p_question_key: string
+          p_submission: string
+        }
+        Returns: Json
+      }
+      bw_360_send_invitations: {
+        Args: {
+          p_cycle: string
+          p_reminder?: boolean
+          p_resend?: boolean
+          p_respect_cadence?: boolean
+        }
+        Returns: Json
+      }
+      bw_360_start_cycle: { Args: never; Returns: Json }
+      bw_360_submit: { Args: { p_submission: string }; Returns: Json }
       bw_all_subjects_consent: {
         Args: { p_audience: string; p_subject_ids: string[] }
         Returns: boolean
@@ -22407,9 +22952,67 @@ export type Database = {
         Returns: Json
       }
       mr_cleanup_media: { Args: { p_apply?: boolean }; Returns: number }
+      mr_dispatch_cutoff: { Args: never; Returns: string }
+      mr_dispatch_gentle_nudge: {
+        Args: {
+          p_dormant_days?: number
+          p_dry_run?: boolean
+          p_idle_days?: number
+          p_min_gap_days?: number
+          p_relationship?: string
+        }
+        Returns: Json
+      }
+      mr_dispatch_left_you_something: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_partner_started: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_practitioner_ordered: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_reached_milestone: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_safety_alerts: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_solo_unlock: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_tally: {
+        Args: {
+          p_considered: number
+          p_dry_run: boolean
+          p_not_sent: number
+          p_sent: number
+          p_suppressed: number
+          p_type: string
+        }
+        Returns: Json
+      }
+      mr_dispatch_turn_ready: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
+      mr_dispatch_waiting_on_you: {
+        Args: { p_dry_run?: boolean; p_relationship?: string }
+        Returns: Json
+      }
       mr_embed_activities: {
         Args: { p_force?: boolean; p_limit?: number }
         Returns: number
+      }
+      mr_first_name: {
+        Args: { p_relationship: string; p_user: string }
+        Returns: string
       }
       mr_gentle_nudge_body: { Args: { p_payload: Json }; Returns: string }
       mr_gentle_nudge_title: { Args: { p_payload: Json }; Returns: string }
@@ -22445,6 +23048,14 @@ export type Database = {
           p_relationship: string
         }
         Returns: string
+      }
+      mr_run_dispatch: {
+        Args: {
+          p_dry_run?: boolean
+          p_include_gentle?: boolean
+          p_relationship?: string
+        }
+        Returns: Json
       }
       mr_safety_alert_body: { Args: { p_payload: Json }; Returns: string }
       my_access_history: {
