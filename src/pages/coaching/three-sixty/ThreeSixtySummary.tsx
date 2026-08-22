@@ -14,11 +14,11 @@ interface Theme {
   title?: string;
   body?: string;
 }
+// Exactly what three-sixty-summarise v2 writes. No other shape is handled.
 interface OverallContent {
-  headline?: string;
   themes?: Theme[];
+  strengths?: Theme[];
   opportunities?: Theme[];
-  summary?: string;
 }
 
 interface SummaryRow {
