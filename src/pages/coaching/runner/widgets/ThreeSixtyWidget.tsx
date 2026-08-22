@@ -179,8 +179,8 @@ export function ThreeSixtyWidget({
         res.error === "not_enough_raters"
           ? `Ask at least ${res.min_invited ?? progress?.min_invited} people before you open your 360.`
           : "Your 360 is already open.",
-
       );
+
       await refresh(cycleId);
       return;
     }
