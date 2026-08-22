@@ -20,6 +20,13 @@ interface Progress {
   invited?: number;
   submitted?: number;
   min_submitted?: number;
+  min_invited?: number;
+  max_invited?: number;
+  participants?: number;
+  max_participants?: number;
+  slots_left?: number;
+  self_started?: boolean;
+  self_submitted?: boolean;
   summary_eligible?: boolean;
   due_at?: string | null;
   days_left?: number | null;
@@ -38,7 +45,8 @@ interface Rater {
   revoked_at: string | null;
 }
 
-const MIN_INVITED = 4;
+// No hardcoded floors or ceilings: every number comes from bw_360_progress.
+
 
 export function ThreeSixtyWidget({
   step,
