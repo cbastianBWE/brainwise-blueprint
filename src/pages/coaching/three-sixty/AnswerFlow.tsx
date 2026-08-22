@@ -170,8 +170,12 @@ function TextAnswer({
   const probeDebounce = useRef<number | null>(null);
   const retryTimer = useRef<number | null>(null);
   const alive = useRef(true);
+  const chain = useRef<Promise<unknown>>(Promise.resolve());
+  const textRef = useRef(text);
+  textRef.current = text;
   const latestAnswer = useRef<Answer | undefined>(value);
   latestAnswer.current = value;
+
 
   // One probe per question, only after the answer is stored, never for a
   // question that already carries a follow-up. A recorded answer usually
