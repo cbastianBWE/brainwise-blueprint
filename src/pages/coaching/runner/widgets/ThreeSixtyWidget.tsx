@@ -177,8 +177,9 @@ export function ThreeSixtyWidget({
       setBusy(false);
       toast.error(
         res.error === "not_enough_raters"
-          ? `Ask at least ${res.min_invited ?? MIN_INVITED} people before you open your 360.`
+          ? `Ask at least ${res.min_invited ?? progress?.min_invited} people before you open your 360.`
           : "Your 360 is already open.",
+
       );
       await refresh(cycleId);
       return;
