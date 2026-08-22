@@ -445,6 +445,8 @@ function TextAnswer({
             disabled={disabled}
             placeholder="Optional"
             onChange={(e) => pushFollowup(e.target.value)}
+            onBlur={() => void flushFollowup()}
+
           />
         </div>
       )}
