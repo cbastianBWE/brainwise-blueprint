@@ -534,3 +534,11 @@ function RaterList({
 }
 
 export default ThreeSixtyWidget;
+
+/** The due date, in plain words. Falls back to "its due date" when unknown. */
+function formatDue(due?: string | null): string {
+  if (!due) return "its due date";
+  const d = new Date(due);
+  if (Number.isNaN(d.getTime())) return "its due date";
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+}
