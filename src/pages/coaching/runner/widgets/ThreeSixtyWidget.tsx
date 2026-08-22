@@ -104,7 +104,7 @@ export function ThreeSixtyWidget({
         setLoading(false);
         return;
       }
-      const started = (data || {}) as { cycle_id?: string; credits?: number };
+      const started = (data || {}) as unknown as { cycle_id?: string; credits?: number };
       const id = started.cycle_id;
       if (typeof started.credits === "number") setCredits(started.credits);
       if (!id) {
