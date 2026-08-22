@@ -167,17 +167,21 @@ export function ThreeSixtySummary({
   }
 
   const opportunities = Array.isArray(client.opportunities) ? client.opportunities : [];
+  const strengths = Array.isArray(client.strengths) ? client.strengths : [];
 
   return (
     <div className="space-y-8">
       <section className="space-y-3">
         <h3 className="text-lg font-semibold">What came back about you</h3>
-        {client.headline && <p className="text-sm text-muted-foreground">{client.headline}</p>}
-        {Array.isArray(client.themes) && client.themes.length > 0 ? (
-          <ThemeList items={client.themes} />
-        ) : client.summary ? (
-          <p className="text-sm whitespace-pre-wrap">{client.summary}</p>
-        ) : null}
+        {Array.isArray(client.themes) && client.themes.length > 0 && <ThemeList items={client.themes} />}
+
+        {strengths.length > 0 && (
+          <div className="space-y-3 pt-2">
+            <h4 className="text-sm font-semibold">What people said you do well</h4>
+            {/* Strengths are read only. The plan button belongs to opportunities. */}
+            <ThemeList items={strengths} />
+          </div>
+        )}
 
         {opportunities.length > 0 && (
           <div className="space-y-3 pt-2">
@@ -214,17 +218,13 @@ export function ThreeSixtySummary({
         )}
       </section>
 
-      {(Array.isArray(team.themes) && team.themes.length > 0) || team.summary ? (
+      {Array.isArray(team.themes) && team.themes.length > 0 ? (
         <section className="space-y-3">
           <h3 className="text-lg font-semibold">What came back about the team</h3>
           <p className="text-sm text-muted-foreground">
             These themes are about the team, not about you.
           </p>
-          {Array.isArray(team.themes) && team.themes.length > 0 ? (
-            <ThemeList items={team.themes} />
-          ) : (
-            <p className="text-sm whitespace-pre-wrap">{team.summary}</p>
-          )}
+          <ThemeList items={team.themes} />
         </section>
       ) : null}
 
@@ -233,18 +233,18 @@ export function ThreeSixtySummary({
           <h3 className="text-lg font-semibold">Question by question</h3>
           {questions.map((q) => {
             const content = perQuestion[q.question_key];
-            const text =
-              typeof content === "string"
-                ? content
-                : content?.summary || content?.body || content?.text || null;
-            if (!text && !selfAnswers[q.question_key]) return null;
+            // The summariser writes { themes: [{title, body}] }, and q01 gets no row.
+            const themes: Theme[] = Array.isArray(content?.themes) ? content.themes : [];
+            if (themes.length === 0 && !selfAnswers[q.question_key]) return null;
             return (
               <Card key={q.question_key} className="space-y-3 p-4">
                 <p className="text-sm font-medium whitespace-pre-wrap">{q.prompt}</p>
-                {text && (
+                {themes.length > 0 && (
                   <div>
                     <div className="text-xs font-semibold uppercase text-muted-foreground">What others said</div>
-                    <p className="mt-1 text-sm whitespace-pre-wrap">{text}</p>
+                    <div className="mt-1">
+                      <ThemeList items={themes} />
+                    </div>
                   </div>
                 )}
                 <div>
