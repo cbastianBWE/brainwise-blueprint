@@ -610,6 +610,8 @@ export function AnswerFlow({
                   followup={followups[q.question_key] || null}
                   onSaved={(a) => setAnswer(q.question_key, a)}
                   onFollowup={(f) => setFollowup(q.question_key, f)}
+                  registerFlush={flushers.current}
+
                 />
               )}
             </Card>
