@@ -17969,6 +17969,69 @@ export type Database = {
         }
         Relationships: []
       }
+      three_sixty_credit_grants: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          source: string
+          source_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          source: string
+          source_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          source?: string
+          source_ref?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "three_sixty_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "three_sixty_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "three_sixty_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "three_sixty_credit_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       three_sixty_cycles: {
         Row: {
           closed_at: string | null
@@ -18087,6 +18150,7 @@ export type Database = {
           modes: string[]
           ordinal: number
           prompt: string
+          prompt_self: string | null
           prompt_self_serve: string | null
           question_key: string
           scale_max: number | null
@@ -18105,6 +18169,7 @@ export type Database = {
           modes?: string[]
           ordinal: number
           prompt: string
+          prompt_self?: string | null
           prompt_self_serve?: string | null
           question_key: string
           scale_max?: number | null
@@ -18123,6 +18188,7 @@ export type Database = {
           modes?: string[]
           ordinal?: number
           prompt?: string
+          prompt_self?: string | null
           prompt_self_serve?: string | null
           question_key?: string
           scale_max?: number | null
@@ -19150,6 +19216,7 @@ export type Database = {
           subscription_status: string
           subscription_tier: string
           supervisor_user_id: string | null
+          three_sixty_credits: number
           timezone: string | null
           tos_accepted_at: string | null
           tos_version_accepted: string | null
@@ -19201,6 +19268,7 @@ export type Database = {
           subscription_status?: string
           subscription_tier?: string
           supervisor_user_id?: string | null
+          three_sixty_credits?: number
           timezone?: string | null
           tos_accepted_at?: string | null
           tos_version_accepted?: string | null
@@ -19252,6 +19320,7 @@ export type Database = {
           subscription_status?: string
           subscription_tier?: string
           supervisor_user_id?: string | null
+          three_sixty_credits?: number
           timezone?: string | null
           tos_accepted_at?: string | null
           tos_version_accepted?: string | null
@@ -20908,6 +20977,10 @@ export type Database = {
         }
         Returns: Json
       }
+      bw_360_admin_grant_credits: {
+        Args: { p_amount: number; p_reason?: string; p_user: string }
+        Returns: Json
+      }
       bw_360_can_read_summary: { Args: { p_cycle: string }; Returns: boolean }
       bw_360_claim_invite: { Args: { p_token: string }; Returns: Json }
       bw_360_cycle_subject: { Args: { p_cycle: string }; Returns: string }
@@ -20919,6 +20992,10 @@ export type Database = {
       bw_360_followup_store: {
         Args: { p_prompt: string; p_question_key: string; p_submission: string }
         Returns: Json
+      }
+      bw_360_grant_entry_credits: {
+        Args: { p_source: string; p_user: string }
+        Returns: number
       }
       bw_360_invitation_html: {
         Args: {
@@ -20942,6 +21019,7 @@ export type Database = {
         Returns: boolean
       }
       bw_360_mint_rater_token: { Args: { p_rater: string }; Returns: string }
+      bw_360_my_credits: { Args: never; Returns: Json }
       bw_360_open_cycle: { Args: { p_cycle: string }; Returns: Json }
       bw_360_progress: { Args: { p_cycle: string }; Returns: Json }
       bw_360_publish_to_coaching: { Args: { p_cycle: string }; Returns: Json }
@@ -21653,6 +21731,7 @@ export type Database = {
         Returns: number
       }
       consume_shared_ai_credit: { Args: { p_user: string }; Returns: number }
+      consume_three_sixty_credit: { Args: { p_user: string }; Returns: number }
       contract_effective_annual_value: {
         Args: { p_org: string }
         Returns: {
@@ -22504,6 +22583,15 @@ export type Database = {
         Returns: number
       }
       grant_shared_ai_credits: {
+        Args: {
+          p_amount: number
+          p_source: string
+          p_source_ref: string
+          p_user: string
+        }
+        Returns: number
+      }
+      grant_three_sixty_credits: {
         Args: {
           p_amount: number
           p_source: string

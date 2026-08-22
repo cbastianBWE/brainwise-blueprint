@@ -65,11 +65,12 @@ export function ThreeSixtyWidget({
   const [selfSubmission, setSelfSubmission] = useState<string | null>(null);
   const [selfSubmitted, setSelfSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const [form, setForm] = useState({ full_name: "", email: "", role: "", relationship: "" });
 
   const refresh = useCallback(
     async (id: string) => {
-      const [{ data: prog }, { data: list }, { data: sub }] = await Promise.all([
+      const [{ data: prog }, { data: list }, { data: sub }, { data: cred }] = await Promise.all([
         supabase.rpc("bw_360_progress", { p_cycle: id }),
         supabase.rpc("bw_360_rater_list", { p_cycle: id }),
         supabase
@@ -78,11 +79,16 @@ export function ThreeSixtyWidget({
           .eq("cycle_id", id)
           .eq("is_self", true)
           .maybeSingle(),
+        // The 360 has its own pool of AI calls. Keep the balance current as
+        // raters answer; there is no self-serve top-up, so this is display only.
+        supabase.rpc("bw_360_my_credits"),
       ]);
       setProgress((prog as unknown as Progress) ?? null);
       setRaters(((list || []) as Rater[]).filter((r) => !r.revoked_at));
       setSelfSubmission(sub?.id ?? null);
       setSelfSubmitted(!!sub?.submitted_at);
+      const c = (cred as unknown as { credits?: number } | null)?.credits;
+      if (typeof c === "number") setCredits(c);
     },
     [],
   );
@@ -98,12 +104,15 @@ export function ThreeSixtyWidget({
         setLoading(false);
         return;
       }
-      const id = (data as any)?.cycle_id as string | undefined;
+      const started = (data || {}) as unknown as { cycle_id?: string; credits?: number };
+      const id = started.cycle_id;
+      if (typeof started.credits === "number") setCredits(started.credits);
       if (!id) {
         setLoading(false);
         return;
       }
       setCycleId(id);
+
       await refresh(id);
       if (!cancelled) setLoading(false);
     })();
@@ -216,6 +225,32 @@ export function ThreeSixtyWidget({
     else toast.success("Reminders sent to anyone who has not answered.");
   };
 
+  // Asking for the summary early spends from the 360's own pool. An empty pool
+  // is not a failure: the due-date run does not refuse, so the summary still
+  // arrives. Say that rather than showing an error.
+  const buildNow = async () => {
+    if (!cycleId) return;
+    setBusy(true);
+    const { error } = await supabase.functions.invoke("three-sixty-summarise", {
+      body: { cycle_id: cycleId },
+    });
+    if (error) {
+      const status = (error as { context?: { status?: number } })?.context?.status;
+      if (status === 402) {
+        toast.info(
+          `You have used all the AI credits included with your 360. Your summary will still be written automatically on ${formatDue(progress?.due_at)}.`,
+        );
+      } else {
+        toast.error("Your summary could not be built just now.");
+      }
+      setBusy(false);
+      return;
+    }
+    await refresh(cycleId);
+    setBusy(false);
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -240,6 +275,19 @@ export function ThreeSixtyWidget({
   const atCeiling = slotsLeft <= 0;
   const canOpen = invited >= minInvited;
   const selfDone = selfSubmitted || !!progress.self_submitted;
+  const dueLabel = formatDue(progress.due_at);
+
+  // The 360's own pool. Silent above 60, a quiet line from 1 to 60, and an
+  // explanation at 0 that the summary still arrives on the due date.
+  const creditNote =
+    credits === null || status === "draft" || credits > 60 ? null : credits > 0 ? (
+      <p className="text-xs text-muted-foreground">AI credits left for your 360: {credits}.</p>
+    ) : (
+      <p className="text-xs text-muted-foreground">
+        You have used all the AI credits included with your 360. Follow-up questions are turned off
+        for the rest of it, and your summary will still be written on {dueLabel}.
+      </p>
+    );
 
 
 
@@ -376,6 +424,7 @@ export function ThreeSixtyWidget({
               Your summary is written once at least {progress.min_submitted ?? 3} people have answered.
               You will never be told who did.
             </p>
+            {creditNote}
             <div>
               <Button type="button" variant="outline" size="sm" onClick={remind} disabled={busy}>
                 {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -421,11 +470,19 @@ export function ThreeSixtyWidget({
 
       {/* ---- Ready: enough answers, summary not written yet ---- */}
       {status !== "draft" && !summarised && progress.summary_eligible && (
-        <Card className="space-y-1 p-4">
+        <Card className="space-y-2 p-4">
           <h3 className="text-sm font-semibold">Enough people have answered</h3>
           <p className="text-sm text-muted-foreground">
-            Your summary is being written. It appears here when it is ready, and you will be told.
+            Your summary is written automatically on {dueLabel}. You can have it built now if you do
+            not want to wait, and more answers arriving afterwards are still included.
           </p>
+          <div>
+            <Button type="button" variant="outline" size="sm" onClick={buildNow} disabled={busy}>
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Build it now
+            </Button>
+          </div>
+          {creditNote}
         </Card>
       )}
 
@@ -477,3 +534,11 @@ function RaterList({
 }
 
 export default ThreeSixtyWidget;
+
+/** The due date, in plain words. Falls back to "its due date" when unknown. */
+function formatDue(due?: string | null): string {
+  if (!due) return "its due date";
+  const d = new Date(due);
+  if (Number.isNaN(d.getTime())) return "its due date";
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+}
