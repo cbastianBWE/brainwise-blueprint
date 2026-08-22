@@ -392,7 +392,11 @@ function TextAnswer({
           {mode === "dictate" && (
             <DictateButton
               disabled={disabled}
-              onFinal={(t) => pushText((text ? text + " " : "") + t, "dictate")}
+              onFinal={(t) => {
+                pushText((textRef.current ? textRef.current + " " : "") + t, "dictate");
+                handleDictationEnd();
+              }}
+
             />
           )}
         </div>
