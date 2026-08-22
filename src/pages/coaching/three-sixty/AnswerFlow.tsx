@@ -143,6 +143,7 @@ function TextAnswer({
   disabled,
   onSaved,
   onFollowup,
+  registerFlush,
 }: {
   q: ThreeSixtyQuestion;
   submissionId: string;
@@ -151,6 +152,7 @@ function TextAnswer({
   disabled?: boolean;
   onSaved: (a: Answer) => void;
   onFollowup: (f: Followup) => void;
+  registerFlush?: Map<string, () => Promise<void>>;
 }) {
   const rec = value && "mode" in value && (value.mode === "audio" || value.mode === "video") ? value : null;
   const [mode, setMode] = useState<FieldMode>(rec ? rec.mode : "text");
