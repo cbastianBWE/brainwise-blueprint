@@ -20,6 +20,13 @@ interface Progress {
   invited?: number;
   submitted?: number;
   min_submitted?: number;
+  min_invited?: number;
+  max_invited?: number;
+  participants?: number;
+  max_participants?: number;
+  slots_left?: number;
+  self_started?: boolean;
+  self_submitted?: boolean;
   summary_eligible?: boolean;
   due_at?: string | null;
   days_left?: number | null;
@@ -38,7 +45,8 @@ interface Rater {
   revoked_at: string | null;
 }
 
-const MIN_INVITED = 4;
+// No hardcoded floors or ceilings: every number comes from bw_360_progress.
+
 
 export function ThreeSixtyWidget({
   step,
@@ -124,17 +132,21 @@ export function ThreeSixtyWidget({
       toast.error("That person could not be added.");
       return;
     }
-    const res = (data || {}) as { ok?: boolean; error?: string };
+    const res = (data || {}) as { ok?: boolean; error?: string; max_invited?: number };
     if (!res.ok) {
       toast.error(
         res.error === "duplicate_email"
           ? "You have already asked that person."
           : res.error === "self"
             ? "You cannot ask yourself."
-            : "That person could not be added.",
+            : res.error === "too_many_raters"
+              ? `You can ask up to ${res.max_invited ?? progress?.max_invited} people. Withdraw someone if you want to add somebody else.`
+              : "That person could not be added.",
       );
+      if (res.error === "too_many_raters") await refresh(cycleId);
       return;
     }
+
     setForm({ full_name: "", email: "", role: "", relationship: "" });
     await refresh(cycleId);
   };
@@ -165,9 +177,10 @@ export function ThreeSixtyWidget({
       setBusy(false);
       toast.error(
         res.error === "not_enough_raters"
-          ? `Ask at least ${res.min_invited ?? MIN_INVITED} people before you open your 360.`
+          ? `Ask at least ${res.min_invited ?? progress?.min_invited} people before you open your 360.`
           : "Your 360 is already open.",
       );
+
       await refresh(cycleId);
       return;
     }
@@ -206,6 +219,18 @@ export function ThreeSixtyWidget({
 
   const status = progress.status;
   const summarised = !!progress.summary_generated_at;
+  // Every count and gate comes from bw_360_progress.
+  const minInvited = progress.min_invited ?? 0;
+  const maxInvited = progress.max_invited ?? 0;
+  const participants = progress.participants ?? 0;
+  const maxParticipants = progress.max_participants ?? 0;
+  const slotsLeft = progress.slots_left ?? 0;
+  const invited = progress.invited ?? 0;
+  const atCeiling = slotsLeft <= 0;
+  const canOpen = invited >= minInvited;
+  const selfDone = selfSubmitted || !!progress.self_submitted;
+
+
 
   return (
     <div className="space-y-6">
@@ -220,62 +245,104 @@ export function ThreeSixtyWidget({
               <h3 className="text-sm font-semibold">Who are you asking?</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Ask at least {MIN_INVITED} people. Nobody, including you, ever sees who said what.
+              A 360 is you and up to {maxInvited} others, {maxParticipants} participants in all. Ask at
+              least {minInvited} people. Nobody, including you, ever sees who said what.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="r-name">Name</Label>
-                <Input
-                  id="r-name"
-                  value={form.full_name}
-                  onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="r-email">Email</Label>
-                <Input
-                  id="r-email"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="r-role">Their role (optional)</Label>
-                <Input
-                  id="r-role"
-                  value={form.role}
-                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="r-rel">How you work together (optional)</Label>
-                <Input
-                  id="r-rel"
-                  value={form.relationship}
-                  onChange={(e) => setForm((f) => ({ ...f, relationship: e.target.value }))}
-                />
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary">
+                {participants} of {maxParticipants} participants
+              </Badge>
+              {!atCeiling && slotsLeft <= 3 && (
+                <span className="text-xs text-muted-foreground">
+                  {slotsLeft === 1 ? "1 more you can ask" : `${slotsLeft} more you can ask`}
+                </span>
+              )}
+              {atCeiling && (
+                <span className="text-xs text-muted-foreground">
+                  You can ask up to {maxInvited} people. Withdraw someone if you want to add somebody else.
+                </span>
+              )}
             </div>
-            <Button type="button" onClick={addRater} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Add this person
-            </Button>
+
+            <fieldset disabled={atCeiling} className="space-y-3 disabled:opacity-60">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="r-name">Name</Label>
+                  <Input
+                    id="r-name"
+                    value={form.full_name}
+                    onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="r-email">Email</Label>
+                  <Input
+                    id="r-email"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="r-role">Their role (optional)</Label>
+                  <Input
+                    id="r-role"
+                    value={form.role}
+                    onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="r-rel">How you work together (optional)</Label>
+                  <Input
+                    id="r-rel"
+                    value={form.relationship}
+                    onChange={(e) => setForm((f) => ({ ...f, relationship: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <Button type="button" onClick={addRater} disabled={busy || atCeiling}>
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                Add this person
+              </Button>
+            </fieldset>
+          </Card>
+
+          {/* Encouragement, never a gate. There is no "this is my manager" field. */}
+          <Card className="space-y-2 p-4">
+            <h3 className="text-sm font-semibold">Include your manager</h3>
+            <p className="text-sm text-muted-foreground">
+              A 360 without the person you report to is missing the view that matters most, and their
+              answers are unattributed like everyone else's.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              A good list is your manager, two or three peers, two or three people who report to you,
+              and anyone else whose view you would act on.
+            </p>
+          </Card>
+
+          {/* The self version exists from the moment the cycle opens, so say so now. */}
+          <Card className="space-y-2 p-4">
+            <h3 className="text-sm font-semibold">You answer these questions too</h3>
+            <p className="text-sm text-muted-foreground">
+              You will answer the same questions about yourself. Your answers are compared with what
+              comes back, and that comparison is the most useful part of your summary.
+            </p>
           </Card>
 
           <RaterList raters={raters} onRevoke={revoke} busy={busy} />
 
           <div className="space-y-2 rounded-md border bg-muted/30 p-4">
             <p className="text-sm">
-              {raters.length < MIN_INVITED
-                ? `Add ${MIN_INVITED - raters.length} more before you can open your 360.`
+              {!canOpen
+                ? `Add ${minInvited - invited} more before you can open your 360.`
                 : "When you open your 360, everyone on this list is emailed an invitation."}
             </p>
-            <Button type="button" onClick={openCycle} disabled={busy || raters.length < MIN_INVITED}>
+            <Button type="button" onClick={openCycle} disabled={busy || !canOpen}>
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Open my 360 and send the invitations
             </Button>
           </div>
+
         </div>
       )}
 
@@ -306,20 +373,38 @@ export function ThreeSixtyWidget({
             </div>
           </Card>
 
-          <RaterList raters={raters} onRevoke={revoke} busy={busy} />
+          {/* Until the subject answers their own version, this is the loudest
+              thing on the screen: the summary compares it question by question. */}
+          {selfDone ? (
+            <>
+              <RaterList raters={raters} onRevoke={revoke} busy={busy} />
+              <div className="space-y-3">
+                <h3 className="text-base font-semibold">Your own answers</h3>
+                <p className="text-sm text-muted-foreground">
+                  You have answered your own version. It is compared with what comes back.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <Card className="space-y-3 border-primary/40 bg-primary/5 p-4">
+                <h3 className="text-base font-semibold">Answer your own version</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your summary compares your own answers with what comes back, question by question,
+                  and that comparison is the most useful part of it. Questions you skip show as
+                  "You did not answer this one."
+                </p>
+                {selfSubmission ? (
+                  <AnswerFlow submissionId={selfSubmission} onSubmitted={() => setSelfSubmitted(true)} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Your own version is not ready yet.</p>
+                )}
+              </Card>
 
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold">Your own answers</h3>
-            {selfSubmitted ? (
-              <p className="text-sm text-muted-foreground">
-                You have answered your own version. It is compared with what comes back.
-              </p>
-            ) : selfSubmission ? (
-              <AnswerFlow submissionId={selfSubmission} onSubmitted={() => setSelfSubmitted(true)} />
-            ) : (
-              <p className="text-sm text-muted-foreground">Your own version is not ready yet.</p>
-            )}
-          </div>
+              <RaterList raters={raters} onRevoke={revoke} busy={busy} />
+            </>
+          )}
+
         </div>
       )}
 
