@@ -178,6 +178,7 @@ import ReportPaymentConfirmed from "./pages/ReportPaymentConfirmed";
 import Unsubscribe from "./pages/Unsubscribe";
 import ClaimInvitation from "./pages/ClaimInvitation";
 import ThreeSixtyInvite from "./pages/three-sixty/ThreeSixtyInvite";
+import ThreeSixtyAnswer from "./pages/three-sixty/ThreeSixtyAnswer";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
