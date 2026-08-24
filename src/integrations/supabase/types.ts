@@ -21026,6 +21026,7 @@ export type Database = {
       }
       bw_360_mint_rater_token: { Args: { p_rater: string }; Returns: string }
       bw_360_my_credits: { Args: never; Returns: Json }
+      bw_360_my_rater_tasks: { Args: never; Returns: Json }
       bw_360_open_cycle: { Args: { p_cycle: string }; Returns: Json }
       bw_360_progress: { Args: { p_cycle: string }; Returns: Json }
       bw_360_publish_to_coaching: { Args: { p_cycle: string }; Returns: Json }
