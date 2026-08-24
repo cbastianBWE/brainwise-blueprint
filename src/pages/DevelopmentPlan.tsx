@@ -49,7 +49,7 @@ interface PlanComment {
 
 interface PlanItem {
   id: string;
-  source: "ptp" | "custom" | "team_report" | "paired_report" | "coaching";
+  source: "ptp" | "custom" | "team_report" | "paired_report" | "coaching" | "three_sixty";
   source_context: string | null;
   source_report_id?: string | null;
   card_title: string | null;
