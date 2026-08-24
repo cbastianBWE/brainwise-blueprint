@@ -21084,6 +21084,17 @@ export type Database = {
       }
       bw_360_start_cycle: { Args: never; Returns: Json }
       bw_360_submit: { Args: { p_submission: string }; Returns: Json }
+      bw_360_summary_questions: {
+        Args: { p_cycle: string }
+        Returns: {
+          answer_type: string
+          focus: string
+          ordinal: number
+          prompt: string
+          question_key: string
+          section: string
+        }[]
+      }
       bw_all_subjects_consent: {
         Args: { p_audience: string; p_subject_ids: string[] }
         Returns: boolean
