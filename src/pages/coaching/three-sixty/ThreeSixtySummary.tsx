@@ -195,7 +195,7 @@ export function ThreeSixtySummary({
                 <Card key={i} className="space-y-2 p-4">
                   {o.title && <div className="text-sm font-semibold">{o.title}</div>}
                   {o.body && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{o.body}</p>}
-                  {canAddToPlan && (
+                  {canAddToPlan && !viewerIsCoach && (
                     <Button
                       type="button"
                       size="sm"
