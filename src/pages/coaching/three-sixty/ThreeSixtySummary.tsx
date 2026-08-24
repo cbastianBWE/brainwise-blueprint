@@ -79,37 +79,47 @@ export function ThreeSixtySummary({
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data: sums } = await supabase
-        .from("three_sixty_summaries")
-        .select("scope, question_key, content")
-        .eq("cycle_id", cycleId);
-      // The subject's own answers, so the self-against-others comparison shows.
-      const { data: sub } = await supabase
-        .from("three_sixty_submissions")
-        .select("id")
-        .eq("cycle_id", cycleId)
-        .eq("is_self", true)
-        .maybeSingle();
-      let qs: ThreeSixtyQuestion[] = [];
+      // Two independent reads: the summaries and the question list. The question
+      // list comes from an RPC gated on the same permission as the summary, so a
+      // practitioner gets it too.
+      const [{ data: sums }, { data: qdata }] = await Promise.all([
+        supabase
+          .from("three_sixty_summaries")
+          .select("scope, question_key, content")
+          .eq("cycle_id", cycleId),
+        supabase.rpc("bw_360_summary_questions", { p_cycle: cycleId }),
+      ]);
+
+      // Self answers are the SUBJECT's own and stay behind their own RLS. A
+      // practitioner gets none, which is deliberate: they see themes, never
+      // anyone's individual answers, the subject's included.
       const answers: Record<string, any> = {};
-      if (sub?.id) {
-        const [{ data: qdata }, { data: rdata }] = await Promise.all([
-          supabase.rpc("bw_360_question_set", { p_submission: sub.id }),
-          supabase.from("three_sixty_responses").select("question_key, answer").eq("submission_id", sub.id),
-        ]);
-        qs = ((qdata || []) as any[]) as ThreeSixtyQuestion[];
-        for (const r of (rdata || []) as any[]) answers[r.question_key] = r.answer;
+      if (!viewerIsCoach) {
+        const { data: sub } = await supabase
+          .from("three_sixty_submissions")
+          .select("id")
+          .eq("cycle_id", cycleId)
+          .eq("is_self", true)
+          .maybeSingle();
+        if (sub?.id) {
+          const { data: rdata } = await supabase
+            .from("three_sixty_responses")
+            .select("question_key, answer")
+            .eq("submission_id", sub.id);
+          for (const r of (rdata || []) as any[]) answers[r.question_key] = r.answer;
+        }
       }
       if (cancelled) return;
       setRows((sums || []) as SummaryRow[]);
-      setQuestions(qs);
+      setQuestions(((qdata || []) as any[]) as ThreeSixtyQuestion[]);
       setSelfAnswers(answers);
       setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [cycleId]);
+  }, [cycleId, viewerIsCoach]);
+
 
   // Folds the 360's themes into the rolling coaching summary. Fire and forget.
   useEffect(() => {
