@@ -288,6 +288,33 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1">Here's where to pick things up.</p>
       </div>
 
+      {raterTasks.length > 0 && (
+        <section className="space-y-3">
+          {raterTasks.map((t) => (
+            <Card key={t.submission_id}>
+              <CardContent className="flex items-center justify-between gap-4 p-6">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold">
+                    {(t.subject_first_name ?? "Someone")} asked for your feedback
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {t.answered} of {t.total} answered.
+                    {t.days_left != null ? ` ${t.days_left} days left.` : ""}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate(`/360/answer/${t.submission_id}`)}
+                  className="shrink-0"
+                >
+                  {t.answered === 0 ? "Start" : "Continue"}
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      )}
+
       <Card>
         <CardContent className="flex items-center justify-between gap-4 p-6">
           {resultsLoading ? (
@@ -319,32 +346,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {raterTasks.length > 0 && (
-        <section className="space-y-3">
-          {raterTasks.map((t) => (
-            <Card key={t.submission_id}>
-              <CardContent className="flex items-center justify-between gap-4 p-6">
-                <div className="space-y-1">
-                  <h2 className="text-xl font-semibold">
-                    {(t.subject_first_name ?? "Someone")} asked for your feedback
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    {t.answered} of {t.total} answered.
-                    {t.days_left != null ? ` ${t.days_left} days left.` : ""}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => navigate(`/360/answer/${t.submission_id}`)}
-                  className="shrink-0"
-                >
-                  {t.answered === 0 ? "Start" : "Continue"}
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </section>
-      )}
+
 
 
       {startedItems.length > 0 && (
