@@ -85,6 +85,19 @@ const DemographicConsent = () => {
   };
 
   const routeNext = async () => {
+    // A rater who signed up from an invitation is forced through onboarding.
+    // Exactly one pending task goes straight there; two or more, or any
+    // failure, falls through to the dashboard, which lists them.
+    try {
+      const { data } = await supabase.rpc("bw_360_my_rater_tasks" as never);
+      const tasks = ((data as any)?.tasks ?? []) as { submission_id: string }[];
+      if (tasks.length === 1) {
+        navigate(`/360/answer/${tasks[0].submission_id}`, { replace: true });
+        return;
+      }
+    } catch {
+      /* fall through to the dashboard */
+    }
     navigate("/dashboard");
   };
 
