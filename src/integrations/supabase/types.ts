@@ -18039,6 +18039,8 @@ export type Database = {
           due_at: string | null
           id: string
           opened_at: string | null
+          publish_error: string | null
+          publish_failed_at: string | null
           question_set_version: number
           run_number: number
           status: string
@@ -18054,6 +18056,8 @@ export type Database = {
           due_at?: string | null
           id?: string
           opened_at?: string | null
+          publish_error?: string | null
+          publish_failed_at?: string | null
           question_set_version?: number
           run_number?: number
           status?: string
@@ -18069,6 +18073,8 @@ export type Database = {
           due_at?: string | null
           id?: string
           opened_at?: string | null
+          publish_error?: string | null
+          publish_failed_at?: string | null
           question_set_version?: number
           run_number?: number
           status?: string
