@@ -150,6 +150,17 @@ function resumeTarget(it: StartedItem): string {
   return detailRouteFor(it.tier, it.entityId);
 }
 
+interface RaterTask {
+  submission_id: string;
+  cycle_id: string;
+  subject_first_name: string | null;
+  subject_full_name: string | null;
+  answered: number;
+  total: number;
+  due_at: string | null;
+  days_left: number | null;
+}
+
 interface DashCard {
   title: string;
   description: string;
@@ -184,6 +195,19 @@ export default function Dashboard() {
       return data as unknown as LearningState;
     },
   });
+
+  // Raters who claimed an invite and did not finish. Empty for almost everyone,
+  // and a failure here must never take the dashboard down with it.
+  const raterTasksQuery = useQuery({
+    queryKey: ["dashboard_360_rater_tasks", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<RaterTask[]> => {
+      const { data, error } = await supabase.rpc("bw_360_my_rater_tasks" as never);
+      if (error) return [];
+      return ((data as unknown as { tasks?: RaterTask[] } | null)?.tasks ?? []) as RaterTask[];
+    },
+  });
+  const raterTasks = raterTasksQuery.data ?? [];
 
   const startedItems = useMemo(
     () => computeStartedItems(learningQuery.data),
@@ -294,6 +318,34 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {raterTasks.length > 0 && (
+        <section className="space-y-3">
+          {raterTasks.map((t) => (
+            <Card key={t.submission_id}>
+              <CardContent className="flex items-center justify-between gap-4 p-6">
+                <div className="space-y-1">
+                  <h2 className="text-xl font-semibold">
+                    {(t.subject_first_name ?? "Someone")} asked for your feedback
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {t.answered} of {t.total} answered.
+                    {t.days_left != null ? ` ${t.days_left} days left.` : ""}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate(`/360/answer/${t.submission_id}`)}
+                  className="shrink-0"
+                >
+                  {t.answered === 0 ? "Start" : "Continue"}
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </section>
+      )}
+
 
       {startedItems.length > 0 && (
         <section className="space-y-3">

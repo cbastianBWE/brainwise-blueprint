@@ -178,6 +178,7 @@ import ReportPaymentConfirmed from "./pages/ReportPaymentConfirmed";
 import Unsubscribe from "./pages/Unsubscribe";
 import ClaimInvitation from "./pages/ClaimInvitation";
 import ThreeSixtyInvite from "./pages/three-sixty/ThreeSixtyInvite";
+import ThreeSixtyAnswer from "./pages/three-sixty/ThreeSixtyAnswer";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ImpersonationProvider from "@/contexts/ImpersonationProvider";
 import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner";
@@ -265,6 +266,8 @@ const App = () => (
               <Route path="/epn-complete/:assignmentId" element={<SubscriptionGate feature="module:ASSESSMENTS"><EpnComplete /></SubscriptionGate>} />
               <Route path="/airsa-manager-complete/:managerAssessmentId" element={<SubscriptionGate feature="module:ASSESSMENTS"><AirsaManagerComplete /></SubscriptionGate>} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/360/answer/:submissionId" element={<ThreeSixtyAnswer />} />
+
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/team-report/:teamProfileId" element={<TeamReport />} />
               <Route path="/paired-report/:pairedProfileId" element={<PairedReport />} />
