@@ -8,6 +8,7 @@ New file `src/pages/three-sixty/ThreeSixtyAnswer.tsx`:
 - Reads `submissionId` from route params.
 - Confirms access with `bw_360_is_my_submission` before rendering; on failure, unknown id, or missing param, shows a plain "This feedback request is not available" card with a link back to the dashboard. No error text, no reason.
 - On success renders `<AnswerFlow submissionId={submissionId} />` (unchanged component) with a short page heading.
+- Below `AnswerFlow`, on the page itself, a persistent "Back to dashboard" link. `AnswerFlow`'s thank-you card is terminal and has no navigation of its own, so a rater who finishes (or who has a second pending request) always has a way out without touching the component.
 
 Route registration in `src/App.tsx`, inside the signed-in block that already wraps `/dashboard` (`ProtectedRoute` + `AppLayout`, around line 267), not next to the public `/360/invite` at line 207:
 
