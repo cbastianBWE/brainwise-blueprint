@@ -150,6 +150,17 @@ function resumeTarget(it: StartedItem): string {
   return detailRouteFor(it.tier, it.entityId);
 }
 
+interface RaterTask {
+  submission_id: string;
+  cycle_id: string;
+  subject_first_name: string | null;
+  subject_full_name: string | null;
+  answered: number;
+  total: number;
+  due_at: string | null;
+  days_left: number | null;
+}
+
 interface DashCard {
   title: string;
   description: string;
