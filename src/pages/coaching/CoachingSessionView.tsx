@@ -195,6 +195,14 @@ export default function CoachingSessionView() {
         </CardContent>
       </Card>
 
+      {cycleId && (
+        <ThreeSixtySummary
+          cycleId={cycleId}
+          canAddToPlan={isOwner}
+          viewerIsCoach={!isOwner}
+        />
+      )}
+
       {analysisHtml && (
         <Card>
           <CardHeader>
