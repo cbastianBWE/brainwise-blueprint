@@ -129,9 +129,10 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  const isMineSource = (i: PlanItem) => i.source === "ptp" || i.source === "custom" || i.source === "coaching";
-  const activeItems = allItems.filter((i) => !i.archived_at && isMineSource(i));
-  const archivedItems = allItems.filter((i) => i.archived_at && isMineSource(i));
+  // No source allowlist: dp_list_my_plan already returns only this user's items,
+  // and silently dropping unknown sources is how 360 items went missing.
+  const activeItems = allItems.filter((i) => !i.archived_at);
+  const archivedItems = allItems.filter((i) => i.archived_at);
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["development-plan"] });
 
