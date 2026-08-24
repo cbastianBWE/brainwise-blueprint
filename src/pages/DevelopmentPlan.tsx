@@ -66,6 +66,9 @@ interface PlanItem {
   comments: PlanComment[];
 }
 
+const HAS_OWN_TAB = new Set(["team_report", "paired_report"]);
+const inMyDevelopment = (i: PlanItem) => !HAS_OWN_TAB.has(i.source);
+
 const STATUS_META: Record<Status, { label: string; color: string }> = {
   not_started: { label: "Not started", color: "var(--bw-muted, #6b7280)" },
   in_progress: { label: "In progress", color: "var(--bw-teal)" },

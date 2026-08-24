@@ -159,13 +159,17 @@ export function ThreeSixtySummary({
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading your 360…
+        <Loader2 className="h-4 w-4 animate-spin" /> {viewerIsCoach ? "Loading the 360…" : "Loading your 360…"}
       </div>
     );
   }
 
   if (rows.length === 0) {
-    return <p className="text-sm text-muted-foreground">Your summary is not available yet.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        {viewerIsCoach ? "This summary is not available yet." : "Your summary is not available yet."}
+      </p>
+    );
   }
 
   const opportunities = Array.isArray(client.opportunities) ? client.opportunities : [];
