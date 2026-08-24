@@ -266,6 +266,8 @@ const App = () => (
               <Route path="/epn-complete/:assignmentId" element={<SubscriptionGate feature="module:ASSESSMENTS"><EpnComplete /></SubscriptionGate>} />
               <Route path="/airsa-manager-complete/:managerAssessmentId" element={<SubscriptionGate feature="module:ASSESSMENTS"><AirsaManagerComplete /></SubscriptionGate>} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/360/answer/:submissionId" element={<ThreeSixtyAnswer />} />
+
               <Route path="/my-results" element={<MyResults />} />
               <Route path="/team-report/:teamProfileId" element={<TeamReport />} />
               <Route path="/paired-report/:pairedProfileId" element={<PairedReport />} />
