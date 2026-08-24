@@ -185,6 +185,19 @@ export default function Dashboard() {
     },
   });
 
+  // Raters who claimed an invite and did not finish. Empty for almost everyone,
+  // and a failure here must never take the dashboard down with it.
+  const raterTasksQuery = useQuery({
+    queryKey: ["dashboard_360_rater_tasks", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<RaterTask[]> => {
+      const { data, error } = await supabase.rpc("bw_360_my_rater_tasks" as never);
+      if (error) return [];
+      return ((data as unknown as { tasks?: RaterTask[] } | null)?.tasks ?? []) as RaterTask[];
+    },
+  });
+  const raterTasks = raterTasksQuery.data ?? [];
+
   const startedItems = useMemo(
     () => computeStartedItems(learningQuery.data),
     [learningQuery.data],
