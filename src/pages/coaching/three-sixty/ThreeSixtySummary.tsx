@@ -237,7 +237,7 @@ export function ThreeSixtySummary({
             const content = perQuestion[q.question_key];
             // The summariser writes { themes: [{title, body}] }, and q01 gets no row.
             const themes: Theme[] = Array.isArray(content?.themes) ? content.themes : [];
-            if (themes.length === 0 && !selfAnswers[q.question_key]) return null;
+            if (themes.length === 0 && (viewerIsCoach || !selfAnswers[q.question_key])) return null;
             return (
               <Card key={q.question_key} className="space-y-3 p-4">
                 <p className="text-sm font-medium whitespace-pre-wrap">{q.prompt}</p>
@@ -249,12 +249,15 @@ export function ThreeSixtySummary({
                     </div>
                   </div>
                 )}
-                <div>
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">Your own answer</div>
-                  <div className="mt-1">
-                    <SelfAnswer answer={selfAnswers[q.question_key]} />
+                {/* A practitioner never sees anyone's individual answer, the subject's included. */}
+                {!viewerIsCoach && (
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">Your own answer</div>
+                    <div className="mt-1">
+                      <SelfAnswer answer={selfAnswers[q.question_key]} />
+                    </div>
                   </div>
-                </div>
+                )}
               </Card>
             );
           })}
