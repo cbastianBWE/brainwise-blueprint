@@ -14,6 +14,7 @@ import {
   type Responses,
 } from "@/components/coaching/CoachingViews";
 import { useCoachingShare } from "@/hooks/useCoachingShare";
+import { ThreeSixtySummary } from "@/pages/coaching/three-sixty/ThreeSixtySummary";
 
 interface SessionRow {
   id: string;
@@ -111,6 +112,12 @@ export default function CoachingSessionView() {
 
   const responses = (session.responses || {}) as Responses;
   const analysisHtml = responses.analysis?.html;
+  // A 360's themes live in responses.analysis. Detect from the analysis itself,
+  // not from the activity code.
+  const cycleId =
+    (responses as any)?.analysis?.source === "three_sixty"
+      ? ((responses as any).analysis.cycle_id as string | undefined)
+      : undefined;
   const chat = responses.chat || [];
   const pictureGroups = Object.values(responses).filter(
     (v): v is Array<{ storage_path: string; tag?: string }> =>
@@ -194,6 +201,14 @@ export default function CoachingSessionView() {
           <SynthesisView responses={responses} steps={session.coaching_activities?.definition?.steps} />
         </CardContent>
       </Card>
+
+      {cycleId && (
+        <ThreeSixtySummary
+          cycleId={cycleId}
+          canAddToPlan={isOwner}
+          viewerIsCoach={!isOwner}
+        />
+      )}
 
       {analysisHtml && (
         <Card>

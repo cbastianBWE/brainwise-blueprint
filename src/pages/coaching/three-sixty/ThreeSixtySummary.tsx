@@ -60,10 +60,12 @@ export function ThreeSixtySummary({
   cycleId,
   sessionId,
   canAddToPlan = true,
+  viewerIsCoach = false,
 }: {
   cycleId: string;
   sessionId?: string | null;
   canAddToPlan?: boolean;
+  viewerIsCoach?: boolean;
 }) {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<SummaryRow[]>([]);
@@ -193,7 +195,7 @@ export function ThreeSixtySummary({
                 <Card key={i} className="space-y-2 p-4">
                   {o.title && <div className="text-sm font-semibold">{o.title}</div>}
                   {o.body && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{o.body}</p>}
-                  {canAddToPlan && (
+                  {canAddToPlan && !viewerIsCoach && (
                     <Button
                       type="button"
                       size="sm"
@@ -235,7 +237,7 @@ export function ThreeSixtySummary({
             const content = perQuestion[q.question_key];
             // The summariser writes { themes: [{title, body}] }, and q01 gets no row.
             const themes: Theme[] = Array.isArray(content?.themes) ? content.themes : [];
-            if (themes.length === 0 && !selfAnswers[q.question_key]) return null;
+            if (themes.length === 0 && (viewerIsCoach || !selfAnswers[q.question_key])) return null;
             return (
               <Card key={q.question_key} className="space-y-3 p-4">
                 <p className="text-sm font-medium whitespace-pre-wrap">{q.prompt}</p>
@@ -247,12 +249,15 @@ export function ThreeSixtySummary({
                     </div>
                   </div>
                 )}
-                <div>
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">Your own answer</div>
-                  <div className="mt-1">
-                    <SelfAnswer answer={selfAnswers[q.question_key]} />
+                {/* A practitioner never sees anyone's individual answer, the subject's included. */}
+                {!viewerIsCoach && (
+                  <div>
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">Your own answer</div>
+                    <div className="mt-1">
+                      <SelfAnswer answer={selfAnswers[q.question_key]} />
+                    </div>
                   </div>
-                </div>
+                )}
               </Card>
             );
           })}
