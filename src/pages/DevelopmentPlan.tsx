@@ -66,6 +66,9 @@ interface PlanItem {
   comments: PlanComment[];
 }
 
+const HAS_OWN_TAB = new Set(["team_report", "paired_report"]);
+const inMyDevelopment = (i: PlanItem) => !HAS_OWN_TAB.has(i.source);
+
 const STATUS_META: Record<Status, { label: string; color: string }> = {
   not_started: { label: "Not started", color: "var(--bw-muted, #6b7280)" },
   in_progress: { label: "In progress", color: "var(--bw-teal)" },
@@ -129,10 +132,13 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  // No source allowlist: dp_list_my_plan already returns only this user's items,
-  // and silently dropping unknown sources is how 360 items went missing.
-  const activeItems = allItems.filter((i) => !i.archived_at);
-  const archivedItems = allItems.filter((i) => i.archived_at);
+  // team_report and paired_report have their own tabs (ReportCommitmentsTab), so
+  // they are excluded here to avoid showing the same commitment twice on one page.
+  // This is a denylist on purpose: a source added later shows up in the wrong
+  // place, which is visible and fixable, instead of vanishing silently the way
+  // three_sixty did.
+  const activeItems = allItems.filter((i) => !i.archived_at && inMyDevelopment(i));
+  const archivedItems = allItems.filter((i) => i.archived_at && inMyDevelopment(i));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["development-plan"] });
 
