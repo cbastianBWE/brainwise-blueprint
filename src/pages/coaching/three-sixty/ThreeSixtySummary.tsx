@@ -60,10 +60,12 @@ export function ThreeSixtySummary({
   cycleId,
   sessionId,
   canAddToPlan = true,
+  viewerIsCoach = false,
 }: {
   cycleId: string;
   sessionId?: string | null;
   canAddToPlan?: boolean;
+  viewerIsCoach?: boolean;
 }) {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<SummaryRow[]>([]);
