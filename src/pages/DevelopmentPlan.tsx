@@ -129,10 +129,13 @@ export default function DevelopmentPlan() {
   });
 
   const allItems = (data?.items ?? []) as PlanItem[];
-  // No source allowlist: dp_list_my_plan already returns only this user's items,
-  // and silently dropping unknown sources is how 360 items went missing.
-  const activeItems = allItems.filter((i) => !i.archived_at);
-  const archivedItems = allItems.filter((i) => i.archived_at);
+  // team_report and paired_report have their own tabs (ReportCommitmentsTab), so
+  // they are excluded here to avoid showing the same commitment twice on one page.
+  // This is a denylist on purpose: a source added later shows up in the wrong
+  // place, which is visible and fixable, instead of vanishing silently the way
+  // three_sixty did.
+  const activeItems = allItems.filter((i) => !i.archived_at && inMyDevelopment(i));
+  const archivedItems = allItems.filter((i) => i.archived_at && inMyDevelopment(i));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["development-plan"] });
 
