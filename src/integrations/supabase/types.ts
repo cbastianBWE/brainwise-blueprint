@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -13160,6 +13160,56 @@ export type Database = {
           },
         ]
       }
+      ptp_generation_attempts: {
+        Row: {
+          assessment_result_id: string
+          attempts: number
+          first_dispatched_at: string | null
+          last_dispatched_at: string | null
+          last_error: string | null
+          last_request_id: number | null
+          last_status: number | null
+          next_eligible_at: string | null
+          state: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          assessment_result_id: string
+          attempts?: number
+          first_dispatched_at?: string | null
+          last_dispatched_at?: string | null
+          last_error?: string | null
+          last_request_id?: number | null
+          last_status?: number | null
+          next_eligible_at?: string | null
+          state?: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          assessment_result_id?: string
+          attempts?: number
+          first_dispatched_at?: string | null
+          last_dispatched_at?: string | null
+          last_error?: string | null
+          last_request_id?: number | null
+          last_status?: number | null
+          next_eligible_at?: string | null
+          state?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ptp_generation_attempts_assessment_result_id_fkey"
+            columns: ["assessment_result_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ptp_intro_gate_state: {
         Row: {
           created_at: string
@@ -20225,6 +20275,33 @@ export type Database = {
         }
         Relationships: []
       }
+      v_ptp_report_health: {
+        Row: {
+          ai_narrative_done: boolean | null
+          assessment_result_id: string | null
+          context_type: string | null
+          contexts_expected: string[] | null
+          created_at: string | null
+          facets_done: boolean | null
+          facets_stored: number | null
+          facets_total: number | null
+          narrative_status: string | null
+          next_facet_batch: number | null
+          onepagers_missing: number | null
+          onepagers_overdue: boolean | null
+          onepagers_present: number | null
+          path_kind: string | null
+          report_complete: boolean | null
+          status_needs_settling: boolean | null
+          units_done: string[] | null
+          units_expected: string[] | null
+          units_missing: number | null
+          units_todo: string[] | null
+          user_id: string | null
+          wedged_contexts: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _archive_asset_internal: {
@@ -21364,6 +21441,46 @@ export type Database = {
           rank: number
           side: string
           value: number
+        }[]
+      }
+      bw_ptp_generation_tick: {
+        Args: {
+          p_cutoff?: string
+          p_dry_run?: boolean
+          p_max_reports?: number
+          p_max_units_per_report?: number
+          p_min_age?: string
+          p_only?: string
+        }
+        Returns: {
+          o_action: string
+          o_detail: Json
+          o_dispatched: boolean
+          o_result_id: string
+          o_unit: string
+        }[]
+      }
+      bw_ptp_report_state: {
+        Args: { p_result_id?: string }
+        Returns: {
+          ai_narrative_done: boolean
+          assessment_result_id: string
+          context_type: string
+          contexts_expected: string[]
+          created_at: string
+          facets_done: boolean
+          facets_stored: number
+          facets_total: number
+          narrative_status: string
+          next_facet_batch: number
+          onepagers_present: number
+          path_kind: string
+          report_complete: boolean
+          units_done: string[]
+          units_expected: string[]
+          units_todo: string[]
+          user_id: string
+          wedged_contexts: string[]
         }[]
       }
       bw_recommend_next_activities: {

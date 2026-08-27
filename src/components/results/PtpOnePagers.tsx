@@ -35,6 +35,17 @@ const ICON: Record<OnePager["audience"], React.ComponentType<{ className?: strin
   friend: Users,
 };
 
+const PREPARING_WINDOW_MS = 30 * 60 * 1000;
+
+function isWithinPreparingWindow(resultCreatedAt?: string): boolean {
+  if (!resultCreatedAt) return false;
+  const t = Date.parse(resultCreatedAt);
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t < PREPARING_WINDOW_MS;
+}
+
+
+
 export default function PtpOnePagers({
   assessmentResultId,
   userName,
@@ -42,6 +53,7 @@ export default function PtpOnePagers({
   open: openProp,
   onOpenChange,
   audience,
+  resultCreatedAt,
 }: {
   assessmentResultId: string;
   userName: string;
@@ -49,11 +61,13 @@ export default function PtpOnePagers({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   audience?: string;
+  resultCreatedAt?: string;
 }) {
   const [pagers, setPagers] = useState<OnePager[]>([]);
   const [internalOpen, setInternalOpen] = useState(false);
   const [tab, setTab] = useState<string | null>(audience ?? null);
   const [downloading, setDownloading] = useState<OnePager["audience"] | null>(null);
+  const [withinWindow, setWithinWindow] = useState(() => isWithinPreparingWindow(resultCreatedAt));
 
   const open = openProp !== undefined ? openProp : internalOpen;
   const setOpen = (next: boolean) => {
@@ -65,9 +79,13 @@ export default function PtpOnePagers({
     if (audience) setTab(audience);
   }, [audience]);
 
+  const preparing = pagers.length === 0 && withinWindow;
+
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    const load = async () => {
       const { data } = await supabase
         .from("facet_interpretations")
         .select("section_type, facet_data")
@@ -81,11 +99,31 @@ export default function PtpOnePagers({
         (a, b) => ORDER.indexOf(a.audience) - ORDER.indexOf(b.audience)
       );
       setPagers(list);
-    })();
+      if (list.length > 0 && interval) {
+        clearInterval(interval);
+        interval = undefined;
+      }
+    };
+
+    load();
+
+    if (isWithinPreparingWindow(resultCreatedAt)) {
+      interval = setInterval(() => {
+        if (!isWithinPreparingWindow(resultCreatedAt)) {
+          setWithinWindow(false);
+          if (interval) clearInterval(interval);
+          interval = undefined;
+          return;
+        }
+        load();
+      }, 15000);
+    }
+
     return () => {
       cancelled = true;
+      if (interval) clearInterval(interval);
     };
-  }, [assessmentResultId]);
+  }, [assessmentResultId, resultCreatedAt]);
 
   // The walkthrough asks this section to open itself (reveal only, never close).
   useEffect(() => {
@@ -95,7 +133,14 @@ export default function PtpOnePagers({
     });
   });
 
-  if (pagers.length === 0) return null;
+  if (pagers.length === 0) {
+    if (!preparing) return null;
+    return (
+      <Button variant="outline" disabled>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Preparing one-page snapshots…
+      </Button>
+    );
+  }
 
   const activeTab =
     (tab && pagers.some((p) => p.audience === tab) ? tab : null) ?? pagers[0].audience;
