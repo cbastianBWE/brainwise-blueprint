@@ -35,6 +35,17 @@ const ICON: Record<OnePager["audience"], React.ComponentType<{ className?: strin
   friend: Users,
 };
 
+const PREPARING_WINDOW_MS = 30 * 60 * 1000;
+
+function isWithinPreparingWindow(resultCreatedAt?: string): boolean {
+  if (!resultCreatedAt) return false;
+  const t = Date.parse(resultCreatedAt);
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t < PREPARING_WINDOW_MS;
+}
+
+
+
 export default function PtpOnePagers({
   assessmentResultId,
   userName,
