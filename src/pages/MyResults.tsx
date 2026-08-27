@@ -1257,6 +1257,8 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               <PtpOnePagers
                 assessmentResultId={effectiveSelected.result.id}
                 userName={displayName}
+                dateTaken={effectiveSelected.result.created_at ?? undefined}
+                resultCreatedAt={effectiveSelected.result.created_at ?? undefined}
               />
               </div>
             )}
