@@ -293,7 +293,7 @@ export default function Assessment() {
       const rows = (ccRes.error ? [] : ccRes.data ?? []) as Array<{ context_progress: string | null; preferred_first_context: string | null }>;
       const progresses = [
         ...rows.map((r) => r.context_progress),
-        ...((purchaseRes.data ?? []) as Array<{ context_progress: string | null }>).map((r) => r.context_progress),
+        ...((purchaseRes.error ? [] : purchaseRes.data ?? []) as Array<{ context_progress: string | null }>).map((r) => r.context_progress),
       ].filter(Boolean);
 
       if (progresses.includes("professional_done") && !progresses.includes("both_done")) {
