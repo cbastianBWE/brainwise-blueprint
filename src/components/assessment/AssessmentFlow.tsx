@@ -259,9 +259,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   };
 
   const flushUnsaved = useCallback(async () => {
-    if (!assessmentId) return;
+    if (!assessmentId) return [] as string[];
     const ids = Array.from(unsavedItems);
-    if (ids.length === 0) return;
+    if (ids.length === 0) return [] as string[];
+    const stillFailing: string[] = [];
     for (const itemId of ids) {
       const item = itemsRef.current.find((i) => i.item_id === itemId);
       const resp = responsesRef.current[itemId];
@@ -284,9 +285,16 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           next.delete(itemId);
           return next;
         });
+      } else {
+        stillFailing.push(itemId);
       }
     }
+    return stillFailing;
   }, [assessmentId, unsavedItems]);
+
+  // Keep a stable handle so the escalating retry doesn't restart on every set change
+  const flushUnsavedRef = useRef(flushUnsaved);
+  flushUnsavedRef.current = flushUnsaved;
 
   // Auto-save every 60s — silently retries anything still unsaved
   useEffect(() => {
@@ -298,6 +306,42 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
     };
   }, [assessmentId, flushUnsaved]);
+
+  // Escalating retry: 3s, 10s, 30s from the moment something is unsaved,
+  // then the 60s interval above takes over as the backstop.
+  const hasUnsaved = unsavedItems.size > 0;
+  useEffect(() => {
+    if (!assessmentId || !hasUnsaved) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const delays = [3000, 10000, 30000];
+    let step = 0;
+    const schedule = () => {
+      if (cancelled || step >= delays.length) return;
+      const wait = delays[step++];
+      timer = setTimeout(async () => {
+        if (cancelled) return;
+        await flushUnsavedRef.current();
+        if (!cancelled) schedule();
+      }, wait);
+    };
+    schedule();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [assessmentId, hasUnsaved, retryNonce]);
+
+  const handleRetryNow = useCallback(async () => {
+    setRetrying(true);
+    try {
+      await flushUnsavedRef.current();
+    } finally {
+      setRetrying(false);
+      setRetryNonce((n) => n + 1);
+    }
+  }, []);
+
 
   const saveResponse = useCallback(
     async (itemId: string, numeric: number, text: string | null, readinessLevel: string | null) => {
