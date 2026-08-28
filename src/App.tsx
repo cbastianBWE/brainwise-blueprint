@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { captureClientError, describeError } from "@/lib/errorCapture";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -185,7 +186,36 @@ import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner"
 import ImpersonationChrome from "@/components/impersonation/ImpersonationChrome";
 import OrgBrandingInjector from "@/components/OrgBrandingInjector";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      const d = describeError(error);
+      captureClientError({
+        source: "rpc",
+        errorCode: d.errorCode,
+        message: d.message,
+        status: d.status,
+        details: d.details,
+        hint: d.hint,
+      });
+    },
+  }),
+  defaultOptions: {
+    mutations: {
+      onError: (error) => {
+        const d = describeError(error);
+        captureClientError({
+          source: "rpc",
+          errorCode: d.errorCode,
+          message: d.message,
+          status: d.status,
+          details: d.details,
+          hint: d.hint,
+        });
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
