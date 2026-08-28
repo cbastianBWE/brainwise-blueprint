@@ -8,10 +8,24 @@ import { supabase as rawSupabase } from "@/integrations/supabase/rawClient";
 const UUID_RE =
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
-/** True while a capture is in flight, so a capture failure can never recurse. */
+const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+
+/**
+ * True only for the synchronous body of a capture, so a failure raised from
+ * inside captureClientError cannot recurse. It is NOT in flight for the RPC's
+ * duration and is not a throttle — see the dedupe map below for that.
+ */
 let capturing = false;
 
+/** Fingerprint -> last send time (ms). Bounded, oldest evicted. */
+const recentSends = new Map<string, number>();
+const DEDUPE_WINDOW_MS = 60_000;
+const MAX_TRACKED_FINGERPRINTS = 200;
+const MAX_CAPTURES_PER_PAGE = 50;
+let capturesThisPage = 0;
+
 export const CAPTURE_RPC = "log_client_error";
+
 
 export function normaliseRoute(pathname?: string): string {
   const path = (pathname ?? (typeof location !== "undefined" ? location.pathname : "/")) || "/";
