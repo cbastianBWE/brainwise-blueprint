@@ -339,11 +339,11 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
   const handleRetryNow = useCallback(async () => {
     setRetrying(true);
+    setRetryNonce((n) => n + 1);
     try {
       await flushUnsavedRef.current();
     } finally {
       setRetrying(false);
-      setRetryNonce((n) => n + 1);
     }
   }, []);
 
@@ -351,8 +351,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-3">
       <div className="w-full max-w-2xl mx-auto flex items-center justify-between gap-3">
         <p className="text-sm text-destructive">
-          {unsavedItems.size} answer{unsavedItems.size === 1 ? "" : "s"} hasn't saved yet. You can keep
-          going — we'll keep trying.
+          {unsavedItems.size === 1
+            ? "1 answer hasn't saved yet."
+            : `${unsavedItems.size} answers haven't saved yet.`}{" "}
+          You can keep going, we'll keep trying.
         </p>
         <Button
           size="sm"
