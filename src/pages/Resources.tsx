@@ -9,6 +9,7 @@ import CoachResourcesTab from "@/components/resources/CoachResourcesTab";
 import type { GetUserResourcesResult } from "@/components/resources/types";
 
 export default function Resources() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["get_user_resources"],
     queryFn: async () => {
