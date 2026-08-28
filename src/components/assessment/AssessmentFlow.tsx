@@ -696,6 +696,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         </div>
       </div>
 
+      {unsavedBanner}
+
+
       {/* Progress */}
       <div className="px-4 pt-2">
         <Progress value={progress} className="h-2" />
