@@ -82,40 +82,38 @@ const APP_VERSION =
 
 /** Fire-and-forget. Never awaited by anything a user waits on. */
 export function captureClientError(input: CaptureInput): void {
+  if (capturing) return;
+  if (input.operation === CAPTURE_RPC) return;
+  // The flag is synchronous only: it blocks a capture raised from inside a
+  // capture, never a second capture for a different, concurrent failure.
+  capturing = true;
   try {
-    if (capturing) return;
-    if (input.operation === CAPTURE_RPC) return;
-    capturing = true;
-
     const route = normaliseRoute(input.route ?? undefined);
     const normalisedMessage = normaliseMessage(input.message ?? undefined);
     const fingerprint = hashString(
       route + "|" + (input.operation ?? "") + "|" + (input.errorCode ?? "") + "|" + normalisedMessage,
     );
 
-    const done = () => {
-      capturing = false;
-    };
-
-    void Promise.resolve(
-      rawSupabase.rpc(CAPTURE_RPC, {
-        p_fingerprint: fingerprint,
-        p_source: input.source,
-        p_operation: input.operation ?? undefined,
-        p_route: route,
-        p_error_code: input.errorCode ?? undefined,
-        p_message: (input.message ?? "").slice(0, 500) || undefined,
-        p_raw: buildRaw(input) as never,
-        p_user_agent:
-          typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : undefined,
-        p_app_version: APP_VERSION,
-      }),
-    )
-      .then(done, done)
-      .catch(() => {
-        capturing = false;
-      });
+    const promise = rawSupabase.rpc(CAPTURE_RPC, {
+      p_fingerprint: fingerprint,
+      p_source: input.source,
+      p_operation: input.operation ?? undefined,
+      p_route: route,
+      p_error_code: input.errorCode ?? undefined,
+      p_message: (input.message ?? "").slice(0, 500) || undefined,
+      p_raw: buildRaw(input) as never,
+      p_user_agent:
+        typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : undefined,
+      p_app_version: APP_VERSION,
+    });
+    // Discard both a resolved { error } and any rejection, in silence.
+    void Promise.resolve(promise).then(
+      () => undefined,
+      () => undefined,
+    );
   } catch {
+    /* capture must never throw */
+  } finally {
     capturing = false;
   }
 }

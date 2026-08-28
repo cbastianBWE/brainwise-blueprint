@@ -47,7 +47,11 @@ const instrumentedRpc = ((...args: unknown[]) => {
   });
 }) as typeof base.rpc;
 
-const invokeOriginal = base.functions.invoke.bind(base.functions) as AnyFn;
+// `base.functions` is a getter that builds a fresh FunctionsClient on every
+// access, so patching what it hands back once would be thrown away. Take one
+// instance, patch it, and pin it behind a plain property.
+const functionsClient = base.functions;
+const invokeOriginal = functionsClient.invoke.bind(functionsClient) as AnyFn;
 
 const instrumentedInvoke = (async (...args: unknown[]) => {
   const name = String(args[0] ?? "");
@@ -69,12 +73,17 @@ const instrumentedInvoke = (async (...args: unknown[]) => {
     /* capture must never affect the caller */
   }
   return res;
-}) as typeof base.functions.invoke;
+}) as typeof functionsClient.invoke;
+
+(functionsClient as any).invoke = instrumentedInvoke;
 
 // Patch in place: the client object identity stays the same, so auth state,
 // realtime channels and every other surface behave exactly as before.
 (base as any).rpc = instrumentedRpc;
-(base.functions as any).invoke = instrumentedInvoke;
+Object.defineProperty(base, "functions", {
+  configurable: true,
+  get: () => functionsClient,
+});
 
 export const supabase = base;
 export default supabase;
