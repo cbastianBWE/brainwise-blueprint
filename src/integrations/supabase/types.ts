@@ -2087,6 +2087,87 @@ export type Database = {
           },
         ]
       }
+      client_errors: {
+        Row: {
+          app_version: string | null
+          error_code: string | null
+          fingerprint: string
+          id: string
+          message_normalised: string | null
+          occurred_at: string
+          operation: string | null
+          raw: Json | null
+          route: string | null
+          source: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          error_code?: string | null
+          fingerprint: string
+          id?: string
+          message_normalised?: string | null
+          occurred_at?: string
+          operation?: string | null
+          raw?: Json | null
+          route?: string | null
+          source: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          error_code?: string | null
+          fingerprint?: string
+          id?: string
+          message_normalised?: string | null
+          occurred_at?: string
+          operation?: string | null
+          raw?: Json | null
+          route?: string | null
+          source?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "client_errors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_bulk_links: {
         Row: {
           coach_note: string | null
@@ -23052,6 +23133,20 @@ export type Database = {
           reason: string
           total_count: number
         }[]
+      }
+      log_client_error: {
+        Args: {
+          p_app_version?: string
+          p_error_code?: string
+          p_fingerprint: string
+          p_message?: string
+          p_operation?: string
+          p_raw?: Json
+          p_route?: string
+          p_source: string
+          p_user_agent?: string
+        }
+        Returns: undefined
       }
       log_resource_access: { Args: { p_resource_id: string }; Returns: Json }
       log_super_admin_action: {
