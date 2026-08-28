@@ -8,10 +8,24 @@ import { supabase as rawSupabase } from "@/integrations/supabase/rawClient";
 const UUID_RE =
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
-/** True while a capture is in flight, so a capture failure can never recurse. */
+const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+
+/**
+ * True only for the synchronous body of a capture, so a failure raised from
+ * inside captureClientError cannot recurse. It is NOT in flight for the RPC's
+ * duration and is not a throttle — see the dedupe map below for that.
+ */
 let capturing = false;
 
+/** Fingerprint -> last send time (ms). Bounded, oldest evicted. */
+const recentSends = new Map<string, number>();
+const DEDUPE_WINDOW_MS = 60_000;
+const MAX_TRACKED_FINGERPRINTS = 200;
+const MAX_CAPTURES_PER_PAGE = 50;
+let capturesThisPage = 0;
+
 export const CAPTURE_RPC = "log_client_error";
+
 
 export function normaliseRoute(pathname?: string): string {
   const path = (pathname ?? (typeof location !== "undefined" ? location.pathname : "/")) || "/";
@@ -33,6 +47,7 @@ export function normaliseRoute(pathname?: string): string {
 
 export function normaliseMessage(message?: string): string {
   return (message ?? "")
+    .replace(EMAIL_RE, ":email")
     .replace(UUID_RE, ":id")
     .replace(/\d{3,}/g, ":n")
     .replace(/"[^"]*"/g, '""')
@@ -41,6 +56,7 @@ export function normaliseMessage(message?: string): string {
     .trim()
     .slice(0, 300);
 }
+
 
 /** Simple non-crypto stable string hash, base36. */
 export function hashString(input: string): string {
@@ -55,7 +71,14 @@ export function hashString(input: string): string {
 }
 
 export interface CaptureInput {
-  source: "rpc" | "invoke" | "render" | "unhandled_rejection" | "window_error";
+  source:
+    | "rpc"
+    | "invoke"
+    | "render"
+    | "unhandled_rejection"
+    | "window_error"
+    | "query"
+    | "mutation";
   operation?: string | null;
   errorCode?: string | null;
   message?: string | null;
@@ -65,13 +88,25 @@ export interface CaptureInput {
   route?: string | null;
 }
 
+/**
+ * The server only accepts a fixed set of source values and coerces anything
+ * else to window_error, so map the finer-grained client sources onto one it
+ * understands. The precise source is kept verbatim in raw.source.
+ */
+function wireSource(source: CaptureInput["source"]): string {
+  if (source === "query" || source === "mutation") return "rpc";
+  return source;
+}
+
 function buildRaw(input: CaptureInput): Record<string, unknown> {
   const raw: Record<string, unknown> = { source: input.source };
   if (input.status != null) raw.status = input.status;
   if (input.errorCode) raw.code = input.errorCode;
   if (input.operation) raw.operation = input.operation;
-  if (input.details) raw.details = String(input.details).slice(0, 500);
-  if (input.hint) raw.hint = String(input.hint).slice(0, 300);
+  // details/hint routinely carry user data (e.g. `Key (email)=(a@b.com) ...`),
+  // so they are normalised exactly like the message before being stored.
+  if (input.details) raw.details = normaliseMessage(String(input.details)).slice(0, 500);
+  if (input.hint) raw.hint = normaliseMessage(String(input.hint)).slice(0, 300);
   const json = JSON.stringify(raw);
   if (json.length > 2000) return { source: input.source, code: input.errorCode ?? null };
   return raw;
@@ -84,6 +119,7 @@ const APP_VERSION =
 export function captureClientError(input: CaptureInput): void {
   if (capturing) return;
   if (input.operation === CAPTURE_RPC) return;
+  if (capturesThisPage >= MAX_CAPTURES_PER_PAGE) return;
   // The flag is synchronous only: it blocks a capture raised from inside a
   // capture, never a second capture for a different, concurrent failure.
   capturing = true;
@@ -94,13 +130,24 @@ export function captureClientError(input: CaptureInput): void {
       route + "|" + (input.operation ?? "") + "|" + (input.errorCode ?? "") + "|" + normalisedMessage,
     );
 
+    // Client-side dedupe, mirroring the server guard so the RPC is never issued.
+    const now = Date.now();
+    const last = recentSends.get(fingerprint);
+    if (last != null && now - last < DEDUPE_WINDOW_MS) return;
+    recentSends.set(fingerprint, now);
+    if (recentSends.size > MAX_TRACKED_FINGERPRINTS) {
+      const oldest = recentSends.keys().next();
+      if (!oldest.done) recentSends.delete(oldest.value);
+    }
+    capturesThisPage += 1;
+
     const promise = rawSupabase.rpc(CAPTURE_RPC, {
       p_fingerprint: fingerprint,
-      p_source: input.source,
+      p_source: wireSource(input.source),
       p_operation: input.operation ?? undefined,
       p_route: route,
       p_error_code: input.errorCode ?? undefined,
-      p_message: (input.message ?? "").slice(0, 500) || undefined,
+      p_message: normalisedMessage || undefined,
       p_raw: buildRaw(input) as never,
       p_user_agent:
         typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : undefined,
@@ -117,6 +164,7 @@ export function captureClientError(input: CaptureInput): void {
     capturing = false;
   }
 }
+
 
 /** Pull a message/code out of an arbitrary thrown or resolved error value. */
 export function describeError(err: unknown): {

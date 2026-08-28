@@ -1,4 +1,4 @@
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { captureClientError, describeError } from "@/lib/errorCapture";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -186,12 +186,21 @@ import ImpersonationBanner from "@/components/impersonation/ImpersonationBanner"
 import ImpersonationChrome from "@/components/impersonation/ImpersonationChrome";
 import OrgBrandingInjector from "@/components/OrgBrandingInjector";
 
+const keyToOperation = (key: unknown): string | undefined => {
+  if (!Array.isArray(key) || key.length === 0) return undefined;
+  return key
+    .filter((part) => typeof part === "string" || typeof part === "number")
+    .join(":")
+    .slice(0, 200) || undefined;
+};
+
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error) => {
+    onError: (error, query) => {
       const d = describeError(error);
       captureClientError({
-        source: "rpc",
+        source: "query",
+        operation: keyToOperation(query?.queryKey),
         errorCode: d.errorCode,
         message: d.message,
         status: d.status,
@@ -200,22 +209,24 @@ const queryClient = new QueryClient({
       });
     },
   }),
-  defaultOptions: {
-    mutations: {
-      onError: (error) => {
-        const d = describeError(error);
-        captureClientError({
-          source: "rpc",
-          errorCode: d.errorCode,
-          message: d.message,
-          status: d.status,
-          details: d.details,
-          hint: d.hint,
-        });
-      },
+  // A per-mutation onError replaces defaultOptions.mutations.onError, so the
+  // cache-level handler is the only one that always fires.
+  mutationCache: new MutationCache({
+    onError: (error, _vars, _ctx, mutation) => {
+      const d = describeError(error);
+      captureClientError({
+        source: "mutation",
+        operation: keyToOperation(mutation?.options?.mutationKey),
+        errorCode: d.errorCode,
+        message: d.message,
+        status: d.status,
+        details: d.details,
+        hint: d.hint,
+      });
     },
-  },
+  }),
 });
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
