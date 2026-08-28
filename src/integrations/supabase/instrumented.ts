@@ -19,7 +19,7 @@ const instrumentedRpc = ((...args: unknown[]) => {
   if (!result || typeof result.then !== "function") return result;
   if (fn === CAPTURE_RPC) return result;
 
-  const wrapped = result.then((res: any) => {
+  const capture = (res: any) => {
     try {
       if (res && res.error) {
         const d = describeError(res.error);
@@ -37,15 +37,36 @@ const instrumentedRpc = ((...args: unknown[]) => {
       /* capture must never affect the caller */
     }
     return res;
-  });
+  };
 
-  // Preserve the thenable/builder-ish surface as closely as possible.
-  return Object.assign(wrapped, {
-    then: wrapped.then.bind(wrapped),
-    catch: wrapped.catch.bind(wrapped),
-    finally: wrapped.finally.bind(wrapped),
-  });
+  // Tap the builder without consuming it: every property is forwarded, so
+  // .single()/.eq()/.returns() keep working and keep returning builders, and
+  // the query stays lazy until the caller awaits it.
+  const wrap = (builder: any): any =>
+    new Proxy(builder, {
+      get(target, prop, receiver) {
+        if (prop === "then") {
+          return (onFulfilled?: any, onRejected?: any) =>
+            target.then((res: any) => {
+              capture(res);
+              return onFulfilled ? onFulfilled(res) : res;
+            }, onRejected);
+        }
+        const value = Reflect.get(target, prop, receiver);
+        if (typeof value === "function") {
+          return (...callArgs: unknown[]) => {
+            const out = value.apply(target, callArgs);
+            // Builder methods return the builder (or a new one) — keep tapping.
+            return out && typeof out.then === "function" ? wrap(out) : out;
+          };
+        }
+        return value;
+      },
+    });
+
+  return wrap(result);
 }) as typeof base.rpc;
+
 
 // `base.functions` is a getter that builds a fresh FunctionsClient on every
 // access, so patching what it hands back once would be thrown away. Take one
