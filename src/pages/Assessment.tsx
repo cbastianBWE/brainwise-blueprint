@@ -273,7 +273,24 @@ export default function Assessment() {
 
       if (cancelled) return;
 
-      const rows = (ccRes.data ?? []) as Array<{ context_progress: string | null; preferred_first_context: string | null }>;
+      if (ccRes.error) {
+        console.error(
+          "[ptp-context] coach_clients_client_view lookup failed",
+          {
+            client_user_id: user.id,
+            instrument_id: ptpUuid ?? selectedInstrument.instrument_id,
+            error: ccRes.error,
+          },
+        );
+      }
+      if (purchaseRes.error) {
+        console.error(
+          "[ptp-context] assessment_purchases lookup failed",
+          { user_id: user.id, error: purchaseRes.error },
+        );
+      }
+
+      const rows = (ccRes.error ? [] : ccRes.data ?? []) as Array<{ context_progress: string | null; preferred_first_context: string | null }>;
       const progresses = [
         ...rows.map((r) => r.context_progress),
         ...((purchaseRes.data ?? []) as Array<{ context_progress: string | null }>).map((r) => r.context_progress),
