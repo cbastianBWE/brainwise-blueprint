@@ -345,6 +345,27 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     }
   }, []);
 
+  const unsavedBanner = hasUnsaved ? (
+    <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-3">
+      <div className="w-full max-w-2xl mx-auto flex items-center justify-between gap-3">
+        <p className="text-sm text-destructive">
+          {unsavedItems.size} answer{unsavedItems.size === 1 ? "" : "s"} hasn't saved yet. You can keep
+          going — we'll keep trying.
+        </p>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={handleRetryNow}
+          disabled={retrying}
+          className="shrink-0"
+        >
+          {retrying && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+          Retry now
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
 
   const saveResponse = useCallback(
     async (itemId: string, numeric: number, text: string | null, readinessLevel: string | null) => {
