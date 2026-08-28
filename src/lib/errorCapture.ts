@@ -47,6 +47,7 @@ export function normaliseRoute(pathname?: string): string {
 
 export function normaliseMessage(message?: string): string {
   return (message ?? "")
+    .replace(EMAIL_RE, ":email")
     .replace(UUID_RE, ":id")
     .replace(/\d{3,}/g, ":n")
     .replace(/"[^"]*"/g, '""')
@@ -55,6 +56,7 @@ export function normaliseMessage(message?: string): string {
     .trim()
     .slice(0, 300);
 }
+
 
 /** Simple non-crypto stable string hash, base36. */
 export function hashString(input: string): string {
