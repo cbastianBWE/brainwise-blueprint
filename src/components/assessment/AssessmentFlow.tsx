@@ -576,6 +576,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           </div>
         </div>
 
+        {unsavedBanner}
+
+
         <div className="flex-1 overflow-auto px-4 py-6">
           <div className="w-full max-w-2xl mx-auto space-y-4">
             {answeredCount < items.length && (
