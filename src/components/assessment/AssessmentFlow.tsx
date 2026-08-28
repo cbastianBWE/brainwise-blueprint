@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import PreAssessmentAcknowledgment from "./PreAssessmentAcknowledgment";
 
 interface Item {
