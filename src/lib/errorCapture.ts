@@ -58,6 +58,35 @@ export function normaliseMessage(message?: string): string {
 }
 
 
+const UUID_EXACT_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * An operation is a stable identifier, never data. Keep the leading segments
+ * that are recognisably names of things and drop the first unsafe segment and
+ * everything after it, so parameters (ids, names) can never be stored.
+ */
+export function normaliseOperation(operation: unknown): string | undefined {
+  const segments =
+    Array.isArray(operation)
+      ? operation.map((s) => String(s))
+      : typeof operation === "string"
+        ? operation.split(":")
+        : [];
+
+  const safe: string[] = [];
+  for (const seg of segments) {
+    if (!/^[a-z][a-z0-9_-]*$/.test(seg)) break;
+    if (seg.length > 32) break;
+    if (UUID_EXACT_RE.test(seg)) break;
+    if (/\d{3,}/.test(seg)) break;
+    safe.push(seg);
+  }
+  if (safe.length === 0) return undefined;
+  return safe.join(":").slice(0, 80);
+}
+
+
 /** Simple non-crypto stable string hash, base36. */
 export function hashString(input: string): string {
   let h1 = 0x811c9dc5;
@@ -98,11 +127,11 @@ function wireSource(source: CaptureInput["source"]): string {
   return source;
 }
 
-function buildRaw(input: CaptureInput): Record<string, unknown> {
+function buildRaw(input: CaptureInput, operation: string | undefined): Record<string, unknown> {
   const raw: Record<string, unknown> = { source: input.source };
   if (input.status != null) raw.status = input.status;
   if (input.errorCode) raw.code = input.errorCode;
-  if (input.operation) raw.operation = input.operation;
+  if (operation) raw.operation = operation;
   // details/hint routinely carry user data (e.g. `Key (email)=(a@b.com) ...`),
   // so they are normalised exactly like the message before being stored.
   if (input.details) raw.details = normaliseMessage(String(input.details)).slice(0, 500);
@@ -125,9 +154,10 @@ export function captureClientError(input: CaptureInput): void {
   capturing = true;
   try {
     const route = normaliseRoute(input.route ?? undefined);
+    const operation = normaliseOperation(input.operation ?? undefined);
     const normalisedMessage = normaliseMessage(input.message ?? undefined);
     const fingerprint = hashString(
-      route + "|" + (input.operation ?? "") + "|" + (input.errorCode ?? "") + "|" + normalisedMessage,
+      route + "|" + (operation ?? "") + "|" + (input.errorCode ?? "") + "|" + normalisedMessage,
     );
 
     // Client-side dedupe, mirroring the server guard so the RPC is never issued.
@@ -144,11 +174,12 @@ export function captureClientError(input: CaptureInput): void {
     const promise = rawSupabase.rpc(CAPTURE_RPC, {
       p_fingerprint: fingerprint,
       p_source: wireSource(input.source),
-      p_operation: input.operation ?? undefined,
+      p_operation: operation,
       p_route: route,
       p_error_code: input.errorCode ?? undefined,
       p_message: normalisedMessage || undefined,
-      p_raw: buildRaw(input) as never,
+      p_raw: buildRaw(input, operation) as never,
+
       p_user_agent:
         typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : undefined,
       p_app_version: APP_VERSION,
