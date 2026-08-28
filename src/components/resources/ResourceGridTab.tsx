@@ -319,7 +319,7 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
             >
               <button
                 type="button"
-                onClick={() => setCurrentFolderId(null)}
+                onClick={() => openFolder(null)}
                 className="hover:text-foreground hover:underline"
               >
                 All
@@ -334,7 +334,7 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setCurrentFolderId(f.folder_id)}
+                        onClick={() => openFolder(f.folder_id)}
                         className="hover:text-foreground hover:underline"
                       >
                         {f.name}
@@ -354,7 +354,7 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
                   <button
                     key={f.folder_id}
                     type="button"
-                    onClick={() => setCurrentFolderId(f.folder_id)}
+                    onClick={() => openFolder(f.folder_id)}
                     className="flex items-center gap-3 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent hover:border-accent-foreground/20"
                   >
                     <Folder className="h-5 w-5 shrink-0 text-primary" />
