@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Folder, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ function groupByContentType(items: Resource[]): Map<Resource["content_type"], Re
 
 export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = false }: ResourceGridTabProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const logAccess = useResourceAccessLog();
   const [search, setSearch] = useState("");
@@ -60,9 +61,30 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
   const resources = tab.resources ?? [];
   const folders = tab.folders ?? [];
 
+  // Deep link: adopt ?folder= once per tab, if it names a folder in this tab.
+  // A plain mount must not clobber the incoming param, so the reset below only
+  // runs on a genuine tab change.
+  const appliedTabRef = useRef<string | null>(null);
   useEffect(() => {
-    setCurrentFolderId(null);
-  }, [tab.tab_id]);
+    if (appliedTabRef.current === tab.tab_id) return;
+    const isFirst = appliedTabRef.current === null;
+    appliedTabRef.current = tab.tab_id;
+    const requested = searchParams.get("folder");
+    if (isFirst && requested && folders.some((f) => f.folder_id === requested)) {
+      setCurrentFolderId(requested);
+    } else {
+      setCurrentFolderId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab.tab_id, folders]);
+
+  const openFolder = (folderId: string | null) => {
+    setCurrentFolderId(folderId);
+    const next = new URLSearchParams(searchParams);
+    if (folderId) next.set("folder", folderId);
+    else next.delete("folder");
+    setSearchParams(next, { replace: true });
+  };
 
   // Resource thumbnails route through the SECURITY DEFINER tier RPC keyed
   // by resource_id, not asset_id, so trainees can read thumbnails on
@@ -297,7 +319,7 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
             >
               <button
                 type="button"
-                onClick={() => setCurrentFolderId(null)}
+                onClick={() => openFolder(null)}
                 className="hover:text-foreground hover:underline"
               >
                 All
@@ -312,7 +334,7 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setCurrentFolderId(f.folder_id)}
+                        onClick={() => openFolder(f.folder_id)}
                         className="hover:text-foreground hover:underline"
                       >
                         {f.name}
@@ -332,7 +354,7 @@ export default function ResourceGridTab({ tab, emptyStateText, showAllAtRoot = f
                   <button
                     key={f.folder_id}
                     type="button"
-                    onClick={() => setCurrentFolderId(f.folder_id)}
+                    onClick={() => openFolder(f.folder_id)}
                     className="flex items-center gap-3 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-accent hover:border-accent-foreground/20"
                   >
                     <Folder className="h-5 w-5 shrink-0 text-primary" />

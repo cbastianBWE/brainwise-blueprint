@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import CoachResourcesTab from "@/components/resources/CoachResourcesTab";
 import type { GetUserResourcesResult } from "@/components/resources/types";
 
 export default function Resources() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["get_user_resources"],
     queryFn: async () => {
@@ -68,11 +70,25 @@ export default function Resources() {
     ? "coach_resources"
     : (tabs[0]?.slug ?? "");
 
+  // Deep link: ?tab=<slug> wins only when the viewer actually has that tab.
+  const requestedTab = searchParams.get("tab");
+  const activeTabSlug =
+    requestedTab && tabs.some((t) => t.slug === requestedTab)
+      ? requestedTab
+      : defaultTabSlug;
+
+  const handleTabChange = (slug: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", slug);
+    next.delete("folder");
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="mb-6 text-2xl font-semibold">Resources</h1>
 
-      <Tabs defaultValue={defaultTabSlug} className="w-full">
+      <Tabs value={activeTabSlug} onValueChange={handleTabChange} className="w-full">
         <TabsList>
           {tabs.map((tab) => (
             <TabsTrigger key={tab.slug} value={tab.slug}>

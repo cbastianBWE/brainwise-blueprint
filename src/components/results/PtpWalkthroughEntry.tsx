@@ -18,63 +18,77 @@ export default function PtpWalkthroughEntry({
 }) {
   const [offer, setOffer] = useState<WalkthroughOffer | null>(null);
   const [hidden, setHidden] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [open, setOpen] = useState(false);
   const [resumeId, setResumeId] = useState<string | undefined>(undefined);
-
-  console.info("[ptp-walkthrough] entry mounted", assessmentResultId);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [{ data, error }, allowedRes] = await Promise.all([
-        supabase.functions.invoke("ptp-walkthrough", {
-          body: { action: "offer", assessment_result_id: assessmentResultId },
-        }),
-        supabase.rpc("bw_walkthrough_allowed" as never, { p_result: assessmentResultId } as never),
-      ]);
+      console.info("[ptp-walkthrough] entry mounted", assessmentResultId);
+      try {
+        const [{ data, error }, allowedRes] = await Promise.all([
+          supabase.functions.invoke("ptp-walkthrough", {
+            body: { action: "offer", assessment_result_id: assessmentResultId },
+          }),
+          supabase.rpc("bw_walkthrough_allowed" as never, { p_result: assessmentResultId } as never),
+        ]);
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (allowedRes.error) {
-        console.error("[ptp-walkthrough] allowed check failed", allowedRes.error);
-        setHidden(true);
-        return;
-      }
-      if (allowedRes.data !== true) {
-        console.info("[ptp-walkthrough] disabled by practitioner", assessmentResultId);
-        setHidden(true);
-        return;
-      }
+        if (allowedRes.error) {
+          console.error("[ptp-walkthrough] allowed check failed", allowedRes.error);
+          setFailed(true);
+          return;
+        }
+        if (allowedRes.data !== true) {
+          console.info("[ptp-walkthrough] disabled by practitioner", assessmentResultId);
+          setHidden(true);
+          return;
+        }
 
-      const err = readWalkthroughError(error, data);
-      if (cancelled) return;
-      if (err) {
-        console.error("[ptp-walkthrough] offer failed", {
+        const err = readWalkthroughError(error, data);
+        if (cancelled) return;
+        if (err) {
+          console.error("[ptp-walkthrough] offer failed", {
+            assessmentResultId,
+            code: err.code,
+            status: err.status,
+            message: err.message,
+          });
+          setFailed(true);
+          return;
+        }
+        const o = data as WalkthroughOffer;
+        setOffer(o);
+        console.info("[ptp-walkthrough] offer ok", {
           assessmentResultId,
-          code: err.code,
-          status: err.status,
-          message: err.message,
+          offer: o.offer,
+          resume: o.resume_session_id,
+          freeUsed: o.free_walkthrough_used,
+          steps: o.steps?.length ?? 0,
         });
-        setHidden(true);
-        return;
+        setResumeId(o.resume_session_id ?? undefined);
+      } catch (e) {
+        if (cancelled) return;
+        console.error("[ptp-walkthrough] entry threw", { assessmentResultId, error: e });
+        setFailed(true);
       }
-      const o = data as WalkthroughOffer;
-      setOffer(o);
-      console.info("[ptp-walkthrough] offer ok", {
-        assessmentResultId,
-        offer: o.offer,
-        resume: o.resume_session_id,
-        freeUsed: o.free_walkthrough_used,
-        steps: o.steps?.length ?? 0,
-      });
-      setResumeId(o.resume_session_id ?? undefined);
     })();
     return () => {
       cancelled = true;
     };
   }, [assessmentResultId]);
 
-  if (hidden || !offer) return null;
+  if (hidden) return null;
+  if (failed) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        The guided walkthrough could not be loaded. Please refresh the page to try again.
+      </p>
+    );
+  }
+  if (!offer) return null;
 
   const canResume = Boolean(offer.resume_session_id);
   const available = canResume || offer.offer;
