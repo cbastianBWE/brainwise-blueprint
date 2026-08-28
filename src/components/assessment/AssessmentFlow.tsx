@@ -395,8 +395,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     if (!assessmentId || !user) return;
     setSubmitting(true);
 
-    await flushUnsaved();
-    if (unsavedItems.size > 0) {
+    const stillUnsaved = await flushUnsaved();
+    if (stillUnsaved.length > 0) {
       toast({
         title: "Please wait",
         description: "Some answers still haven't saved. Please wait a moment and try again.",
