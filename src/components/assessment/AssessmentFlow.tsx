@@ -65,6 +65,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [reviewing, setReviewing] = useState(false);
   const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null }>>({});
   const [unsavedItems, setUnsavedItems] = useState<Set<string>>(new Set());
+  const [retrying, setRetrying] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
