@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { X, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
 import PreAssessmentAcknowledgment from "./PreAssessmentAcknowledgment";
 
 interface Item {
@@ -65,6 +65,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [reviewing, setReviewing] = useState(false);
   const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null }>>({});
   const [unsavedItems, setUnsavedItems] = useState<Set<string>>(new Set());
+  const [retrying, setRetrying] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
@@ -259,9 +262,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   };
 
   const flushUnsaved = useCallback(async () => {
-    if (!assessmentId) return;
+    if (!assessmentId) return [] as string[];
     const ids = Array.from(unsavedItems);
-    if (ids.length === 0) return;
+    if (ids.length === 0) return [] as string[];
+    const stillFailing: string[] = [];
     for (const itemId of ids) {
       const item = itemsRef.current.find((i) => i.item_id === itemId);
       const resp = responsesRef.current[itemId];
@@ -284,9 +288,16 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           next.delete(itemId);
           return next;
         });
+      } else {
+        stillFailing.push(itemId);
       }
     }
+    return stillFailing;
   }, [assessmentId, unsavedItems]);
+
+  // Keep a stable handle so the escalating retry doesn't restart on every set change
+  const flushUnsavedRef = useRef(flushUnsaved);
+  flushUnsavedRef.current = flushUnsaved;
 
   // Auto-save every 60s — silently retries anything still unsaved
   useEffect(() => {
@@ -298,6 +309,63 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current);
     };
   }, [assessmentId, flushUnsaved]);
+
+  // Escalating retry: 3s, 10s, 30s from the moment something is unsaved,
+  // then the 60s interval above takes over as the backstop.
+  const hasUnsaved = unsavedItems.size > 0;
+  useEffect(() => {
+    if (!assessmentId || !hasUnsaved) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const delays = [3000, 10000, 30000];
+    let step = 0;
+    const schedule = () => {
+      if (cancelled || step >= delays.length) return;
+      const wait = delays[step++];
+      timer = setTimeout(async () => {
+        if (cancelled) return;
+        await flushUnsavedRef.current();
+        if (!cancelled) schedule();
+      }, wait);
+    };
+    schedule();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [assessmentId, hasUnsaved, retryNonce]);
+
+  const handleRetryNow = useCallback(async () => {
+    setRetrying(true);
+    try {
+      await flushUnsavedRef.current();
+    } finally {
+      setRetrying(false);
+      setRetryNonce((n) => n + 1);
+    }
+  }, []);
+
+  const unsavedBanner = hasUnsaved ? (
+    <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-3">
+      <div className="w-full max-w-2xl mx-auto flex items-center justify-between gap-3">
+        <p className="text-sm text-destructive">
+          {unsavedItems.size} answer{unsavedItems.size === 1 ? "" : "s"} hasn't saved yet. You can keep
+          going — we'll keep trying.
+        </p>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={handleRetryNow}
+          disabled={retrying}
+          className="shrink-0"
+        >
+          {retrying && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+          Retry now
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
 
   const saveResponse = useCallback(
     async (itemId: string, numeric: number, text: string | null, readinessLevel: string | null) => {
@@ -348,8 +416,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
     if (!assessmentId || !user) return;
     setSubmitting(true);
 
-    await flushUnsaved();
-    if (unsavedItems.size > 0) {
+    const stillUnsaved = await flushUnsaved();
+    if (stillUnsaved.length > 0) {
       toast({
         title: "Please wait",
         description: "Some answers still haven't saved. Please wait a moment and try again.",
@@ -529,6 +597,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           </div>
         </div>
 
+        {unsavedBanner}
+
+
         <div className="flex-1 overflow-auto px-4 py-6">
           <div className="w-full max-w-2xl mx-auto space-y-4">
             {answeredCount < items.length && (
@@ -648,6 +719,9 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
           </Button>
         </div>
       </div>
+
+      {unsavedBanner}
+
 
       {/* Progress */}
       <div className="px-4 pt-2">
