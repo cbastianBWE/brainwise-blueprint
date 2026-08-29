@@ -570,10 +570,8 @@ export default function BulkInviteModal({
                   </div>
                 </div>
               )}
-
             </div>
 
-            </div>
           )}
 
           {stage === "dispatching" && (
