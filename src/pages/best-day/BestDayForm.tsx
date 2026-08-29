@@ -234,11 +234,18 @@ export default function BestDayForm({
       </CardHeader>
       <CardContent className="space-y-6">
         {fields.map(renderField)}
-        <div className="flex justify-end">
-          <Button onClick={handleContinue} disabled={submitting}>
-            Continue
-          </Button>
-        </div>
+        {fields.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            This morning's questions could not be loaded. Refresh the page to try again.
+          </p>
+        ) : (
+          <div className="flex justify-end">
+            <Button onClick={handleContinue} disabled={submitting}>
+              Continue
+            </Button>
+          </div>
+        )}
+
       </CardContent>
     </Card>
   );

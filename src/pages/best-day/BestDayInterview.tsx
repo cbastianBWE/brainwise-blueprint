@@ -21,6 +21,7 @@ export default function BestDayInterview({
   const [sending, setSending] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [done, setDone] = useState(false);
+  const [failed, setFailed] = useState(false);
   const opened = useRef(false);
 
   const turn = async (message: string) => {
@@ -31,9 +32,10 @@ export default function BestDayInterview({
       });
       if (error) {
         console.error("[best-day] turn failed", error);
-        setDone(true);
+        setFailed(true);
         return;
       }
+      setFailed(false);
       const reply = (data as any)?.reply as string | undefined;
       if (reply) setMessages((m) => [...m, { role: "assistant", content: reply }]);
       if (typeof (data as any)?.exchanges_remaining === "number") {
@@ -44,6 +46,7 @@ export default function BestDayInterview({
       setSending(false);
     }
   };
+
 
   useEffect(() => {
     if (opened.current) return;

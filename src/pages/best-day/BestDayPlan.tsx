@@ -94,6 +94,7 @@ export default function BestDayPlan({
             const item = b.item_id ? byId.get(b.item_id) : undefined;
             const done = item?.status === "done";
             const dropped = item?.status === "dropped";
+            const moved = item?.status === "moved";
             const busy = b.item_id ? busyIds.has(b.item_id) : false;
             const note = item ? moveCountNote(item.move_count) : null;
 
@@ -103,7 +104,7 @@ export default function BestDayPlan({
                   <Checkbox
                     className="mt-1"
                     checked={done}
-                    disabled={busy || dropped}
+                    disabled={busy || dropped || moved}
                     onCheckedChange={(v) => onToggleDone(b.item_id!, v === true)}
                     aria-label={`Mark ${b.title} done`}
                   />
@@ -111,18 +112,22 @@ export default function BestDayPlan({
                   <span className="mt-1 text-xs font-semibold text-muted-foreground">{i + 1}</span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className={done || dropped ? "font-medium line-through text-muted-foreground" : "font-medium"}>
+                  <p className={done || dropped || moved ? "font-medium line-through text-muted-foreground" : "font-medium"}>
                     {b.title}
                   </p>
                   {b.detail && <p className="text-sm text-muted-foreground">{b.detail}</p>}
                   {note && <p className="text-xs text-muted-foreground">{note}</p>}
-                  {dropped && <p className="text-xs text-muted-foreground">Dropped</p>}
+                  {moved ? (
+                    <p className="text-xs text-muted-foreground">Moved to another day</p>
+                  ) : dropped ? (
+                    <p className="text-xs text-muted-foreground">Dropped</p>
+                  ) : null}
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   {b.minutes ? (
                     <span className="text-xs text-muted-foreground">{b.minutes} min</span>
                   ) : null}
-                  {b.item_id && !dropped && (
+                  {b.item_id && !dropped && !moved && (
                     <div className="flex items-center gap-2">
                       <MoveDatePopover disabled={busy} onPick={(d) => onMove(b.item_id!, d)} />
                       <Button size="sm" variant="outline" disabled={busy} onClick={() => onDrop(b.item_id!)}>
@@ -131,6 +136,7 @@ export default function BestDayPlan({
                     </div>
                   )}
                 </div>
+
               </li>
             );
           })}
