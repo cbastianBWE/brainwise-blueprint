@@ -300,7 +300,49 @@ export default function BulkInviteModal({
         title="Bulk Invite Clients"
         description="Invite up to 75 clients at once. Mix self-pay and practitioner-paid invitations in a single batch."
         footer={
-          stage === "results" ? (
+          stage === "validate" ? (
+            <div className="flex justify-end">
+              <Button onClick={handleContinue} disabled={continueDisabled}>
+                Continue
+              </Button>
+            </div>
+          ) : stage === "preview" ? (
+            <div className="space-y-3">
+              {totalValid > PREVIEW_CONFIRMATION_THRESHOLD && (
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={confirmReviewed}
+                    onCheckedChange={(c) => setConfirmReviewed(!!c)}
+                  />
+                  I have reviewed all {totalValid} invitations in this batch
+                </label>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setStage("validate")}>
+                    Reject batch
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={downloadInvalidCsv}
+                    disabled={invalidRows.length === 0}
+                  >
+                    Download invalid rows as CSV
+                  </Button>
+                </div>
+                <Button
+                  onClick={handleSend}
+                  disabled={
+                    totalValid === 0 ||
+                    submitting ||
+                    (totalValid > PREVIEW_CONFIRMATION_THRESHOLD && !confirmReviewed)
+                  }
+                >
+                  Send batch
+                </Button>
+              </div>
+            </div>
+          ) : stage === "results" ? (
             <div className="flex justify-end">
               <Button onClick={() => { onComplete(); resetAll(); }}>
                 Done
@@ -308,6 +350,7 @@ export default function BulkInviteModal({
             </div>
           ) : undefined
         }
+
       >
         <div>
 
@@ -478,7 +521,7 @@ export default function BulkInviteModal({
 
 
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center pt-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -488,10 +531,8 @@ export default function BulkInviteModal({
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add row
                 </Button>
-                <Button onClick={handleContinue} disabled={continueDisabled}>
-                  Continue
-                </Button>
               </div>
+
             </div>
           )}
 
@@ -570,42 +611,8 @@ export default function BulkInviteModal({
                   </div>
                 </div>
               )}
-
-              {totalValid > PREVIEW_CONFIRMATION_THRESHOLD && (
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={confirmReviewed}
-                    onCheckedChange={(c) => setConfirmReviewed(!!c)}
-                  />
-                  I have reviewed all {totalValid} invitations in this batch
-                </label>
-              )}
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStage("validate")}>
-                    Reject batch
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={downloadInvalidCsv}
-                    disabled={invalidRows.length === 0}
-                  >
-                    Download invalid rows as CSV
-                  </Button>
-                </div>
-                <Button
-                  onClick={handleSend}
-                  disabled={
-                    totalValid === 0 ||
-                    submitting ||
-                    (totalValid > PREVIEW_CONFIRMATION_THRESHOLD && !confirmReviewed)
-                  }
-                >
-                  Send batch
-                </Button>
-              </div>
             </div>
+
           )}
 
           {stage === "dispatching" && (
