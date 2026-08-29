@@ -44,6 +44,12 @@ export default function CoachingSessionNote({
   bare,
 }: Props) {
   const { user } = useAuth();
+  const { coachUserId, loading: shareLoading } = useCoachingShare();
+  const placeholder = shareLoading
+    ? "Notes for yourself."
+    : coachUserId
+      ? "Notes for yourself. Your practitioner can read these."
+      : "Notes for yourself. Only you can see these.";
 
   // The user_id filter is REQUIRED: RLS on coaching_notes also exposes rows to
   // the client's practitioner and to super admins, so an unfiltered read can
