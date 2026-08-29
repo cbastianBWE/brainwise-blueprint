@@ -811,6 +811,7 @@ function HistoryTab() {
         </div>
       )}
     </div>
+    </NotedSessionsContext.Provider>
   );
 }
 
