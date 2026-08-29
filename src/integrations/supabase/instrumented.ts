@@ -7,7 +7,7 @@
 // The generated file (./client.ts) is imported relatively so this module is
 // never aliased back onto itself.
 import { supabase as base } from "./client";
-import { CAPTURE_RPC, captureClientError, describeError } from "@/lib/errorCapture";
+import { CAPTURE_RPC, captureClientError, describeError, markCaptured } from "@/lib/errorCapture";
 
 type AnyFn = (...args: unknown[]) => unknown;
 
@@ -32,6 +32,7 @@ const instrumentedRpc = ((...args: unknown[]) => {
           details: d.details,
           hint: d.hint,
         });
+        markCaptured(res.error);
       }
     } catch {
       /* capture must never affect the caller */
@@ -71,6 +72,17 @@ const instrumentedRpc = ((...args: unknown[]) => {
 // `base.functions` is a getter that builds a fresh FunctionsClient on every
 // access, so patching what it hands back once would be thrown away. Take one
 // instance, patch it, and pin it behind a plain property.
+// Statuses that are part of a function's contract rather than a failure. The caller
+// handles these and shows the person a plain-language message, so recording them as
+// errors inflates the volume the D23 triage would be billed for.
+//
+// Keep this list SHORT and specific. A status is only listed here when the calling code
+// demonstrably handles it. Never add a status globally: a 429 from a function that does
+// not expect one is a real finding.
+const EXPECTED_INVOKE_STATUSES: Record<string, number[]> = {
+  "best-day-organizer": [429, 409],
+};
+
 const functionsClient = base.functions;
 const invokeOriginal = functionsClient.invoke.bind(functionsClient) as AnyFn;
 
@@ -80,15 +92,21 @@ const instrumentedInvoke = (async (...args: unknown[]) => {
   try {
     if (res && res.error) {
       const d = describeError(res.error);
-      captureClientError({
-        source: "invoke",
-        operation: name,
-        errorCode: d.errorCode,
-        message: d.message,
-        status: d.status,
-        details: d.details,
-        hint: d.hint,
-      });
+      const status = (res.error as any)?.status ?? (res.error as any)?.context?.status ?? d.status;
+      const expected =
+        typeof status === "number" && EXPECTED_INVOKE_STATUSES[name]?.includes(status);
+      if (!expected) {
+        captureClientError({
+          source: "invoke",
+          operation: name,
+          errorCode: d.errorCode,
+          message: d.message,
+          status: d.status,
+          details: d.details,
+          hint: d.hint,
+        });
+      }
+      markCaptured(res.error);
     }
   } catch {
     /* capture must never affect the caller */
