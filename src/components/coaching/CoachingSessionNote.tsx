@@ -184,7 +184,7 @@ export default function CoachingSessionNote({
         rows={6}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Notes for yourself. Your practitioner can read these."
+        placeholder={placeholder}
         className="min-h-[9rem] resize-y"
       />
       <div className="flex h-4 items-center gap-2 text-xs text-muted-foreground">
