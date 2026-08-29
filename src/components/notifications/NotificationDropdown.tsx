@@ -23,10 +23,13 @@ function safeInternalPath(url: string | null): string | null {
   }
 }
 
+import { useAuth } from "@/hooks/useAuth";
+
 export function NotificationDropdown({ open, onClose }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const unreadSnapshot = useRef<Set<string>>(new Set());
+  const { user } = useAuth();
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["notif", "dropdown"],
@@ -40,7 +43,7 @@ export function NotificationDropdown({ open, onClose }: Props) {
       const result = (data ?? {}) as unknown as GetUserNotificationsResult;
       return (result.items ?? []) as NotificationRow[];
     },
-    enabled: open,
+    enabled: open && !!user,
     staleTime: 0,
   });
 
