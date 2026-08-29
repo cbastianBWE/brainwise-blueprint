@@ -1,6 +1,7 @@
 import type { HelpRoleContent } from "./types";
 import myClients from "@/assets/help/coach/10_my_clients.png.asset.json";
 import clientResults from "@/assets/help/coach/11_client_results.png.asset.json";
+import clientCoaching from "@/assets/help/coach/13_client_coaching.png.asset.json";
 import feedbackTemplates from "@/assets/help/coach/20_feedback_templates.png.asset.json";
 import teamPaired from "@/assets/help/coach/30_team_paired.png.asset.json";
 import orders from "@/assets/help/coach/40_orders.png.asset.json";
@@ -106,6 +107,8 @@ export const coachContent: HelpRoleContent = {
           title: "Open a client",
           body:
             "From My Clients, open the client you want. Their coaching sessions are listed below their assessments.",
+          imageUrl: clientCoaching.url,
+          imageAlt: "Client Results list used to open a client's coaching work",
           capture: { path: "/coach/client-results", assetPath: "src/assets/help/coach/13_client_coaching.png" },
         },
         {

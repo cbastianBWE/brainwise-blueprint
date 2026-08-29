@@ -3,6 +3,9 @@ import dashboard from "@/assets/help/individual/10_dashboard.png.asset.json";
 import assessmentLanding from "@/assets/help/individual/20_assessment_landing.png.asset.json";
 import myResults from "@/assets/help/individual/30_my_results.png.asset.json";
 import myResultsScroll from "@/assets/help/individual/31_my_results_scroll.png.asset.json";
+import myCoaching from "@/assets/help/individual/42_my_coaching.png.asset.json";
+import myCoachingHistory from "@/assets/help/individual/43_my_coaching_history.png.asset.json";
+import bestDay from "@/assets/help/individual/44_best_day.png.asset.json";
 import devPlan from "@/assets/help/individual/40_development_plan.png.asset.json";
 import sharedWithMe from "@/assets/help/individual/50_shared_with_me.png.asset.json";
 import sharingRequests from "@/assets/help/individual/51_sharing_requests.png.asset.json";
@@ -124,6 +127,8 @@ export const individualContent: HelpRoleContent = {
           title: "Open My Coaching",
           body:
             "Click My Coaching in the sidebar. Activities are grouped by area, and each one tells you roughly how long it takes and what you will come away with.",
+          imageUrl: myCoaching.url,
+          imageAlt: "My Coaching page with activities grouped by area",
           capture: { path: "/coaching", assetPath: "src/assets/help/individual/42_my_coaching.png" },
         },
         {
@@ -140,6 +145,8 @@ export const individualContent: HelpRoleContent = {
           title: "Find something you finished",
           body:
             "The History tab lists everything you have completed, most recent first, with earlier runs grouped underneath. Open any one to re-read your answers and the plan you were given.",
+          imageUrl: myCoachingHistory.url,
+          imageAlt: "History tab in My Coaching",
           capture: { path: "/coaching", assetPath: "src/assets/help/individual/43_my_coaching_history.png", tabName: "History" },
         },
       ],
@@ -180,6 +187,8 @@ export const individualContent: HelpRoleContent = {
           title: "Open Best Day",
           body:
             "Click Best Day in the sidebar. It is available once you have completed your Personal Threat Profile, because the plan is built around how you respond to pressure.",
+          imageUrl: bestDay.url,
+          imageAlt: "Best Day Organizer morning form",
           capture: { path: "/best-day", assetPath: "src/assets/help/individual/44_best_day.png" },
         },
         {
