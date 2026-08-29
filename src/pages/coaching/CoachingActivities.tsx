@@ -757,6 +757,7 @@ function HistoryTab() {
     );
 
   return (
+    <NotedSessionsContext.Provider value={notedSessions}>
     <div className="space-y-6">
       {reviews.length > 0 && (
         <div className="space-y-3">
