@@ -1,6 +1,7 @@
 import type { HelpRoleContent } from "./types";
 import myClients from "@/assets/help/coach/10_my_clients.png.asset.json";
 import clientResults from "@/assets/help/coach/11_client_results.png.asset.json";
+import clientCoaching from "@/assets/help/coach/13_client_coaching.png.asset.json";
 import feedbackTemplates from "@/assets/help/coach/20_feedback_templates.png.asset.json";
 import teamPaired from "@/assets/help/coach/30_team_paired.png.asset.json";
 import orders from "@/assets/help/coach/40_orders.png.asset.json";
@@ -41,7 +42,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click My Clients. This is your roster of coaching clients and the hub for inviting new ones.",
           imageUrl: myClients.url,
           imageAlt: "Practitioner sidebar with My Clients highlighted",
-          capture: { path: "/my-clients", assetPath: "src/assets/help/coach/10_my_clients.png" },
+          capture: { path: "/coach/clients", assetPath: "src/assets/help/coach/10_my_clients.png" },
           hotspots: [{ ...SIDEBAR.myClients, label: "Click My Clients" }],
         },
         {
@@ -77,7 +78,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, expand My Clients and click Client Results. Every client who has completed an assessment appears here.",
           imageUrl: clientResults.url,
           imageAlt: "Sidebar with Client Results highlighted",
-          capture: { path: "/client-results", assetPath: "src/assets/help/coach/11_client_results.png" },
+          capture: { path: "/coach/client-results", assetPath: "src/assets/help/coach/11_client_results.png" },
           hotspots: [{ ...SIDEBAR.clientResults, label: "Click Client Results" }],
         },
         {
@@ -98,6 +99,58 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
+      id: "client-coaching-work",
+      title: "See a client's coaching work",
+      summary: "Read the activities a client has completed, their answers, and their notes.",
+      steps: [
+        {
+          title: "Open a client",
+          body:
+            "From My Clients, open the client you want. Their coaching sessions are listed below their assessments.",
+          imageUrl: clientCoaching.url,
+          imageAlt: "Client Results list used to open a client's coaching work",
+          capture: { path: "/coach/client-results", assetPath: "src/assets/help/coach/13_client_coaching.png" },
+        },
+        {
+          title: "Open a session",
+          body:
+            "Each session opens to show what the client answered, the coaching plan they were given, and any note they wrote on it.",
+        },
+        {
+          title: "What you can and cannot see",
+          body:
+            "You see activities your client completed after coach visibility was turned on. Anything from before that stays private to them unless they share it with you, in which case it is marked Shared by client.",
+        },
+        {
+          title: "Notes are theirs, not yours",
+          body:
+            "You can read a client's note. You cannot edit it or reply to it inside the activity. Use your own client notes for anything you want to record.",
+        },
+      ],
+    },
+    {
+      id: "coaching-plan-feedback",
+      title: "Give feedback on a coaching plan",
+      summary: "Tell the system when part of a generated plan does not fit the client.",
+      steps: [
+        {
+          title: "Open a client's coaching plan",
+          body:
+            "Coaching plans appear as cards, one per suggestion, on a completed session.",
+        },
+        {
+          title: "Mark what does not fit",
+          body:
+            "Each card can be marked as not right for this client. That feedback is kept with the session.",
+        },
+        {
+          title: "Why it is worth doing",
+          body:
+            "Marking a card is the only signal that a suggestion missed. Without it the plan looks equally good to everyone.",
+        },
+      ],
+    },
+    {
       id: "order-assessments",
       title: "Order assessments in bulk",
       summary: "Buy assessment credits to send to clients.",
@@ -108,7 +161,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click Orders & Invoices. This is where you see past orders, download invoices, and start a new order.",
           imageUrl: orders.url,
           imageAlt: "Sidebar with Orders & Invoices highlighted",
-          capture: { path: "/orders", assetPath: "src/assets/help/coach/40_orders.png" },
+          capture: { path: "/coach/invoices", assetPath: "src/assets/help/coach/40_orders.png" },
           hotspots: [{ ...SIDEBAR.invoices, label: "Click Orders & Invoices" }],
         },
         {
@@ -117,7 +170,7 @@ export const coachContent: HelpRoleContent = {
             "Click Order Assessment to start a new purchase. Pick the assessment, the quantity, and the payer, then check out. Credits show up immediately after payment and can be sent to clients from My Clients.",
           imageUrl: orderAssessment.url,
           imageAlt: "Order Assessment page",
-          capture: { path: "/order-assessment", assetPath: "src/assets/help/coach/41_order_assessment.png" },
+          capture: { path: "/coach/order-assessment", assetPath: "src/assets/help/coach/41_order_assessment.png" },
         },
       ],
     },
