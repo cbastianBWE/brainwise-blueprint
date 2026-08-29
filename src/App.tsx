@@ -324,7 +324,7 @@ const App = () => (
               <Route path="/coaching" element={<CoachingDisclosureGate><CoachingActivities /></CoachingDisclosureGate>} />
               <Route path="/best-day" element={<BestDay />} />
               <Route path="/coaching/:activityId" element={<CoachingDisclosureGate><CoachingActivityRunner /></CoachingDisclosureGate>} />
-              <Route path="/coaching/session/:sessionId" element={<CoachingDisclosureGate><CoachingSessionView /></CoachingDisclosureGate>} />
+              <Route path="/coaching/session/:sessionId" element={<CoachingDisclosureGate skipWhenViewingOther><CoachingSessionView /></CoachingDisclosureGate>} />
               <Route path="/couples/:relationshipId" element={<RelationshipJourney />} />
               <Route path="/couples/:relationshipId/map" element={<CoupleJourneyMap />} />
               <Route path="/couples/:relationshipId/activity/:activityCode" element={<RelationshipActivityRunner />} />
