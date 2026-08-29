@@ -98,6 +98,56 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
+      id: "client-coaching-work",
+      title: "See a client's coaching work",
+      summary: "Read the activities a client has completed, their answers, and their notes.",
+      steps: [
+        {
+          title: "Open a client",
+          body:
+            "From My Clients, open the client you want. Their coaching sessions are listed below their assessments.",
+          capture: { path: "/coach/client-results", assetPath: "src/assets/help/coach/13_client_coaching.png" },
+        },
+        {
+          title: "Open a session",
+          body:
+            "Each session opens to show what the client answered, the coaching plan they were given, and any note they wrote on it.",
+        },
+        {
+          title: "What you can and cannot see",
+          body:
+            "You see activities your client completed after coach visibility was turned on. Anything from before that stays private to them unless they share it with you, in which case it is marked Shared by client.",
+        },
+        {
+          title: "Notes are theirs, not yours",
+          body:
+            "You can read a client's note. You cannot edit it or reply to it inside the activity. Use your own client notes for anything you want to record.",
+        },
+      ],
+    },
+    {
+      id: "coaching-plan-feedback",
+      title: "Give feedback on a coaching plan",
+      summary: "Tell the system when part of a generated plan does not fit the client.",
+      steps: [
+        {
+          title: "Open a client's coaching plan",
+          body:
+            "Coaching plans appear as cards, one per suggestion, on a completed session.",
+        },
+        {
+          title: "Mark what does not fit",
+          body:
+            "Each card can be marked as not right for this client. That feedback is kept with the session.",
+        },
+        {
+          title: "Why it is worth doing",
+          body:
+            "Marking a card is the only signal that a suggestion missed. Without it the plan looks equally good to everyone.",
+        },
+      ],
+    },
+    {
       id: "order-assessments",
       title: "Order assessments in bulk",
       summary: "Buy assessment credits to send to clients.",
