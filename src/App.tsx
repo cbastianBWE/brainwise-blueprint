@@ -64,6 +64,7 @@ import AiChatHistory from "./pages/AiChatHistory";
 import Resources from "./pages/Resources";
 import MyLearning from "./pages/MyLearning";
 import CoachingActivities from "./pages/coaching/CoachingActivities";
+import BestDay from "./pages/BestDay";
 import CoachingActivityRunner from "./pages/coaching/CoachingActivityRunner";
 import RelationshipJourney from "./pages/couples/RelationshipJourney";
 import RelationshipActivityRunner from "./pages/couples/RelationshipActivityRunner";
@@ -320,6 +321,7 @@ const App = () => (
               <Route path="/shared" element={<SharedHub />} />
               <Route path="/development-plan" element={<DevelopmentPlan />} />
               <Route path="/coaching" element={<CoachingActivities />} />
+              <Route path="/best-day" element={<BestDay />} />
               <Route path="/coaching/:activityId" element={<CoachingActivityRunner />} />
               <Route path="/coaching/session/:sessionId" element={<CoachingSessionView />} />
               <Route path="/couples/:relationshipId" element={<RelationshipJourney />} />

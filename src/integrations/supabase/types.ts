@@ -1450,6 +1450,369 @@ export type Database = {
           },
         ]
       }
+      bdo_break_bank: {
+        Row: {
+          body: string
+          created_at: string
+          driving_force: string | null
+          energy_context: string
+          facet_hint: string | null
+          id: string
+          is_active: boolean
+          max_minutes: number
+          min_minutes: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          driving_force?: string | null
+          energy_context?: string
+          facet_hint?: string | null
+          id?: string
+          is_active?: boolean
+          max_minutes?: number
+          min_minutes?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          driving_force?: string | null
+          energy_context?: string
+          facet_hint?: string | null
+          id?: string
+          is_active?: boolean
+          max_minutes?: number
+          min_minutes?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bdo_day_plan_shares: {
+        Row: {
+          granted_at: string
+          id: string
+          mode: string
+          owner_user_id: string
+          revoked_at: string | null
+          viewer_user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          id?: string
+          mode?: string
+          owner_user_id: string
+          revoked_at?: string | null
+          viewer_user_id: string
+        }
+        Update: {
+          granted_at?: string
+          id?: string
+          mode?: string
+          owner_user_id?: string
+          revoked_at?: string | null
+          viewer_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bdo_day_plan_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plan_shares_viewer_user_id_fkey"
+            columns: ["viewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bdo_day_plans: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          exchange_budget: number
+          exchanges_spent: number
+          form: Json
+          generations_used: number
+          id: string
+          plan: Json | null
+          plan_date: string
+          reshape_allowance: number
+          reshapes_used: number
+          status: string
+          transcript: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          exchange_budget?: number
+          exchanges_spent?: number
+          form?: Json
+          generations_used?: number
+          id?: string
+          plan?: Json | null
+          plan_date: string
+          reshape_allowance?: number
+          reshapes_used?: number
+          status?: string
+          transcript?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          exchange_budget?: number
+          exchanges_spent?: number
+          form?: Json
+          generations_used?: number
+          id?: string
+          plan?: Json | null
+          plan_date?: string
+          reshape_allowance?: number
+          reshapes_used?: number
+          status?: string
+          transcript?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bdo_day_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bdo_day_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bdo_definition: {
+        Row: {
+          created_at: string
+          form_spec: Json
+          id: string
+          interview_prompt: string
+          interview_seed: Json
+          is_active: boolean
+          notes: string | null
+          plan_prompt: string
+          probe_rules: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          form_spec: Json
+          id?: string
+          interview_prompt: string
+          interview_seed: Json
+          is_active?: boolean
+          notes?: string | null
+          plan_prompt: string
+          probe_rules?: Json
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          form_spec?: Json
+          id?: string
+          interview_prompt?: string
+          interview_seed?: Json
+          is_active?: boolean
+          notes?: string | null
+          plan_prompt?: string
+          probe_rules?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      bdo_plan_items: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          day_plan_id: string
+          first_seen_date: string
+          id: string
+          move_count: number
+          notes: string | null
+          origin: string
+          position: number
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          day_plan_id: string
+          first_seen_date: string
+          id?: string
+          move_count?: number
+          notes?: string | null
+          origin?: string
+          position?: number
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          day_plan_id?: string
+          first_seen_date?: string
+          id?: string
+          move_count?: number
+          notes?: string | null
+          origin?: string
+          position?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bdo_plan_items_day_plan_id_fkey"
+            columns: ["day_plan_id"]
+            isOneToOne: false
+            referencedRelation: "bdo_day_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "bdo_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bdo_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "bdo_plan_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       briefing_requests: {
         Row: {
           client_ip: unknown
@@ -21090,6 +21453,54 @@ export type Database = {
         }
         Returns: Json
       }
+      bdo_active_definition: {
+        Args: never
+        Returns: {
+          created_at: string
+          form_spec: Json
+          id: string
+          interview_prompt: string
+          interview_seed: Json
+          is_active: boolean
+          notes: string | null
+          plan_prompt: string
+          probe_rules: Json
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bdo_definition"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      bdo_context: {
+        Args: { p_day_plan_id: string; p_user_id: string }
+        Returns: Json
+      }
+      bdo_has_ptp: { Args: { p_user_id?: string }; Returns: boolean }
+      bdo_move_item: {
+        Args: { p_item_id: string; p_to_date: string }
+        Returns: Json
+      }
+      bdo_save_form: {
+        Args: { p_day_plan_id: string; p_form: Json }
+        Returns: undefined
+      }
+      bdo_set_item_status: {
+        Args: { p_item_id: string; p_status: string }
+        Returns: undefined
+      }
+      bdo_set_typed_items: {
+        Args: { p_day_plan_id: string; p_titles: Json }
+        Returns: Json
+      }
+      bdo_spend: {
+        Args: { p_day_plan_id: string; p_kind: string }
+        Returns: Json
+      }
+      bdo_start_today: { Args: { p_plan_date?: string }; Returns: Json }
       bulk_coach_invitation_create: {
         Args: {
           p_preferred_first_context?: string
