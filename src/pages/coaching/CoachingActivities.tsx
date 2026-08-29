@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, createContext, useContext } from "react";
 import CoachingShareControl from "@/components/coaching/CoachingShareControl";
+import { CoachingVisibilityLine } from "@/components/coaching/CoachingSessionNote";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Compass, Lock, History, Search, Send, RotateCcw, Sparkles, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -447,6 +448,14 @@ interface PriorRun {
   ended_at: string | null;
 }
 
+const NotedSessionsContext = createContext<Set<string>>(new Set());
+
+function NoteBadge({ sessionId }: { sessionId: string }) {
+  const noted = useContext(NotedSessionsContext);
+  if (!noted.has(sessionId)) return null;
+  return <Badge variant="outline">Note</Badge>;
+}
+
 function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
   const [rows, setRows] = useState<HistoryRow[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -545,6 +554,7 @@ function PriorRunItem({ prior, userId }: { prior: PriorRun; userId: string }) {
                         <div className="flex items-center gap-2 flex-wrap">
                           {tier && <Badge variant={tierBadgeVariant(tier)}>{tier}</Badge>}
                           <span className="text-xs text-muted-foreground">Completed {dateStr}</span>
+                          <NoteBadge sessionId={r.id} />
                         </div>
                         <p className="mt-1 truncate">{title}</p>
                       </div>
@@ -621,12 +631,20 @@ function HistoryTab() {
   const [rows, setRows] = useState<HistoryRow[]>([]);
   const [priorRuns, setPriorRuns] = useState<PriorRun[]>([]);
   const [reviews, setReviews] = useState<SavedReview[]>([]);
+  const [notedSessions, setNotedSessions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
+
+      const { data: notes } = await supabase.rpc("bw_my_coaching_notes" as any);
+      if (!cancelled) {
+        setNotedSessions(
+          new Set(((notes as any[]) ?? []).map((n: any) => n.session_id as string)),
+        );
+      }
 
       const { data: runState } = await supabase.rpc("coaching_get_run_state" as any);
       const currentRun = ((runState as any)?.current_run as number) ?? 1;
@@ -720,6 +738,7 @@ function HistoryTab() {
                   <div className="flex flex-wrap items-center gap-2">
                     {tier && <Badge variant={tierBadgeVariant(tier)}>{tier}</Badge>}
                     <span className="text-xs text-muted-foreground">Completed {dateStr}</span>
+                    <NoteBadge sessionId={r.id} />
                   </div>
                   <p className="mt-1 truncate text-sm font-medium">{title}</p>
                 </div>
@@ -738,6 +757,7 @@ function HistoryTab() {
     );
 
   return (
+    <NotedSessionsContext.Provider value={notedSessions}>
     <div className="space-y-6">
       {reviews.length > 0 && (
         <div className="space-y-3">
@@ -791,6 +811,7 @@ function HistoryTab() {
         </div>
       )}
     </div>
+    </NotedSessionsContext.Provider>
   );
 }
 
@@ -1205,7 +1226,10 @@ export default function CoachingActivities() {
         </div>
       </div>
 
-      <CoachingShareControl variant="inline" />
+      <div className="space-y-1">
+        <CoachingShareControl variant="inline" />
+        <CoachingVisibilityLine />
+      </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "activities" | "history")}>
         <TabsList>

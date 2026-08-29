@@ -6,11 +6,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-interface CoachingSessionRow {
-  id: string;
+interface CoachSessionRow {
+  session_id: string;
   activity_id: string;
+  activity_code: string | null;
+  activity_title: string | null;
+  module_group: string | null;
+  tier: string | null;
+  run_number: number | null;
+  session_status: string | null;
+  responses: unknown;
+  note_body: string | null;
+  note_updated_at: string | null;
+  started_at: string | null;
   completed_at: string | null;
-  coaching_activities: { title: string | null; tier: string | null } | null;
+  visibility: string | null;
 }
 
 interface Props {
@@ -19,7 +29,7 @@ interface Props {
 }
 
 export default function CoachClientCoaching({ clientUserId }: Props) {
-  const [rows, setRows] = useState<CoachingSessionRow[]>([]);
+  const [rows, setRows] = useState<CoachSessionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,50 +38,11 @@ export default function CoachClientCoaching({ clientUserId }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const { data: sessions, error: err } = await supabase
-        .from("coaching_activity_sessions")
-        .select("id, activity_id, completed_at")
-        .eq("user_id", clientUserId)
-        .eq("status", "completed")
-        .order("completed_at", { ascending: false });
+      const { data, error: err } = await supabase.rpc("bw_coach_client_coaching" as any, {
+        p_client_user_id: clientUserId,
+      });
       if (err) throw new Error(err.message);
-
-      const sessionRows = (sessions ?? []) as Array<{
-        id: string;
-        activity_id: string;
-        completed_at: string | null;
-      }>;
-
-      if (sessionRows.length === 0) {
-        setRows([]);
-        return;
-      }
-
-      const ids = Array.from(new Set(sessionRows.map((s) => s.activity_id).filter(Boolean)));
-      const { data: activities, error: actErr } = await supabase
-        .from("coaching_activities_public")
-        .select("id, title, tier")
-        .in("id", ids);
-      if (actErr) throw new Error(actErr.message);
-
-      const byId = new Map(
-        ((activities ?? []) as Array<{ id: string; title: string | null; tier: string | null }>).map(
-          (a) => [a.id, a],
-        ),
-      );
-
-      setRows(
-        sessionRows.map((s) => {
-          const a = byId.get(s.activity_id);
-          return {
-            ...s,
-            coaching_activities: {
-              title: a?.title ?? "Coaching activity",
-              tier: a?.tier ?? null,
-            },
-          };
-        }),
-      );
+      setRows(((data as any[]) ?? []) as CoachSessionRow[]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load coaching sessions");
       setRows([]);
@@ -107,20 +78,24 @@ export default function CoachClientCoaching({ clientUserId }: Props) {
         </div>
       ) : rows.length === 0 ? (
         <p className="text-muted-foreground text-center py-8 text-sm">
-          No coaching sessions shared with you yet.
+          No coaching sessions to show yet.
         </p>
       ) : (
         <div className="space-y-3">
           {rows.map((r) => {
-            const title = r.coaching_activities?.title || "Coaching session";
-            const tier = r.coaching_activities?.tier;
+            const title = r.activity_title || "Coaching session";
+            const tier = r.tier;
             const date = r.completed_at
               ? new Date(r.completed_at).toLocaleDateString()
               : null;
+            const note = (r.note_body ?? "").trim();
             return (
-              <Link key={r.id} to={`/coaching/session/${r.id}`} className="block">
-                <Card className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardContent className="flex items-center gap-3 p-4">
+              <Card key={r.session_id}>
+                <CardContent className="space-y-3 p-4">
+                  <Link
+                    to={`/coaching/session/${r.session_id}`}
+                    className="flex items-center gap-3 rounded-md transition-colors hover:bg-accent/50"
+                  >
                     <Sparkles
                       className="h-5 w-5 text-muted-foreground shrink-0"
                       aria-hidden="true"
@@ -129,14 +104,23 @@ export default function CoachClientCoaching({ clientUserId }: Props) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium truncate">{title}</p>
                         {tier && <Badge variant="outline">{tier}</Badge>}
+                        {r.visibility === "client_shared" && (
+                          <Badge variant="outline">Shared by client</Badge>
+                        )}
                       </div>
-                      {date && (
-                        <p className="text-sm text-muted-foreground">{date}</p>
-                      )}
+                      {date && <p className="text-sm text-muted-foreground">{date}</p>}
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                  </Link>
+                  {note && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Note</p>
+                      <p className="line-clamp-2 whitespace-pre-wrap text-sm text-foreground">
+                        {note}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             );
           })}
         </div>

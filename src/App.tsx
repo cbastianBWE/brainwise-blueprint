@@ -70,6 +70,7 @@ import RelationshipJourney from "./pages/couples/RelationshipJourney";
 import RelationshipActivityRunner from "./pages/couples/RelationshipActivityRunner";
 import CoupleJourneyMap from "./pages/couples/JourneyMap";
 import CoachingSessionView from "./pages/coaching/CoachingSessionView";
+import { CoachingDisclosureGate } from "./components/coaching/CoachingDisclosureGate";
 import ResourceReader from "./pages/ResourceReader";
 import CertPathDetail from "./pages/learning/CertPathDetail";
 import CurriculumDetail from "./pages/learning/CurriculumDetail";
@@ -320,10 +321,10 @@ const App = () => (
               <Route path="/shared-with-me" element={<SharedWithMe />} />
               <Route path="/shared" element={<SharedHub />} />
               <Route path="/development-plan" element={<DevelopmentPlan />} />
-              <Route path="/coaching" element={<CoachingActivities />} />
+              <Route path="/coaching" element={<CoachingDisclosureGate><CoachingActivities /></CoachingDisclosureGate>} />
               <Route path="/best-day" element={<BestDay />} />
-              <Route path="/coaching/:activityId" element={<CoachingActivityRunner />} />
-              <Route path="/coaching/session/:sessionId" element={<CoachingSessionView />} />
+              <Route path="/coaching/:activityId" element={<CoachingDisclosureGate><CoachingActivityRunner /></CoachingDisclosureGate>} />
+              <Route path="/coaching/session/:sessionId" element={<CoachingDisclosureGate><CoachingSessionView /></CoachingDisclosureGate>} />
               <Route path="/couples/:relationshipId" element={<RelationshipJourney />} />
               <Route path="/couples/:relationshipId/map" element={<CoupleJourneyMap />} />
               <Route path="/couples/:relationshipId/activity/:activityCode" element={<RelationshipActivityRunner />} />
