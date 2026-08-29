@@ -2450,6 +2450,109 @@ export type Database = {
           },
         ]
       }
+      client_disclosure_acceptances: {
+        Row: {
+          accepted_at: string
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+          user_id: string
+          version_hash: string
+          version_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          user_id: string
+          version_hash: string
+          version_id: string
+        }
+        Update: {
+          accepted_at?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+          user_id?: string
+          version_hash?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_disclosure_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_disclosure_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "client_disclosure_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_disclosure_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "client_disclosure_acceptances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_disclosure_acceptances_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "client_disclosure_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_disclosure_versions: {
+        Row: {
+          body_markdown: string
+          created_at: string
+          effective_from: string
+          id: string
+          is_current: boolean
+          kind: string
+          version_hash: string
+        }
+        Insert: {
+          body_markdown: string
+          created_at?: string
+          effective_from?: string
+          id?: string
+          is_current?: boolean
+          kind?: string
+          version_hash: string
+        }
+        Update: {
+          body_markdown?: string
+          created_at?: string
+          effective_from?: string
+          id?: string
+          is_current?: boolean
+          kind?: string
+          version_hash?: string
+        }
+        Relationships: []
+      }
       client_errors: {
         Row: {
           app_version: string | null
@@ -3958,6 +4061,7 @@ export type Database = {
       coaching_activity_sessions: {
         Row: {
           activity_id: string
+          coach_visible: boolean
           completed_at: string | null
           context_snapshot: Json | null
           created_at: string
@@ -3972,6 +4076,7 @@ export type Database = {
         }
         Insert: {
           activity_id: string
+          coach_visible?: boolean
           completed_at?: string | null
           context_snapshot?: Json | null
           created_at?: string
@@ -3986,6 +4091,7 @@ export type Database = {
         }
         Update: {
           activity_id?: string
+          coach_visible?: boolean
           completed_at?: string | null
           context_snapshot?: Json | null
           created_at?: string
@@ -4360,6 +4466,93 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      coaching_notes: {
+        Row: {
+          activity_id: string
+          body: string
+          created_at: string
+          id: string
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          body?: string
+          created_at?: string
+          id?: string
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_notes_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       coaching_plan_block_feedback: {
         Row: {
@@ -20967,6 +21160,10 @@ export type Database = {
           out_ref_path: string
         }[]
       }
+      accept_client_coaching_disclosure: {
+        Args: { p_version_hash: string; p_version_id: string }
+        Returns: Json
+      }
       accept_coach_disclosure: {
         Args: { p_version_hash: string; p_version_id: string }
         Returns: Json
@@ -21706,6 +21903,25 @@ export type Database = {
         Returns: boolean
       }
       bw_coach_can_access_my_relationship: { Args: never; Returns: boolean }
+      bw_coach_client_coaching: {
+        Args: { p_client_user_id: string }
+        Returns: {
+          activity_code: string
+          activity_id: string
+          activity_title: string
+          completed_at: string
+          module_group: string
+          note_body: string
+          note_updated_at: string
+          responses: Json
+          run_number: number
+          session_id: string
+          session_status: string
+          started_at: string
+          tier: string
+          visibility: string
+        }[]
+      }
       bw_coach_winback_unsubscribe: {
         Args: { p_token: string }
         Returns: boolean
@@ -21720,6 +21936,24 @@ export type Database = {
           sessions_extracted: number
           sessions_with_content: number
         }[]
+      }
+      bw_coaching_note_save: {
+        Args: { p_body: string; p_session_id: string }
+        Returns: {
+          activity_id: string
+          body: string
+          created_at: string
+          id: string
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "coaching_notes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       bw_fire_paired_narrative: {
         Args: { p_profile: string; p_section: string }
@@ -21887,6 +22121,24 @@ export type Database = {
       bw_match_case: {
         Args: { p_original: string; p_replacement: string }
         Returns: string
+      }
+      bw_my_coaching_notes: {
+        Args: never
+        Returns: {
+          activity_code: string
+          activity_id: string
+          activity_title: string
+          body: string
+          coach_visible: boolean
+          created_at: string
+          module_group: string
+          note_id: string
+          run_number: number
+          session_id: string
+          session_status: string
+          tier: string
+          updated_at: string
+        }[]
       }
       bw_my_learning_notes: {
         Args: never
@@ -22853,6 +23105,7 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_client_coaching_disclosure_status: { Args: never; Returns: Json }
       get_coach_disclosure_status: { Args: never; Returns: Json }
       get_content_item_for_viewer: {
         Args: { p_content_item_id: string; p_user_id?: string }
