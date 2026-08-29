@@ -571,40 +571,8 @@ export default function BulkInviteModal({
                 </div>
               )}
 
-              {totalValid > PREVIEW_CONFIRMATION_THRESHOLD && (
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={confirmReviewed}
-                    onCheckedChange={(c) => setConfirmReviewed(!!c)}
-                  />
-                  I have reviewed all {totalValid} invitations in this batch
-                </label>
-              )}
+            </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStage("validate")}>
-                    Reject batch
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={downloadInvalidCsv}
-                    disabled={invalidRows.length === 0}
-                  >
-                    Download invalid rows as CSV
-                  </Button>
-                </div>
-                <Button
-                  onClick={handleSend}
-                  disabled={
-                    totalValid === 0 ||
-                    submitting ||
-                    (totalValid > PREVIEW_CONFIRMATION_THRESHOLD && !confirmReviewed)
-                  }
-                >
-                  Send batch
-                </Button>
-              </div>
             </div>
           )}
 
