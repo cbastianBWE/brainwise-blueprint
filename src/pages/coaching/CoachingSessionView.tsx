@@ -15,6 +15,7 @@ import {
 } from "@/components/coaching/CoachingViews";
 import { useCoachingShare } from "@/hooks/useCoachingShare";
 import { ThreeSixtySummary } from "@/pages/coaching/three-sixty/ThreeSixtySummary";
+import CoachingSessionNote from "@/components/coaching/CoachingSessionNote";
 
 interface SessionRow {
   id: string;
@@ -41,6 +42,7 @@ export default function CoachingSessionView() {
   const [session, setSession] = useState<SessionRow | null>(null);
   const coachingShare = useCoachingShare();
   const { coachUserId, alwaysShare, hasSnapshotShare } = coachingShare;
+  const [coachNote, setCoachNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || !sessionId) return;
@@ -67,6 +69,32 @@ export default function CoachingSessionView() {
       cancelled = true;
     };
   }, [user, sessionId]);
+
+  // A practitioner reading a client's session gets the note through the
+  // coach-facing RPC. Never read coaching_notes directly here.
+  useEffect(() => {
+    if (!user || !session || !sessionId) return;
+    if (user.id === session.user_id) {
+      setCoachNote(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("bw_coach_client_coaching" as any, {
+        p_client_user_id: session.user_id,
+      });
+      if (cancelled) return;
+      if (error) {
+        setCoachNote(null);
+        return;
+      }
+      const row = ((data as any[]) ?? []).find((r: any) => r.session_id === sessionId);
+      setCoachNote((row?.note_body as string | null) ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, session, sessionId]);
 
   // Practitioner lookup + share state now live in useCoachingShare().
 
@@ -228,6 +256,22 @@ export default function CoachingSessionView() {
           </CardHeader>
           <CardContent>
             <ChatTranscript chat={chat} />
+          </CardContent>
+        </Card>
+      )}
+
+      {(isOwner || (coachNote ?? "").trim().length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{isOwner ? "My notes" : "Client's note"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CoachingSessionNote
+              sessionId={sessionId!}
+              editable={isOwner}
+              readOnlyBody={coachNote}
+              bare
+            />
           </CardContent>
         </Card>
       )}
