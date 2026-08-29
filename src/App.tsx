@@ -217,6 +217,7 @@ const queryClient = new QueryClient({
   // cache-level handler is the only one that always fires.
   mutationCache: new MutationCache({
     onError: (error, _vars, _ctx, mutation) => {
+      if (wasCaptured(error)) return;
       const d = describeError(error);
       captureClientError({
         source: "mutation",
