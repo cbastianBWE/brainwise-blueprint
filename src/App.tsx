@@ -199,6 +199,8 @@ const keyToOperation = (key: unknown): string | undefined => {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
+      // The instrumented Supabase client already recorded this one.
+      if (wasCaptured(error)) return;
       const d = describeError(error);
       captureClientError({
         source: "query",
