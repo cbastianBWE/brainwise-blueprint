@@ -116,6 +116,120 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
+      id: "my-coaching-journey",
+      title: "Work through My Coaching",
+      summary: "Guided activities that turn your profile into something you can act on.",
+      steps: [
+        {
+          title: "Open My Coaching",
+          body:
+            "Click My Coaching in the sidebar. Activities are grouped by area, and each one tells you roughly how long it takes and what you will come away with.",
+          capture: { path: "/coaching", assetPath: "src/assets/help/individual/42_my_coaching.png" },
+        },
+        {
+          title: "Filter by how deep you want to go",
+          body:
+            "Every area can be filtered to Foundational, Typical or Advanced. Foundational activities are the shortest way in; Advanced ones assume you have done some of the earlier work. The count next to each filter tells you how many activities it will show.",
+        },
+        {
+          title: "Do an activity",
+          body:
+            "Activities save as you go, so you can leave one part-finished and come back to it. Some ask you to type, some let you speak or record instead.",
+        },
+        {
+          title: "Find something you finished",
+          body:
+            "The History tab lists everything you have completed, most recent first, with earlier runs grouped underneath. Open any one to re-read your answers and the plan you were given.",
+          capture: { path: "/coaching", assetPath: "src/assets/help/individual/43_my_coaching_history.png", tabName: "History" },
+        },
+      ],
+    },
+    {
+      id: "coaching-notes",
+      title: "Take notes on a coaching activity",
+      summary: "Write your own notes on any activity you have done, and know who can read them.",
+      steps: [
+        {
+          title: "Open a finished activity",
+          body:
+            "From the History tab in My Coaching, open any activity you have completed. Your notes box is below your answers and the coaching plan.",
+        },
+        {
+          title: "Write whatever is useful to you",
+          body:
+            "Notes save on their own a moment after you stop typing, so there is no save button. Clearing the box removes the note.",
+        },
+        {
+          title: "Who can read your notes",
+          body:
+            "If you have a practitioner, they can read the notes you write on activities you complete from now on, alongside your answers. The line under the box always tells you which is true for you. If you do not have a practitioner, only you can see them.",
+        },
+        {
+          title: "Anything from before stays private",
+          body:
+            "Activities you completed before this changed are not shared with your practitioner. If you want them to see one of those, you can share it yourself from the activity.",
+        },
+      ],
+    },
+    {
+      id: "best-day-organizer",
+      title: "Plan your day with the Best Day Organizer",
+      summary: "A couple of minutes each morning, and the rest of the day has a shape.",
+      steps: [
+        {
+          title: "Open Best Day",
+          body:
+            "Click Best Day in the sidebar. It is available once you have completed your Personal Threat Profile, because the plan is built around how you respond to pressure.",
+          capture: { path: "/best-day", assetPath: "src/assets/help/individual/44_best_day.png" },
+        },
+        {
+          title: "Deal with yesterday first",
+          body:
+            "Anything you left unfinished appears at the top. Keep it for today, move it to a day that suits it better, or drop it. Dropping is not a failure, and a task that has moved several times will tell you so.",
+        },
+        {
+          title: "Say what today looks like",
+          body:
+            "Add what you want to get done, how much of the day is already committed, and how you are feeling. It is short on purpose.",
+        },
+        {
+          title: "Answer a few questions",
+          body:
+            "A short conversation fills in what the form cannot. On a simple day it is nearly silent, and you can go straight to your plan at any point.",
+        },
+        {
+          title: "Work from the plan",
+          body:
+            "You get a sequenced day with breaks built in, not added on. Tick things off, move what did not happen, drop what has stopped mattering. If the day changes shape, reshape it.",
+        },
+      ],
+    },
+    {
+      id: "development-plan",
+      title: "Use your development plan",
+      summary: "Where the actions you commit to are collected, and how you get reminded.",
+      steps: [
+        {
+          title: "Open your development plan",
+          body:
+            "Click My Development Plan in the sidebar. Actions you commit to during coaching activities and debriefs collect here.",
+          imageUrl: devPlan.url,
+          imageAlt: "Development plan page listing committed actions",
+          capture: { path: "/development-plan", assetPath: "src/assets/help/individual/40_development_plan.png" },
+        },
+        {
+          title: "Keep it current",
+          body:
+            "Mark actions done as you go. A plan you never revisit stops being a plan.",
+        },
+        {
+          title: "Fortnightly check-in",
+          body:
+            "Every couple of weeks you get a nudge about anything still open. You can control whether that arrives by email, in-app, or not at all, under Settings → Notifications.",
+        },
+      ],
+    },
+    {
       id: "share-with-a-practitioner",
       title: "Share results with a practitioner",
       summary: "Grant a practitioner or trusted person read access to your report.",
