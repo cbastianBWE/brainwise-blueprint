@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationDropdown } from "./NotificationDropdown";
+import { useAuth } from "@/hooks/useAuth";
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notif", "unreadCount"],
@@ -15,6 +17,7 @@ export function NotificationBell() {
       if (error) throw error;
       return typeof data === "number" ? data : 0;
     },
+    enabled: !!user,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });

@@ -1,5 +1,5 @@
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { captureClientError, describeError } from "@/lib/errorCapture";
+import { captureClientError, describeError, wasCaptured } from "@/lib/errorCapture";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -199,6 +199,8 @@ const keyToOperation = (key: unknown): string | undefined => {
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
+      // The instrumented Supabase client already recorded this one.
+      if (wasCaptured(error)) return;
       const d = describeError(error);
       captureClientError({
         source: "query",
@@ -215,6 +217,7 @@ const queryClient = new QueryClient({
   // cache-level handler is the only one that always fires.
   mutationCache: new MutationCache({
     onError: (error, _vars, _ctx, mutation) => {
+      if (wasCaptured(error)) return;
       const d = describeError(error);
       captureClientError({
         source: "mutation",

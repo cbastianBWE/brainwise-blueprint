@@ -26,6 +26,23 @@ let capturesThisPage = 0;
 
 export const CAPTURE_RPC = "log_client_error";
 
+const CAPTURED = Symbol.for("bw.errorCaptured");
+
+/** Mark an error object as already recorded, so a second handler skips it. */
+export function markCaptured(err: unknown): void {
+  if (err && typeof err === "object") {
+    try {
+      Object.defineProperty(err, CAPTURED, { value: true, enumerable: false, configurable: true });
+    } catch {
+      /* frozen error objects are fine to skip */
+    }
+  }
+}
+
+export function wasCaptured(err: unknown): boolean {
+  return !!(err && typeof err === "object" && (err as any)[CAPTURED]);
+}
+
 
 export function normaliseRoute(pathname?: string): string {
   const path = (pathname ?? (typeof location !== "undefined" ? location.pathname : "/")) || "/";
