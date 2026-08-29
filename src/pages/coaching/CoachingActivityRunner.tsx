@@ -14,6 +14,7 @@ import { SynthesisView, AiAnalysisPanel, ChatTranscript, ResourceVideo, Coaching
 import TransitionMapWalkthrough from "@/components/coaching/TransitionMapWalkthrough";
 import CoachingShareControl from "@/components/coaching/CoachingShareControl";
 import { useCoachingShare } from "@/hooks/useCoachingShare";
+import CoachingSessionNote, { CoachingVisibilityLine } from "@/components/coaching/CoachingSessionNote";
 import {
   MultimodalField,
   MediaRecorderPane,
@@ -882,6 +883,15 @@ export default function CoachingActivityRunner() {
 
 
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">My notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CoachingSessionNote sessionId={session.id} editable bare />
+            </CardContent>
+          </Card>
+
           {coachUserId && (
             <Card>
               <CardHeader>
@@ -959,6 +969,7 @@ export default function CoachingActivityRunner() {
             <CardTitle className="text-lg">{stepTitle(step)}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <CoachingVisibilityLine />
             {analyzing && (
               <div className="flex items-center gap-2 rounded-md border bg-muted/30 p-3 text-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
