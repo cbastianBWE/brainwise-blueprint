@@ -90,9 +90,13 @@ export default function BestDayInterview({
           ))}
         </div>
 
-        {done ? (
+        {done || failed ? (
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">That is everything I need.</p>
+            <p className="text-sm text-muted-foreground">
+              {done
+                ? "That is everything I need."
+                : "That did not come through. You can still build your day from what you have already given me."}
+            </p>
             <Button onClick={onFinish} disabled={generating}>
               {generating && <Loader2 className="h-4 w-4 animate-spin" />}
               Build my day
