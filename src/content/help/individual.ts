@@ -240,7 +240,7 @@ export const individualContent: HelpRoleContent = {
             "Go to Settings → Sharing Requests, or use the Shared With Me link in the sidebar to see who currently has access to your results.",
           imageUrl: sharingRequests.url,
           imageAlt: "Sharing requests screen",
-          capture: { path: "/settings/sharing", assetPath: "src/assets/help/individual/51_sharing_requests.png" },
+          capture: { path: "/settings/sharing-requests", assetPath: "src/assets/help/individual/51_sharing_requests.png" },
           hotspots: [
             { x: 1.2, y: 24.0, w: 18.3, h: 1.9, label: "Open Settings" },
           ],
@@ -271,7 +271,7 @@ export const individualContent: HelpRoleContent = {
             "Go to Settings → Notifications from the sidebar. You'll see notifications grouped by category (results, sharing, learning, etc.).",
           imageUrl: notif.url,
           imageAlt: "Notification settings page",
-          capture: { path: "/notification-settings", assetPath: "src/assets/help/individual/60_notification_settings.png" },
+          capture: { path: "/settings/notifications", assetPath: "src/assets/help/individual/60_notification_settings.png" },
         },
         {
           title: "Toggle individual notifications",
@@ -279,7 +279,7 @@ export const individualContent: HelpRoleContent = {
             "Each notification has an Email and In-app toggle. Turn on the ones you want, turn off the ones you don't. Changes save automatically.",
           imageUrl: notifScroll.url,
           imageAlt: "Notification categories with toggles",
-          capture: { path: "/notification-settings", assetPath: "src/assets/help/individual/61_notification_settings_scroll.png", scrollY: 900 },
+          capture: { path: "/settings/notifications", assetPath: "src/assets/help/individual/61_notification_settings_scroll.png", scrollY: 900 },
         },
         {
           title: "Use \"Set all\" for a whole category",

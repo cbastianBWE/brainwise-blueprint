@@ -158,7 +158,7 @@ export const orgMemberContent: HelpRoleContent = {
             "In the sidebar, click Settings, then Notification Settings. Each category has a 'Set all' control so you can turn a whole section on or off in one click.",
           imageUrl: notifications.url,
           imageAlt: "Notification settings page",
-          capture: { path: "/notification-settings", assetPath: "src/assets/help/org_member/60_notifications.png" },
+          capture: { path: "/settings/notifications", assetPath: "src/assets/help/org_member/60_notifications.png" },
         },
       ],
     },

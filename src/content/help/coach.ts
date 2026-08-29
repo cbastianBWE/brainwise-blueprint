@@ -41,7 +41,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click My Clients. This is your roster of coaching clients and the hub for inviting new ones.",
           imageUrl: myClients.url,
           imageAlt: "Practitioner sidebar with My Clients highlighted",
-          capture: { path: "/my-clients", assetPath: "src/assets/help/coach/10_my_clients.png" },
+          capture: { path: "/coach/clients", assetPath: "src/assets/help/coach/10_my_clients.png" },
           hotspots: [{ ...SIDEBAR.myClients, label: "Click My Clients" }],
         },
         {
@@ -77,7 +77,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, expand My Clients and click Client Results. Every client who has completed an assessment appears here.",
           imageUrl: clientResults.url,
           imageAlt: "Sidebar with Client Results highlighted",
-          capture: { path: "/client-results", assetPath: "src/assets/help/coach/11_client_results.png" },
+          capture: { path: "/coach/client-results", assetPath: "src/assets/help/coach/11_client_results.png" },
           hotspots: [{ ...SIDEBAR.clientResults, label: "Click Client Results" }],
         },
         {
@@ -108,7 +108,7 @@ export const coachContent: HelpRoleContent = {
             "In the sidebar, click Orders & Invoices. This is where you see past orders, download invoices, and start a new order.",
           imageUrl: orders.url,
           imageAlt: "Sidebar with Orders & Invoices highlighted",
-          capture: { path: "/orders", assetPath: "src/assets/help/coach/40_orders.png" },
+          capture: { path: "/coach/invoices", assetPath: "src/assets/help/coach/40_orders.png" },
           hotspots: [{ ...SIDEBAR.invoices, label: "Click Orders & Invoices" }],
         },
         {
@@ -117,7 +117,7 @@ export const coachContent: HelpRoleContent = {
             "Click Order Assessment to start a new purchase. Pick the assessment, the quantity, and the payer, then check out. Credits show up immediately after payment and can be sent to clients from My Clients.",
           imageUrl: orderAssessment.url,
           imageAlt: "Order Assessment page",
-          capture: { path: "/order-assessment", assetPath: "src/assets/help/coach/41_order_assessment.png" },
+          capture: { path: "/coach/order-assessment", assetPath: "src/assets/help/coach/41_order_assessment.png" },
         },
       ],
     },
