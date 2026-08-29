@@ -478,7 +478,7 @@ export default function BulkInviteModal({
 
 
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center pt-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -488,10 +488,8 @@ export default function BulkInviteModal({
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add row
                 </Button>
-                <Button onClick={handleContinue} disabled={continueDisabled}>
-                  Continue
-                </Button>
               </div>
+
             </div>
           )}
 
