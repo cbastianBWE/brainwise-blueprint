@@ -265,7 +265,7 @@ export const individualContent: HelpRoleContent = {
             "The list shows every active share. Click Revoke next to any name to remove their access immediately.",
           imageUrl: sharedWithMe.url,
           imageAlt: "Shared With Me listing current shares",
-          capture: { path: "/shared", assetPath: "src/assets/help/individual/50_shared_with_me.png" },
+          capture: { path: "/shared-with-me", assetPath: "src/assets/help/individual/50_shared_with_me.png" },
         },
       ],
     },
