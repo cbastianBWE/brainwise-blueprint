@@ -310,13 +310,10 @@ export default function HelpWidget() {
       </TooltipProvider>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          id={PANEL_ID}
-          side="right"
-          hideOverlay
-          className="z-40 w-full sm:max-w-md h-dvh flex flex-col gap-0 p-0"
-        >
+        <SheetContent id={PANEL_ID} side="right" hideOverlay className="z-40 p-0 sm:max-w-md">
+          <div className="flex h-full flex-col gap-0">
           <SheetHeader className="p-6 pb-4 border-b">
+
             <SheetTitle>Help</SheetTitle>
             <SheetDescription>Ask about anything in BrainWise.</SheetDescription>
             <div className="pt-2">
