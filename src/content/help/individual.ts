@@ -6,6 +6,7 @@ import myResultsScroll from "@/assets/help/individual/31_my_results_scroll.png.a
 import myCoaching from "@/assets/help/individual/42_my_coaching.png.asset.json";
 import myCoachingHistory from "@/assets/help/individual/43_my_coaching_history.png.asset.json";
 import bestDay from "@/assets/help/individual/44_best_day.png.asset.json";
+import myCoaching360 from "@/assets/help/individual/45_my_coaching_360.png.asset.json";
 import devPlan from "@/assets/help/individual/40_development_plan.png.asset.json";
 import sharedWithMe from "@/assets/help/individual/50_shared_with_me.png.asset.json";
 import sharingRequests from "@/assets/help/individual/51_sharing_requests.png.asset.json";
@@ -207,6 +208,42 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
+      id: "your-360-feedback",
+      title: "Get 360 feedback from people around you",
+      summary: "Ask colleagues to describe how they see you, and read it back as themes rather than individual comments.",
+      steps: [
+        {
+          title: "Start it from a coaching activity",
+          body:
+            "A 360 is not a separate section. You start one inside a coaching activity: open My Coaching and go to How Others See You, in the Present area. It also appears inside Using Your Strengths if you have reached that one.",
+          imageUrl: myCoaching360.url,
+          imageAlt: "My Coaching page showing the How Others See You activity",
+          capture: { path: "/coaching", assetPath: "src/assets/help/individual/45_my_coaching_360.png" },
+        },
+        {
+          title: "Nominate your raters",
+          body:
+            "You choose who to ask. Add their names and email addresses, and each one gets their own private link. Pick people who see different sides of your work rather than only those who will be kind.",
+        },
+        {
+          title: "While it is running",
+          body:
+            "You can see who has responded and who has not, but not what any individual said. That is deliberate: raters answer more honestly when they know their answers are not attributed.",
+        },
+        {
+          title: "Reading what comes back",
+          body:
+            "Feedback comes back grouped, not person by person, for the same reason. Where a group is small, answers may be combined further before you see them.",
+        },
+        {
+          title: "If not enough people reply",
+          body:
+            "A group with too few responses cannot be reported at all. If that happens, asking those people directly does more than another reminder from the system.",
+        },
+      ],
+    },
+    {
+
       id: "best-day-organizer",
       title: "Plan your day with the Best Day Organizer",
       summary: "A couple of minutes each morning, and the rest of the day has a shape.",
@@ -546,7 +583,37 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
+      id: "signing-in-and-passwords",
+      title: "Change your password, or get back in",
+      summary: "What to do when you want a new password, and what to do when you cannot sign in at all.",
+      steps: [
+        {
+          title: "Changing your password while signed in",
+          body:
+            "Go to Settings and press Change Password. Nothing opens: BrainWise emails you a link instead, and you will see a short message saying the reset email has been sent. That is expected.",
+          imageUrl: settings.url,
+          imageAlt: "Settings page with the Change Password button",
+        },
+        {
+          title: "Finish it from the email",
+          body:
+            "Open the link in that email and you will land on a page headed Set New Password. Type the new password twice and save. The link stops working after a while, so if it has been sitting in your inbox for a day, press Change Password again for a fresh one.",
+        },
+        {
+          title: "If you cannot sign in at all",
+          body:
+            "On the sign-in screen, use Forgot your password? underneath the Log In button. It sends the same kind of link. You do not need to be signed in, which is the point.",
+        },
+        {
+          title: "If the email does not arrive",
+          body:
+            "Check the spam folder first. If it is not there, the address you are typing may not be the one on your account. Ask whoever invited you which address they used, or contact your practitioner or organisation administrator.",
+        },
+      ],
+    },
+    {
       id: "two-factor-and-trusted-devices",
+
       title: "Set up two-factor authentication",
       summary: "Add a second sign-in step and mark trusted browsers so you don't have to re-verify every time.",
       steps: [

@@ -13190,6 +13190,7 @@ export type Database = {
       }
       platform_agent_proposals: {
         Row: {
+          adjustment: string | null
           applied_at: string | null
           apply_result: Json | null
           created_at: string
@@ -13210,6 +13211,7 @@ export type Database = {
           token_hash: string
         }
         Insert: {
+          adjustment?: string | null
           applied_at?: string | null
           apply_result?: Json | null
           created_at?: string
@@ -13230,6 +13232,7 @@ export type Database = {
           token_hash: string
         }
         Update: {
+          adjustment?: string | null
           applied_at?: string | null
           apply_result?: Json | null
           created_at?: string
@@ -13258,6 +13261,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_email_suppression: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          email: string
+          reason: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          email: string
+          reason: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          email?: string
+          reason?: string
+        }
+        Relationships: []
       }
       platform_features: {
         Row: {
@@ -22598,6 +22622,18 @@ export type Database = {
           section: string
         }[]
       }
+      bw_agent_close_invite_ticket: {
+        Args: { p_coach_client_id: string; p_ticket_id: string }
+        Returns: Json
+      }
+      bw_agent_failure_evidence: {
+        Args: { p_ticket_id: string }
+        Returns: Json
+      }
+      bw_agent_invite_followups: {
+        Args: { p_dry_run?: boolean; p_limit?: number }
+        Returns: Json
+      }
       bw_agent_next_tickets: {
         Args: { p_limit?: number }
         Returns: {
@@ -22619,20 +22655,43 @@ export type Database = {
         Args: { p_coach_client_id: string; p_ticket_id?: string }
         Returns: Json
       }
-      bw_agent_proposal_decide: {
-        Args: { p_decision: string; p_token: string; p_via?: string }
+      bw_agent_post_user_reply: {
+        Args: {
+          p_body: string
+          p_note?: string
+          p_resolve?: boolean
+          p_ticket_id: string
+        }
         Returns: Json
       }
+      bw_agent_proposal_decide:
+        | {
+            Args: { p_decision: string; p_token: string; p_via?: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_adjustment?: string
+              p_decision: string
+              p_token: string
+              p_via: string
+            }
+            Returns: Json
+          }
       bw_agent_proposal_peek: {
         Args: { p_token: string }
         Returns: {
           expires_at: string
+          id: string
           impact: string
-          proposal_id: string
+          instructions: string
+          kind: string
           rationale: string
+          remedy_kind: string
           reversal: string
           risk: string
           status: string
+          ticket_title: string
           title: string
         }[]
       }
@@ -22656,12 +22715,20 @@ export type Database = {
           token: string
         }[]
       }
+      bw_agent_resend_client_invitation: {
+        Args: { p_coach_client_id: string; p_ticket_id?: string }
+        Returns: Json
+      }
       bw_agent_revoke_unclaimed_invite: {
         Args: {
           p_coach_client_id: string
           p_force?: boolean
           p_ticket_id?: string
         }
+        Returns: Json
+      }
+      bw_agent_user_report_context: {
+        Args: { p_ticket_id: string }
         Returns: Json
       }
       bw_agent_weekly_room: {
@@ -22728,6 +22795,10 @@ export type Database = {
       }
       bw_check_agent_liveness: { Args: never; Returns: Json }
       bw_check_watchdogs: { Args: never; Returns: number }
+      bw_close_exhausted_invite_tickets: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       bw_coach_can_access_my_relationship: { Args: never; Returns: boolean }
       bw_coach_client_coaching: {
         Args: { p_client_user_id: string }
@@ -22781,6 +22852,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      bw_digest_proposal_blocks: { Args: never; Returns: string }
       bw_expire_agent_proposals: { Args: never; Returns: number }
       bw_fire_paired_narrative: {
         Args: { p_profile: string; p_section: string }
@@ -23177,6 +23249,10 @@ export type Database = {
         Returns: Json
       }
       bw_run_ticket_agent: {
+        Args: { p_dry_run?: boolean; p_ticket_id?: string }
+        Returns: number
+      }
+      bw_run_user_report_agent: {
         Args: { p_dry_run?: boolean; p_ticket_id?: string }
         Returns: number
       }
@@ -25030,6 +25106,10 @@ export type Database = {
           p_relationship: string
         }
         Returns: string
+      }
+      mr_propose_remedies: {
+        Args: { p_dry_run?: boolean; p_ticket_id?: string }
+        Returns: number
       }
       mr_run_dispatch: {
         Args: {
