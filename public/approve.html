@@ -93,17 +93,22 @@
     return;
   }
 
-  function post(payload) {
-    return fetch(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload)
-    }).then(function (r) {
-      return r.json().catch(function () { return null; }).then(function (data) {
+  function api(method, params, payload) {
+    var url = ENDPOINT + "?" + new URLSearchParams(params).toString();
+    var opts = { method: method, headers: { "Accept": "application/json" } };
+    if (payload) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(payload);
+    }
+    return fetch(url, opts).then(function (r) {
+      return r.text().then(function (text) {
+        var data = null;
+        try { data = JSON.parse(text); } catch (e) { data = null; }
         return { ok: r.ok, data: data };
       });
     });
   }
+
 
   function field(dl, label, value, cls) {
     if (value == null || value === "") return;
