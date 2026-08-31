@@ -2,7 +2,6 @@ import type { HelpRoleContent } from "./types";
 import myClients from "@/assets/help/coach/10_my_clients.png.asset.json";
 import clientResults from "@/assets/help/coach/11_client_results.png.asset.json";
 import clientCoaching from "@/assets/help/coach/13_client_coaching.png.asset.json";
-import feedbackTemplates from "@/assets/help/coach/20_feedback_templates.png.asset.json";
 import teamPaired from "@/assets/help/coach/30_team_paired.png.asset.json";
 import orders from "@/assets/help/coach/40_orders.png.asset.json";
 import orderAssessment from "@/assets/help/coach/41_order_assessment.png.asset.json";
@@ -19,7 +18,6 @@ const SIDEBAR = {
   myClients:        { ...SB, y: 16.1 },
   clientResults:    { ...SB, y: 18.1, x: 4.0, w: 14.4 },
   mentorPortal:     { ...SB, y: 20.1 },
-  feedbackTemplates:{ ...SB, y: 22.1 },
   teamPaired:       { ...SB, y: 24.1 },
   invoices:         { ...SB, y: 26.1 },
   certification:    { ...SB, y: 34.1 },
