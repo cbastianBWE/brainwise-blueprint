@@ -6,6 +6,7 @@ import myResultsScroll from "@/assets/help/individual/31_my_results_scroll.png.a
 import myCoaching from "@/assets/help/individual/42_my_coaching.png.asset.json";
 import myCoachingHistory from "@/assets/help/individual/43_my_coaching_history.png.asset.json";
 import bestDay from "@/assets/help/individual/44_best_day.png.asset.json";
+import myCoaching360 from "@/assets/help/individual/45_my_coaching_360.png.asset.json";
 import devPlan from "@/assets/help/individual/40_development_plan.png.asset.json";
 import sharedWithMe from "@/assets/help/individual/50_shared_with_me.png.asset.json";
 import sharingRequests from "@/assets/help/individual/51_sharing_requests.png.asset.json";
@@ -215,6 +216,8 @@ export const individualContent: HelpRoleContent = {
           title: "Start it from a coaching activity",
           body:
             "A 360 is not a separate section. You start one inside a coaching activity: open My Coaching and go to How Others See You, in the Present area. It also appears inside Using Your Strengths if you have reached that one.",
+          imageUrl: myCoaching360.url,
+          imageAlt: "My Coaching page showing the How Others See You activity",
           capture: { path: "/coaching", assetPath: "src/assets/help/individual/45_my_coaching_360.png" },
         },
         {
