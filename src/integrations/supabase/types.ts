@@ -8412,6 +8412,57 @@ export type Database = {
           },
         ]
       }
+      help_guide_chunks: {
+        Row: {
+          content: string
+          content_hash: string
+          embedding: string | null
+          grain: string
+          guide_id: string
+          guide_summary: string
+          guide_title: string
+          id: string
+          role: string
+          role_label: string
+          source_commit: string | null
+          step_index: number | null
+          step_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          content_hash: string
+          embedding?: string | null
+          grain: string
+          guide_id: string
+          guide_summary: string
+          guide_title: string
+          id?: string
+          role: string
+          role_label: string
+          source_commit?: string | null
+          step_index?: number | null
+          step_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          content_hash?: string
+          embedding?: string | null
+          grain?: string
+          guide_id?: string
+          guide_summary?: string
+          guide_title?: string
+          id?: string
+          role?: string
+          role_label?: string
+          source_commit?: string | null
+          step_index?: number | null
+          step_title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       heygen_catalog_cache: {
         Row: {
           fetched_at: string
@@ -18876,6 +18927,56 @@ export type Database = {
           },
         ]
       }
+      support_questions: {
+        Row: {
+          answered: boolean
+          created_at: string
+          id: string
+          question: string
+          refusal_reason: string | null
+          roles: string[]
+          route: string | null
+          sources: Json
+          ticket_id: string | null
+          top_similarity: number | null
+          user_id: string | null
+        }
+        Insert: {
+          answered: boolean
+          created_at?: string
+          id?: string
+          question: string
+          refusal_reason?: string | null
+          roles?: string[]
+          route?: string | null
+          sources?: Json
+          ticket_id?: string | null
+          top_similarity?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          answered?: boolean
+          created_at?: string
+          id?: string
+          question?: string
+          refusal_reason?: string | null
+          roles?: string[]
+          route?: string | null
+          sources?: Json
+          ticket_id?: string | null
+          top_similarity?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_questions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -22737,6 +22838,10 @@ export type Database = {
         Returns: boolean
       }
       bw_has_shared_credit: { Args: { p_user: string }; Returns: boolean }
+      bw_help_roles_for_user: {
+        Args: { p_user_id?: string }
+        Returns: string[]
+      }
       bw_is_relationship_member: {
         Args: { p_relationship: string; p_user?: string }
         Returns: boolean
@@ -22848,6 +22953,25 @@ export type Database = {
         Args: { p_original: string; p_replacement: string }
         Returns: string
       }
+      bw_match_help_chunks: {
+        Args: {
+          p_limit?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+          p_roles?: string[]
+        }
+        Returns: {
+          content: string
+          grain: string
+          guide_id: string
+          guide_summary: string
+          guide_title: string
+          role: string
+          similarity: number
+          step_index: number
+          step_title: string
+        }[]
+      }
       bw_match_ticket_learnings: {
         Args: {
           p_limit?: number
@@ -22902,6 +23026,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      bw_my_reports: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          last_message_at: string
+          resolved_at: string
+          status: string
+          title: string
+          unread_from_us: boolean
+        }[]
+      }
       bw_normalize_house_style: { Args: { p_text: string }; Returns: string }
       bw_normalize_house_style_jsonb: { Args: { p: Json }; Returns: Json }
       bw_or_tsquery: { Args: { p_text: string }; Returns: unknown }
@@ -22911,6 +23047,10 @@ export type Database = {
           full_name: string
           pair_role: string
         }[]
+      }
+      bw_post_report_message: {
+        Args: { p_body: string; p_ticket_id: string }
+        Returns: Json
       }
       bw_product_opened_at: {
         Args: { p_tier: string; p_user: string }
@@ -23009,6 +23149,18 @@ export type Database = {
       bw_relationship_partner: {
         Args: { p_relationship: string; p_user?: string }
         Returns: string
+      }
+      bw_report_issue: {
+        Args: { p_body: string; p_context?: Json; p_route?: string }
+        Returns: Json
+      }
+      bw_report_thread: {
+        Args: { p_ticket_id: string }
+        Returns: {
+          author_kind: string
+          body: string
+          created_at: string
+        }[]
       }
       bw_resolve_model: { Args: { p_role: string }; Returns: string }
       bw_resolve_price_entitlement: {
@@ -24888,6 +25040,7 @@ export type Database = {
         Returns: Json
       }
       mr_safety_alert_body: { Args: { p_payload: Json }; Returns: string }
+      mr_sync_help_index: { Args: { p_force?: boolean }; Returns: number }
       my_access_history: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
