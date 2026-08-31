@@ -11,6 +11,9 @@ import resourcesPage from "@/assets/help/coach/80_resources.png.asset.json";
 import coachDashboard from "@/assets/help/coach/90_dashboard.png.asset.json";
 import coachMyResults from "@/assets/help/coach/91_my_results.png.asset.json";
 import coachSettings from "@/assets/help/coach/92_settings.png.asset.json";
+import orgMembers from "@/assets/help/coach/12_org_members.png.asset.json";
+import coachProfile from "@/assets/help/coach/15_coach_profile.png.asset.json";
+import findAPractitioner from "@/assets/help/coach/16_find_a_practitioner.png.asset.json";
 
 // Sidebar hotspots (percentages of a 1280x1800 screenshot). Item height ≈ 1.7%.
 const SB = { x: 1.2, w: 17.2, h: 1.7 };
@@ -135,6 +138,8 @@ export const coachContent: HelpRoleContent = {
           title: "Open Organization Members",
           body:
             "Click Organization Members in the sidebar. This is separate from My Clients: these are people who belong to an organisation you work with, not people you invited yourself.",
+          imageUrl: orgMembers.url,
+          imageAlt: "Organization Members page",
           capture: { path: "/coach/org-members", assetPath: "src/assets/help/coach/12_org_members.png" },
         },
         {
@@ -158,6 +163,8 @@ export const coachContent: HelpRoleContent = {
           title: "Open My Profile",
           body:
             "Click My Profile in the sidebar. This is your public-facing profile, not your account settings.",
+          imageUrl: coachProfile.url,
+          imageAlt: "Practitioner public profile editor",
           capture: { path: "/coach/profile", assetPath: "src/assets/help/coach/15_coach_profile.png" },
         },
         {
@@ -169,6 +176,8 @@ export const coachContent: HelpRoleContent = {
           title: "See how you appear",
           body:
             "The Find a Practitioner directory is what a prospective client browses. Check your entry there after you change anything.",
+          imageUrl: findAPractitioner.url,
+          imageAlt: "Find a Practitioner public directory",
           capture: { path: "/find-a-practitioner", assetPath: "src/assets/help/coach/16_find_a_practitioner.png" },
         },
       ],

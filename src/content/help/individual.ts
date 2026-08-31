@@ -15,6 +15,10 @@ import settings from "@/assets/help/individual/70_settings.png.asset.json";
 import aiChat from "@/assets/help/individual/80_ai_chat.png.asset.json";
 import chatHistory from "@/assets/help/individual/81_chat_history.png.asset.json";
 import myLearning from "@/assets/help/individual/90_my_learning.png.asset.json";
+import resourcesPage from "@/assets/help/individual/52_resources.png.asset.json";
+import privacySettings from "@/assets/help/individual/71_settings_privacy.png.asset.json";
+import accessHistory from "@/assets/help/individual/72_access_history.png.asset.json";
+import billing from "@/assets/help/individual/73_billing.png.asset.json";
 
 export const individualContent: HelpRoleContent = {
   role: "individual",
@@ -295,6 +299,8 @@ export const individualContent: HelpRoleContent = {
           title: "Open Resources",
           body:
             "Click Resources in the sidebar. Items are grouped into folders by topic.",
+          imageUrl: resourcesPage.url,
+          imageAlt: "Resources library grouped into folders",
           capture: { path: "/resources", assetPath: "src/assets/help/individual/52_resources.png" },
         },
         {
@@ -318,6 +324,8 @@ export const individualContent: HelpRoleContent = {
           title: "Open Privacy and Permissions",
           body:
             "Go to Settings → Privacy & Permissions. This is where you decide who may see what.",
+          imageUrl: privacySettings.url,
+          imageAlt: "Privacy and permissions settings page",
           capture: { path: "/settings/privacy", assetPath: "src/assets/help/individual/71_settings_privacy.png" },
         },
         {
@@ -346,6 +354,8 @@ export const individualContent: HelpRoleContent = {
           title: "Open Access History",
           body:
             "Go to Settings → Access History. It lists who opened what, and when.",
+          imageUrl: accessHistory.url,
+          imageAlt: "Access history page listing report views",
           capture: { path: "/settings/access-history", assetPath: "src/assets/help/individual/72_access_history.png" },
         },
         {
@@ -369,6 +379,8 @@ export const individualContent: HelpRoleContent = {
           title: "Open Billing and Receipts",
           body:
             "Go to Settings → Billing & Receipts for anything you have paid for directly.",
+          imageUrl: billing.url,
+          imageAlt: "Billing and receipts page with purchase history",
           capture: { path: "/settings/billing", assetPath: "src/assets/help/individual/73_billing.png" },
         },
         {
