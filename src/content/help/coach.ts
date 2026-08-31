@@ -2,7 +2,6 @@ import type { HelpRoleContent } from "./types";
 import myClients from "@/assets/help/coach/10_my_clients.png.asset.json";
 import clientResults from "@/assets/help/coach/11_client_results.png.asset.json";
 import clientCoaching from "@/assets/help/coach/13_client_coaching.png.asset.json";
-import feedbackTemplates from "@/assets/help/coach/20_feedback_templates.png.asset.json";
 import teamPaired from "@/assets/help/coach/30_team_paired.png.asset.json";
 import orders from "@/assets/help/coach/40_orders.png.asset.json";
 import orderAssessment from "@/assets/help/coach/41_order_assessment.png.asset.json";
@@ -12,6 +11,9 @@ import resourcesPage from "@/assets/help/coach/80_resources.png.asset.json";
 import coachDashboard from "@/assets/help/coach/90_dashboard.png.asset.json";
 import coachMyResults from "@/assets/help/coach/91_my_results.png.asset.json";
 import coachSettings from "@/assets/help/coach/92_settings.png.asset.json";
+import orgMembers from "@/assets/help/coach/12_org_members.png.asset.json";
+import coachProfile from "@/assets/help/coach/15_coach_profile.png.asset.json";
+import findAPractitioner from "@/assets/help/coach/16_find_a_practitioner.png.asset.json";
 
 // Sidebar hotspots (percentages of a 1280x1800 screenshot). Item height ≈ 1.7%.
 const SB = { x: 1.2, w: 17.2, h: 1.7 };
@@ -19,7 +21,6 @@ const SIDEBAR = {
   myClients:        { ...SB, y: 16.1 },
   clientResults:    { ...SB, y: 18.1, x: 4.0, w: 14.4 },
   mentorPortal:     { ...SB, y: 20.1 },
-  feedbackTemplates:{ ...SB, y: 22.1 },
   teamPaired:       { ...SB, y: 24.1 },
   invoices:         { ...SB, y: 26.1 },
   certification:    { ...SB, y: 34.1 },
@@ -129,6 +130,91 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
+      id: "organization-members",
+      title: "Work with an organisation's members",
+      summary: "When you are attached to an organisation, this is where its people appear.",
+      steps: [
+        {
+          title: "Open Organization Members",
+          body:
+            "Click Organization Members in the sidebar. This is separate from My Clients: these are people who belong to an organisation you work with, not people you invited yourself.",
+          imageUrl: orgMembers.url,
+          imageAlt: "Organization Members page",
+          capture: { path: "/coach/org-members", assetPath: "src/assets/help/coach/12_org_members.png" },
+        },
+        {
+          title: "What you can see",
+          body:
+            "You see what the organisation has given you access to. If someone is missing, the organisation's administrator controls that, not you.",
+        },
+        {
+          title: "If the page is empty",
+          body:
+            "An empty list means you are not currently attached to an organisation, or it has not shared its members with you.",
+        },
+      ],
+    },
+    {
+      id: "your-directory-profile",
+      title: "Set up your practitioner profile",
+      summary: "What people see when they find you in the practitioner directory.",
+      steps: [
+        {
+          title: "Open My Profile",
+          body:
+            "Click My Profile in the sidebar. This is your public-facing profile, not your account settings.",
+          imageUrl: coachProfile.url,
+          imageAlt: "Practitioner public profile editor",
+          capture: { path: "/coach/profile", assetPath: "src/assets/help/coach/15_coach_profile.png" },
+        },
+        {
+          title: "Write it for the person looking",
+          body:
+            "Someone reading it is deciding whether to work with you. What you specialise in and who you work best with does more than a list of credentials.",
+        },
+        {
+          title: "See how you appear",
+          body:
+            "The Find a Practitioner directory is what a prospective client browses. Check your entry there after you change anything.",
+          imageUrl: findAPractitioner.url,
+          imageAlt: "Find a Practitioner public directory",
+          capture: { path: "/find-a-practitioner", assetPath: "src/assets/help/coach/16_find_a_practitioner.png" },
+        },
+      ],
+    },
+    {
+      id: "run-a-360-for-a-client",
+      title: "Run a 360 for a client",
+      summary: "Collecting feedback about a client from the people around them.",
+      steps: [
+        {
+          title: "What a 360 is here",
+          body:
+            "A 360 gathers structured feedback about your client from raters they nominate: managers, peers, direct reports. It sits alongside their own assessment rather than replacing it.",
+        },
+        {
+          title: "Nominating raters",
+          body:
+            "Your client nominates the people who will give feedback. Each rater gets their own invitation link, and their answers are theirs alone.",
+        },
+        {
+          title: "While it is running",
+          body:
+            "You can see who has responded and who has not, without seeing what any individual rater said before the results are released.",
+        },
+        {
+          title: "Reading the result",
+          body:
+            "Feedback is reported by rater group, not by person, so that raters can be candid. Small groups may be combined for the same reason.",
+        },
+        {
+          title: "Chasing responses",
+          body:
+            "A 360 with too few responses in a group cannot be reported for that group. If a group is short, the useful move is your client asking directly rather than another reminder email.",
+        },
+      ],
+    },
+    {
       id: "coaching-plan-feedback",
       title: "Give feedback on a coaching plan",
       summary: "Tell the system when part of a generated plan does not fit the client.",
@@ -202,32 +288,6 @@ export const coachContent: HelpRoleContent = {
           title: "Open and share the report",
           body:
             "Click any report in the list to open the full interactive view. Subjects (the people the report is about) can be given read access — they'll see it under Shared With Me on their own account.",
-        },
-      ],
-    },
-    {
-      id: "feedback-templates",
-      title: "Save feedback templates",
-      summary: "Reuse the same coaching feedback across multiple review panels.",
-      steps: [
-        {
-          title: "Open Feedback Templates",
-          body:
-            "In the sidebar, click Feedback Templates. Templates are grouped by review panel type (Written Summary, Skills Practice, etc.) and are private to you.",
-          imageUrl: feedbackTemplates.url,
-          imageAlt: "Feedback templates page grouped by review panel type",
-          capture: { path: "/coach/templates", assetPath: "src/assets/help/coach/20_feedback_templates.png" },
-          hotspots: [{ ...SIDEBAR.feedbackTemplates, label: "Click Feedback Templates" }],
-        },
-        {
-          title: "Create a new template",
-          body:
-            "Click New template on the panel type you want (for example Written Summary). Give it a name, write the reusable text, and save. It's now available every time you're leaving feedback on that panel type.",
-          imageUrl: feedbackTemplates.url,
-          imageAlt: "New template button on a review panel",
-          hotspots: [
-            { x: 55.0, y: 12.2, w: 13.5, h: 2.0, label: "New template" },
-          ],
         },
       ],
     },

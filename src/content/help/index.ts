@@ -3,6 +3,7 @@ import { individualContent } from "./individual";
 import { coachContent } from "./coach";
 import { orgMemberContent } from "./org_member";
 import { orgAdminContent } from "./org_admin";
+import { mentorContent } from "./mentor";
 
 const placeholder = (
   role: HelpRoleContent["role"],
@@ -20,11 +21,7 @@ export const helpContent: Record<HelpRoleContent["role"], HelpRoleContent> = {
   coach: coachContent,
   org_member: orgMemberContent,
   org_admin: orgAdminContent,
-  mentor: placeholder(
-    "mentor",
-    "Mentor",
-    "You mentor practitioners-in-training. Guides for reviewing trainees, leaving feedback, and using templates are on the way.",
-  ),
+  mentor: mentorContent,
   super_admin: placeholder(
     "super_admin",
     "Super Admin",

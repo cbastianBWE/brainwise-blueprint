@@ -15,6 +15,10 @@ import settings from "@/assets/help/individual/70_settings.png.asset.json";
 import aiChat from "@/assets/help/individual/80_ai_chat.png.asset.json";
 import chatHistory from "@/assets/help/individual/81_chat_history.png.asset.json";
 import myLearning from "@/assets/help/individual/90_my_learning.png.asset.json";
+import resourcesPage from "@/assets/help/individual/52_resources.png.asset.json";
+import privacySettings from "@/assets/help/individual/71_settings_privacy.png.asset.json";
+import accessHistory from "@/assets/help/individual/72_access_history.png.asset.json";
+import billing from "@/assets/help/individual/73_billing.png.asset.json";
 
 export const individualContent: HelpRoleContent = {
   role: "individual",
@@ -22,6 +26,30 @@ export const individualContent: HelpRoleContent = {
   description:
     "You signed up on your own to take assessments and grow your self-awareness. These are the tasks people do most often.",
   guides: [
+    {
+      id: "your-dashboard",
+      title: "Find your way around the dashboard",
+      summary: "What is on your home screen, and where each part of it leads.",
+      steps: [
+        {
+          title: "What you land on",
+          body:
+            "Your dashboard is the first thing you see when you sign in. It pulls together where you are: assessments you have finished, what is still open, and what is worth doing next.",
+          imageUrl: dashboard.url,
+          imageAlt: "Individual dashboard home screen",
+        },
+        {
+          title: "The sidebar is the map",
+          body:
+            "Everything else lives in the left-hand menu: your results, your development plan, My Coaching, Best Day, and anything shared with you. What appears there depends on your account, so not everyone sees the same list.",
+        },
+        {
+          title: "If something looks empty",
+          body:
+            "A section with nothing in it usually means there is nothing yet rather than something being broken. Results appear once an assessment is scored, and coaching activities appear once you have a profile to build them from.",
+        },
+      ],
+    },
     {
       id: "take-an-assessment",
       title: "Take an assessment",
@@ -239,6 +267,130 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
+      id: "shared-with-me",
+      title: "See what someone has shared with you",
+      summary: "Where results other people have shared land, and what you can do with them.",
+      steps: [
+        {
+          title: "Open Shared With Me",
+          body:
+            "Click Shared With Me in the sidebar. Anything another person has shared with you appears here, newest first.",
+          imageUrl: sharedWithMe.url,
+          imageAlt: "Shared With Me page listing shared reports",
+        },
+        {
+          title: "Open a shared report",
+          body:
+            "Opening one shows you what the person chose to share and nothing else. Sharing is per report, so someone sharing one result with you does not give you the rest.",
+        },
+        {
+          title: "Access is theirs to withdraw",
+          body:
+            "Whoever shared it can withdraw access at any time, and it will disappear from this list. That is deliberate, not a fault.",
+        },
+      ],
+    },
+    {
+      id: "browse-resources",
+      title: "Find and use Resources",
+      summary: "The library of articles, worksheets and tools, and how to get back to one.",
+      steps: [
+        {
+          title: "Open Resources",
+          body:
+            "Click Resources in the sidebar. Items are grouped into folders by topic.",
+          imageUrl: resourcesPage.url,
+          imageAlt: "Resources library grouped into folders",
+          capture: { path: "/resources", assetPath: "src/assets/help/individual/52_resources.png" },
+        },
+        {
+          title: "Open a folder, then an item",
+          body:
+            "Folders open in place. Opening an item takes you to its own page, so you can send someone a link to exactly the thing you meant rather than to the library.",
+        },
+        {
+          title: "Getting back",
+          body:
+            "A link to a specific resource opens that resource directly, with its folder already expanded behind it. Use your browser's back button to return to where you were.",
+        },
+      ],
+    },
+    {
+      id: "privacy-and-permissions",
+      title: "Control who can see your results",
+      summary: "Your privacy settings, in one place, and what each one actually changes.",
+      steps: [
+        {
+          title: "Open Privacy and Permissions",
+          body:
+            "Go to Settings → Privacy & Permissions. This is where you decide who may see what.",
+          imageUrl: privacySettings.url,
+          imageAlt: "Privacy and permissions settings page",
+          capture: { path: "/settings/privacy", assetPath: "src/assets/help/individual/71_settings_privacy.png" },
+        },
+        {
+          title: "Sharing is something you do, not a default",
+          body:
+            "Nobody sees your results because they asked. They see them because you shared them, or because you accepted a request. Turning a permission off stops future access; it does not un-see anything already read.",
+        },
+        {
+          title: "Requests come to you",
+          body:
+            "When someone asks for access, it arrives as a request rather than as access. Settings → Sharing Requests is where you approve or decline.",
+        },
+        {
+          title: "If you are unsure, decline",
+          body:
+            "Declining is not final. The person can ask again, and you can share later from the report itself.",
+        },
+      ],
+    },
+    {
+      id: "access-history",
+      title: "See who has opened your results",
+      summary: "A record of the access that has actually happened.",
+      steps: [
+        {
+          title: "Open Access History",
+          body:
+            "Go to Settings → Access History. It lists who opened what, and when.",
+          imageUrl: accessHistory.url,
+          imageAlt: "Access history page listing report views",
+          capture: { path: "/settings/access-history", assetPath: "src/assets/help/individual/72_access_history.png" },
+        },
+        {
+          title: "What it does and does not tell you",
+          body:
+            "It records access to your reports. An empty list means nobody has opened anything, which is the normal state if you have not shared.",
+        },
+        {
+          title: "If something looks wrong",
+          body:
+            "If you see access you do not recognise, withdraw the sharing permission under Settings → Privacy & Permissions first, then get in touch. Withdrawing takes effect straight away.",
+        },
+      ],
+    },
+    {
+      id: "billing-and-receipts",
+      title: "Find your receipts",
+      summary: "Where past payments live, and where they do not.",
+      steps: [
+        {
+          title: "Open Billing and Receipts",
+          body:
+            "Go to Settings → Billing & Receipts for anything you have paid for directly.",
+          imageUrl: billing.url,
+          imageAlt: "Billing and receipts page with purchase history",
+          capture: { path: "/settings/billing", assetPath: "src/assets/help/individual/73_billing.png" },
+        },
+        {
+          title: "If it is empty",
+          body:
+            "An empty page usually means you have not paid for anything directly. An assessment paid for by a practitioner or by your organisation does not appear here, because the payment was not yours.",
+        },
+      ],
+    },
+    {
       id: "share-with-a-practitioner",
       title: "Share results with a practitioner",
       summary: "Grant a practitioner or trusted person read access to your report.",
@@ -265,7 +417,7 @@ export const individualContent: HelpRoleContent = {
             "The list shows every active share. Click Revoke next to any name to remove their access immediately.",
           imageUrl: sharedWithMe.url,
           imageAlt: "Shared With Me listing current shares",
-          capture: { path: "/shared", assetPath: "src/assets/help/individual/50_shared_with_me.png" },
+          capture: { path: "/shared-with-me", assetPath: "src/assets/help/individual/50_shared_with_me.png" },
         },
       ],
     },
