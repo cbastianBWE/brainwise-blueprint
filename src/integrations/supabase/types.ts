@@ -22716,7 +22716,11 @@ export type Database = {
         }[]
       }
       bw_agent_resend_client_invitation: {
-        Args: { p_coach_client_id: string; p_ticket_id?: string }
+        Args: {
+          p_coach_client_id: string
+          p_dry_run?: boolean
+          p_ticket_id?: string
+        }
         Returns: Json
       }
       bw_agent_revoke_unclaimed_invite: {
