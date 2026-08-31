@@ -63,148 +63,223 @@
 </style>
 </head>
 <body>
-<main class="card" id="card" aria-live="polite">
-  <h1 id="title">Loading…</h1>
-  <p class="sub" id="sub"></p>
-</main>
+<div class="card" id="root" aria-live="polite"><p class="sub" id="boot">Loading…</p></div>
 <script>
 (function () {
+  "use strict";
+
   var ENDPOINT = "https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/agent-approve";
-  var card = document.getElementById("card");
-  var token = new URLSearchParams(window.location.search).get("t");
 
-  function clear() { while (card.firstChild) card.removeChild(card.firstChild); }
+  var root = document.getElementById("root");
+  var token = new URLSearchParams(window.location.search).get("t") || "";
 
-  function el(tag, cls, text) {
+  // Every value below comes from the database. It is built with textContent, never innerHTML,
+  // so a proposal containing SQL or angle brackets renders as text and cannot inject markup.
+  function el(tag, text, cls) {
     var n = document.createElement(tag);
+    if (text !== undefined && text !== null && text !== "") n.textContent = String(text);
     if (cls) n.className = cls;
-    if (text != null) n.textContent = String(text);
     return n;
   }
 
-  function message(title, sub) {
+  function clear() { while (root.firstChild) root.removeChild(root.firstChild); }
+
+  function simple(heading, sub, headingClass) {
     clear();
-    card.appendChild(el("h1", null, title));
-    if (sub) card.appendChild(el("p", "sub", sub));
+    root.appendChild(el("h1", heading, headingClass || ""));
+    if (sub) root.appendChild(el("p", sub, "sub"));
   }
 
-  if (!token) {
-    message("Nothing to decide", "This link is missing its approval token.");
-    return;
+  var KIND_LABEL = {
+    sql: "Database change",
+    lovable: "Frontend change",
+    config: "Configuration change",
+    investigate: "Investigation"
+  };
+
+  function field(dl, term, value, cls) {
+    if (value === undefined || value === null || value === "") return;
+    dl.appendChild(el("dt", term));
+    dl.appendChild(el("dd", value, cls || ""));
   }
 
-  function api(method, params, payload) {
-    var url = ENDPOINT + "?" + new URLSearchParams(params).toString();
-    var opts = { method: method, headers: { "Accept": "application/json" } };
-    if (payload) {
-      opts.headers["Content-Type"] = "application/json";
-      opts.body = JSON.stringify(payload);
+  function render(payload) {
+    var p = payload.proposal;
+
+    if (!payload.decidable) {
+      if (payload.expired) {
+        simple(p.title, "This expired and can no longer be decided. If it still matters the " +
+          "agent will raise it again.");
+      } else {
+        simple(p.title, "Already " + p.status + ". Nothing further to do.");
+      }
+      return;
     }
-    return fetch(url, opts).then(function (r) {
-      return r.text().then(function (text) {
-        var data = null;
-        try { data = JSON.parse(text); } catch (e) { data = null; }
-        return { ok: r.ok, data: data };
-      });
-    });
-  }
 
-
-  function field(dl, label, value, cls) {
-    if (value == null || value === "") return;
-    dl.appendChild(el("dt", null, label));
-    dl.appendChild(el("dd", cls || null, value));
-  }
-
-  function render(p) {
     clear();
-    card.appendChild(el("h1", null, p.title || "Proposed fix"));
-    var sub = el("p", "sub", p.summary || "Review the proposal below and choose an outcome.");
-    card.appendChild(sub);
-    if (p.status) card.appendChild(el("span", "tag", p.status));
+    root.appendChild(el("h1", p.title));
+
+    var sub = el("p", "", "sub");
+    if (p.ticket_title) sub.appendChild(document.createTextNode("On: " + p.ticket_title + " "));
+    if (p.remedy_kind) {
+      sub.appendChild(el("span", KIND_LABEL[p.remedy_kind] || p.remedy_kind, "tag"));
+    }
+    root.appendChild(sub);
 
     var dl = document.createElement("dl");
-    field(dl, "Area", p.area);
-    field(dl, "Requested by", p.requested_by);
-    field(dl, "Created", p.created_at);
-    field(dl, "Risk", p.risk, "risk");
-    field(dl, "Rationale", p.rationale);
-    card.appendChild(dl);
-
-    if (p.detail || p.diff || p.sql) {
-      card.appendChild(el("dt", null, "Proposed change"));
-      card.appendChild(el("pre", null, p.detail || p.diff || p.sql));
+    field(dl, "What is wrong", p.rationale);
+    if (p.instructions) {
+      dl.appendChild(el("dt", "Proposed fix"));
+      var dd = document.createElement("dd");
+      dd.appendChild(el("pre", p.instructions));
+      dl.appendChild(dd);
     }
+    field(dl, "What changes", p.impact);
+    field(dl, "Risk", p.risk, "risk");
+    field(dl, "How it gets undone", p.reversal);
+    root.appendChild(dl);
 
-    card.appendChild(document.createElement("hr"));
+    root.appendChild(document.createElement("hr"));
 
-    var label = el("label", null, "Comment (optional; required to request changes)");
-    label.setAttribute("for", "comment");
-    card.appendChild(label);
-    var ta = document.createElement("textarea");
-    ta.id = "comment";
-    card.appendChild(ta);
+    var label = el("label", "Want it done differently? Say so here, then press Approve with changes.");
+    label.setAttribute("for", "adjustment");
+    root.appendChild(label);
 
-    var hint = el("p", "hint", "");
+    var box = document.createElement("textarea");
+    box.id = "adjustment";
+    box.placeholder = "Optional. For example: do this but only for the affected rows, or wait until after the launch.";
+    root.appendChild(box);
+
+    var hint = el("p", "", "hint");
     hint.style.display = "none";
+    root.appendChild(hint);
 
-    var actions = el("div", "actions");
+    var actions = el("div", "", "actions");
     var buttons = [
-      { key: "approve", cls: "approve", text: "Approve" },
-      { key: "adjust", cls: "adjust", text: "Request changes" },
-      { key: "reject", cls: "reject", text: "Reject" }
-    ].map(function (b) {
-      var btn = el("button", b.cls, b.text);
-      btn.type = "button";
-      btn.addEventListener("click", function () { decide(b.key, b.text); });
-      actions.appendChild(btn);
-      return btn;
+      { text: "Approve", decision: "approved", cls: "approve" },
+      { text: "Approve with changes", decision: "adjusted", cls: "adjust" },
+      { text: "Reject", decision: "rejected", cls: "reject" }
+    ].map(function (spec) {
+      var b = el("button", spec.text, spec.cls);
+      b.type = "button";
+      b.addEventListener("click", function () { submit(spec.decision); });
+      actions.appendChild(b);
+      return b;
     });
-    card.appendChild(actions);
-    card.appendChild(hint);
-    card.appendChild(el("p", "note", "This link can be used once. Your decision is recorded immediately."));
+    root.appendChild(actions);
 
-    function decide(decision, verb) {
-      var comment = ta.value.trim();
-      if (decision === "adjust" && !comment) {
-        hint.textContent = "Please describe the changes you want before submitting.";
+    root.appendChild(el("p",
+      (p.kind === "remedy"
+        ? "Approving records your decision and keeps these exact instructions with the ticket. " +
+          "It does not run anything: the agent never changes code or runs a migration on its " +
+          "own, whatever is approved."
+        : "Approving records your decision. The agent carries it out on its next run, inside " +
+          "the same action ledger as everything else it does, so it stays reversible.") +
+      " This link works once.", "note"));
+
+    function submit(decision) {
+      var adjustment = box.value.trim();
+
+      if (decision === "adjusted" && adjustment.length < 3) {
+        hint.textContent = "Write what you want changed, or press Approve to take it as proposed.";
         hint.style.display = "";
-        ta.focus();
+        box.focus();
         return;
       }
       hint.style.display = "none";
       buttons.forEach(function (b) { b.disabled = true; });
-      api("POST", { t: token, action: decision }, { comment: comment })
-        .then(function (res) {
-          if (!res.ok) {
-            hint.textContent = (res.data && res.data.error) || "That did not go through. Please try again.";
-            hint.style.display = "";
-            buttons.forEach(function (b) { b.disabled = false; });
-            return;
+
+      fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ t: token, decision: decision, adjustment: adjustment })
+      })
+        .then(function (r) { return r.json().catch(function () { return { error: "bad_response" }; }); })
+        .then(function (d) {
+          if (d && d.ok) return done(d.status, d.title);
+          if (d && d.error === "already_decided") {
+            return simple("Already " + (d.status || "decided"),
+              "Someone, probably you, has already answered this one.");
           }
-          message("Recorded: " + verb.toLowerCase(),
-            (res.data && res.data.message) || "Thank you. The platform agent has been notified.");
+          if (d && d.error === "not_found") {
+            return simple("This proposal is not available",
+              "The link may already have been used.");
+          }
+          if (d && d.error === "expired") {
+            return simple("This proposal has expired",
+              "If it still matters the agent will raise it again.");
+          }
+          buttons.forEach(function (b) { b.disabled = false; });
+          hint.textContent = "That did not go through and nothing was changed. Try again.";
+          hint.style.display = "";
         })
         .catch(function () {
-          hint.textContent = "Could not reach the server. Check your connection and try again.";
-          hint.style.display = "";
           buttons.forEach(function (b) { b.disabled = false; });
+          hint.textContent = "Could not reach the server. Check your connection and try again. " +
+            "Nothing was changed.";
+          hint.style.display = "";
         });
     }
   }
 
-  api("GET", { t: token })
-    .then(function (res) {
-      if (!res.ok || !res.data || res.data.error) {
-        message("This proposal is not available",
-          (res.data && res.data.error) || "The link may have expired or already been used.");
-        return;
-      }
-      render(res.data.proposal || res.data);
+  function done(status, title) {
+    var heading = status === "rejected" ? "Rejected"
+      : status === "adjusted" ? "Approved with changes" : "Approved";
+    var body = status === "rejected"
+      ? "Nothing will be done. The agent will not raise this same proposal again."
+      : status === "adjusted"
+        ? "Your changes are recorded with the ticket, alongside the original proposal, so it " +
+          "is clear which words are yours."
+        : "Recorded against the ticket. Anything the agent is allowed to do itself will happen " +
+          "on its next run; anything that needs a code or migration change is now written down " +
+          "and waiting, so nobody has to work it out again.";
+    clear();
+    root.appendChild(el("h1", heading));
+    if (title) root.appendChild(el("p", title, "sub"));
+    root.appendChild(el("p", body));
+    root.appendChild(el("p", "You can close this page.", "note"));
+  }
+
+  function load() {
+    if (!token) {
+      simple("Nothing to decide", "This link is missing its token.", "bad");
+      return;
+    }
+    fetch(ENDPOINT + "?format=json&t=" + encodeURIComponent(token), {
+      method: "GET",
+      headers: { "Accept": "application/json" }
     })
-    .catch(function () {
-      message("Could not load this proposal", "Check your connection and reload the page.");
-    });
+      .then(function (r) { return r.json().catch(function () { return { error: "bad_response" }; }); })
+      .then(function (d) {
+        if (d && d.ok) return render(d);
+        if (d && d.error === "not_found") {
+          return simple("This proposal is not available",
+            "The link may be from an old digest, it may already have been used, or the " +
+            "proposal has been removed. The current list is in today's digest.");
+        }
+        if (d && d.error === "missing_token") {
+          return simple("Nothing to decide", "This link is missing its token.", "bad");
+        }
+        retryable("Something went wrong reading this proposal.");
+      })
+      .catch(function () {
+        retryable("Could not reach the server.");
+      });
+  }
+
+  function retryable(message) {
+    clear();
+    root.appendChild(el("h1", "Not loaded", "bad"));
+    root.appendChild(el("p", message + " Nothing has been decided.", "sub"));
+    var b = el("button", "Try again", "approve");
+    b.type = "button";
+    b.addEventListener("click", function () { simple("Loading…", ""); load(); });
+    var wrap = el("div", "", "actions");
+    wrap.appendChild(b);
+    root.appendChild(wrap);
+  }
+
+  load();
 })();
 </script>
 </body>
