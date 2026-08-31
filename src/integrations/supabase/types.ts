@@ -121,6 +121,36 @@ export type Database = {
           },
         ]
       }
+      agent_digest_runs: {
+        Row: {
+          dispatched: boolean
+          id: number
+          sent_at: string
+          subject: string | null
+          summary: Json
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          dispatched?: boolean
+          id?: number
+          sent_at?: string
+          subject?: string | null
+          summary?: Json
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          dispatched?: boolean
+          id?: number
+          sent_at?: string
+          subject?: string | null
+          summary?: Json
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       ai_authoring_context: {
         Row: {
           body_markdown: string
@@ -834,6 +864,141 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dimensions_public"
             referencedColumns: ["dimension_id"]
+          },
+        ]
+      }
+      api_clients: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          organization_id: string | null
+          rate_limit_per_min: number
+          revoked_at: string | null
+          scopes: string[]
+          total_requests: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          organization_id?: string | null
+          rate_limit_per_min?: number
+          revoked_at?: string | null
+          scopes?: string[]
+          total_requests?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          organization_id?: string | null
+          rate_limit_per_min?: number
+          revoked_at?: string | null
+          scopes?: string[]
+          total_requests?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "api_clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "api_clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_request_log: {
+        Row: {
+          api_client_id: string | null
+          duration_ms: number | null
+          id: number
+          ip: string | null
+          method: string | null
+          occurred_at: string
+          path: string | null
+          status_code: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          api_client_id?: string | null
+          duration_ms?: number | null
+          id?: number
+          ip?: string | null
+          method?: string | null
+          occurred_at?: string
+          path?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          api_client_id?: string | null
+          duration_ms?: number | null
+          id?: number
+          ip?: string | null
+          method?: string | null
+          occurred_at?: string
+          path?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_request_log_api_client_id_fkey"
+            columns: ["api_client_id"]
+            isOneToOne: false
+            referencedRelation: "api_clients"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -8265,6 +8430,27 @@ export type Database = {
         }
         Relationships: []
       }
+      http_request_labels: {
+        Row: {
+          created_at: string
+          method: string | null
+          request_id: number
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          method?: string | null
+          request_id: number
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          method?: string | null
+          request_id?: number
+          url?: string | null
+        }
+        Relationships: []
+      }
       impersonation_sessions: {
         Row: {
           audit_log_id: string | null
@@ -12900,6 +13086,128 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_agent_heartbeats: {
+        Row: {
+          created_at: string
+          id: number
+          label: string
+          observed_at: string
+          response_id: number | null
+          status_code: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          label: string
+          observed_at: string
+          response_id?: number | null
+          status_code: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          label?: string
+          observed_at?: string
+          response_id?: number | null
+          status_code?: number
+        }
+        Relationships: []
+      }
+      platform_agent_liveness_expectations: {
+        Row: {
+          is_active: boolean
+          label: string
+          max_silence: string
+          note: string | null
+          severity: string
+        }
+        Insert: {
+          is_active?: boolean
+          label: string
+          max_silence: string
+          note?: string | null
+          severity?: string
+        }
+        Update: {
+          is_active?: boolean
+          label?: string
+          max_silence?: string
+          note?: string | null
+          severity?: string
+        }
+        Relationships: []
+      }
+      platform_agent_proposals: {
+        Row: {
+          applied_at: string | null
+          apply_result: Json | null
+          created_at: string
+          decided_at: string | null
+          decided_via: string | null
+          expires_at: string
+          id: string
+          impact: string
+          kind: string
+          proposed_change: Json
+          rationale: string
+          reversal: string
+          risk: string
+          status: string
+          ticket_id: string | null
+          title: string
+          token_enc: string | null
+          token_hash: string
+        }
+        Insert: {
+          applied_at?: string | null
+          apply_result?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_via?: string | null
+          expires_at?: string
+          id?: string
+          impact: string
+          kind: string
+          proposed_change?: Json
+          rationale: string
+          reversal: string
+          risk: string
+          status?: string
+          ticket_id?: string | null
+          title: string
+          token_enc?: string | null
+          token_hash: string
+        }
+        Update: {
+          applied_at?: string | null
+          apply_result?: Json | null
+          created_at?: string
+          decided_at?: string | null
+          decided_via?: string | null
+          expires_at?: string
+          id?: string
+          impact?: string
+          kind?: string
+          proposed_change?: Json
+          rationale?: string
+          reversal?: string
+          risk?: string
+          status?: string
+          ticket_id?: string | null
+          title?: string
+          token_enc?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_agent_proposals_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_features: {
         Row: {
           category: string | null
@@ -12926,6 +13234,226 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      platform_ticket_actions: {
+        Row: {
+          action_code: string
+          detail: Json
+          id: string
+          outcome: string
+          performed_at: string
+          reversal_hint: string | null
+          reverted_at: string | null
+          reverted_by: string | null
+          subject_ref: string | null
+          ticket_id: string | null
+          ticket_type: string
+        }
+        Insert: {
+          action_code: string
+          detail?: Json
+          id?: string
+          outcome: string
+          performed_at?: string
+          reversal_hint?: string | null
+          reverted_at?: string | null
+          reverted_by?: string | null
+          subject_ref?: string | null
+          ticket_id?: string | null
+          ticket_type: string
+        }
+        Update: {
+          action_code?: string
+          detail?: Json
+          id?: string
+          outcome?: string
+          performed_at?: string
+          reversal_hint?: string | null
+          reverted_at?: string | null
+          reverted_by?: string | null
+          subject_ref?: string | null
+          ticket_id?: string | null
+          ticket_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_ticket_actions_reverted_by_fkey"
+            columns: ["reverted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_actions_reverted_by_fkey"
+            columns: ["reverted_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_actions_reverted_by_fkey"
+            columns: ["reverted_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_actions_reverted_by_fkey"
+            columns: ["reverted_by"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_actions_reverted_by_fkey"
+            columns: ["reverted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_actions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_ticket_learnings: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: string | null
+          facts: Json
+          id: string
+          observation_window: string
+          recurrence_checked_at: string | null
+          resolution: string
+          resolved_by_human: boolean
+          source_kind: string
+          superseded_at: string | null
+          ticket_id: string | null
+          ticket_type: string
+          title: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding?: string | null
+          facts?: Json
+          id?: string
+          observation_window?: string
+          recurrence_checked_at?: string | null
+          resolution: string
+          resolved_by_human: boolean
+          source_kind?: string
+          superseded_at?: string | null
+          ticket_id?: string | null
+          ticket_type: string
+          title?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          facts?: Json
+          id?: string
+          observation_window?: string
+          recurrence_checked_at?: string | null
+          resolution?: string
+          resolved_by_human?: boolean
+          source_kind?: string
+          superseded_at?: string | null
+          ticket_id?: string | null
+          ticket_type?: string
+          title?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_ticket_learnings_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_ticket_messages: {
+        Row: {
+          author_kind: string
+          author_user_id: string | null
+          body: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+        }
+        Insert: {
+          author_kind: string
+          author_user_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id: string
+        }
+        Update: {
+          author_kind?: string
+          author_user_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_ticket_messages_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_messages_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_messages_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_messages_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_messages_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_ticket_scan_state: {
         Row: {
@@ -12985,14 +13513,19 @@ export type Database = {
           created_at: string
           dedupe_key: string
           detail: Json
+          escalated_at: string | null
+          escalation_reason: string | null
           id: string
           is_backlog: boolean
           notified_at: string | null
+          origin: string
+          reported_by_user_id: string | null
           resolution: string | null
           resolution_note: string | null
           resolved_at: string | null
           resolved_by: string | null
           severity: string
+          source_fingerprint: string | null
           status: string
           subject_email: string | null
           subject_ref: string | null
@@ -13006,14 +13539,19 @@ export type Database = {
           created_at?: string
           dedupe_key: string
           detail?: Json
+          escalated_at?: string | null
+          escalation_reason?: string | null
           id?: string
           is_backlog?: boolean
           notified_at?: string | null
+          origin?: string
+          reported_by_user_id?: string | null
           resolution?: string | null
           resolution_note?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           severity: string
+          source_fingerprint?: string | null
           status?: string
           subject_email?: string | null
           subject_ref?: string | null
@@ -13027,14 +13565,19 @@ export type Database = {
           created_at?: string
           dedupe_key?: string
           detail?: Json
+          escalated_at?: string | null
+          escalation_reason?: string | null
           id?: string
           is_backlog?: boolean
           notified_at?: string | null
+          origin?: string
+          reported_by_user_id?: string | null
           resolution?: string | null
           resolution_note?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: string
+          source_fingerprint?: string | null
           status?: string
           subject_email?: string | null
           subject_ref?: string | null
@@ -13074,6 +13617,41 @@ export type Database = {
           {
             foreignKeyName: "platform_tickets_acknowledged_by_fkey"
             columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_reported_by_user_id_fkey"
+            columns: ["reported_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_reported_by_user_id_fkey"
+            columns: ["reported_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_reported_by_user_id_fkey"
+            columns: ["reported_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_reported_by_user_id_fkey"
+            columns: ["reported_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "platform_tickets_reported_by_user_id_fkey"
+            columns: ["reported_by_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -17658,6 +18236,63 @@ export type Database = {
           },
         ]
       }
+      server_failure_sweep_state: {
+        Row: {
+          last_id: number
+          last_seen: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          last_id?: number
+          last_seen?: string
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          last_id?: number
+          last_seen?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      server_failures: {
+        Row: {
+          detail: Json
+          fingerprint: string
+          id: number
+          label: string
+          message: string | null
+          occurred_at: string
+          recorded_at: string
+          source: string
+          status: string | null
+        }
+        Insert: {
+          detail?: Json
+          fingerprint: string
+          id?: number
+          label: string
+          message?: string | null
+          occurred_at: string
+          recorded_at?: string
+          source: string
+          status?: string | null
+        }
+        Update: {
+          detail?: Json
+          fingerprint?: string
+          id?: number
+          label?: string
+          message?: string | null
+          occurred_at?: string
+          recorded_at?: string
+          source?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       shared_credit_grants: {
         Row: {
           amount: number
@@ -21862,10 +22497,98 @@ export type Database = {
           section: string
         }[]
       }
+      bw_agent_next_tickets: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          detail: Json
+          id: string
+          last_touched_at: string
+          origin: string
+          severity: string
+          status: string
+          subject_email: string
+          subject_ref: string
+          subject_user_id: string
+          ticket_type: string
+          title: string
+        }[]
+      }
+      bw_agent_notify_practitioner: {
+        Args: { p_coach_client_id: string; p_ticket_id?: string }
+        Returns: Json
+      }
+      bw_agent_proposal_decide: {
+        Args: { p_decision: string; p_token: string; p_via?: string }
+        Returns: Json
+      }
+      bw_agent_proposal_peek: {
+        Args: { p_token: string }
+        Returns: {
+          expires_at: string
+          impact: string
+          proposal_id: string
+          rationale: string
+          reversal: string
+          risk: string
+          status: string
+          title: string
+        }[]
+      }
+      bw_agent_proposal_token: {
+        Args: { p_proposal_id: string }
+        Returns: string
+      }
+      bw_agent_propose: {
+        Args: {
+          p_impact: string
+          p_kind: string
+          p_proposed_change?: Json
+          p_rationale: string
+          p_reversal: string
+          p_risk: string
+          p_ticket_id?: string
+          p_title: string
+        }
+        Returns: {
+          proposal_id: string
+          token: string
+        }[]
+      }
+      bw_agent_revoke_unclaimed_invite: {
+        Args: {
+          p_coach_client_id: string
+          p_force?: boolean
+          p_ticket_id?: string
+        }
+        Returns: Json
+      }
+      bw_agent_weekly_room: {
+        Args: { p_action_code: string; p_per_week?: number }
+        Returns: boolean
+      }
       bw_all_subjects_consent: {
         Args: { p_audience: string; p_subject_ids: string[] }
         Returns: boolean
       }
+      bw_api_client_create: {
+        Args: {
+          p_name: string
+          p_organization_id?: string
+          p_rate_limit_per_min?: number
+          p_scopes?: string[]
+        }
+        Returns: {
+          api_client_id: string
+          api_key: string
+          key_prefix: string
+        }[]
+      }
+      bw_api_client_revoke: {
+        Args: { p_api_client_id: string }
+        Returns: undefined
+      }
+      bw_apply_agent_proposals: { Args: { p_limit?: number }; Returns: Json }
       bw_archive_report: {
         Args: { p_id: string; p_kind: string; p_reason: string }
         Returns: Json
@@ -21902,6 +22625,8 @@ export type Database = {
         Args: { p_kind: string; p_profile: string }
         Returns: boolean
       }
+      bw_check_agent_liveness: { Args: never; Returns: Json }
+      bw_check_watchdogs: { Args: never; Returns: number }
       bw_coach_can_access_my_relationship: { Args: never; Returns: boolean }
       bw_coach_client_coaching: {
         Args: { p_client_user_id: string }
@@ -21955,6 +22680,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      bw_expire_agent_proposals: { Args: never; Returns: number }
       bw_fire_paired_narrative: {
         Args: { p_profile: string; p_section: string }
         Returns: number
@@ -22122,6 +22848,21 @@ export type Database = {
         Args: { p_original: string; p_replacement: string }
         Returns: string
       }
+      bw_match_ticket_learnings: {
+        Args: {
+          p_limit?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+          p_ticket_type?: string
+        }
+        Returns: {
+          resolution: string
+          similarity: number
+          source_kind: string
+          ticket_type: string
+          title: string
+        }[]
+      }
       bw_my_coaching_notes: {
         Args: never
         Returns: {
@@ -22227,6 +22968,17 @@ export type Database = {
           wedged_contexts: string[]
         }[]
       }
+      bw_purge_api_request_log: { Args: never; Returns: number }
+      bw_purge_http_request_labels: { Args: never; Returns: number }
+      bw_raise_tickets_from_client_errors: {
+        Args: {
+          p_min_occurrences?: number
+          p_min_users?: number
+          p_window?: string
+        }
+        Returns: number
+      }
+      bw_raise_tickets_from_server_failures: { Args: never; Returns: number }
       bw_recommend_next_activities: {
         Args: {
           p_match_count?: number
@@ -22272,7 +23024,12 @@ export type Database = {
         Args: { p_id: string; p_kind: string }
         Returns: Json
       }
+      bw_run_ticket_agent: {
+        Args: { p_dry_run?: boolean; p_ticket_id?: string }
+        Returns: number
+      }
       bw_scan_platform_tickets: { Args: never; Returns: Json }
+      bw_send_agent_digest: { Args: never; Returns: Json }
       bw_set_client_walkthrough: {
         Args: { p_client_email: string; p_enabled: boolean }
         Returns: number
@@ -22301,6 +23058,7 @@ export type Database = {
         Args: { p_kind: string; p_profile: string; p_released: boolean }
         Returns: undefined
       }
+      bw_sweep_server_failures: { Args: never; Returns: number }
       bw_sync_event_teams_meeting: {
         Args: { p_action?: string; p_event_id: string }
         Returns: undefined
@@ -22312,6 +23070,84 @@ export type Database = {
           scores: number[]
         }[]
       }
+      bw_ticket_action_within_cap: {
+        Args: {
+          p_action_code: string
+          p_max_total: number
+          p_min_interval: string
+          p_subject_ref: string
+        }
+        Returns: boolean
+      }
+      bw_ticket_agent_acknowledge: {
+        Args: { p_ticket_id: string }
+        Returns: boolean
+      }
+      bw_ticket_agent_resolve_diagnostic: {
+        Args: { p_note: string; p_ticket_id: string }
+        Returns: boolean
+      }
+      bw_ticket_learning_queue: {
+        Args: { p_limit?: number }
+        Returns: {
+          content: string
+          facts: Json
+          resolution: string
+          source_kind: string
+          ticket_id: string
+          ticket_type: string
+          title: string
+        }[]
+      }
+      bw_ticket_learning_store: {
+        Args: {
+          p_content: string
+          p_embedding: string
+          p_facts: Json
+          p_resolution: string
+          p_source_kind?: string
+          p_ticket_id: string
+          p_ticket_type: string
+          p_title: string
+        }
+        Returns: string
+      }
+      bw_ticket_post_message: {
+        Args: {
+          p_author_kind?: string
+          p_body: string
+          p_is_internal?: boolean
+          p_ticket_id: string
+        }
+        Returns: {
+          author_kind: string
+          author_user_id: string | null
+          body: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          ticket_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_ticket_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      bw_ticket_record_action: {
+        Args: {
+          p_action_code: string
+          p_detail?: Json
+          p_outcome: string
+          p_reversal_hint?: string
+          p_subject_ref?: string
+          p_ticket_id: string
+          p_ticket_type: string
+        }
+        Returns: string
+      }
+      bw_verify_ticket_learnings: { Args: never; Returns: Json }
       bw_walkthrough_active_definition: {
         Args: never
         Returns: {
@@ -23997,6 +24833,10 @@ export type Database = {
         Returns: Json
       }
       mr_embed_activities: {
+        Args: { p_force?: boolean; p_limit?: number }
+        Returns: number
+      }
+      mr_embed_coaching_activities: {
         Args: { p_force?: boolean; p_limit?: number }
         Returns: number
       }
