@@ -170,6 +170,13 @@ export default function HelpWidget() {
         offer_report: !!res?.offer_report,
       });
       setView("answer");
+    } catch {
+      setAnswer({
+        answered: false,
+        message: "I could not reach the server. Check your connection and try again.",
+        offer_report: false,
+      });
+      setView("answer");
     } finally {
       setAsking(false);
     }
@@ -215,6 +222,8 @@ export default function HelpWidget() {
       setAnswer(null);
       await loadReports();
       setView("reports");
+    } catch {
+      toast.error("Could not send. Check your connection and try again.");
     } finally {
       setSendingReport(false);
     }
@@ -260,6 +269,8 @@ export default function HelpWidget() {
       }
       setReply("");
       await openThread(activeTicket);
+    } catch {
+      toast.error("Could not send. Check your connection and try again.");
     } finally {
       setReplying(false);
     }
