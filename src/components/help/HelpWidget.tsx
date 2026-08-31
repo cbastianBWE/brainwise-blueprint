@@ -115,11 +115,13 @@ export default function HelpWidget() {
   // Poll the report list only while the panel is open.
   useEffect(() => {
     if (!open) return;
+    loadReports();
     const id = window.setInterval(() => {
       loadReports();
     }, 30_000);
     return () => window.clearInterval(id);
   }, [open, loadReports]);
+
 
   const goHelp = () => {
     setOpen(false);
