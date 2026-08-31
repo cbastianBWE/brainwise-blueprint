@@ -206,32 +206,6 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "feedback-templates",
-      title: "Save feedback templates",
-      summary: "Reuse the same coaching feedback across multiple review panels.",
-      steps: [
-        {
-          title: "Open Feedback Templates",
-          body:
-            "In the sidebar, click Feedback Templates. Templates are grouped by review panel type (Written Summary, Skills Practice, etc.) and are private to you.",
-          imageUrl: feedbackTemplates.url,
-          imageAlt: "Feedback templates page grouped by review panel type",
-          capture: { path: "/coach/templates", assetPath: "src/assets/help/coach/20_feedback_templates.png" },
-          hotspots: [{ ...SIDEBAR.feedbackTemplates, label: "Click Feedback Templates" }],
-        },
-        {
-          title: "Create a new template",
-          body:
-            "Click New template on the panel type you want (for example Written Summary). Give it a name, write the reusable text, and save. It's now available every time you're leaving feedback on that panel type.",
-          imageUrl: feedbackTemplates.url,
-          imageAlt: "New template button on a review panel",
-          hotspots: [
-            { x: 55.0, y: 12.2, w: 13.5, h: 2.0, label: "New template" },
-          ],
-        },
-      ],
-    },
-    {
       id: "certification",
       title: "Track your certification",
       summary: "See your certification progress and next required steps.",
