@@ -523,7 +523,9 @@ export default function HelpWidget() {
               Browse all help guides →
             </button>
           </div>
+          </div>
         </SheetContent>
+
       </Sheet>
     </>
   );
