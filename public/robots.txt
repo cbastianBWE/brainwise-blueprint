@@ -1,17 +1,22 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /approve.html
 
 User-agent: Bingbot
 Allow: /
+Disallow: /approve.html
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /approve.html
 
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /approve.html
 
 User-agent: *
 Allow: /
+Disallow: /approve.html
 
 Sitemap: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/newsletter-sitemap
 Sitemap: https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/practitioner-sitemap
