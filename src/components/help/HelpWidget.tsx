@@ -197,6 +197,7 @@ export default function HelpWidget() {
     const body = reportText.trim();
     if (!body || sendingReport) return;
     setSendingReport(true);
+    let filed = false;
     try {
       const { data, error } = await (supabase.rpc as any)("bw_report_issue", {
         p_body: body,
@@ -216,6 +217,7 @@ export default function HelpWidget() {
         toast.error(res.detail || map[res.error] || "Something went wrong.");
         return;
       }
+      filed = true;
       toast.success("Sent.");
       setReportText("");
       setQuestion("");
@@ -223,11 +225,16 @@ export default function HelpWidget() {
       await loadReports();
       setView("reports");
     } catch {
-      toast.error("Could not send. Check your connection and try again.");
+      toast.error(
+        filed
+          ? "Sent, but the list did not refresh. Reopen Your reports to see it."
+          : "Could not send. Check your connection and try again.",
+      );
     } finally {
       setSendingReport(false);
     }
   };
+
 
   const openThread = async (ticketId: string) => {
     setActiveTicket(ticketId);
@@ -310,13 +317,10 @@ export default function HelpWidget() {
       </TooltipProvider>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          id={PANEL_ID}
-          side="right"
-          hideOverlay
-          className="z-40 w-full sm:max-w-md h-dvh flex flex-col gap-0 p-0"
-        >
+        <SheetContent id={PANEL_ID} side="right" hideOverlay className="z-40 p-0 sm:max-w-md">
+          <div className="flex h-full flex-col gap-0">
           <SheetHeader className="p-6 pb-4 border-b">
+
             <SheetTitle>Help</SheetTitle>
             <SheetDescription>Ask about anything in BrainWise.</SheetDescription>
             <div className="pt-2">
@@ -526,7 +530,9 @@ export default function HelpWidget() {
               Browse all help guides →
             </button>
           </div>
+          </div>
         </SheetContent>
+
       </Sheet>
     </>
   );
