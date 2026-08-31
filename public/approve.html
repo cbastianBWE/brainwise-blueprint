@@ -193,7 +193,7 @@
     }
   }
 
-  post({ token: token, action: "get" })
+  api("GET", { t: token })
     .then(function (res) {
       if (!res.ok || !res.data || res.data.error) {
         message("This proposal is not available",
