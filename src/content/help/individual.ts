@@ -207,6 +207,40 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
+      id: "your-360-feedback",
+      title: "Get 360 feedback from people around you",
+      summary: "Ask colleagues to describe how they see you, and read it back as themes rather than individual comments.",
+      steps: [
+        {
+          title: "Start it from a coaching activity",
+          body:
+            "A 360 is not a separate section. You start one inside a coaching activity: open My Coaching and go to How Others See You, in the Present area. It also appears inside Using Your Strengths if you have reached that one.",
+          capture: { path: "/coaching", assetPath: "src/assets/help/individual/45_my_coaching_360.png" },
+        },
+        {
+          title: "Nominate your raters",
+          body:
+            "You choose who to ask. Add their names and email addresses, and each one gets their own private link. Pick people who see different sides of your work rather than only those who will be kind.",
+        },
+        {
+          title: "While it is running",
+          body:
+            "You can see who has responded and who has not, but not what any individual said. That is deliberate: raters answer more honestly when they know their answers are not attributed.",
+        },
+        {
+          title: "Reading what comes back",
+          body:
+            "Feedback comes back grouped, not person by person, for the same reason. Where a group is small, answers may be combined further before you see them.",
+        },
+        {
+          title: "If not enough people reply",
+          body:
+            "A group with too few responses cannot be reported at all. If that happens, asking those people directly does more than another reminder from the system.",
+        },
+      ],
+    },
+    {
+
       id: "best-day-organizer",
       title: "Plan your day with the Best Day Organizer",
       summary: "A couple of minutes each morning, and the rest of the day has a shape.",
