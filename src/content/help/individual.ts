@@ -580,7 +580,37 @@ export const individualContent: HelpRoleContent = {
       ],
     },
     {
+      id: "signing-in-and-passwords",
+      title: "Change your password, or get back in",
+      summary: "What to do when you want a new password, and what to do when you cannot sign in at all.",
+      steps: [
+        {
+          title: "Changing your password while signed in",
+          body:
+            "Go to Settings and press Change Password. Nothing opens: BrainWise emails you a link instead, and you will see a short message saying the reset email has been sent. That is expected.",
+          imageUrl: settings.url,
+          imageAlt: "Settings page with the Change Password button",
+        },
+        {
+          title: "Finish it from the email",
+          body:
+            "Open the link in that email and you will land on a page headed Set New Password. Type the new password twice and save. The link stops working after a while, so if it has been sitting in your inbox for a day, press Change Password again for a fresh one.",
+        },
+        {
+          title: "If you cannot sign in at all",
+          body:
+            "On the sign-in screen, use Forgot your password? underneath the Log In button. It sends the same kind of link. You do not need to be signed in, which is the point.",
+        },
+        {
+          title: "If the email does not arrive",
+          body:
+            "Check the spam folder first. If it is not there, the address you are typing may not be the one on your account. Ask whoever invited you which address they used, or contact your practitioner or organisation administrator.",
+        },
+      ],
+    },
+    {
       id: "two-factor-and-trusted-devices",
+
       title: "Set up two-factor authentication",
       summary: "Add a second sign-in step and mark trusted browsers so you don't have to re-verify every time.",
       steps: [
