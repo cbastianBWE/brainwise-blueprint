@@ -23,6 +23,30 @@ export const individualContent: HelpRoleContent = {
     "You signed up on your own to take assessments and grow your self-awareness. These are the tasks people do most often.",
   guides: [
     {
+      id: "your-dashboard",
+      title: "Find your way around the dashboard",
+      summary: "What is on your home screen, and where each part of it leads.",
+      steps: [
+        {
+          title: "What you land on",
+          body:
+            "Your dashboard is the first thing you see when you sign in. It pulls together where you are: assessments you have finished, what is still open, and what is worth doing next.",
+          imageUrl: dashboard.url,
+          imageAlt: "Individual dashboard home screen",
+        },
+        {
+          title: "The sidebar is the map",
+          body:
+            "Everything else lives in the left-hand menu: your results, your development plan, My Coaching, Best Day, and anything shared with you. What appears there depends on your account, so not everyone sees the same list.",
+        },
+        {
+          title: "If something looks empty",
+          body:
+            "A section with nothing in it usually means there is nothing yet rather than something being broken. Results appear once an assessment is scored, and coaching activities appear once you have a profile to build them from.",
+        },
+      ],
+    },
+    {
       id: "take-an-assessment",
       title: "Take an assessment",
       summary: "Start a new assessment, work through it, and see your results the moment it finishes.",
