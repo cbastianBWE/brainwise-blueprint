@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>BrainWise approval</title>
+<style>
+  :root {
+    color-scheme: light;
+    --navy:#021F36; --ink:#1b1f24; --muted:#5b6470; --line:#e3e6ea;
+    --go:#0f766e; --warn:#92400e; --bad:#b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Montserrat, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background:#f6f7f9; margin:0; padding:24px 16px 48px; color:var(--ink); line-height:1.55;
+  }
+  .card {
+    max-width:680px; margin:0 auto; background:#fff; border:1px solid var(--line);
+    border-radius:12px; padding:24px 20px 28px;
+  }
+  h1 { font-size:20px; margin:0 0 4px; color:var(--navy); }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 20px; }
+  .tag {
+    display:inline-block; background:#eef2f7; color:#374151; border-radius:999px;
+    padding:2px 10px; font-size:12px; font-weight:600;
+  }
+  dl { margin:0; }
+  dt {
+    font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+    margin-top:18px; font-weight:600;
+  }
+  dd { margin:4px 0 0; }
+  dd.risk { border-left:3px solid #d97706; padding-left:12px; color:var(--warn); }
+  pre {
+    background:#0f172a; color:#e2e8f0; padding:14px 16px; border-radius:8px; overflow-x:auto;
+    font-size:12.5px; line-height:1.5; white-space:pre-wrap; word-break:break-word; margin:6px 0 0;
+  }
+  hr { border:0; border-top:1px solid #eceef1; margin:24px 0 0; }
+  label { display:block; font-size:13px; color:var(--muted); margin:20px 0 6px; }
+  textarea {
+    width:100%; font:inherit; font-size:15px; padding:10px 12px; border:1px solid #d1d5db;
+    border-radius:8px; min-height:92px; resize:vertical;
+  }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+  button {
+    font:inherit; font-size:15px; font-weight:600; padding:12px 22px; border-radius:8px;
+    border:1px solid transparent; cursor:pointer; min-height:46px;
+  }
+  button[disabled] { opacity:.55; cursor:default; }
+  .approve { background:var(--go); color:#fff; }
+  .adjust { background:#fff; color:var(--go); border-color:var(--go); }
+  .reject { background:#fff; color:#374151; border-color:#d1d5db; }
+  .note { color:var(--muted); font-size:12px; margin-top:20px; }
+  .bad { color:var(--bad); }
+  .hint { color:var(--bad); font-size:13px; margin:8px 0 0; }
+  @media (max-width: 420px) {
+    .actions { flex-direction:column; }
+    .actions button { width:100%; }
+  }
+</style>
+</head>
+<body>
+<main class="card" id="card" aria-live="polite">
+  <h1 id="title">Loading…</h1>
+  <p class="sub" id="sub"></p>
+</main>
+<script>
+(function () {
+  var ENDPOINT = "https://svprhtzawnbzmumxnhsq.supabase.co/functions/v1/agent-approve";
+  var card = document.getElementById("card");
+  var token = new URLSearchParams(window.location.search).get("t");
+
+  function clear() { while (card.firstChild) card.removeChild(card.firstChild); }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = String(text);
+    return n;
+  }
+
+  function message(title, sub) {
+    clear();
+    card.appendChild(el("h1", null, title));
+    if (sub) card.appendChild(el("p", "sub", sub));
+  }
+
+  if (!token) {
+    message("Nothing to decide", "This link is missing its approval token.");
+    return;
+  }
+
+  function post(payload) {
+    return fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (data) {
+        return { ok: r.ok, data: data };
+      });
+    });
+  }
+
+  function field(dl, label, value, cls) {
+    if (value == null || value === "") return;
+    dl.appendChild(el("dt", null, label));
+    dl.appendChild(el("dd", cls || null, value));
+  }
+
+  function render(p) {
+    clear();
+    card.appendChild(el("h1", null, p.title || "Proposed fix"));
+    var sub = el("p", "sub", p.summary || "Review the proposal below and choose an outcome.");
+    card.appendChild(sub);
+    if (p.status) card.appendChild(el("span", "tag", p.status));
+
+    var dl = document.createElement("dl");
+    field(dl, "Area", p.area);
+    field(dl, "Requested by", p.requested_by);
+    field(dl, "Created", p.created_at);
+    field(dl, "Risk", p.risk, "risk");
+    field(dl, "Rationale", p.rationale);
+    card.appendChild(dl);
+
+    if (p.detail || p.diff || p.sql) {
+      card.appendChild(el("dt", null, "Proposed change"));
+      card.appendChild(el("pre", null, p.detail || p.diff || p.sql));
+    }
+
+    card.appendChild(document.createElement("hr"));
+
+    var label = el("label", null, "Comment (optional; required to request changes)");
+    label.setAttribute("for", "comment");
+    card.appendChild(label);
+    var ta = document.createElement("textarea");
+    ta.id = "comment";
+    card.appendChild(ta);
+
+    var hint = el("p", "hint", "");
+    hint.style.display = "none";
+
+    var actions = el("div", "actions");
+    var buttons = [
+      { key: "approve", cls: "approve", text: "Approve" },
+      { key: "adjust", cls: "adjust", text: "Request changes" },
+      { key: "reject", cls: "reject", text: "Reject" }
+    ].map(function (b) {
+      var btn = el("button", b.cls, b.text);
+      btn.type = "button";
+      btn.addEventListener("click", function () { decide(b.key, b.text); });
+      actions.appendChild(btn);
+      return btn;
+    });
+    card.appendChild(actions);
+    card.appendChild(hint);
+    card.appendChild(el("p", "note", "This link can be used once. Your decision is recorded immediately."));
+
+    function decide(decision, verb) {
+      var comment = ta.value.trim();
+      if (decision === "adjust" && !comment) {
+        hint.textContent = "Please describe the changes you want before submitting.";
+        hint.style.display = "";
+        ta.focus();
+        return;
+      }
+      hint.style.display = "none";
+      buttons.forEach(function (b) { b.disabled = true; });
+      post({ token: token, decision: decision, comment: comment })
+        .then(function (res) {
+          if (!res.ok) {
+            hint.textContent = (res.data && res.data.error) || "That did not go through. Please try again.";
+            hint.style.display = "";
+            buttons.forEach(function (b) { b.disabled = false; });
+            return;
+          }
+          message("Recorded: " + verb.toLowerCase(),
+            (res.data && res.data.message) || "Thank you. The platform agent has been notified.");
+        })
+        .catch(function () {
+          hint.textContent = "Could not reach the server. Check your connection and try again.";
+          hint.style.display = "";
+          buttons.forEach(function (b) { b.disabled = false; });
+        });
+    }
+  }
+
+  post({ token: token, action: "get" })
+    .then(function (res) {
+      if (!res.ok || !res.data || res.data.error) {
+        message("This proposal is not available",
+          (res.data && res.data.error) || "The link may have expired or already been used.");
+        return;
+      }
+      render(res.data.proposal || res.data);
+    })
+    .catch(function () {
+      message("Could not load this proposal", "Check your connection and reload the page.");
+    });
+})();
+</script>
+</body>
+</html>
