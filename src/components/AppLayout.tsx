@@ -184,7 +184,9 @@ export default function AppLayout() {
             <PractitionerDirectoryPrompt />
           </main>
         </div>
+        <HelpWidget />
       </div>
     </SidebarProvider>
+
   );
 }
