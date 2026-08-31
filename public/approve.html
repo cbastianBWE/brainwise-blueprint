@@ -73,6 +73,18 @@
   var root = document.getElementById("root");
   var token = new URLSearchParams(window.location.search).get("t") || "";
 
+  // The build injects an analytics script that reports window.location.href on page load.
+  // The token in the query string is a bearer credential for approving a platform change, so
+  // it has no business in an analytics store. Take it out of the URL as soon as it is read.
+  // This script is inline and runs during parsing; the analytics script is deferred and waits
+  // a further 300ms, so it only ever sees the cleaned URL. The token stays in the variable
+  // above, so the page works normally until the tab is closed.
+  if (token && window.history && window.history.replaceState) {
+    try {
+      window.history.replaceState(null, "", window.location.pathname + "?opened=1");
+    } catch (e) { /* a browser that refuses this is no reason to fail the page */ }
+  }
+
   // Every value below comes from the database. It is built with textContent, never innerHTML,
   // so a proposal containing SQL or angle brackets renders as text and cannot inject markup.
   function el(tag, text, cls) {
@@ -242,7 +254,13 @@
 
   function load() {
     if (!token) {
-      simple("Nothing to decide", "This link is missing its token.", "bad");
+      if (new URLSearchParams(window.location.search).get("opened") === "1") {
+        simple("Open the link again",
+          "This page was already opened in this tab, and the one-time token is deliberately " +
+          "not kept in the address bar. Open the link from the email again to decide.");
+      } else {
+        simple("Nothing to decide", "This link is missing its token.", "bad");
+      }
       return;
     }
     fetch(ENDPOINT + "?format=json&t=" + encodeURIComponent(token), {
