@@ -197,6 +197,7 @@ export default function HelpWidget() {
     const body = reportText.trim();
     if (!body || sendingReport) return;
     setSendingReport(true);
+    let filed = false;
     try {
       const { data, error } = await (supabase.rpc as any)("bw_report_issue", {
         p_body: body,
@@ -216,6 +217,7 @@ export default function HelpWidget() {
         toast.error(res.detail || map[res.error] || "Something went wrong.");
         return;
       }
+      filed = true;
       toast.success("Sent.");
       setReportText("");
       setQuestion("");
@@ -223,11 +225,16 @@ export default function HelpWidget() {
       await loadReports();
       setView("reports");
     } catch {
-      toast.error("Could not send. Check your connection and try again.");
+      toast.error(
+        filed
+          ? "Sent, but the list did not refresh. Reopen Your reports to see it."
+          : "Could not send. Check your connection and try again.",
+      );
     } finally {
       setSendingReport(false);
     }
   };
+
 
   const openThread = async (ticketId: string) => {
     setActiveTicket(ticketId);
