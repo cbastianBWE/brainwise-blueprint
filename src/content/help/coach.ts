@@ -183,38 +183,7 @@ export const coachContent: HelpRoleContent = {
       ],
     },
     {
-      id: "run-a-360-for-a-client",
-      title: "Run a 360 for a client",
-      summary: "Collecting feedback about a client from the people around them.",
-      steps: [
-        {
-          title: "What a 360 is here",
-          body:
-            "A 360 gathers structured feedback about your client from raters they nominate: managers, peers, direct reports. It sits alongside their own assessment rather than replacing it.",
-        },
-        {
-          title: "Nominating raters",
-          body:
-            "Your client nominates the people who will give feedback. Each rater gets their own invitation link, and their answers are theirs alone.",
-        },
-        {
-          title: "While it is running",
-          body:
-            "You can see who has responded and who has not, without seeing what any individual rater said before the results are released.",
-        },
-        {
-          title: "Reading the result",
-          body:
-            "Feedback is reported by rater group, not by person, so that raters can be candid. Small groups may be combined for the same reason.",
-        },
-        {
-          title: "Chasing responses",
-          body:
-            "A 360 with too few responses in a group cannot be reported for that group. If a group is short, the useful move is your client asking directly rather than another reminder email.",
-        },
-      ],
-    },
-    {
+
       id: "coaching-plan-feedback",
       title: "Give feedback on a coaching plan",
       summary: "Tell the system when part of a generated plan does not fit the client.",
