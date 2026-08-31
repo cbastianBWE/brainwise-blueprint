@@ -10,6 +10,8 @@ import { CoachDisclosureGate } from "@/components/coach/CoachDisclosureGate";
 import { PractitionerDirectoryPrompt } from "@/components/coach/PractitionerDirectoryPrompt";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
+import HelpWidget from "@/components/help/HelpWidget";
+
 
 interface CouponData {
   stripe_coupon_id: string | null;
