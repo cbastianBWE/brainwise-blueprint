@@ -183,7 +183,127 @@ export default function HelpWidget() {
     navigate("/help");
   };
 
+  const askAdmin = async () => {
+    const q = question.trim();
+    if (q.length < 3 || asking) return;
+    setAsking(true);
+    setLastQuestion(q);
+    setAdminAnswer(null);
+    setChange(null);
+    setRunResult(null);
+    setExecutionId(null);
+    setUndoNote(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("support-bot", {
+        body: { question: q, route: window.location.pathname, mode: "admin" },
+      });
+      if (error) {
+        const status = (error as any)?.status ?? (error as any)?.context?.status;
+        setAdminAnswer({
+          mode: "admin",
+          ok: false,
+          message:
+            status === 401
+              ? "Your session has expired. Please reload the page and sign in again."
+              : status === 429
+                ? "You have asked a lot of questions in the last hour. Please try again shortly."
+                : "Something went wrong.",
+        });
+        setView("admin");
+        return;
+      }
+      const res = (data ?? {}) as AdminAnswer;
+      setAdminAnswer({
+        mode: "admin",
+        ok: !!res.ok,
+        kind: res.kind,
+        message: res.message ?? "Something went wrong.",
+        proposal_created: res.proposal_created,
+        proposal_error: res.proposal_error ?? null,
+        queries_run: res.queries_run,
+      });
+      if (res.ok && res.kind === "change" && res.change) setChange(res.change);
+      setView("admin");
+    } catch {
+      setAdminAnswer({
+        mode: "admin",
+        ok: false,
+        message: "I could not reach the server. Check your connection and try again.",
+      });
+      setView("admin");
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const runChange = async () => {
+    if (!change || runningChange) return;
+    setRunningChange(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("bw_admin_apply_content_change", {
+        p_table: change.table,
+        p_id: change.id,
+        p_column: change.column,
+        p_new_value: change.new_value,
+        p_json_path: change.json_path,
+        p_note: change.note ?? null,
+      });
+      if (error) {
+        setRunResult({ kind: "error", message: (error as any)?.message || "The change did not run." });
+        return;
+      }
+      const res = (data ?? {}) as any;
+      if (res?.error) {
+        setRunResult({
+          kind: "error",
+          message: res.detail ? `${res.error}: ${res.detail}` : String(res.error),
+        });
+        return;
+      }
+      if (res?.unchanged) {
+        setRunResult({ kind: "unchanged" });
+        return;
+      }
+      setExecutionId(res?.execution_id ?? null);
+      setRunResult({ kind: "ok", executionId: res?.execution_id ?? "" });
+    } catch (e) {
+      setRunResult({
+        kind: "error",
+        message: (e as Error)?.message || "Could not reach the server. Nothing was changed.",
+      });
+    } finally {
+      setRunningChange(false);
+    }
+  };
+
+  const undoChange = async () => {
+    if (!executionId || undoing) return;
+    setUndoing(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("bw_admin_revert_execution", {
+        p_execution_id: executionId,
+      });
+      if (error) {
+        setUndoNote((error as any)?.message || "The undo did not run.");
+        return;
+      }
+      const res = (data ?? {}) as any;
+      if (res?.error) {
+        setUndoNote(res.detail ? `${res.error}: ${res.detail}` : String(res.error));
+        return;
+      }
+      setUndoNote("Undone.");
+      setExecutionId(null);
+    } catch {
+      setUndoNote("Could not reach the server. Nothing was undone.");
+    } finally {
+      setUndoing(false);
+    }
+  };
+
   const ask = async () => {
+    if (isAdmin && mode === "diagnose") return askAdmin();
+
     const q = question.trim();
     if (q.length < 3 || asking) return;
     setAsking(true);
