@@ -618,6 +618,116 @@ export default function HelpWidget() {
                 </div>
               )}
 
+              {view === "admin" && adminAnswer && (
+                <div className="space-y-4">
+                  <div aria-live="polite" className="space-y-3">
+                    <Paragraphs text={adminAnswer.message} />
+                  </div>
+
+                  {adminAnswer.ok && adminAnswer.kind === "frontend" && (
+                    <p className="text-sm text-muted-foreground">
+                      {adminAnswer.proposal_created
+                        ? "A proposal is in the approvals queue and will appear in the next digest."
+                        : `The proposal could not be recorded. ${adminAnswer.proposal_error ?? ""}`}
+                    </p>
+                  )}
+
+                  {typeof adminAnswer.queries_run === "number" && (
+                    <p className="text-xs text-muted-foreground">
+                      {adminAnswer.queries_run} database queries
+                    </p>
+                  )}
+
+                  {change && (
+                    <div className="rounded-md border p-3 space-y-2 overflow-hidden">
+                      <p className="text-xs text-muted-foreground">
+                        Table: <span className="text-foreground">{change.table}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Row id: <span className="text-foreground break-all">{change.id}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Column:{" "}
+                        <span className="text-foreground break-all">
+                          {change.column}
+                          {change.json_path?.length ? ` · ${change.json_path.join(".")}` : ""}
+                        </span>
+                      </p>
+                      <div className="max-w-full overflow-x-auto rounded bg-muted p-2">
+                        <pre className="text-xs whitespace-pre">
+                          {JSON.stringify(change.new_value, null, 2)}
+                        </pre>
+                      </div>
+                      {change.note && (
+                        <p className="text-xs text-muted-foreground">Note: {change.note}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <Button size="sm" onClick={runChange} disabled={runningChange}>
+                          {runningChange && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <span>Run this change</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={runningChange}
+                          onClick={() => {
+                            setChange(null);
+                            setAdminAnswer(null);
+                            setRunResult(null);
+                            setView("ask");
+                          }}
+                        >
+                          Discard
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        This writes to the live database. It is recorded and can be undone.
+                      </p>
+                    </div>
+                  )}
+
+                  {runResult && (
+                    <div aria-live="polite" className="space-y-2">
+                      {runResult.kind === "ok" && (
+                        <>
+                          <p className="text-sm">The change was applied.</p>
+                          {executionId && (
+                            <Button size="sm" variant="outline" onClick={undoChange} disabled={undoing}>
+                              {undoing && <Loader2 className="h-4 w-4 animate-spin" />}
+                              <span>Undo</span>
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {runResult.kind === "unchanged" && (
+                        <p className="text-sm">The value was already what was asked for.</p>
+                      )}
+                      {runResult.kind === "error" && (
+                        <p className="text-sm text-destructive break-words">{runResult.message}</p>
+                      )}
+                      {undoNote && <p className="text-sm text-muted-foreground">{undoNote}</p>}
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setAdminAnswer(null);
+                        setChange(null);
+                        setView("ask");
+                      }}
+                    >
+                      Ask another
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+
+
               {view === "report" && (
                 <div className="space-y-3">
                   <Textarea
