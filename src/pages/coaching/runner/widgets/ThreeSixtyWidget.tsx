@@ -315,9 +315,26 @@ export function ThreeSixtyWidget({
     );
   }
 
+  // The gate. No decline button: leaving the activity is the way out.
+  if (disclosure) {
+    return (
+      <Card className="space-y-4 p-4">
+        <h3 className="text-base font-semibold">Before you start your 360</h3>
+        <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground">
+          <ReactMarkdown>{disclosure.bodyMarkdown}</ReactMarkdown>
+        </div>
+        <Button type="button" onClick={acceptDisclosure} disabled={busy}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          I understand
+        </Button>
+      </Card>
+    );
+  }
+
   if (!cycleId || !progress?.found) {
     return <p className="text-sm text-muted-foreground">Your 360 could not be opened right now.</p>;
   }
+
 
   const status = progress.status;
   const summarised = !!progress.summary_generated_at;
