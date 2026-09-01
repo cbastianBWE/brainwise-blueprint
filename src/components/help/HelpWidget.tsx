@@ -516,6 +516,36 @@ export default function HelpWidget() {
             <div className="p-6 space-y-4">
               {view === "ask" && (
                 <div className="space-y-3">
+                  {isAdmin && (
+                    <div
+                      role="radiogroup"
+                      aria-label="Answer mode"
+                      className="inline-flex rounded-md border p-1 gap-1"
+                    >
+                      {(
+                        [
+                          ["guides", "Help guides"],
+                          ["diagnose", "Diagnose"],
+                        ] as const
+                      ).map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          role="radio"
+                          aria-checked={mode === val}
+                          onClick={() => setMode(val)}
+                          className={cn(
+                            "rounded px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            mode === val
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <Textarea
                     rows={3}
                     value={question}
@@ -535,9 +565,16 @@ export default function HelpWidget() {
                     <span>Send</span>
                   </Button>
                   <div aria-live="polite" aria-busy={asking} className="min-h-[1rem]">
-                    {asking && <span className="sr-only">Thinking…</span>}
+                    {asking && (
+                      <span className="text-sm text-muted-foreground">
+                        {isAdmin && mode === "diagnose"
+                          ? "Looking at the database…"
+                          : "Thinking…"}
+                      </span>
+                    )}
                   </div>
                 </div>
+
               )}
 
               {view === "answer" && answer && (
