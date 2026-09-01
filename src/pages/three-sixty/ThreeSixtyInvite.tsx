@@ -175,13 +175,18 @@ export default function ThreeSixtyInvite() {
           </h1>
           <p className="text-sm text-muted-foreground">
             There {info.question_count === 1 ? "is" : "are"} {info.question_count ?? ""} question
-            {info.question_count === 1 ? "" : "s"}. {subject} will read the themes across everyone who
-            answered. They will not see your name against anything you say.
+            {info.question_count === 1 ? "" : "s"}.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Your answers are never shown to anyone on their own. They are grouped with everyone
+            else's and only the themes come back. {subject} will see those themes, and so will
+            their BrainWise practitioner if they have one. Nobody sees who said what.
           </p>
           <p className="text-sm text-muted-foreground">
             You need an account so that your answers can be saved and so that nobody can answer twice.
           </p>
         </Card>
+
 
         {checkEmail ? (
           <Card className="space-y-2 p-6">

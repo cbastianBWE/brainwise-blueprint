@@ -22006,6 +22006,10 @@ export type Database = {
           out_ref_path: string
         }[]
       }
+      accept_client_360_disclosure: {
+        Args: { p_version_hash: string; p_version_id: string }
+        Returns: Json
+      }
       accept_client_coaching_disclosure: {
         Args: { p_version_hash: string; p_version_id: string }
         Returns: Json
@@ -24285,6 +24289,7 @@ export type Database = {
           out_user_id: string
         }[]
       }
+      get_client_360_disclosure_status: { Args: never; Returns: Json }
       get_client_coaching_disclosure_status: { Args: never; Returns: Json }
       get_coach_disclosure_status: { Args: never; Returns: Json }
       get_content_item_for_viewer: {

@@ -4,7 +4,9 @@
 // Who answered is never shown. Counts only.
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, Send, Trash2, Users, Clock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -66,7 +68,13 @@ export function ThreeSixtyWidget({
   const [selfSubmitted, setSelfSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [disclosure, setDisclosure] = useState<{
+    versionId: string;
+    versionHash: string;
+    bodyMarkdown: string;
+  } | null>(null);
   const [form, setForm] = useState({ full_name: "", email: "", role: "", relationship: "" });
+
 
   const refresh = useCallback(
     async (id: string) => {
@@ -93,33 +101,83 @@ export function ThreeSixtyWidget({
     [],
   );
 
+  // The gate arrives as data, not as a Supabase error. Without this branch the
+  // widget would render nothing at all once the disclosure is armed.
+  const startCycle = useCallback(async (): Promise<boolean> => {
+    const { data, error } = await supabase.rpc("bw_360_start_cycle");
+    if (error) {
+      toast.error("Your 360 could not be started.");
+      return false;
+    }
+    const started = (data || {}) as unknown as {
+      cycle_id?: string;
+      credits?: number;
+      error?: string;
+      version_id?: string;
+      version_hash?: string;
+      body_markdown?: string;
+    };
+    if (started.error === "disclosure_required" && started.version_id && started.version_hash) {
+      setDisclosure({
+        versionId: started.version_id,
+        versionHash: started.version_hash,
+        bodyMarkdown: started.body_markdown ?? "",
+      });
+      return false;
+    }
+    setDisclosure(null);
+    if (typeof started.credits === "number") setCredits(started.credits);
+    const id = started.cycle_id;
+    if (!id) return false;
+    setCycleId(id);
+    await refresh(id);
+    return true;
+  }, [refresh]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("bw_360_start_cycle");
-      if (cancelled) return;
-      if (error) {
-        toast.error("Your 360 could not be started.");
-        setLoading(false);
-        return;
-      }
-      const started = (data || {}) as unknown as { cycle_id?: string; credits?: number };
-      const id = started.cycle_id;
-      if (typeof started.credits === "number") setCredits(started.credits);
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-      setCycleId(id);
-
-      await refresh(id);
+      await startCycle();
       if (!cancelled) setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId, refresh]);
+  }, [userId, startCycle]);
+
+  const acceptDisclosure = async () => {
+    if (!disclosure) return;
+    setBusy(true);
+    const { data, error } = await supabase.rpc("accept_client_360_disclosure" as never, {
+      p_version_id: disclosure.versionId,
+      p_version_hash: disclosure.versionHash,
+    } as never);
+    if (error) {
+      setBusy(false);
+      toast.error("That could not be recorded just now.");
+      return;
+    }
+    const res = (data || {}) as { success?: boolean; error?: string };
+    if (res.error === "version_mismatch") {
+      toast.info("This notice has been updated. Please read it again.");
+      setLoading(true);
+      await startCycle();
+      setLoading(false);
+      setBusy(false);
+      return;
+    }
+    if (!res.success) {
+      setBusy(false);
+      toast.error("That could not be recorded just now.");
+      return;
+    }
+    setLoading(true);
+    await startCycle();
+    setLoading(false);
+    setBusy(false);
+  };
+
 
   const addRater = async () => {
     if (!cycleId) return;
@@ -259,9 +317,26 @@ export function ThreeSixtyWidget({
     );
   }
 
+  // The gate. No decline button: leaving the activity is the way out.
+  if (disclosure) {
+    return (
+      <Card className="space-y-4 p-4">
+        <h3 className="text-base font-semibold">Before you start your 360</h3>
+        <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground">
+          <ReactMarkdown>{disclosure.bodyMarkdown}</ReactMarkdown>
+        </div>
+        <Button type="button" onClick={acceptDisclosure} disabled={busy}>
+          {busy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          I understand
+        </Button>
+      </Card>
+    );
+  }
+
   if (!cycleId || !progress?.found) {
     return <p className="text-sm text-muted-foreground">Your 360 could not be opened right now.</p>;
   }
+
 
   const status = progress.status;
   const summarised = !!progress.summary_generated_at;
