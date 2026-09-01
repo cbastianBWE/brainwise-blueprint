@@ -104,6 +104,40 @@ export default function HelpWidget() {
   const [reply, setReply] = useState("");
   const [replying, setReplying] = useState(false);
 
+  // Super-admin diagnostic mode (component state only).
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminChecked, setAdminChecked] = useState(false);
+  const [mode, setMode] = useState<"guides" | "diagnose">("diagnose");
+  const [adminAnswer, setAdminAnswer] = useState<AdminAnswer | null>(null);
+  const [change, setChange] = useState<AdminChange | null>(null);
+  const [runningChange, setRunningChange] = useState(false);
+  const [runResult, setRunResult] = useState<
+    { kind: "ok"; executionId: string } | { kind: "unchanged" } | { kind: "error"; message: string } | null
+  >(null);
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [undoing, setUndoing] = useState(false);
+  const [undoNote, setUndoNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || adminChecked || !user) return;
+    let cancelled = false;
+    (supabase.rpc as any)("bw_am_i_super_admin")
+      .then(({ data, error }: any) => {
+        if (cancelled) return;
+        setIsAdmin(!error && data === true);
+        setAdminChecked(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setIsAdmin(false);
+        setAdminChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, adminChecked, user]);
+
+
   const loadReports = useCallback(async () => {
     const { data, error } = await (supabase.rpc as any)("bw_my_reports");
     if (error) return null;
