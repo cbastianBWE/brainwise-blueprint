@@ -66,7 +66,13 @@ export function ThreeSixtyWidget({
   const [selfSubmitted, setSelfSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
+  const [disclosure, setDisclosure] = useState<{
+    versionId: string;
+    versionHash: string;
+    bodyMarkdown: string;
+  } | null>(null);
   const [form, setForm] = useState({ full_name: "", email: "", role: "", relationship: "" });
+
 
   const refresh = useCallback(
     async (id: string) => {
