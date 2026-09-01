@@ -39,7 +39,28 @@ type ReportRow = {
 
 type ThreadRow = { author_kind: string; body: string; created_at: string };
 
-type View = "ask" | "answer" | "report" | "reports" | "thread";
+type AdminChange = {
+  table: string;
+  id: string;
+  column: string;
+  json_path: string[] | null;
+  new_value: unknown;
+  note?: string | null;
+};
+
+type AdminAnswer = {
+  mode: "admin";
+  ok: boolean;
+  kind?: "answer" | "change" | "frontend";
+  message: string;
+  change?: AdminChange | null;
+  proposal_created?: boolean;
+  proposal_error?: string | null;
+  queries_run?: number;
+};
+
+type View = "ask" | "answer" | "report" | "reports" | "thread" | "admin";
+
 
 function Paragraphs({ text }: { text: string }) {
   return (
