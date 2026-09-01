@@ -93,33 +93,83 @@ export function ThreeSixtyWidget({
     [],
   );
 
+  // The gate arrives as data, not as a Supabase error. Without this branch the
+  // widget would render nothing at all once the disclosure is armed.
+  const startCycle = useCallback(async (): Promise<boolean> => {
+    const { data, error } = await supabase.rpc("bw_360_start_cycle");
+    if (error) {
+      toast.error("Your 360 could not be started.");
+      return false;
+    }
+    const started = (data || {}) as unknown as {
+      cycle_id?: string;
+      credits?: number;
+      error?: string;
+      version_id?: string;
+      version_hash?: string;
+      body_markdown?: string;
+    };
+    if (started.error === "disclosure_required" && started.version_id && started.version_hash) {
+      setDisclosure({
+        versionId: started.version_id,
+        versionHash: started.version_hash,
+        bodyMarkdown: started.body_markdown ?? "",
+      });
+      return false;
+    }
+    setDisclosure(null);
+    if (typeof started.credits === "number") setCredits(started.credits);
+    const id = started.cycle_id;
+    if (!id) return false;
+    setCycleId(id);
+    await refresh(id);
+    return true;
+  }, [refresh]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase.rpc("bw_360_start_cycle");
-      if (cancelled) return;
-      if (error) {
-        toast.error("Your 360 could not be started.");
-        setLoading(false);
-        return;
-      }
-      const started = (data || {}) as unknown as { cycle_id?: string; credits?: number };
-      const id = started.cycle_id;
-      if (typeof started.credits === "number") setCredits(started.credits);
-      if (!id) {
-        setLoading(false);
-        return;
-      }
-      setCycleId(id);
-
-      await refresh(id);
+      await startCycle();
       if (!cancelled) setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId, refresh]);
+  }, [userId, startCycle]);
+
+  const acceptDisclosure = async () => {
+    if (!disclosure) return;
+    setBusy(true);
+    const { data, error } = await supabase.rpc("accept_client_360_disclosure" as never, {
+      p_version_id: disclosure.versionId,
+      p_version_hash: disclosure.versionHash,
+    } as never);
+    if (error) {
+      setBusy(false);
+      toast.error("That could not be recorded just now.");
+      return;
+    }
+    const res = (data || {}) as { success?: boolean; error?: string };
+    if (res.error === "version_mismatch") {
+      toast.info("This notice has been updated. Please read it again.");
+      setLoading(true);
+      await startCycle();
+      setLoading(false);
+      setBusy(false);
+      return;
+    }
+    if (!res.success) {
+      setBusy(false);
+      toast.error("That could not be recorded just now.");
+      return;
+    }
+    setLoading(true);
+    await startCycle();
+    setLoading(false);
+    setBusy(false);
+  };
+
 
   const addRater = async () => {
     if (!cycleId) return;
