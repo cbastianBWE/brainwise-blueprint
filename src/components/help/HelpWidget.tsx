@@ -39,7 +39,28 @@ type ReportRow = {
 
 type ThreadRow = { author_kind: string; body: string; created_at: string };
 
-type View = "ask" | "answer" | "report" | "reports" | "thread";
+type AdminChange = {
+  table: string;
+  id: string;
+  column: string;
+  json_path: string[] | null;
+  new_value: unknown;
+  note?: string | null;
+};
+
+type AdminAnswer = {
+  mode: "admin";
+  ok: boolean;
+  kind?: "answer" | "change" | "frontend";
+  message: string;
+  change?: AdminChange | null;
+  proposal_created?: boolean;
+  proposal_error?: string | null;
+  queries_run?: number;
+};
+
+type View = "ask" | "answer" | "report" | "reports" | "thread" | "admin";
+
 
 function Paragraphs({ text }: { text: string }) {
   return (
@@ -82,6 +103,40 @@ export default function HelpWidget() {
   const [thread, setThread] = useState<ThreadRow[] | null>(null);
   const [reply, setReply] = useState("");
   const [replying, setReplying] = useState(false);
+
+  // Super-admin diagnostic mode (component state only).
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminChecked, setAdminChecked] = useState(false);
+  const [mode, setMode] = useState<"guides" | "diagnose">("diagnose");
+  const [adminAnswer, setAdminAnswer] = useState<AdminAnswer | null>(null);
+  const [change, setChange] = useState<AdminChange | null>(null);
+  const [runningChange, setRunningChange] = useState(false);
+  const [runResult, setRunResult] = useState<
+    { kind: "ok"; executionId: string } | { kind: "unchanged" } | { kind: "error"; message: string } | null
+  >(null);
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [undoing, setUndoing] = useState(false);
+  const [undoNote, setUndoNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open || adminChecked || !user) return;
+    let cancelled = false;
+    (supabase.rpc as any)("bw_am_i_super_admin")
+      .then(({ data, error }: any) => {
+        if (cancelled) return;
+        setIsAdmin(!error && data === true);
+        setAdminChecked(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setIsAdmin(false);
+        setAdminChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, adminChecked, user]);
+
 
   const loadReports = useCallback(async () => {
     const { data, error } = await (supabase.rpc as any)("bw_my_reports");
@@ -128,7 +183,127 @@ export default function HelpWidget() {
     navigate("/help");
   };
 
+  const askAdmin = async () => {
+    const q = question.trim();
+    if (q.length < 3 || asking) return;
+    setAsking(true);
+    setLastQuestion(q);
+    setAdminAnswer(null);
+    setChange(null);
+    setRunResult(null);
+    setExecutionId(null);
+    setUndoNote(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("support-bot", {
+        body: { question: q, route: window.location.pathname, mode: "admin" },
+      });
+      if (error) {
+        const status = (error as any)?.status ?? (error as any)?.context?.status;
+        setAdminAnswer({
+          mode: "admin",
+          ok: false,
+          message:
+            status === 401
+              ? "Your session has expired. Please reload the page and sign in again."
+              : status === 429
+                ? "You have asked a lot of questions in the last hour. Please try again shortly."
+                : "Something went wrong.",
+        });
+        setView("admin");
+        return;
+      }
+      const res = (data ?? {}) as AdminAnswer;
+      setAdminAnswer({
+        mode: "admin",
+        ok: !!res.ok,
+        kind: res.kind,
+        message: res.message ?? "Something went wrong.",
+        proposal_created: res.proposal_created,
+        proposal_error: res.proposal_error ?? null,
+        queries_run: res.queries_run,
+      });
+      if (res.ok && res.kind === "change" && res.change) setChange(res.change);
+      setView("admin");
+    } catch {
+      setAdminAnswer({
+        mode: "admin",
+        ok: false,
+        message: "I could not reach the server. Check your connection and try again.",
+      });
+      setView("admin");
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const runChange = async () => {
+    if (!change || runningChange) return;
+    setRunningChange(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("bw_admin_apply_content_change", {
+        p_table: change.table,
+        p_id: change.id,
+        p_column: change.column,
+        p_new_value: change.new_value,
+        p_json_path: change.json_path,
+        p_note: change.note ?? null,
+      });
+      if (error) {
+        setRunResult({ kind: "error", message: (error as any)?.message || "The change did not run." });
+        return;
+      }
+      const res = (data ?? {}) as any;
+      if (res?.error) {
+        setRunResult({
+          kind: "error",
+          message: res.detail ? `${res.error}: ${res.detail}` : String(res.error),
+        });
+        return;
+      }
+      if (res?.unchanged) {
+        setRunResult({ kind: "unchanged" });
+        return;
+      }
+      setExecutionId(res?.execution_id ?? null);
+      setRunResult({ kind: "ok", executionId: res?.execution_id ?? "" });
+    } catch (e) {
+      setRunResult({
+        kind: "error",
+        message: (e as Error)?.message || "Could not reach the server. Nothing was changed.",
+      });
+    } finally {
+      setRunningChange(false);
+    }
+  };
+
+  const undoChange = async () => {
+    if (!executionId || undoing) return;
+    setUndoing(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("bw_admin_revert_execution", {
+        p_execution_id: executionId,
+      });
+      if (error) {
+        setUndoNote((error as any)?.message || "The undo did not run.");
+        return;
+      }
+      const res = (data ?? {}) as any;
+      if (res?.error) {
+        setUndoNote(res.detail ? `${res.error}: ${res.detail}` : String(res.error));
+        return;
+      }
+      setUndoNote("Undone.");
+      setExecutionId(null);
+    } catch {
+      setUndoNote("Could not reach the server. Nothing was undone.");
+    } finally {
+      setUndoing(false);
+    }
+  };
+
   const ask = async () => {
+    if (isAdmin && mode === "diagnose") return askAdmin();
+
     const q = question.trim();
     if (q.length < 3 || asking) return;
     setAsking(true);
@@ -341,6 +516,36 @@ export default function HelpWidget() {
             <div className="p-6 space-y-4">
               {view === "ask" && (
                 <div className="space-y-3">
+                  {isAdmin && (
+                    <div
+                      role="radiogroup"
+                      aria-label="Answer mode"
+                      className="inline-flex rounded-md border p-1 gap-1"
+                    >
+                      {(
+                        [
+                          ["guides", "Help guides"],
+                          ["diagnose", "Diagnose"],
+                        ] as const
+                      ).map(([val, label]) => (
+                        <button
+                          key={val}
+                          type="button"
+                          role="radio"
+                          aria-checked={mode === val}
+                          onClick={() => setMode(val)}
+                          className={cn(
+                            "rounded px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            mode === val
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <Textarea
                     rows={3}
                     value={question}
@@ -360,9 +565,16 @@ export default function HelpWidget() {
                     <span>Send</span>
                   </Button>
                   <div aria-live="polite" aria-busy={asking} className="min-h-[1rem]">
-                    {asking && <span className="sr-only">Thinking…</span>}
+                    {asking && (
+                      <span className="text-sm text-muted-foreground">
+                        {isAdmin && mode === "diagnose"
+                          ? "Looking at the database…"
+                          : "Thinking…"}
+                      </span>
+                    )}
                   </div>
                 </div>
+
               )}
 
               {view === "answer" && answer && (
@@ -405,6 +617,116 @@ export default function HelpWidget() {
                   </div>
                 </div>
               )}
+
+              {view === "admin" && adminAnswer && (
+                <div className="space-y-4">
+                  <div aria-live="polite" className="space-y-3">
+                    <Paragraphs text={adminAnswer.message} />
+                  </div>
+
+                  {adminAnswer.ok && adminAnswer.kind === "frontend" && (
+                    <p className="text-sm text-muted-foreground">
+                      {adminAnswer.proposal_created
+                        ? "A proposal is in the approvals queue and will appear in the next digest."
+                        : `The proposal could not be recorded. ${adminAnswer.proposal_error ?? ""}`}
+                    </p>
+                  )}
+
+                  {typeof adminAnswer.queries_run === "number" && (
+                    <p className="text-xs text-muted-foreground">
+                      {adminAnswer.queries_run} database queries
+                    </p>
+                  )}
+
+                  {change && (
+                    <div className="rounded-md border p-3 space-y-2 overflow-hidden">
+                      <p className="text-xs text-muted-foreground">
+                        Table: <span className="text-foreground">{change.table}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Row id: <span className="text-foreground break-all">{change.id}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Column:{" "}
+                        <span className="text-foreground break-all">
+                          {change.column}
+                          {change.json_path?.length ? ` · ${change.json_path.join(".")}` : ""}
+                        </span>
+                      </p>
+                      <div className="max-w-full overflow-x-auto rounded bg-muted p-2">
+                        <pre className="text-xs whitespace-pre">
+                          {JSON.stringify(change.new_value, null, 2)}
+                        </pre>
+                      </div>
+                      {change.note && (
+                        <p className="text-xs text-muted-foreground">Note: {change.note}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        <Button size="sm" onClick={runChange} disabled={runningChange}>
+                          {runningChange && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <span>Run this change</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={runningChange}
+                          onClick={() => {
+                            setChange(null);
+                            setAdminAnswer(null);
+                            setRunResult(null);
+                            setView("ask");
+                          }}
+                        >
+                          Discard
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        This writes to the live database. It is recorded and can be undone.
+                      </p>
+                    </div>
+                  )}
+
+                  {runResult && (
+                    <div aria-live="polite" className="space-y-2">
+                      {runResult.kind === "ok" && (
+                        <>
+                          <p className="text-sm">The change was applied.</p>
+                          {executionId && (
+                            <Button size="sm" variant="outline" onClick={undoChange} disabled={undoing}>
+                              {undoing && <Loader2 className="h-4 w-4 animate-spin" />}
+                              <span>Undo</span>
+                            </Button>
+                          )}
+                        </>
+                      )}
+                      {runResult.kind === "unchanged" && (
+                        <p className="text-sm">The value was already what was asked for.</p>
+                      )}
+                      {runResult.kind === "error" && (
+                        <p className="text-sm text-destructive break-words">{runResult.message}</p>
+                      )}
+                      {undoNote && <p className="text-sm text-muted-foreground">{undoNote}</p>}
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setAdminAnswer(null);
+                        setChange(null);
+                        setView("ask");
+                      }}
+                    >
+                      Ask another
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+
 
               {view === "report" && (
                 <div className="space-y-3">

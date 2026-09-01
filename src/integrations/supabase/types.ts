@@ -13137,6 +13137,92 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_admin_queries: {
+        Row: {
+          actor_user_id: string
+          failed: boolean
+          id: string
+          ran_at: string
+          row_count: number | null
+          statement: string
+        }
+        Insert: {
+          actor_user_id: string
+          failed?: boolean
+          id?: string
+          ran_at?: string
+          row_count?: number | null
+          statement: string
+        }
+        Update: {
+          actor_user_id?: string
+          failed?: boolean
+          id?: string
+          ran_at?: string
+          row_count?: number | null
+          statement?: string
+        }
+        Relationships: []
+      }
+      platform_agent_executions: {
+        Row: {
+          actor_user_id: string
+          after_row: Json | null
+          applied_at: string
+          before_row: Json
+          id: string
+          json_path: string[] | null
+          note: string | null
+          reverted_at: string | null
+          reverted_by: string | null
+          status: string
+          target_column: string
+          target_id: string
+          target_table: string
+          ticket_id: string | null
+        }
+        Insert: {
+          actor_user_id: string
+          after_row?: Json | null
+          applied_at?: string
+          before_row: Json
+          id?: string
+          json_path?: string[] | null
+          note?: string | null
+          reverted_at?: string | null
+          reverted_by?: string | null
+          status?: string
+          target_column: string
+          target_id: string
+          target_table: string
+          ticket_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          after_row?: Json | null
+          applied_at?: string
+          before_row?: Json
+          id?: string
+          json_path?: string[] | null
+          note?: string | null
+          reverted_at?: string | null
+          reverted_by?: string | null
+          status?: string
+          target_column?: string
+          target_id?: string
+          target_table?: string
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_agent_executions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_agent_heartbeats: {
         Row: {
           created_at: string
@@ -22622,6 +22708,32 @@ export type Database = {
           section: string
         }[]
       }
+      bw_admin_apply_content_change: {
+        Args: {
+          p_column: string
+          p_id: string
+          p_json_path?: string[]
+          p_new_value: Json
+          p_note?: string
+          p_table: string
+          p_ticket_id?: string
+        }
+        Returns: Json
+      }
+      bw_admin_change_allowed_tables: { Args: never; Returns: string[] }
+      bw_admin_read_sql: {
+        Args: { p_limit?: number; p_sql: string }
+        Returns: Json
+      }
+      bw_admin_revert_execution: {
+        Args: { p_execution_id: string }
+        Returns: Json
+      }
+      bw_admin_schema_digest: { Args: { p_table_like?: string }; Returns: Json }
+      bw_agent_classify_report: {
+        Args: { p_kind: string; p_reason?: string; p_ticket_id: string }
+        Returns: Json
+      }
       bw_agent_close_invite_ticket: {
         Args: { p_coach_client_id: string; p_ticket_id: string }
         Returns: Json
@@ -22664,20 +22776,15 @@ export type Database = {
         }
         Returns: Json
       }
-      bw_agent_proposal_decide:
-        | {
-            Args: { p_decision: string; p_token: string; p_via?: string }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_adjustment?: string
-              p_decision: string
-              p_token: string
-              p_via: string
-            }
-            Returns: Json
-          }
+      bw_agent_proposal_decide: {
+        Args: {
+          p_adjustment?: string
+          p_decision: string
+          p_token: string
+          p_via?: string
+        }
+        Returns: Json
+      }
       bw_agent_proposal_peek: {
         Args: { p_token: string }
         Returns: {
@@ -22743,6 +22850,7 @@ export type Database = {
         Args: { p_audience: string; p_subject_ids: string[] }
         Returns: boolean
       }
+      bw_am_i_super_admin: { Args: never; Returns: boolean }
       bw_api_client_create: {
         Args: {
           p_name: string
@@ -23229,6 +23337,10 @@ export type Database = {
       bw_report_issue: {
         Args: { p_body: string; p_context?: Json; p_route?: string }
         Returns: Json
+      }
+      bw_report_outcome_to_user: {
+        Args: { p_outcome: string; p_ticket_id: string }
+        Returns: boolean
       }
       bw_report_thread: {
         Args: { p_ticket_id: string }
