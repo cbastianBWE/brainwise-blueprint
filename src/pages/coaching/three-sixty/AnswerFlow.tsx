@@ -587,7 +587,17 @@ export function AnswerFlow({
 
   return (
     <div className="space-y-6">
+      {/* The terms, stated before anyone answers. Not behind a disclosure. */}
+      <div className="rounded-md border bg-muted/30 p-4">
+        <p className="text-sm text-muted-foreground">
+          Your answers are never shown to anyone on their own. They are grouped with everyone
+          else's and only the themes come back. The person who asked you will see those themes,
+          and so will their BrainWise practitioner if they have one. Nobody sees who said what.
+        </p>
+      </div>
+
       {grouped.map((g) => (
+
         <div key={g.section} className="space-y-4">
           <h3 className="text-base font-semibold">{sectionHeading(g.section)}</h3>
           {g.items.map((q) => (
