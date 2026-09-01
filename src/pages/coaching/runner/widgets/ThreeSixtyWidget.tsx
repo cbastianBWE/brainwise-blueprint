@@ -4,7 +4,9 @@
 // Who answered is never shown. Counts only.
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, Send, Trash2, Users, Clock } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
