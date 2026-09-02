@@ -57,7 +57,13 @@ type AdminAnswer = {
   proposal_created?: boolean;
   proposal_error?: string | null;
   queries_run?: number;
+  lovable_prompt?: string | null;
+  lovable_prompt_id?: string | null;
+  files_read?: string[];
 };
+
+type EvidenceItem = { id: string; kind: "screenshot" | "console" | "network"; path: string | null };
+
 
 type View = "ask" | "answer" | "report" | "reports" | "thread" | "admin";
 
@@ -117,6 +123,20 @@ export default function HelpWidget() {
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [undoing, setUndoing] = useState(false);
   const [undoNote, setUndoNote] = useState<string | null>(null);
+
+  // Evidence attached during this panel session (diagnose mode only).
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteKind, setPasteKind] = useState<"console" | "network">("console");
+  const [attachingPaste, setAttachingPaste] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Never show a stale count: reset the session list whenever the panel opens.
+  useEffect(() => {
+    if (open) setEvidence([]);
+  }, [open]);
+
 
   useEffect(() => {
     if (!open || adminChecked || !user) return;
@@ -178,7 +198,107 @@ export default function HelpWidget() {
   }, [open, loadReports]);
 
 
+  const EVIDENCE_BUCKET = "diagnostic-attachments";
+
+  const uploadScreenshot = async (file: File) => {
+    if (!user || uploading) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("That image is over 10MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const extMap: Record<string, string> = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/webp": "webp",
+        "image/gif": "gif",
+      };
+      const ext = extMap[file.type] ?? "png";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, file, { contentType: file.type });
+      if (upErr) throw upErr;
+
+      const { data, error } = await (supabase.rpc as any)("bw_add_diagnostic_evidence", {
+        p_kind: "screenshot",
+        p_storage_path: path,
+        p_body: null,
+        p_route: window.location.pathname,
+      });
+      if (error) throw error;
+      const id = (data as any)?.id ?? (typeof data === "string" ? data : null);
+      if (!id) throw new Error("no id");
+      setEvidence((prev) => [...prev, { id: String(id), kind: "screenshot", path }]);
+    } catch {
+      toast.error("That did not attach. Nothing was saved.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const attachPaste = async () => {
+    const body = pasteText.trim();
+    if (!body || attachingPaste) return;
+    setAttachingPaste(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("bw_add_diagnostic_evidence", {
+        p_kind: pasteKind,
+        p_storage_path: null,
+        p_body: body,
+        p_route: window.location.pathname,
+      });
+      if (error) throw error;
+      const id = (data as any)?.id ?? (typeof data === "string" ? data : null);
+      if (!id) throw new Error("no id");
+      setEvidence((prev) => [...prev, { id: String(id), kind: pasteKind, path: null }]);
+      setPasteText("");
+    } catch {
+      toast.error("That did not attach. Nothing was saved.");
+    } finally {
+      setAttachingPaste(false);
+    }
+  };
+
+  const clearEvidence = async () => {
+    const items = evidence;
+    if (!items.length) return;
+    let failed = false;
+    try {
+      const ids = items.map((i) => i.id);
+      const { error } = await (supabase as any)
+        .from("platform_diagnostic_evidence")
+        .delete()
+        .in("id", ids);
+      if (error) failed = true;
+      const paths = items.map((i) => i.path).filter((p): p is string => !!p);
+      if (paths.length) {
+        const { error: rmErr } = await supabase.storage.from(EVIDENCE_BUCKET).remove(paths);
+        if (rmErr) failed = true;
+      }
+    } catch {
+      failed = true;
+    }
+    setEvidence([]);
+    if (failed) toast.error("Some attachments could not be removed.");
+  };
+
+  const evidenceSummary = () => {
+    const shots = evidence.filter((e) => e.kind === "screenshot").length;
+    const consoles = evidence.filter((e) => e.kind === "console").length;
+    const nets = evidence.filter((e) => e.kind === "network").length;
+    const parts: string[] = [];
+    if (shots) parts.push(`${shots} screenshot${shots > 1 ? "s" : ""}`);
+    if (consoles) parts.push(`${consoles} console capture${consoles > 1 ? "s" : ""}`);
+    if (nets) parts.push(`${nets} network capture${nets > 1 ? "s" : ""}`);
+    if (parts.length > 1) parts[parts.length - 1] = `and ${parts[parts.length - 1]}`;
+    return `${parts.join(parts.length > 2 ? ", " : " ")} attached`;
+  };
+
   const goHelp = () => {
+
     setOpen(false);
     navigate("/help");
   };
@@ -221,6 +341,10 @@ export default function HelpWidget() {
         proposal_created: res.proposal_created,
         proposal_error: res.proposal_error ?? null,
         queries_run: res.queries_run,
+        lovable_prompt: res.lovable_prompt ?? null,
+        lovable_prompt_id: res.lovable_prompt_id ?? null,
+        files_read: Array.isArray(res.files_read) ? res.files_read : [],
+
       });
       if (res.ok && res.kind === "change" && res.change) setChange(res.change);
       setView("admin");
@@ -546,6 +670,85 @@ export default function HelpWidget() {
                       ))}
                     </div>
                   )}
+
+                  {isAdmin && mode === "diagnose" && (
+                    <div className="rounded-md border p-3 space-y-3">
+                      <p className="text-xs font-medium text-muted-foreground">Attach evidence</p>
+
+                      <div className="space-y-1">
+                        <label
+                          htmlFor="bw-evidence-file"
+                          className="text-xs text-muted-foreground"
+                        >
+                          Screenshot
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            id="bw-evidence-file"
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            disabled={uploading}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) uploadScreenshot(f);
+                            }}
+                            className="text-xs file:mr-2 file:rounded file:border file:bg-muted file:px-2 file:py-1 file:text-xs"
+                          />
+                          {uploading && (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="bw-evidence-paste"
+                          className="text-xs text-muted-foreground"
+                        >
+                          Console or network output
+                        </label>
+                        <Textarea
+                          id="bw-evidence-paste"
+                          rows={3}
+                          value={pasteText}
+                          onChange={(e) => setPasteText(e.target.value)}
+                          placeholder="Paste console or network output from your browser's developer tools"
+                          disabled={attachingPaste}
+                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            aria-label="Capture type"
+                            value={pasteKind}
+                            onChange={(e) => setPasteKind(e.target.value as "console" | "network")}
+                            className="h-8 rounded-md border bg-background px-2 text-xs"
+                          >
+                            <option value="console">Console</option>
+                            <option value="network">Network</option>
+                          </select>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={attachPaste}
+                            disabled={uploading || attachingPaste || !pasteText.trim()}
+                          >
+                            {attachingPaste && <Loader2 className="h-4 w-4 animate-spin" />}
+                            <span>Attach</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      {evidence.length > 0 && (
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-xs text-muted-foreground">{evidenceSummary()}</span>
+                          <Button size="sm" variant="ghost" onClick={clearEvidence}>
+                            Clear
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <Textarea
                     rows={3}
                     value={question}
@@ -631,6 +834,40 @@ export default function HelpWidget() {
                         : `The proposal could not be recorded. ${adminAnswer.proposal_error ?? ""}`}
                     </p>
                   )}
+
+                  {adminAnswer.kind === "frontend" &&
+                    typeof adminAnswer.lovable_prompt === "string" &&
+                    adminAnswer.lovable_prompt.trim().length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Prompt for Lovable</p>
+                        <div className="max-h-64 overflow-auto rounded-md border bg-muted p-2">
+                          <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+                            {adminAnswer.lovable_prompt}
+                          </pre>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard
+                              .writeText(adminAnswer.lovable_prompt as string)
+                              .then(() => toast.success("Copied."))
+                              .catch(() =>
+                                toast.error("Could not copy. Select the text and copy it manually."),
+                              );
+                          }}
+                        >
+                          Copy prompt
+                        </Button>
+                      </div>
+                    )}
+
+                  {!!adminAnswer.files_read?.length && (
+                    <p className="text-xs text-muted-foreground break-all">
+                      Files read: {adminAnswer.files_read.join(", ")}
+                    </p>
+                  )}
+
 
                   {typeof adminAnswer.queries_run === "number" && (
                     <p className="text-xs text-muted-foreground">
