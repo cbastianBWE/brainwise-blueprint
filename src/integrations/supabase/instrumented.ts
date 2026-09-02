@@ -96,16 +96,66 @@ const instrumentedInvoke = (async (...args: unknown[]) => {
       const expected =
         typeof status === "number" && EXPECTED_INVOKE_STATUSES[name]?.includes(status);
       if (!expected) {
-        captureClientError({
-          source: "invoke",
-          operation: name,
-          errorCode: d.errorCode,
-          message: d.message,
-          status: d.status,
-          details: d.details,
-          hint: d.hint,
-        });
+        const record = (message: string) =>
+          captureClientError({
+            source: "invoke",
+            operation: name,
+            errorCode: d.errorCode,
+            message,
+            status: d.status,
+            details: d.details,
+            hint: d.hint,
+          });
+
+        // The real message from the function lives on error.context (a Response).
+        // Read a clone so the caller can still consume the body. Never await:
+        // the caller must not be delayed by the capture.
+        let started = false;
+        try {
+          const ctx = (res.error as any)?.context;
+          if (ctx && typeof ctx.clone === "function") {
+            const clone = ctx.clone();
+            if (clone && typeof clone.text === "function") {
+              started = true;
+              Promise.resolve(clone.text())
+                .then((raw: string) => {
+                  let message = d.message;
+                  const text = typeof raw === "string" ? raw.slice(0, 2000) : "";
+                  if (text) {
+                    let picked = "";
+                    try {
+                      const parsed = JSON.parse(text);
+                      if (parsed && typeof parsed === "object") {
+                        for (const key of ["error", "message", "detail"]) {
+                          const v = (parsed as any)[key];
+                          if (typeof v === "string" && v.trim()) {
+                            picked = v;
+                            break;
+                          }
+                        }
+                      }
+                    } catch {
+                      picked = text.trim();
+                    }
+                    if (picked) message = picked;
+                  }
+                  record(message);
+                })
+                .catch(() => {
+                  try {
+                    record(d.message);
+                  } catch {
+                    /* capture must never affect the caller */
+                  }
+                });
+            }
+          }
+        } catch {
+          started = false;
+        }
+        if (!started) record(d.message);
       }
+
       markCaptured(res.error);
     }
   } catch {
