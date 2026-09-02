@@ -561,6 +561,13 @@ export type Database = {
             foreignKeyName: "ai_image_generations_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "ai_image_generations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -2363,6 +2370,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "certification_paths"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certification_paths_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
           },
           {
             foreignKeyName: "certification_paths_thumbnail_asset_id_fkey"
@@ -5802,6 +5816,13 @@ export type Database = {
             foreignKeyName: "cohorts_welcome_attachment_asset_id_fkey"
             columns: ["welcome_attachment_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "cohorts_welcome_attachment_asset_id_fkey"
+            columns: ["welcome_attachment_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -6190,6 +6211,13 @@ export type Database = {
             foreignKeyName: "content_asset_refs_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "content_asset_refs_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -6372,6 +6400,13 @@ export type Database = {
           version_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "content_asset_versions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
           {
             foreignKeyName: "content_asset_versions_asset_id_fkey"
             columns: ["asset_id"]
@@ -6994,6 +7029,13 @@ export type Database = {
             foreignKeyName: "content_items_thumbnail_asset_id_fkey"
             columns: ["thumbnail_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "content_items_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -7413,6 +7455,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curricula_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
           },
           {
             foreignKeyName: "curricula_thumbnail_asset_id_fkey"
@@ -9241,6 +9290,13 @@ export type Database = {
             foreignKeyName: "lesson_audio_generations_asset_id_fkey"
             columns: ["asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "lesson_audio_generations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -10409,6 +10465,13 @@ export type Database = {
             foreignKeyName: "modules_thumbnail_asset_id_fkey"
             columns: ["thumbnail_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "modules_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -10876,6 +10939,13 @@ export type Database = {
             foreignKeyName: "newsletter_articles_cover_asset_id_fkey"
             columns: ["cover_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_cover_asset_id_fkey"
+            columns: ["cover_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -10913,6 +10983,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_articles_og_image_asset_id_fkey"
+            columns: ["og_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
           },
           {
             foreignKeyName: "newsletter_articles_og_image_asset_id_fkey"
@@ -13348,6 +13425,85 @@ export type Database = {
           },
         ]
       }
+      platform_diagnostic_evidence: {
+        Row: {
+          actor_user_id: string
+          body: string | null
+          captured_at: string | null
+          created_at: string
+          id: string
+          kind: string
+          route: string | null
+          storage_path: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          actor_user_id: string
+          body?: string | null
+          captured_at?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          route?: string | null
+          storage_path?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          body?: string | null
+          captured_at?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          route?: string | null
+          storage_path?: string | null
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_diagnostic_evidence_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_diagnostic_evidence_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_diagnostic_evidence_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_diagnostic_evidence_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "platform_diagnostic_evidence_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_diagnostic_evidence_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_email_suppression: {
         Row: {
           added_at: string
@@ -13395,6 +13551,85 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      platform_lovable_prompts: {
+        Row: {
+          created_at: string
+          created_by: string
+          files_cited: string[] | null
+          id: string
+          prompt: string
+          status: string
+          ticket_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          files_cited?: string[] | null
+          id?: string
+          prompt: string
+          status?: string
+          ticket_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          files_cited?: string[] | null
+          id?: string
+          prompt?: string
+          status?: string
+          ticket_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_lovable_prompts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_lovable_prompts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "platform_lovable_prompts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_lovable_prompts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "platform_lovable_prompts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_lovable_prompts_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "platform_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_ticket_actions: {
         Row: {
@@ -15319,6 +15554,13 @@ export type Database = {
             foreignKeyName: "quiz_answer_options_option_image_asset_id_fkey"
             columns: ["option_image_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "quiz_answer_options_option_image_asset_id_fkey"
+            columns: ["option_image_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -15552,6 +15794,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_question_image_asset_id_fkey"
+            columns: ["question_image_asset_id"]
+            isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
           },
           {
             foreignKeyName: "quiz_questions_question_image_asset_id_fkey"
@@ -18113,6 +18362,13 @@ export type Database = {
             foreignKeyName: "resources_content_asset_id_fkey"
             columns: ["content_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "resources_content_asset_id_fkey"
+            columns: ["content_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -18164,6 +18420,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "resource_tabs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_thumbnail_asset_id_fkey"
+            columns: ["thumbnail_asset_id"]
+            isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
           },
           {
             foreignKeyName: "resources_thumbnail_asset_id_fkey"
@@ -18427,8 +18690,10 @@ export type Database = {
           message: string | null
           occurred_at: string
           recorded_at: string
+          route: string | null
           source: string
           status: string | null
+          user_id: string | null
         }
         Insert: {
           detail?: Json
@@ -18438,8 +18703,10 @@ export type Database = {
           message?: string | null
           occurred_at: string
           recorded_at?: string
+          route?: string | null
           source: string
           status?: string | null
+          user_id?: string | null
         }
         Update: {
           detail?: Json
@@ -18449,10 +18716,48 @@ export type Database = {
           message?: string | null
           occurred_at?: string
           recorded_at?: string
+          route?: string | null
           source?: string
           status?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "server_failures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "server_failures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "server_failures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "server_failures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "server_failures_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shared_credit_grants: {
         Row: {
@@ -20870,6 +21175,13 @@ export type Database = {
             foreignKeyName: "users_avatar_asset_id_fkey"
             columns: ["avatar_asset_id"]
             isOneToOne: false
+            referencedRelation: "bw_archived_assets_missing_file"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "users_avatar_asset_id_fkey"
+            columns: ["avatar_asset_id"]
+            isOneToOne: false
             referencedRelation: "content_assets"
             referencedColumns: ["id"]
           },
@@ -21179,6 +21491,19 @@ export type Database = {
             referencedColumns: ["dimension_id"]
           },
         ]
+      }
+      bw_archived_assets_missing_file: {
+        Row: {
+          archive_reason: string | null
+          archived_at: string | null
+          asset_id: string | null
+          bucket: string | null
+          library_name: string | null
+          original_filename: string | null
+          path: string | null
+          size_bytes: number | null
+        }
+        Relationships: []
       }
       bw_walkthrough_usage: {
         Row: {
@@ -22712,6 +23037,16 @@ export type Database = {
           section: string
         }[]
       }
+      bw_add_diagnostic_evidence: {
+        Args: {
+          p_body?: string
+          p_kind: string
+          p_route?: string
+          p_storage_path?: string
+          p_ticket_id?: string
+        }
+        Returns: Json
+      }
       bw_admin_apply_content_change: {
         Args: {
           p_column: string
@@ -22725,6 +23060,10 @@ export type Database = {
         Returns: Json
       }
       bw_admin_change_allowed_tables: { Args: never; Returns: string[] }
+      bw_admin_read_function_source: {
+        Args: { p_name: string; p_part?: number }
+        Returns: Json
+      }
       bw_admin_read_sql: {
         Args: { p_limit?: number; p_sql: string }
         Returns: Json
@@ -22877,6 +23216,23 @@ export type Database = {
         Args: { p_id: string; p_kind: string; p_reason: string }
         Returns: Json
       }
+      bw_assets_due_for_archive_batch: {
+        Args: { p_limit?: number }
+        Returns: {
+          archive_reason: string
+          archived_at: string
+          asset_id: string
+          bucket: string
+          is_library_asset: boolean
+          library_name: string
+          mime_type: string
+          original_filename: string
+          orphan_records: number
+          path: string
+          size_bytes: number
+          total_due: number
+        }[]
+      }
       bw_can_generate_paired: {
         Args: { p_a: string; p_b: string; p_caller: string; p_mode: string }
         Returns: boolean
@@ -22969,7 +23325,12 @@ export type Database = {
         }
       }
       bw_digest_proposal_blocks: { Args: never; Returns: string }
+      bw_digest_user_report_blocks: { Args: never; Returns: string }
       bw_expire_agent_proposals: { Args: never; Returns: number }
+      bw_failure_fingerprint: {
+        Args: { p_label: string; p_message: string }
+        Returns: string
+      }
       bw_fire_paired_narrative: {
         Args: { p_profile: string; p_section: string }
         Returns: number
@@ -23307,6 +23668,10 @@ export type Database = {
         Returns: number
       }
       bw_raise_tickets_from_server_failures: { Args: never; Returns: number }
+      bw_recent_diagnostic_evidence: {
+        Args: { p_minutes?: number }
+        Returns: Json
+      }
       bw_recommend_next_activities: {
         Args: {
           p_match_count?: number
@@ -23329,6 +23694,25 @@ export type Database = {
           tier: string
           title: string
         }[]
+      }
+      bw_record_function_failure: {
+        Args: {
+          p_detail?: Json
+          p_label: string
+          p_message: string
+          p_route?: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
+      bw_record_lovable_prompt: {
+        Args: {
+          p_files_cited?: string[]
+          p_prompt: string
+          p_ticket_id?: string
+          p_title: string
+        }
+        Returns: Json
       }
       bw_relationship_pair_role: {
         Args: { p_relationship: string; p_user?: string }
@@ -23377,6 +23761,7 @@ export type Database = {
         Returns: number
       }
       bw_scan_platform_tickets: { Args: never; Returns: Json }
+      bw_scheduled_actor: { Args: never; Returns: string }
       bw_send_agent_digest: { Args: never; Returns: Json }
       bw_set_client_walkthrough: {
         Args: { p_client_email: string; p_enabled: boolean }
@@ -28103,12 +28488,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -28132,11 +28517,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -28157,11 +28542,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -28182,11 +28567,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -28199,11 +28584,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
