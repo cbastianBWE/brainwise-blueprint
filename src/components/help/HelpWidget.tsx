@@ -835,6 +835,40 @@ export default function HelpWidget() {
                     </p>
                   )}
 
+                  {adminAnswer.kind === "frontend" &&
+                    typeof adminAnswer.lovable_prompt === "string" &&
+                    adminAnswer.lovable_prompt.trim().length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Prompt for Lovable</p>
+                        <div className="max-h-64 overflow-auto rounded-md border bg-muted p-2">
+                          <pre className="text-xs font-mono whitespace-pre-wrap break-words">
+                            {adminAnswer.lovable_prompt}
+                          </pre>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard
+                              .writeText(adminAnswer.lovable_prompt as string)
+                              .then(() => toast.success("Copied."))
+                              .catch(() =>
+                                toast.error("Could not copy. Select the text and copy it manually."),
+                              );
+                          }}
+                        >
+                          Copy prompt
+                        </Button>
+                      </div>
+                    )}
+
+                  {!!adminAnswer.files_read?.length && (
+                    <p className="text-xs text-muted-foreground break-all">
+                      Files read: {adminAnswer.files_read.join(", ")}
+                    </p>
+                  )}
+
+
                   {typeof adminAnswer.queries_run === "number" && (
                     <p className="text-xs text-muted-foreground">
                       {adminAnswer.queries_run} database queries
