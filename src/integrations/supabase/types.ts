@@ -4225,6 +4225,13 @@ export type Database = {
             foreignKeyName: "coaching_activity_embeddings_activity_id_fkey"
             columns: ["activity_id"]
             isOneToOne: true
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_embeddings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
             referencedRelation: "coaching_activities"
             referencedColumns: ["id"]
           },
@@ -4233,6 +4240,118 @@ export type Database = {
             columns: ["activity_id"]
             isOneToOne: true
             referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_activity_recommendations: {
+        Row: {
+          allowed: boolean
+          batch_id: string
+          because_key: string | null
+          because_source: string | null
+          clicked_at: string | null
+          created_at: string
+          dismissed_at: string | null
+          has_written_reason: boolean
+          id: string
+          position: number
+          recommended_activity_id: string
+          similarity: number | null
+          user_id: string
+        }
+        Insert: {
+          allowed: boolean
+          batch_id: string
+          because_key?: string | null
+          because_source?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          has_written_reason: boolean
+          id?: string
+          position: number
+          recommended_activity_id: string
+          similarity?: number | null
+          user_id: string
+        }
+        Update: {
+          allowed?: boolean
+          batch_id?: string
+          because_key?: string | null
+          because_source?: string | null
+          clicked_at?: string | null
+          created_at?: string
+          dismissed_at?: string | null
+          has_written_reason?: boolean
+          id?: string
+          position?: number
+          recommended_activity_id?: string
+          similarity?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_activity_recommendations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_recommendation_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_recommended_activity_id_fkey"
+            columns: ["recommended_activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_recommended_activity_id_fkey"
+            columns: ["recommended_activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_recommended_activity_id_fkey"
+            columns: ["recommended_activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -4284,6 +4403,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_activity_sessions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
           {
             foreignKeyName: "coaching_activity_sessions_activity_id_fkey"
             columns: ["activity_id"]
@@ -4679,6 +4805,13 @@ export type Database = {
             foreignKeyName: "coaching_notes_activity_id_fkey"
             columns: ["activity_id"]
             isOneToOne: false
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_notes_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
             referencedRelation: "coaching_activities"
             referencedColumns: ["id"]
           },
@@ -4806,6 +4939,106 @@ export type Database = {
           },
         ]
       }
+      coaching_recommendation_batches: {
+        Row: {
+          created_at: string
+          id: string
+          ordinal: number
+          reasons_generated: boolean
+          requested_count: number
+          returned_count: number
+          session_id: string
+          source_activity_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordinal: number
+          reasons_generated: boolean
+          requested_count: number
+          returned_count: number
+          session_id: string
+          source_activity_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordinal?: number
+          reasons_generated?: boolean
+          requested_count?: number
+          returned_count?: number
+          session_id?: string
+          source_activity_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_recommendation_batches_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activity_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_source_activity_id_fkey"
+            columns: ["source_activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_source_activity_id_fkey"
+            columns: ["source_activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_source_activity_id_fkey"
+            columns: ["source_activity_id"]
+            isOneToOne: false
+            referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_response_extracts: {
         Row: {
           activity_id: string
@@ -4850,6 +5083,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_response_extracts_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
           {
             foreignKeyName: "coaching_response_extracts_activity_id_fkey"
             columns: ["activity_id"]
@@ -21505,6 +21745,28 @@ export type Database = {
         }
         Relationships: []
       }
+      bw_recommendation_effectiveness: {
+        Row: {
+          activity_id: string | null
+          avg_similarity: number | null
+          clicked_count: number | null
+          code: string | null
+          dismissed_count: number | null
+          distinct_people: number | null
+          first_shown_at: string | null
+          last_shown_at: string | null
+          module_group: string | null
+          started_within_30d: number | null
+          tier: string | null
+          times_shown: number | null
+          times_shown_at_completion: number | null
+          times_shown_first: number | null
+          times_shown_unlocked: number | null
+          times_shown_with_reason: number | null
+          title: string | null
+        }
+        Relationships: []
+      }
       bw_walkthrough_usage: {
         Row: {
           account_type: string | null
@@ -23694,6 +23956,19 @@ export type Database = {
           tier: string
           title: string
         }[]
+      }
+      bw_recommendation_engaged: {
+        Args: { p_action: string; p_activity_id: string; p_batch_id: string }
+        Returns: Json
+      }
+      bw_record_activity_recommendations: {
+        Args: {
+          p_reasons_generated: boolean
+          p_recs: Json
+          p_requested_count: number
+          p_session_id: string
+        }
+        Returns: string
       }
       bw_record_function_failure: {
         Args: {
