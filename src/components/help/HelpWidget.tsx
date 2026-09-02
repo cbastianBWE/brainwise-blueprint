@@ -670,6 +670,85 @@ export default function HelpWidget() {
                       ))}
                     </div>
                   )}
+
+                  {isAdmin && mode === "diagnose" && (
+                    <div className="rounded-md border p-3 space-y-3">
+                      <p className="text-xs font-medium text-muted-foreground">Attach evidence</p>
+
+                      <div className="space-y-1">
+                        <label
+                          htmlFor="bw-evidence-file"
+                          className="text-xs text-muted-foreground"
+                        >
+                          Screenshot
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            id="bw-evidence-file"
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            disabled={uploading}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) uploadScreenshot(f);
+                            }}
+                            className="text-xs file:mr-2 file:rounded file:border file:bg-muted file:px-2 file:py-1 file:text-xs"
+                          />
+                          {uploading && (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden />
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="bw-evidence-paste"
+                          className="text-xs text-muted-foreground"
+                        >
+                          Console or network output
+                        </label>
+                        <Textarea
+                          id="bw-evidence-paste"
+                          rows={3}
+                          value={pasteText}
+                          onChange={(e) => setPasteText(e.target.value)}
+                          placeholder="Paste console or network output from your browser's developer tools"
+                          disabled={attachingPaste}
+                        />
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            aria-label="Capture type"
+                            value={pasteKind}
+                            onChange={(e) => setPasteKind(e.target.value as "console" | "network")}
+                            className="h-8 rounded-md border bg-background px-2 text-xs"
+                          >
+                            <option value="console">Console</option>
+                            <option value="network">Network</option>
+                          </select>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={attachPaste}
+                            disabled={uploading || attachingPaste || !pasteText.trim()}
+                          >
+                            {attachingPaste && <Loader2 className="h-4 w-4 animate-spin" />}
+                            <span>Attach</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      {evidence.length > 0 && (
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-xs text-muted-foreground">{evidenceSummary()}</span>
+                          <Button size="sm" variant="ghost" onClick={clearEvidence}>
+                            Clear
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <Textarea
                     rows={3}
                     value={question}
