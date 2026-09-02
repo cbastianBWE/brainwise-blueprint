@@ -146,6 +146,118 @@ const tierBadgeVariant = (tier: string | null): "default" | "secondary" | "outli
   return "outline";
 };
 
+// Telemetry for the "Where to go next" cards. Resolves true only when the RPC
+// resolved a payload without an "error" key.
+async function recordEngagement(
+  batchId: string | null,
+  activityId: string,
+  action: "clicked" | "dismissed" | "undismissed",
+): Promise<boolean> {
+  if (!batchId) return false;
+  try {
+    const { data, error } = await supabase.rpc("bw_recommendation_engaged", {
+      p_batch_id: batchId,
+      p_activity_id: activityId,
+      p_action: action,
+    } as never);
+    if (error) return false;
+    if (data && typeof data === "object" && "error" in (data as Record<string, unknown>)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function RecCard({
+  rec,
+  batchId,
+  detailed,
+  dismissed,
+  onDismiss,
+  onUndo,
+  onNavigate,
+}: {
+  rec: NextRec;
+  batchId: string | null;
+  detailed?: boolean;
+  dismissed: boolean;
+  onDismiss: (rec: NextRec) => void;
+  onUndo: (rec: NextRec) => void;
+  onNavigate?: () => void;
+}) {
+  if (dismissed) {
+    return (
+      <div className="flex items-center justify-between rounded-lg border border-dashed p-3">
+        <span className="text-sm text-muted-foreground">Dismissed</span>
+        <Button variant="link" className="h-auto p-0 text-sm" onClick={() => onUndo(rec)}>
+          Undo
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border p-4 space-y-2">
+      <div className="flex items-center gap-2">
+        {!rec.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
+        <Badge variant={tierBadgeVariant(rec.tier)}>{rec.tier || "General"}</Badge>
+        {rec.module_group && (
+          <span className="text-xs text-muted-foreground">{rec.module_group}</span>
+        )}
+      </div>
+      {detailed && rec.thumbnail_url && (
+        <img
+          src={rec.thumbnail_url}
+          alt=""
+          className="h-24 w-full rounded-md object-cover"
+          loading="lazy"
+        />
+      )}
+      {rec.allowed ? (
+        <Link
+          to={`/coaching/${rec.activity_id}`}
+          onClick={() => {
+            void recordEngagement(batchId, rec.activity_id, "clicked");
+            onNavigate?.();
+          }}
+          className="block text-base font-medium leading-snug hover:underline"
+        >
+          {rec.title}
+        </Link>
+      ) : (
+        <p className="text-base font-medium leading-snug text-muted-foreground">{rec.title}</p>
+      )}
+      {detailed && rec.why && (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Why we are suggesting this
+          </p>
+          <p className="text-sm">{rec.why}</p>
+        </div>
+      )}
+      {detailed && rec.what_you_gain && (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            What you may learn
+          </p>
+          <p className="text-sm">{rec.what_you_gain}</p>
+        </div>
+      )}
+      <RecQuote rec={rec} />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-auto px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
+        aria-label={`Dismiss ${rec.title}`}
+        onClick={() => onDismiss(rec)}
+      >
+        Not for me
+      </Button>
+    </div>
+  );
+}
+
+
 // ---- Main page ----
 
 
@@ -175,6 +287,9 @@ export default function CoachingActivityRunner() {
   const [recs, setRecs] = useState<NextRec[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [recsOpen, setRecsOpen] = useState(false);
+  const [batchId, setBatchId] = useState<string | null>(null);
+  // Dismissals belong to the batch they were made in; cleared on every load.
+  const [dismissed, setDismissed] = useState<Record<string, true>>({});
   // Set while `finish` is running the extractor, so the completed-view effect
   // does not race it with a second (empty) call.
   const finishingRef = useRef(false);
@@ -182,13 +297,17 @@ export default function CoachingActivityRunner() {
 
   const loadRecs = useCallback(async (sessionId: string): Promise<NextRec[]> => {
     setRecsLoading(true);
+    setBatchId(null);
+    setDismissed({});
     try {
       const { data, error } = await supabase.functions.invoke(
         "coaching-next-recommendations",
         { body: { session_id: sessionId, match_count: 4 } },
       );
       if (error) throw error;
-      const results = ((data as { results?: NextRec[] } | null)?.results || []) as NextRec[];
+      const payload = data as { results?: NextRec[]; batch_id?: string | null } | null;
+      const results = (payload?.results || []) as NextRec[];
+      setBatchId(typeof payload?.batch_id === "string" ? payload.batch_id : null);
       setRecs(results);
       return results;
     } catch {
@@ -196,8 +315,39 @@ export default function CoachingActivityRunner() {
       return [];
     } finally {
       setRecsLoading(false);
+
     }
   }, []);
+
+  const handleDismissRec = useCallback(async (rec: NextRec) => {
+    setDismissed((d) => ({ ...d, [rec.activity_id]: true }));
+    if (!batchId) return;
+    const ok = await recordEngagement(batchId, rec.activity_id, "dismissed");
+    if (!ok) {
+      setDismissed((d) => {
+        const next = { ...d };
+        delete next[rec.activity_id];
+        return next;
+      });
+      toast.error("That did not save. The suggestion is still here.");
+    }
+  }, [batchId]);
+
+  const handleUndoRec = useCallback(async (rec: NextRec) => {
+    setDismissed((d) => {
+      const next = { ...d };
+      delete next[rec.activity_id];
+      return next;
+    });
+    if (!batchId) return;
+    const ok = await recordEngagement(batchId, rec.activity_id, "undismissed");
+    if (!ok) {
+      setDismissed((d) => ({ ...d, [rec.activity_id]: true }));
+      toast.error("That did not save. The suggestion is still dismissed.");
+    }
+  }, [batchId]);
+
+
 
   // Returning to an activity finished earlier: recommendations only, no extraction.
   useEffect(() => {
@@ -788,29 +938,16 @@ export default function CoachingActivityRunner() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {recs.map((r) => (
-                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
-                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
-                      {r.module_group && (
-                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
-                      )}
-                    </div>
-                    {r.allowed ? (
-                      <Link
-                        to={`/coaching/${r.activity_id}`}
-                        className="block text-base font-medium leading-snug hover:underline"
-                      >
-                        {r.title}
-                      </Link>
-                    ) : (
-                      <p className="text-base font-medium leading-snug text-muted-foreground">
-                        {r.title}
-                      </p>
-                    )}
-                    <RecQuote rec={r} />
-                  </div>
+                  <RecCard
+                    key={r.activity_id}
+                    rec={r}
+                    batchId={batchId}
+                    dismissed={!!dismissed[r.activity_id]}
+                    onDismiss={handleDismissRec}
+                    onUndo={handleUndoRec}
+                  />
                 ))}
+
                 <Button
                   variant="link"
                   className="h-auto p-0 text-sm"
@@ -829,54 +966,18 @@ export default function CoachingActivityRunner() {
               </DialogHeader>
               <div className="space-y-4">
                 {recs.map((r) => (
-                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
-                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
-                      {r.module_group && (
-                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
-                      )}
-                    </div>
-                    {r.thumbnail_url && (
-                      <img
-                        src={r.thumbnail_url}
-                        alt=""
-                        className="h-24 w-full rounded-md object-cover"
-                        loading="lazy"
-                      />
-                    )}
-                    {r.allowed ? (
-                      <Link
-                        to={`/coaching/${r.activity_id}`}
-                        onClick={() => setRecsOpen(false)}
-                        className="block text-base font-medium leading-snug hover:underline"
-                      >
-                        {r.title}
-                      </Link>
-                    ) : (
-                      <p className="text-base font-medium leading-snug text-muted-foreground">
-                        {r.title}
-                      </p>
-                    )}
-                    {r.why && (
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          Why we are suggesting this
-                        </p>
-                        <p className="text-sm">{r.why}</p>
-                      </div>
-                    )}
-                    {r.what_you_gain && (
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          What you may learn
-                        </p>
-                        <p className="text-sm">{r.what_you_gain}</p>
-                      </div>
-                    )}
-                    <RecQuote rec={r} />
-                  </div>
+                  <RecCard
+                    key={r.activity_id}
+                    rec={r}
+                    batchId={batchId}
+                    detailed
+                    dismissed={!!dismissed[r.activity_id]}
+                    onDismiss={handleDismissRec}
+                    onUndo={handleUndoRec}
+                    onNavigate={() => setRecsOpen(false)}
+                  />
                 ))}
+
               </div>
             </DialogContent>
           </Dialog>
