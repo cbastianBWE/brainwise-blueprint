@@ -124,6 +124,20 @@ export default function HelpWidget() {
   const [undoing, setUndoing] = useState(false);
   const [undoNote, setUndoNote] = useState<string | null>(null);
 
+  // Evidence attached during this panel session (diagnose mode only).
+  const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteKind, setPasteKind] = useState<"console" | "network">("console");
+  const [attachingPaste, setAttachingPaste] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Never show a stale count: reset the session list whenever the panel opens.
+  useEffect(() => {
+    if (open) setEvidence([]);
+  }, [open]);
+
+
   useEffect(() => {
     if (!open || adminChecked || !user) return;
     let cancelled = false;
