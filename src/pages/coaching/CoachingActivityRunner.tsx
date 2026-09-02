@@ -938,29 +938,16 @@ export default function CoachingActivityRunner() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {recs.map((r) => (
-                  <div key={r.activity_id} className="rounded-lg border p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      {!r.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
-                      <Badge variant={tierBadgeVariant(r.tier)}>{r.tier || "General"}</Badge>
-                      {r.module_group && (
-                        <span className="text-xs text-muted-foreground">{r.module_group}</span>
-                      )}
-                    </div>
-                    {r.allowed ? (
-                      <Link
-                        to={`/coaching/${r.activity_id}`}
-                        className="block text-base font-medium leading-snug hover:underline"
-                      >
-                        {r.title}
-                      </Link>
-                    ) : (
-                      <p className="text-base font-medium leading-snug text-muted-foreground">
-                        {r.title}
-                      </p>
-                    )}
-                    <RecQuote rec={r} />
-                  </div>
+                  <RecCard
+                    key={r.activity_id}
+                    rec={r}
+                    batchId={batchId}
+                    dismissed={!!dismissed[r.activity_id]}
+                    onDismiss={handleDismissRec}
+                    onUndo={handleUndoRec}
+                  />
                 ))}
+
                 <Button
                   variant="link"
                   className="h-auto p-0 text-sm"
