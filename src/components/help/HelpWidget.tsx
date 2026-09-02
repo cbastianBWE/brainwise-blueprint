@@ -57,7 +57,13 @@ type AdminAnswer = {
   proposal_created?: boolean;
   proposal_error?: string | null;
   queries_run?: number;
+  lovable_prompt?: string | null;
+  lovable_prompt_id?: string | null;
+  files_read?: string[];
 };
+
+type EvidenceItem = { id: string; kind: "screenshot" | "console" | "network"; path: string | null };
+
 
 type View = "ask" | "answer" | "report" | "reports" | "thread" | "admin";
 
