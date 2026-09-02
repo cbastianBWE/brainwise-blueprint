@@ -3192,6 +3192,113 @@ export type Database = {
           },
         ]
       }
+      coach_client_chat_questions: {
+        Row: {
+          answered: boolean
+          client_user_id: string
+          coach_user_id: string
+          created_at: string
+          id: string
+          question: string
+          refusal_reason: string | null
+          sessions_cited: number
+          tool_calls: number
+        }
+        Insert: {
+          answered: boolean
+          client_user_id: string
+          coach_user_id: string
+          created_at?: string
+          id?: string
+          question: string
+          refusal_reason?: string | null
+          sessions_cited?: number
+          tool_calls?: number
+        }
+        Update: {
+          answered?: boolean
+          client_user_id?: string
+          coach_user_id?: string
+          created_at?: string
+          id?: string
+          question?: string
+          refusal_reason?: string | null
+          sessions_cited?: number
+          tool_calls?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_client_chat_questions_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_client_user_id_fkey"
+            columns: ["client_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coach_client_chat_questions_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coach_clients: {
         Row: {
           actor_id: string | null
@@ -23550,6 +23657,27 @@ export type Database = {
           session_status: string
           started_at: string
           tier: string
+          visibility: string
+        }[]
+      }
+      bw_coach_search_client_extracts: {
+        Args: {
+          p_client_user_id: string
+          p_match_count?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          activity_code: string
+          activity_id: string
+          activity_title: string
+          content: string
+          extract_id: string
+          module_group: string
+          response_key: string
+          session_id: string
+          similarity: number
+          updated_at: string
           visibility: string
         }[]
       }
