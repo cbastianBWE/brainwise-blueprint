@@ -319,6 +319,36 @@ export default function CoachingActivityRunner() {
     }
   }, []);
 
+  const handleDismissRec = useCallback(async (rec: NextRec) => {
+    setDismissed((d) => ({ ...d, [rec.activity_id]: true }));
+    if (!batchId) return;
+    const ok = await recordEngagement(batchId, rec.activity_id, "dismissed");
+    if (!ok) {
+      setDismissed((d) => {
+        const next = { ...d };
+        delete next[rec.activity_id];
+        return next;
+      });
+      toast.error("That did not save. The suggestion is still here.");
+    }
+  }, [batchId]);
+
+  const handleUndoRec = useCallback(async (rec: NextRec) => {
+    setDismissed((d) => {
+      const next = { ...d };
+      delete next[rec.activity_id];
+      return next;
+    });
+    if (!batchId) return;
+    const ok = await recordEngagement(batchId, rec.activity_id, "undismissed");
+    if (!ok) {
+      setDismissed((d) => ({ ...d, [rec.activity_id]: true }));
+      toast.error("That did not save. The suggestion is still dismissed.");
+    }
+  }, [batchId]);
+
+
+
   // Returning to an activity finished earlier: recommendations only, no extraction.
   useEffect(() => {
     if (!session || session.status !== "completed") return;
