@@ -146,6 +146,118 @@ const tierBadgeVariant = (tier: string | null): "default" | "secondary" | "outli
   return "outline";
 };
 
+// Telemetry for the "Where to go next" cards. Resolves true only when the RPC
+// resolved a payload without an "error" key.
+async function recordEngagement(
+  batchId: string | null,
+  activityId: string,
+  action: "clicked" | "dismissed" | "undismissed",
+): Promise<boolean> {
+  if (!batchId) return false;
+  try {
+    const { data, error } = await supabase.rpc("bw_recommendation_engaged", {
+      p_batch_id: batchId,
+      p_activity_id: activityId,
+      p_action: action,
+    } as never);
+    if (error) return false;
+    if (data && typeof data === "object" && "error" in (data as Record<string, unknown>)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function RecCard({
+  rec,
+  batchId,
+  detailed,
+  dismissed,
+  onDismiss,
+  onUndo,
+  onNavigate,
+}: {
+  rec: NextRec;
+  batchId: string | null;
+  detailed?: boolean;
+  dismissed: boolean;
+  onDismiss: (rec: NextRec) => void;
+  onUndo: (rec: NextRec) => void;
+  onNavigate?: () => void;
+}) {
+  if (dismissed) {
+    return (
+      <div className="flex items-center justify-between rounded-lg border border-dashed p-3">
+        <span className="text-sm text-muted-foreground">Dismissed</span>
+        <Button variant="link" className="h-auto p-0 text-sm" onClick={() => onUndo(rec)}>
+          Undo
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border p-4 space-y-2">
+      <div className="flex items-center gap-2">
+        {!rec.allowed && <Lock className="h-4 w-4 text-muted-foreground" />}
+        <Badge variant={tierBadgeVariant(rec.tier)}>{rec.tier || "General"}</Badge>
+        {rec.module_group && (
+          <span className="text-xs text-muted-foreground">{rec.module_group}</span>
+        )}
+      </div>
+      {detailed && rec.thumbnail_url && (
+        <img
+          src={rec.thumbnail_url}
+          alt=""
+          className="h-24 w-full rounded-md object-cover"
+          loading="lazy"
+        />
+      )}
+      {rec.allowed ? (
+        <Link
+          to={`/coaching/${rec.activity_id}`}
+          onClick={() => {
+            void recordEngagement(batchId, rec.activity_id, "clicked");
+            onNavigate?.();
+          }}
+          className="block text-base font-medium leading-snug hover:underline"
+        >
+          {rec.title}
+        </Link>
+      ) : (
+        <p className="text-base font-medium leading-snug text-muted-foreground">{rec.title}</p>
+      )}
+      {detailed && rec.why && (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Why we are suggesting this
+          </p>
+          <p className="text-sm">{rec.why}</p>
+        </div>
+      )}
+      {detailed && rec.what_you_gain && (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            What you may learn
+          </p>
+          <p className="text-sm">{rec.what_you_gain}</p>
+        </div>
+      )}
+      <RecQuote rec={rec} />
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-auto px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
+        aria-label={`Dismiss ${rec.title}`}
+        onClick={() => onDismiss(rec)}
+      >
+        Not for me
+      </Button>
+    </div>
+  );
+}
+
+
 // ---- Main page ----
 
 
