@@ -198,7 +198,107 @@ export default function HelpWidget() {
   }, [open, loadReports]);
 
 
+  const EVIDENCE_BUCKET = "diagnostic-attachments";
+
+  const uploadScreenshot = async (file: File) => {
+    if (!user || uploading) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("That image is over 10MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const extMap: Record<string, string> = {
+        "image/png": "png",
+        "image/jpeg": "jpg",
+        "image/webp": "webp",
+        "image/gif": "gif",
+      };
+      const ext = extMap[file.type] ?? "png";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, file, { contentType: file.type });
+      if (upErr) throw upErr;
+
+      const { data, error } = await (supabase.rpc as any)("bw_add_diagnostic_evidence", {
+        p_kind: "screenshot",
+        p_storage_path: path,
+        p_body: null,
+        p_route: window.location.pathname,
+      });
+      if (error) throw error;
+      const id = (data as any)?.id ?? (typeof data === "string" ? data : null);
+      if (!id) throw new Error("no id");
+      setEvidence((prev) => [...prev, { id: String(id), kind: "screenshot", path }]);
+    } catch {
+      toast.error("That did not attach. Nothing was saved.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const attachPaste = async () => {
+    const body = pasteText.trim();
+    if (!body || attachingPaste) return;
+    setAttachingPaste(true);
+    try {
+      const { data, error } = await (supabase.rpc as any)("bw_add_diagnostic_evidence", {
+        p_kind: pasteKind,
+        p_storage_path: null,
+        p_body: body,
+        p_route: window.location.pathname,
+      });
+      if (error) throw error;
+      const id = (data as any)?.id ?? (typeof data === "string" ? data : null);
+      if (!id) throw new Error("no id");
+      setEvidence((prev) => [...prev, { id: String(id), kind: pasteKind, path: null }]);
+      setPasteText("");
+    } catch {
+      toast.error("That did not attach. Nothing was saved.");
+    } finally {
+      setAttachingPaste(false);
+    }
+  };
+
+  const clearEvidence = async () => {
+    const items = evidence;
+    if (!items.length) return;
+    let failed = false;
+    try {
+      const ids = items.map((i) => i.id);
+      const { error } = await (supabase as any)
+        .from("platform_diagnostic_evidence")
+        .delete()
+        .in("id", ids);
+      if (error) failed = true;
+      const paths = items.map((i) => i.path).filter((p): p is string => !!p);
+      if (paths.length) {
+        const { error: rmErr } = await supabase.storage.from(EVIDENCE_BUCKET).remove(paths);
+        if (rmErr) failed = true;
+      }
+    } catch {
+      failed = true;
+    }
+    setEvidence([]);
+    if (failed) toast.error("Some attachments could not be removed.");
+  };
+
+  const evidenceSummary = () => {
+    const shots = evidence.filter((e) => e.kind === "screenshot").length;
+    const consoles = evidence.filter((e) => e.kind === "console").length;
+    const nets = evidence.filter((e) => e.kind === "network").length;
+    const parts: string[] = [];
+    if (shots) parts.push(`${shots} screenshot${shots > 1 ? "s" : ""}`);
+    if (consoles) parts.push(`${consoles} console capture${consoles > 1 ? "s" : ""}`);
+    if (nets) parts.push(`${nets} network capture${nets > 1 ? "s" : ""}`);
+    if (parts.length > 1) parts[parts.length - 1] = `and ${parts[parts.length - 1]}`;
+    return `${parts.join(parts.length > 2 ? ", " : " ")} attached`;
+  };
+
   const goHelp = () => {
+
     setOpen(false);
     navigate("/help");
   };
