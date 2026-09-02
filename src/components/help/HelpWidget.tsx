@@ -241,6 +241,10 @@ export default function HelpWidget() {
         proposal_created: res.proposal_created,
         proposal_error: res.proposal_error ?? null,
         queries_run: res.queries_run,
+        lovable_prompt: res.lovable_prompt ?? null,
+        lovable_prompt_id: res.lovable_prompt_id ?? null,
+        files_read: Array.isArray(res.files_read) ? res.files_read : [],
+
       });
       if (res.ok && res.kind === "change" && res.change) setChange(res.change);
       setView("admin");
