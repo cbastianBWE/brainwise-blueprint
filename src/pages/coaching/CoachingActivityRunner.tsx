@@ -287,6 +287,9 @@ export default function CoachingActivityRunner() {
   const [recs, setRecs] = useState<NextRec[]>([]);
   const [recsLoading, setRecsLoading] = useState(false);
   const [recsOpen, setRecsOpen] = useState(false);
+  const [batchId, setBatchId] = useState<string | null>(null);
+  // Dismissals belong to the batch they were made in; cleared on every load.
+  const [dismissed, setDismissed] = useState<Record<string, true>>({});
   // Set while `finish` is running the extractor, so the completed-view effect
   // does not race it with a second (empty) call.
   const finishingRef = useRef(false);
@@ -294,13 +297,17 @@ export default function CoachingActivityRunner() {
 
   const loadRecs = useCallback(async (sessionId: string): Promise<NextRec[]> => {
     setRecsLoading(true);
+    setBatchId(null);
+    setDismissed({});
     try {
       const { data, error } = await supabase.functions.invoke(
         "coaching-next-recommendations",
         { body: { session_id: sessionId, match_count: 4 } },
       );
       if (error) throw error;
-      const results = ((data as { results?: NextRec[] } | null)?.results || []) as NextRec[];
+      const payload = data as { results?: NextRec[]; batch_id?: string | null } | null;
+      const results = (payload?.results || []) as NextRec[];
+      setBatchId(typeof payload?.batch_id === "string" ? payload.batch_id : null);
       setRecs(results);
       return results;
     } catch {
@@ -308,6 +315,7 @@ export default function CoachingActivityRunner() {
       return [];
     } finally {
       setRecsLoading(false);
+
     }
   }, []);
 
