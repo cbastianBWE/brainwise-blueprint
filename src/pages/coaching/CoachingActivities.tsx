@@ -1445,6 +1445,15 @@ export default function CoachingActivities() {
               <Button
                 type="button"
                 size="sm"
+                variant={view === "journey" ? "default" : "ghost"}
+                className="h-8"
+                onClick={() => setView("journey")}
+              >
+                My journey
+              </Button>
+              <Button
+                type="button"
+                size="sm"
                 variant={view === "map" ? "default" : "ghost"}
                 className="h-8"
                 onClick={() => setView("map")}
@@ -1462,7 +1471,7 @@ export default function CoachingActivities() {
               </Button>
             </div>
           </div>
-          {view === "map" ? mapView : activitiesContent}
+          {view === "journey" ? journeyView : view === "map" ? mapView : activitiesContent}
         </TabsContent>
         <TabsContent value="history" className="mt-4">
           {tab === "history" ? <HistoryTab /> : null}
