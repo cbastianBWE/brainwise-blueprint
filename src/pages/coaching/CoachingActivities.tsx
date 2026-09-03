@@ -833,7 +833,24 @@ export default function CoachingActivities() {
   const [groupAccess, setGroupAccess] = useState<
     Record<string, { accessible: boolean; has_completed: boolean }>
   >({});
-  const [view, setView] = useState<"map" | "list">("map");
+  const [view, setView] = useState<"map" | "list" | "journey">("map");
+  const [journeyLoading, setJourneyLoading] = useState(false);
+  const [journeyError, setJourneyError] = useState<string | null>(null);
+  const [journeyLoaded, setJourneyLoaded] = useState(false);
+  const [myJourney, setMyJourney] = useState<{
+    journey_key: string;
+    name: string;
+    description: string | null;
+    run_number: number;
+    core_total: number;
+    core_completed: number;
+  } | null>(null);
+  const [journeyOptions, setJourneyOptions] = useState<
+    { key: string; name: string; description: string | null }[]
+  >([]);
+  const [nextIds, setNextIds] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [choosing, setChoosing] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [currentRun, setCurrentRun] = useState<number>(1);
   const [reloadKey, setReloadKey] = useState(0);
