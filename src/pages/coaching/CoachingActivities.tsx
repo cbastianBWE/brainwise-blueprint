@@ -1256,7 +1256,126 @@ export default function CoachingActivities() {
   );
 
 
+  const journeyPicker = (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        This orders the activities around where you are right now. You can change it at any
+        time, and nothing is hidden either way.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {journeyOptions.map((j) => (
+          <Card
+            key={j.key}
+            className="cursor-pointer transition-colors hover:border-primary"
+            onClick={() => !choosing && chooseJourney(j.key)}
+          >
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                {j.name}
+                {choosing === j.key && <Loader2 className="h-4 w-4 animate-spin" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{j.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+
+  const journeyNextActivities = nextIds
+    .map((id) => activities.find((a) => a.id === id))
+    .filter((a): a is Activity => !!a);
+
+  const journeyView = journeyLoading ? (
+    <div className="flex items-center justify-center py-16">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  ) : journeyError ? (
+    <Card>
+      <CardContent className="p-6 space-y-3">
+        <p className="text-sm text-muted-foreground">
+          We couldn't load your journey. {journeyError}
+        </p>
+        <Button variant="outline" size="sm" onClick={() => void loadJourney()}>
+          Try again
+        </Button>
+      </CardContent>
+    </Card>
+  ) : !myJourney || pickerOpen ? (
+    journeyPicker
+  ) : (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="flex items-baseline justify-between gap-4 flex-wrap">
+          <h2 className="text-base font-semibold">{myJourney.name}</h2>
+          <span className="text-sm text-muted-foreground">
+            {myJourney.core_completed} of {myJourney.core_total}
+          </span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{
+              width: `${
+                myJourney.core_total > 0
+                  ? Math.min(100, (myJourney.core_completed / myJourney.core_total) * 100)
+                  : 0
+              }%`,
+            }}
+          />
+        </div>
+      </div>
+
+      {myJourney.core_completed >= myJourney.core_total ? (
+        <Card>
+          <CardContent className="p-8 text-center space-y-3">
+            <Compass className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              You've finished the guided path. The Advanced activities sit off the path on
+              purpose — you'll find them all under Browse all.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => setView("list")}>
+              Browse all
+            </Button>
+          </CardContent>
+        </Card>
+      ) : journeyNextActivities.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              We couldn't work out what to suggest next, even though there's more of the path
+              to go. Everything is still available under Browse all.
+            </p>
+            <Button variant="outline" size="sm" onClick={() => setView("list")}>
+              Browse all
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        renderCards(journeyNextActivities)
+      )}
+
+      <div className="space-y-1">
+        <Button
+          variant="link"
+          size="sm"
+          className="px-0"
+          onClick={() => setPickerOpen(true)}
+        >
+          Change journey
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Changing your journey only re-orders what's suggested next. Nothing you've already
+          completed is lost.
+        </p>
+      </div>
+    </div>
+  );
+
   const mapView = (
+
     <div className="space-y-6">
       <div className="flex justify-center">
         <Button
