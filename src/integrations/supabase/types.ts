@@ -4305,6 +4305,53 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_activity_blocks: {
+        Row: {
+          activity_id: string
+          block_key: string
+          in_core: boolean
+        }
+        Insert: {
+          activity_id: string
+          block_key: string
+          in_core?: boolean
+        }
+        Update: {
+          activity_id?: string
+          block_key?: string
+          in_core?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_activity_blocks_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_blocks_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "bw_recommendation_effectiveness"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_blocks_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "coaching_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_blocks_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "coaching_activities_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coaching_activity_embeddings: {
         Row: {
           activity_id: string
@@ -4328,6 +4375,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_activity_embeddings_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: true
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
+          },
           {
             foreignKeyName: "coaching_activity_embeddings_activity_id_fkey"
             columns: ["activity_id"]
@@ -4404,6 +4458,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "coaching_recommendation_batches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_activity_recommendations_recommended_activity_id_fkey"
+            columns: ["recommended_activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
           },
           {
             foreignKeyName: "coaching_activity_recommendations_recommended_activity_id_fkey"
@@ -4510,6 +4571,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_activity_sessions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
+          },
           {
             foreignKeyName: "coaching_activity_sessions_activity_id_fkey"
             columns: ["activity_id"]
@@ -4837,6 +4905,59 @@ export type Database = {
           },
         ]
       }
+      coaching_journey_blocks: {
+        Row: {
+          block_key: string
+          journey_key: string
+          position: number
+        }
+        Insert: {
+          block_key: string
+          journey_key: string
+          position: number
+        }
+        Update: {
+          block_key?: string
+          journey_key?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_journey_blocks_journey_key_fkey"
+            columns: ["journey_key"]
+            isOneToOne: false
+            referencedRelation: "coaching_journeys"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      coaching_journeys: {
+        Row: {
+          created_at: string
+          description: string | null
+          is_active: boolean
+          key: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          is_active?: boolean
+          key: string
+          name: string
+          sort_order: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          is_active?: boolean
+          key?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       coaching_media_library: {
         Row: {
           active: boolean
@@ -4908,6 +5029,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_notes_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
+          },
           {
             foreignKeyName: "coaching_notes_activity_id_fkey"
             columns: ["activity_id"]
@@ -5092,6 +5220,13 @@ export type Database = {
             foreignKeyName: "coaching_recommendation_batches_source_activity_id_fkey"
             columns: ["source_activity_id"]
             isOneToOne: false
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "coaching_recommendation_batches_source_activity_id_fkey"
+            columns: ["source_activity_id"]
+            isOneToOne: false
             referencedRelation: "bw_recommendation_effectiveness"
             referencedColumns: ["activity_id"]
           },
@@ -5190,6 +5325,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "coaching_response_extracts_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "bw_journey_plan"
+            referencedColumns: ["activity_id"]
+          },
           {
             foreignKeyName: "coaching_response_extracts_activity_id_fkey"
             columns: ["activity_id"]
@@ -5520,6 +5662,70 @@ export type Database = {
           },
           {
             foreignKeyName: "coaching_usage_counters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_user_journey: {
+        Row: {
+          journey_key: string
+          run_number: number
+          selected_at: string
+          user_id: string
+        }
+        Insert: {
+          journey_key: string
+          run_number?: number
+          selected_at?: string
+          user_id: string
+        }
+        Update: {
+          journey_key?: string
+          run_number?: number
+          selected_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_user_journey_journey_key_fkey"
+            columns: ["journey_key"]
+            isOneToOne: false
+            referencedRelation: "coaching_journeys"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "coaching_user_journey_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_user_journey_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_org_users_view"
+            referencedColumns: ["supervisor_joined_id"]
+          },
+          {
+            foreignKeyName: "coaching_user_journey_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "org_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_user_journey_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "reporting_users"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "coaching_user_journey_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -21852,6 +22058,31 @@ export type Database = {
         }
         Relationships: []
       }
+      bw_journey_plan: {
+        Row: {
+          activity_id: string | null
+          block_key: string | null
+          block_position: number | null
+          code: string | null
+          in_core: boolean | null
+          journey_key: string | null
+          module_group: string | null
+          position_in_core: number | null
+          position_overall: number | null
+          thumbnail_url: string | null
+          tier: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_journey_blocks_journey_key_fkey"
+            columns: ["journey_key"]
+            isOneToOne: false
+            referencedRelation: "coaching_journeys"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       bw_recommendation_effectiveness: {
         Row: {
           activity_id: string | null
@@ -23714,6 +23945,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      bw_current_coaching_run: { Args: { p_user: string }; Returns: number }
       bw_digest_proposal_blocks: { Args: never; Returns: string }
       bw_digest_user_report_blocks: { Args: never; Returns: string }
       bw_expire_agent_proposals: { Args: never; Returns: number }
@@ -23942,6 +24174,32 @@ export type Database = {
           session_status: string
           tier: string
           updated_at: string
+        }[]
+      }
+      bw_my_journey: {
+        Args: never
+        Returns: {
+          core_completed: number
+          core_total: number
+          description: string
+          journey_key: string
+          name: string
+          run_number: number
+        }[]
+      }
+      bw_my_journey_next: {
+        Args: { p_limit?: number }
+        Returns: {
+          activity_id: string
+          block_key: string
+          code: string
+          in_core: boolean
+          journey_key: string
+          module_group: string
+          position_in_core: number
+          thumbnail_url: string
+          tier: string
+          title: string
         }[]
       }
       bw_my_learning_notes: {
@@ -24178,6 +24436,7 @@ export type Database = {
         Args: { p_opt_out: boolean }
         Returns: boolean
       }
+      bw_set_my_journey: { Args: { p_journey_key: string }; Returns: Json }
       bw_set_my_walkthrough_default: {
         Args: { p_enabled: boolean }
         Returns: boolean
