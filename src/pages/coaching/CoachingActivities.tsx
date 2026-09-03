@@ -871,6 +871,73 @@ export default function CoachingActivities() {
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
+  const loadJourney = useCallback(async () => {
+    setJourneyLoading(true);
+    setJourneyError(null);
+    try {
+      const { data: mine, error: mineErr } = await (supabase.rpc as any)("bw_my_journey");
+      if (mineErr) throw mineErr;
+      const row = Array.isArray(mine) ? mine[0] : mine;
+      if (row) {
+        setMyJourney(row as any);
+        setPickerOpen(false);
+        if ((row as any).core_completed < (row as any).core_total) {
+          const { data: nx, error: nxErr } = await (supabase.rpc as any)(
+            "bw_my_journey_next",
+            { p_limit: 6 },
+          );
+          if (nxErr) throw nxErr;
+          setNextIds(((nx as any[]) ?? []).map((r) => r.activity_id));
+        } else {
+          setNextIds([]);
+        }
+      } else {
+        setMyJourney(null);
+        setNextIds([]);
+        setPickerOpen(true);
+      }
+      const { data: opts } = await supabase
+        .from("coaching_journeys" as any)
+        .select("key, name, description, sort_order")
+        .eq("is_active", true)
+        .order("sort_order");
+      setJourneyOptions(((opts as any[]) ?? []) as any);
+      setJourneyLoaded(true);
+    } catch (e: any) {
+      setJourneyError(e?.message || "Something went wrong.");
+    } finally {
+      setJourneyLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (view === "journey" && !journeyLoaded && !journeyLoading) {
+      void loadJourney();
+    }
+  }, [view, journeyLoaded, journeyLoading, loadJourney]);
+
+  const chooseJourney = useCallback(
+    async (key: string) => {
+      setChoosing(key);
+      try {
+        const { data, error: rpcErr } = await (supabase.rpc as any)("bw_set_my_journey", {
+          p_journey_key: key,
+        });
+        if (rpcErr) throw rpcErr;
+        if (!data || (data as any).error) throw new Error((data as any)?.error || "failed");
+        setJourneyLoaded(false);
+        await loadJourney();
+      } catch {
+        toast.error("That didn't save. Your journey is unchanged.");
+      } finally {
+        setChoosing(null);
+      }
+    },
+    [loadJourney],
+  );
+
+
+
   useEffect(() => {
     if (searchParams.get("checkout") === "success") {
       toast.success("Purchase complete — your coaching is unlocked.");
