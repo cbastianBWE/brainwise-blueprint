@@ -12,12 +12,22 @@ import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 const PENDING_INVITE_KEY = "pending_invite_code";
 
+interface PendingOrgInvite {
+  out_invitation_id: string;
+  out_organization_id: string;
+  out_organization_name: string;
+  out_account_type: string | null;
+  out_department_name: string | null;
+  out_expires_at: string | null;
+}
+
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: existingAccountType, isLoading: accountTypeLoading } = useAccountType(user?.id);
   const [showInviteCode, setShowInviteCode] = useState(false);
+  const [pendingOrgInvite, setPendingOrgInvite] = useState<PendingOrgInvite | null>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [prefilled, setPrefilled] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,8 +55,21 @@ const Onboarding = () => {
         return;
       }
 
+      // Server-side invitation lookup by the signed-in user's email
+      try {
+        const { data: inviteRows } = await (supabase.rpc as any)("corporate_invitation_for_me");
+        const row = Array.isArray(inviteRows) ? inviteRows[0] : inviteRows;
+        if (row) {
+          setPendingOrgInvite(row as PendingOrgInvite);
+          setChecking(false);
+          return;
+        }
+      } catch {
+        // fall through to the manual code path
+      }
+
       // Check for stashed invite code from sign-up URL
-      const stashed = sessionStorage.getItem(PENDING_INVITE_KEY);
+      const stashed = localStorage.getItem(PENDING_INVITE_KEY);
       if (stashed && stashed.trim()) {
         setInviteCode(stashed.trim().toUpperCase());
         setPrefilled(true);
@@ -108,7 +131,7 @@ const Onboarding = () => {
       const { response, result } = await callSetAccountType({ invite_code: code });
 
       if (response.ok) {
-        sessionStorage.removeItem(PENDING_INVITE_KEY);
+        localStorage.removeItem(PENDING_INVITE_KEY);
         toast({ title: "Welcome to your organization", description: "You're all set." });
         navigate("/demographic-form");
         return;
@@ -136,9 +159,35 @@ const Onboarding = () => {
     }
   };
 
+  const handleJoinOrg = async () => {
+    if (!pendingOrgInvite) return;
+    setLoading(true);
+    try {
+      const { error } = await (supabase.rpc as any)("invitation_redeem_self");
+      if (error) throw error;
+      localStorage.removeItem(PENDING_INVITE_KEY);
+      toast({ title: "Welcome to your organization", description: "You're all set." });
+      navigate("/demographic-form");
+    } catch (err: any) {
+      const message: string = err?.message || "";
+      if (/no_pending_invitation/.test(message)) {
+        toast({
+          title: "Invitation unavailable",
+          description: "That invitation is no longer available. Contact your administrator.",
+          variant: "destructive",
+        });
+        setPendingOrgInvite(null);
+      } else {
+        toast({ title: "Error", description: message || "Something went wrong, please try again", variant: "destructive" });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBack = () => {
     if (prefilled) {
-      sessionStorage.removeItem(PENDING_INVITE_KEY);
+      localStorage.removeItem(PENDING_INVITE_KEY);
       navigate("/login");
     } else {
       setShowInviteCode(false);
@@ -163,6 +212,36 @@ const Onboarding = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (pendingOrgInvite) {
+    const orgName = pendingOrgInvite.out_organization_name;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
+            <CardTitle className="text-2xl">Join {orgName}</CardTitle>
+            <CardDescription>
+              Your administrator invited you to {orgName}. Your assessments are covered by your organization.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button className="w-full" onClick={handleJoinOrg} disabled={loading}>
+              {loading ? "Joining..." : `Join ${orgName}`}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setPendingOrgInvite(null)}
+              disabled={loading}
+            >
+              Use a different option
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
