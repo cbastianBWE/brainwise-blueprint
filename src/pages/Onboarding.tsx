@@ -131,7 +131,7 @@ const Onboarding = () => {
       const { response, result } = await callSetAccountType({ invite_code: code });
 
       if (response.ok) {
-        sessionStorage.removeItem(PENDING_INVITE_KEY);
+        localStorage.removeItem(PENDING_INVITE_KEY);
         toast({ title: "Welcome to your organization", description: "You're all set." });
         navigate("/demographic-form");
         return;
@@ -159,9 +159,35 @@ const Onboarding = () => {
     }
   };
 
+  const handleJoinOrg = async () => {
+    if (!pendingOrgInvite) return;
+    setLoading(true);
+    try {
+      const { error } = await (supabase.rpc as any)("invitation_redeem_self");
+      if (error) throw error;
+      localStorage.removeItem(PENDING_INVITE_KEY);
+      toast({ title: "Welcome to your organization", description: "You're all set." });
+      navigate("/demographic-form");
+    } catch (err: any) {
+      const message: string = err?.message || "";
+      if (/no_pending_invitation/.test(message)) {
+        toast({
+          title: "Invitation unavailable",
+          description: "That invitation is no longer available. Contact your administrator.",
+          variant: "destructive",
+        });
+        setPendingOrgInvite(null);
+      } else {
+        toast({ title: "Error", description: message || "Something went wrong, please try again", variant: "destructive" });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBack = () => {
     if (prefilled) {
-      sessionStorage.removeItem(PENDING_INVITE_KEY);
+      localStorage.removeItem(PENDING_INVITE_KEY);
       navigate("/login");
     } else {
       setShowInviteCode(false);
