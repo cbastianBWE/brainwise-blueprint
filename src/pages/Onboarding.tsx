@@ -12,12 +12,22 @@ import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 
 const PENDING_INVITE_KEY = "pending_invite_code";
 
+interface PendingOrgInvite {
+  out_invitation_id: string;
+  out_organization_id: string;
+  out_organization_name: string;
+  out_account_type: string | null;
+  out_department_name: string | null;
+  out_expires_at: string | null;
+}
+
 const Onboarding = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: existingAccountType, isLoading: accountTypeLoading } = useAccountType(user?.id);
   const [showInviteCode, setShowInviteCode] = useState(false);
+  const [pendingOrgInvite, setPendingOrgInvite] = useState<PendingOrgInvite | null>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [prefilled, setPrefilled] = useState(false);
   const [loading, setLoading] = useState(false);
