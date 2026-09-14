@@ -55,8 +55,21 @@ const Onboarding = () => {
         return;
       }
 
+      // Server-side invitation lookup by the signed-in user's email
+      try {
+        const { data: inviteRows } = await (supabase.rpc as any)("corporate_invitation_for_me");
+        const row = Array.isArray(inviteRows) ? inviteRows[0] : inviteRows;
+        if (row) {
+          setPendingOrgInvite(row as PendingOrgInvite);
+          setChecking(false);
+          return;
+        }
+      } catch {
+        // fall through to the manual code path
+      }
+
       // Check for stashed invite code from sign-up URL
-      const stashed = sessionStorage.getItem(PENDING_INVITE_KEY);
+      const stashed = localStorage.getItem(PENDING_INVITE_KEY);
       if (stashed && stashed.trim()) {
         setInviteCode(stashed.trim().toUpperCase());
         setPrefilled(true);
