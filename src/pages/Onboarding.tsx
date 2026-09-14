@@ -216,6 +216,36 @@ const Onboarding = () => {
     );
   }
 
+  if (pendingOrgInvite) {
+    const orgName = pendingOrgInvite.out_organization_name;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <img src="/brain-icon.png" alt="BrainWise" className="mx-auto h-10 w-10 mb-2" />
+            <CardTitle className="text-2xl">Join {orgName}</CardTitle>
+            <CardDescription>
+              Your administrator invited you to {orgName}. Your assessments are covered by your organization.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button className="w-full" onClick={handleJoinOrg} disabled={loading}>
+              {loading ? "Joining..." : `Join ${orgName}`}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setPendingOrgInvite(null)}
+              disabled={loading}
+            >
+              Use a different option
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (showInviteCode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
