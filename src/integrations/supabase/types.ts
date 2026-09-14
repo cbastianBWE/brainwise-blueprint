@@ -23871,6 +23871,10 @@ export type Database = {
         Args: { p_limit?: number }
         Returns: Json
       }
+      bw_close_quiet_error_tickets: {
+        Args: { p_quiet_hours?: number }
+        Returns: Json
+      }
       bw_coach_can_access_my_relationship: { Args: never; Returns: boolean }
       bw_coach_client_coaching: {
         Args: { p_client_user_id: string }
@@ -23923,8 +23927,9 @@ export type Database = {
           newest_extract: string
           oldest_extract: string
           rows_missing_vector: number
+          sessions_eligible: number
           sessions_extracted: number
-          sessions_with_content: number
+          sessions_pending: number
         }[]
       }
       bw_coaching_note_save: {
@@ -24887,6 +24892,17 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      corporate_invitation_for_me: {
+        Args: never
+        Returns: {
+          out_account_type: string
+          out_department_name: string
+          out_expires_at: string
+          out_invitation_id: string
+          out_organization_id: string
+          out_organization_name: string
+        }[]
+      }
       corporate_invitation_record_reminder: {
         Args: { p_invitation_id: string; p_stage: string }
         Returns: undefined
@@ -25766,6 +25782,17 @@ export type Database = {
       }
       invitation_redeem: {
         Args: { p_invite_code: string; p_user_id: string }
+        Returns: {
+          account_type: string
+          department_id: string
+          department_name: string
+          org_level: string
+          organization_id: string
+          user_id: string
+        }[]
+      }
+      invitation_redeem_self: {
+        Args: never
         Returns: {
           account_type: string
           department_id: string
