@@ -542,15 +542,16 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
         }
       }
 
+      if (cancelled) return;
       setAssessments(filtered);
       if (preSelectedAssessmentId) {
-        const preSelected = combined.find(a => a.result.assessment_id === preSelectedAssessmentId);
-        setSelectedId(preSelected?.result.id ?? combined[0]?.result.id ?? "");
+        const preSelected = filtered.find(a => a.result.assessment_id === preSelectedAssessmentId);
+        setSelectedId(preSelected?.result.id ?? filtered[0]?.result.id ?? "");
       } else if (defaultInstrumentId) {
         const match = filtered.find(a => (a.result.instrument_id ?? "") === defaultInstrumentId);
-        setSelectedId(match?.result.id ?? combined[0]?.result.id ?? "");
+        setSelectedId(match?.result.id ?? filtered[0]?.result.id ?? "");
       } else {
-        setSelectedId(combined[0]?.result.id ?? "");
+        setSelectedId(filtered[0]?.result.id ?? "");
       }
       // Initialize PTP context tab based on most recent PTP result
       const mostRecentPtp = filtered.find(a => a.isPTP);
@@ -563,7 +564,8 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
     };
 
     fetchResults();
-  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach, refetchKey]);
+    return () => { cancelled = true; };
+  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach, orgPractitionerView, refetchKey]);
 
   // Selected assessment
   const selected = useMemo(
