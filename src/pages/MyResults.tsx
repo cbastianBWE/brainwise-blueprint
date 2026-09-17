@@ -392,6 +392,7 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
         .from("dimensions_public" as any)
         .select("dimension_id, dimension_name")
         .in("instrument_id", instrumentIds);
+      if (cancelled) return;
 
       const dimNameMap = new Map(
         (dimensionRows ?? []).map((d: any) => [d.dimension_id, d.dimension_name])
