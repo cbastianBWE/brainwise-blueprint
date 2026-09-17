@@ -316,9 +316,9 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
       .single()
       .then(({ data }) => {
         setClientName(data?.full_name ?? null);
-        if (!adminView) setShareWithCoach(data?.share_results_with_coach ?? false);
+        if (!adminView && !orgPractitionerView) setShareWithCoach(data?.share_results_with_coach ?? false);
       });
-  }, [isCoachView, targetUserId, adminView]);
+  }, [isCoachView, targetUserId, adminView, orgPractitionerView]);
 
   useEffect(() => {
     setCoachViewActive(isCoachView);
