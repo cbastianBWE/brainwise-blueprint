@@ -531,6 +531,7 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
             .select('assessment_id, paired_assessment_id, results_released')
             .eq('client_user_id', effectiveUserId)
             .in('assessment_id', assessmentIds);
+          if (cancelled) return;
 
           const pendingIds = new Set<string>(
             (ccRows ?? [])
