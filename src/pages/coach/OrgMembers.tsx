@@ -113,7 +113,7 @@ function MemberList({ onSelect }: { onSelect: (memberId: string) => void }) {
           <Users className="h-6 w-6" /> Organization Members
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Members of organizations you practitioner. Open anyone to view their results, plan, and coaching.
+          Members of the organizations you support as a practitioner. Open anyone to view their results, plan, and coaching.
         </p>
       </div>
 
