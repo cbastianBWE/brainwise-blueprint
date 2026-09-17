@@ -354,6 +354,11 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
   useEffect(() => {
     if (!effectiveUserId) return;
 
+    const filterMayApply = isCoachView && !adminView && !orgPractitionerView && !!coachUserId;
+    if (filterMayApply && shareWithCoach === null) return; // wait until the share preference is known
+
+    let cancelled = false;
+
     const fetchResults = async () => {
       setLoading(true);
 
