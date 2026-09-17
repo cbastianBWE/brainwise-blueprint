@@ -448,6 +448,7 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
               "airsa_get_my_paired_manager_status" as any,
               { p_self_assessment_id: row.id }
             );
+            if (cancelled) return;
             const pmRow = Array.isArray(pairedManagerRows) && pairedManagerRows.length > 0
               ? (pairedManagerRows[0] as any)
               : null;
