@@ -270,6 +270,7 @@ function MemberReport({
         <TabsContent value="results" className="mt-4">
           <MyResults
             isCoachView
+            orgPractitionerView
             targetUserId={memberId}
             preSelectedAssessmentId={assessmentId}
             coachUserId={coachUserId}
