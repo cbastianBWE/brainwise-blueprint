@@ -501,6 +501,7 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
       }
 
       if (combined.length === 0) {
+        if (cancelled) return;
         setLoading(false);
         return;
       }
