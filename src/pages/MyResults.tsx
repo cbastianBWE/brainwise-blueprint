@@ -430,6 +430,7 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
           .eq("rater_type", "self")
           .eq("status", "completed")
           .is("self_only_released_at", null);
+        if (cancelled) return;
 
         const existingResultAssessmentIds = new Set(combined.map((c) => c.result.assessment_id));
         const awaitingFiltered = (awaitingRows ?? []).filter(
