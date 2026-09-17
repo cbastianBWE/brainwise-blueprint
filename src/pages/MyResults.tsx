@@ -230,6 +230,7 @@ const NAI_DIMENSION_PASTEL: Record<string, string> = {
 interface MyResultsProps {
   isCoachView?: boolean;
   adminView?: boolean;
+  orgPractitionerView?: boolean;
   targetUserId?: string;
   preSelectedAssessmentId?: string;
   coachUserId?: string;
@@ -239,7 +240,7 @@ interface MyResultsProps {
   allowHighlighting?: boolean;
 }
 
-export default function MyResults({ isCoachView = false, adminView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId, allowHighlighting = true }: MyResultsProps) {
+export default function MyResults({ isCoachView = false, adminView = false, orgPractitionerView = false, targetUserId, preSelectedAssessmentId, coachUserId, permissionLevel = null, viewLabel, defaultInstrumentId, allowHighlighting = true }: MyResultsProps) {
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const { isBypassAdmin, isCoach, isCoachPremium, canBypassAssessmentPaywall } = useAccountRole();
@@ -315,9 +316,9 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       .single()
       .then(({ data }) => {
         setClientName(data?.full_name ?? null);
-        if (!adminView) setShareWithCoach(data?.share_results_with_coach ?? false);
+        if (!adminView && !orgPractitionerView) setShareWithCoach(data?.share_results_with_coach ?? false);
       });
-  }, [isCoachView, targetUserId, adminView]);
+  }, [isCoachView, targetUserId, adminView, orgPractitionerView]);
 
   useEffect(() => {
     setCoachViewActive(isCoachView);
@@ -352,6 +353,11 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
   // Fetch all completed assessment results
   useEffect(() => {
     if (!effectiveUserId) return;
+
+    const filterMayApply = isCoachView && !adminView && !orgPractitionerView && !!coachUserId;
+    if (filterMayApply && shareWithCoach === null) return; // wait until the share preference is known
+
+    let cancelled = false;
 
     const fetchResults = async () => {
       setLoading(true);
@@ -391,6 +397,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
         .from("dimensions_public" as any)
         .select("dimension_id, dimension_name")
         .in("instrument_id", instrumentIds);
+      if (cancelled) return;
 
       const dimNameMap = new Map(
         (dimensionRows ?? []).map((d: any) => [d.dimension_id, d.dimension_name])
@@ -429,6 +436,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
           .eq("rater_type", "self")
           .eq("status", "completed")
           .is("self_only_released_at", null);
+        if (cancelled) return;
 
         const existingResultAssessmentIds = new Set(combined.map((c) => c.result.assessment_id));
         const awaitingFiltered = (awaitingRows ?? []).filter(
@@ -447,6 +455,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
               "airsa_get_my_paired_manager_status" as any,
               { p_self_assessment_id: row.id }
             );
+            if (cancelled) return;
             const pmRow = Array.isArray(pairedManagerRows) && pairedManagerRows.length > 0
               ? (pairedManagerRows[0] as any)
               : null;
@@ -500,6 +509,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
       }
 
       if (combined.length === 0) {
+        if (cancelled) return;
         setLoading(false);
         return;
       }
@@ -507,13 +517,14 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
 
       // Coach filtering: if share_results_with_coach is false, only show linked assessments
       let filtered = combined;
-      if (isCoachView && !adminView && coachUserId && shareWithCoach === false) {
+      if (isCoachView && !adminView && !orgPractitionerView && coachUserId && shareWithCoach === false) {
         const { data: linkedRows } = await supabase
           .from("coach_clients")
           .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", effectiveUserId)
           .not("assessment_id", "is", null);
+        if (cancelled) return;
         const linkedIds = new Set([
           ...(linkedRows ?? []).map(r => r.assessment_id).filter(Boolean),
           ...(linkedRows ?? []).map(r => r.paired_assessment_id).filter(Boolean),
@@ -530,6 +541,7 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
             .select('assessment_id, paired_assessment_id, results_released')
             .eq('client_user_id', effectiveUserId)
             .in('assessment_id', assessmentIds);
+          if (cancelled) return;
 
           const pendingIds = new Set<string>(
             (ccRows ?? [])
@@ -541,15 +553,16 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
         }
       }
 
+      if (cancelled) return;
       setAssessments(filtered);
       if (preSelectedAssessmentId) {
-        const preSelected = combined.find(a => a.result.assessment_id === preSelectedAssessmentId);
-        setSelectedId(preSelected?.result.id ?? combined[0]?.result.id ?? "");
+        const preSelected = filtered.find(a => a.result.assessment_id === preSelectedAssessmentId);
+        setSelectedId(preSelected?.result.id ?? filtered[0]?.result.id ?? "");
       } else if (defaultInstrumentId) {
         const match = filtered.find(a => (a.result.instrument_id ?? "") === defaultInstrumentId);
-        setSelectedId(match?.result.id ?? combined[0]?.result.id ?? "");
+        setSelectedId(match?.result.id ?? filtered[0]?.result.id ?? "");
       } else {
-        setSelectedId(combined[0]?.result.id ?? "");
+        setSelectedId(filtered[0]?.result.id ?? "");
       }
       // Initialize PTP context tab based on most recent PTP result
       const mostRecentPtp = filtered.find(a => a.isPTP);
@@ -562,7 +575,8 @@ export default function MyResults({ isCoachView = false, adminView = false, targ
     };
 
     fetchResults();
-  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach, refetchKey]);
+    return () => { cancelled = true; };
+  }, [effectiveUserId, preSelectedAssessmentId, isCoachView, coachUserId, shareWithCoach, orgPractitionerView, refetchKey]);
 
   // Selected assessment
   const selected = useMemo(
