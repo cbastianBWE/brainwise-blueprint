@@ -508,13 +508,14 @@ export default function MyResults({ isCoachView = false, adminView = false, orgP
 
       // Coach filtering: if share_results_with_coach is false, only show linked assessments
       let filtered = combined;
-      if (isCoachView && !adminView && coachUserId && shareWithCoach === false) {
+      if (isCoachView && !adminView && !orgPractitionerView && coachUserId && shareWithCoach === false) {
         const { data: linkedRows } = await supabase
           .from("coach_clients")
           .select("assessment_id, paired_assessment_id")
           .eq("coach_user_id", coachUserId)
           .eq("client_user_id", effectiveUserId)
           .not("assessment_id", "is", null);
+        if (cancelled) return;
         const linkedIds = new Set([
           ...(linkedRows ?? []).map(r => r.assessment_id).filter(Boolean),
           ...(linkedRows ?? []).map(r => r.paired_assessment_id).filter(Boolean),
