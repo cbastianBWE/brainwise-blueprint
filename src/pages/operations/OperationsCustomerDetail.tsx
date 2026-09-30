@@ -784,8 +784,8 @@ export default function OperationsCustomerDetail() {
                           { branding: (orgBrandingQ.data ?? {}) as any, statement: stmtData },
                           `Statement-${c?.display_name ?? "customer"}.pdf`,
                         );
-                      } catch (err: any) {
-                        toast.error(err?.message ?? "Failed to download statement");
+                      } catch {
+                        // deliverPdf shows its own messages and never rethrows.
                       }
                     }}
                   >

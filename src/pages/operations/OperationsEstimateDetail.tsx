@@ -239,7 +239,7 @@ export default function OperationsEstimateDetail() {
     <div className="p-6 space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-3">
                 <span>Estimate {est.estimate_number}</span>
@@ -249,7 +249,7 @@ export default function OperationsEstimateDetail() {
                 Issued {formatDate(est.issue_date)} · Expires {formatDate(est.expiration_date)}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               {canEdit && (
                 <Button variant="outline" onClick={() => navigate(`/operations/estimates/${id}/edit`)}>
                   Edit

@@ -1,6 +1,61 @@
 // Client-side branded document PDF generator for Operations.
 // One engine, three template variants (standard, corporate, detailed).
 // Brand identity comes from the org record; the recipient block comes from the customer.
+import { toast } from "sonner";
+
+function isIOSLike(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && (navigator as any).maxTouchPoints > 1);
+}
+
+function triggerAnchorDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+async function saveOrShare(blob: Blob, filename: string) {
+  const file = new File([blob], filename, { type: "application/pdf" });
+  const nav = navigator as any;
+  if (nav.canShare && nav.canShare({ files: [file] })) {
+    try {
+      await nav.share({ files: [file], title: filename });
+      return;
+    } catch (e: any) {
+      if (e?.name === "AbortError") return; // user closed the share sheet
+    }
+  }
+  triggerAnchorDownload(blob, filename);
+}
+
+async function deliverPdf(build: () => Promise<Blob>, filename: string): Promise<void> {
+  const toastId = toast.loading("Preparing PDF…");
+  let blob: Blob;
+  try {
+    blob = await build();
+  } catch (e: any) {
+    toast.error(e?.message ? `Could not create the PDF: ${e.message}` : "Could not create the PDF.", { id: toastId });
+    return;
+  }
+  if (isIOSLike()) {
+    // The tap on this action is a fresh user gesture, which iOS requires.
+    toast.success("PDF ready", {
+      id: toastId,
+      duration: 60_000,
+      action: { label: "Save or share", onClick: () => { void saveOrShare(blob, filename); } },
+    });
+    return;
+  }
+  triggerAnchorDownload(blob, filename);
+  toast.success("PDF downloaded.", { id: toastId });
+}
 
 export type DocKind = "invoice" | "estimate" | "receipt";
 export type TemplateKey = "standard" | "corporate" | "detailed";
@@ -398,15 +453,7 @@ export async function downloadDocumentPdf(
   args: Parameters<typeof generateDocumentPdf>[0],
   filename: string
 ): Promise<void> {
-  const blob = await generateDocumentPdf(args);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  await deliverPdf(() => generateDocumentPdf(args), filename);
 }
 
 // =====================================================================
@@ -656,13 +703,5 @@ export async function downloadStatementPdf(
   args: Parameters<typeof generateStatementPdf>[0],
   filename: string
 ): Promise<void> {
-  const blob = await generateStatementPdf(args);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  await deliverPdf(() => generateStatementPdf(args), filename);
 }
