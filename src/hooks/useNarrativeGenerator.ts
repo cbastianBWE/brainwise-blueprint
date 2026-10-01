@@ -101,7 +101,8 @@ export function useNarrativeGenerator({
         );
         const localFailed: string[] = [];
 
-        for (const section of todo) {
+        for (let i = 0; i < todo.length; i++) {
+          const section = todo[i];
           setCurrent(section);
           const delays = [0, 5000, 10000, 20000];
           let success = false;
@@ -113,7 +114,12 @@ export function useNarrativeGenerator({
               const { data, error } = await supabase.functions.invoke(FN_NAME[kind], {
                 body: { ...idBody, section_type: section },
               });
-              if (error || !data) continue;
+              if (error) {
+                const st = (error as any)?.context?.status;
+                if (typeof st === "number" && st >= 400 && st <= 499) break; // client error: don't retry
+                continue;
+              }
+              if (!data) continue;
               const res = data as PlanResponse;
               setExpected(res.sections_expected ?? []);
               setDone(res.sections_done ?? []);
@@ -124,7 +130,14 @@ export function useNarrativeGenerator({
               // retry
             }
           }
-          if (!success) localFailed.push(section);
+          if (!success) {
+            if (i === 0) {
+              // First section failed: stop and leave everything for retry().
+              localFailed.push(...todo);
+              break;
+            }
+            localFailed.push(section);
+          }
         }
 
         setCurrent(null);

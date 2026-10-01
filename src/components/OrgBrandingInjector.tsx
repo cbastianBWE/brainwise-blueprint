@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrgBranding } from "@/hooks/useOrgBranding";
 
 const PRIMARY_VARS = ["--primary", "--primary-foreground"] as const;
 const ACCENT_VARS = [
@@ -89,39 +90,35 @@ function applyBrandingPayload(data: any) {
 export default function OrgBrandingInjector() {
   const { user, loading } = useAuth();
 
+  const branding = useOrgBranding();
+
   useEffect(() => {
-    if (loading) return;
+    if (!user) return;
+    if (branding.isSuccess) applyBrandingPayload(branding.data);
+    else if (branding.error) clearBranding();
+  }, [user?.id, branding.isSuccess, branding.data, branding.error]);
+
+  useEffect(() => {
+    if (loading || user) return;
     let active = true;
 
     (async () => {
-      if (user) {
-        const { data, error } = await (supabase.rpc as any)(
-          "get_org_branding_for_current_user",
-        );
-        if (!active) return;
-        if (error) {
-          clearBranding();
-          return;
-        }
-        applyBrandingPayload(data);
-      } else {
-        const { data, error } = await (supabase.rpc as any)(
-          "get_org_branding_for_hostname",
-          { p_hostname: window.location.hostname },
-        );
-        if (!active) return;
-        if (error) {
-          clearBranding();
-          return;
-        }
-        applyBrandingPayload(data);
+      const { data, error } = await (supabase.rpc as any)(
+        "get_org_branding_for_hostname",
+        { p_hostname: window.location.hostname },
+      );
+      if (!active) return;
+      if (error) {
+        clearBranding();
+        return;
       }
+      applyBrandingPayload(data);
     })();
 
     return () => {
       active = false;
     };
-  }, [user, loading]);
+  }, [user?.id, loading]);
 
   useEffect(() => clearBranding, []);
   return null;
