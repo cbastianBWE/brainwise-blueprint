@@ -301,7 +301,11 @@ export default function PrivacySettings() {
       setCoach({ ...coach, enabled: false });
     }
     if (user) {
-      await supabase.from("users").update({ share_results_with_coach: newEnabled }).eq("id", user.id);
+      const { error } = await supabase.from("users").update({ share_results_with_coach: newEnabled }).eq("id", user.id);
+      if (error) {
+        toast.error("Couldn't save your coach sharing setting. Please try again.");
+        return;
+      }
     }
     showSaved("coach");
   };

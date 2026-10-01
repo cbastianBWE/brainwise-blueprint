@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const { session } = useAuth();
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notif", "unreadCount"],
@@ -17,7 +17,7 @@ export function NotificationBell() {
       if (error) throw error;
       return typeof data === "number" ? data : 0;
     },
-    enabled: !!user,
+    enabled: !!session?.access_token,
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });

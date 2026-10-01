@@ -166,6 +166,24 @@ export function captureClientError(input: CaptureInput): void {
   if (capturing) return;
   if (input.operation === CAPTURE_RPC) return;
   if (capturesThisPage >= MAX_CAPTURES_PER_PAGE) return;
+  // Known noise, dropped before sending:
+  // - "Object Not Found Matching Id": Outlook Safe Links scanner opening emailed links headlessly.
+  // - "ResizeObserver loop": benign browser layout warning.
+  // - Network interruptions while offline or with the tab hidden (not actionable).
+  // "Lock broken"/"Lock was stolen" are intentionally kept to monitor auth timing.
+  {
+    const raw = String(input.message ?? "");
+    if (/Object Not Found Matching Id:\d+, MethodName:update, ParamCount:\d+/.test(raw)) return;
+    if (raw.startsWith("ResizeObserver loop")) return;
+    const isNetwork =
+      /^(TypeError: )?(Load failed|Failed to fetch|NetworkError when attempting to fetch resource\.?)$/.test(raw) ||
+      raw === "Failed to send a request to the Edge Function";
+    if (
+      isNetwork &&
+      ((typeof navigator !== "undefined" && navigator.onLine === false) ||
+        (typeof document !== "undefined" && document.visibilityState === "hidden"))
+    ) return;
+  }
   // The flag is synchronous only: it blocks a capture raised from inside a
   // capture, never a second capture for a different, concurrent failure.
   capturing = true;

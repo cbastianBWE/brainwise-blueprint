@@ -11,6 +11,7 @@ import { PractitionerDirectoryPrompt } from "@/components/coach/PractitionerDire
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { readBulkToken, claimPendingBulkSeat } from "@/lib/bulkSeatClaim";
 import HelpWidget from "@/components/help/HelpWidget";
+import { useOrgBranding } from "@/hooks/useOrgBranding";
 
 
 interface CouponData {
@@ -34,7 +35,7 @@ export default function AppLayout() {
       await claimPendingBulkSeat();
     })();
     return () => { done = true; };
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) return;
@@ -47,39 +48,20 @@ export default function AppLayout() {
       if (data) setCouponData(data);
     };
     fetchCoupon();
-  }, [user]);
+  }, [user?.id]);
 
-  const [branding, setBranding] = useState<{ logoUrl: string | null; orgName: string | null; isDefault: boolean; loaded: boolean }>({
-    logoUrl: null,
-    orgName: null,
-    isDefault: true,
-    loaded: false,
-  });
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      setBranding({ logoUrl: null, orgName: null, isDefault: true, loaded: true });
-      return;
+  const orgBranding = useOrgBranding();
+  const branding = (() => {
+    const settled = !!orgBranding.error || orgBranding.isSuccess;
+    const loaded = !authLoading && (!user || settled);
+    const data = orgBranding.data;
+    if (!user || orgBranding.error || !data || data.is_default) {
+      return { logoUrl: null as string | null, orgName: null as string | null, isDefault: true, loaded };
     }
-    let active = true;
-    (async () => {
-      const { data, error } = await (supabase.rpc as any)("get_org_branding_for_current_user");
-      if (!active) return;
-      if (error || !data || data.is_default) {
-        setBranding({ logoUrl: null, orgName: null, isDefault: true, loaded: true });
-        return;
-      }
-      const path = data.brand_logo_path as string | null;
-      const logoUrl = path
-        ? supabase.storage.from("org-branding").getPublicUrl(path).data.publicUrl
-        : null;
-      setBranding({ logoUrl, orgName: (data.organization_name as string) ?? null, isDefault: false, loaded: true });
-    })();
-    return () => {
-      active = false;
-    };
-  }, [user, authLoading]);
+    const path = data.brand_logo_path as string | null;
+    const logoUrl = path ? supabase.storage.from("org-branding").getPublicUrl(path).data.publicUrl : null;
+    return { logoUrl, orgName: (data.organization_name as string) ?? null, isDefault: false, loaded };
+  })();
 
   const showBanner =
     !dismissed &&

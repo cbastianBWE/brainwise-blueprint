@@ -42,7 +42,7 @@ export async function claimPendingCoachInvite(
         if (/coach_cannot_claim_own_invite/.test(msg)) {
           toast.error("You can't claim your own invitation.");
         } else if (/already_claimed/.test(msg)) {
-          toast.error("This invitation has already been claimed by someone else.");
+          toast.error("This invitation is linked to a different account. Sign in with the email address the invitation was sent to, or ask your practitioner to resend it.");
         } else if (/revoked/.test(msg)) {
           toast.error("This invitation has been revoked by your practitioner.");
         } else if (/expired/.test(msg)) {
