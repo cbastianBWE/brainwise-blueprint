@@ -86,9 +86,14 @@ export default function ShareableLinkModal({
   const validInstruments = selectedInstrumentShortIds.length > 0
     && selectedInstrumentShortIds.every(id => allowedInstrumentIds.has(id));
   const coachPaidPriceMissing = paymentMode === "coach_paid" && perAssessmentPrice === null;
-  const submitDisabled = !validEmail || !validInstruments || coachPaidPriceMissing || stage === "submitting";
+  const submitDisabled = !validEmail || !validInstruments || coachPaidPriceMissing || stage === "submitting" || (selectedInstrumentShortIds.includes("PTP") && !preferredContext);
 
   const handleSubmit = async () => {
+    const ptpNeeded = selectedInstrumentShortIds.includes("PTP");
+    if (ptpNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     const instrumentUuids = selectedInstrumentShortIds
       .map(id => INSTRUMENTS.find(i => i.id === id)?.uuid)
       .filter(Boolean) as string[];
@@ -261,18 +266,15 @@ export default function ShareableLinkModal({
 
             {selectedInstrumentShortIds.includes("PTP") && (
               <div className="space-y-2 pt-1">
-                <Label className="text-sm">Suggest a starting context (optional)</Label>
+                <Label className="text-sm">PTP variant your client will take (required)</Label>
                 <p className="text-xs text-muted-foreground">
-                  The PTP has a work half and a personal half. Your suggestion pre-selects
-                  the client's choice and explains that it came from you. They can still
-                  pick either, or both.
-                </p>
+The PTP has a work half and a personal half. Your client takes the variant you choose. If you assign one half, they can take the other half after finishing it.
+</p>
                 <div className="flex flex-wrap gap-2">
                   {([
-                    { v: null, label: "No suggestion" },
                     { v: 'professional', label: "Corporate / Professional" },
                     { v: 'personal', label: "Personal / Social" },
-                    { v: 'both', label: "Both" },
+                    { v: 'both', label: "Combined (both halves)" },
                   ] as const).map((opt) => (
                     <Button
                       key={opt.label}
@@ -285,6 +287,7 @@ export default function ShareableLinkModal({
                     </Button>
                   ))}
                 </div>
+                {!preferredContext && <p className="text-xs text-muted-foreground">Choose a variant to continue.</p>}
               </div>
             )}
 

@@ -79,6 +79,8 @@ interface ClientRow {
   revoked_at: string | null;
   expires_at: string | null;
   walkthrough_enabled: boolean | null;
+  instrument_id: string | null;
+  preferred_first_context: 'professional' | 'personal' | 'both' | null;
 }
 
 interface UniqueClient {
@@ -251,6 +253,7 @@ export default function CoachClients() {
 
   const canOrderAssessment = allowedInstrumentIds.size > 0 || canOfferActorDebrief;
   const actorOnlyMode = certsLoaded && allowedInstrumentIds.size === 0 && canOfferActorDebrief;
+  const ptpChoiceNeeded = (!isFreeGrant && (isActorDebrief || actorOnlyMode)) || selectedInstruments.includes(PTP_SHORT_ID);
 
   const fetchClients = async () => {
     if (!user) return;
@@ -260,7 +263,7 @@ export default function CoachClients() {
     try {
       const { data: ccRows, error: ccError } = await supabase
         .from("coach_clients")
-        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at, walkthrough_enabled")
+        .select("id, client_email, client_user_id, invitation_status, assessment_id, instrument_id, coach_notes, created_at, stripe_payment_intent_id, debrief_completed, results_released, revoked_at, expires_at, walkthrough_enabled, preferred_first_context")
         .eq("coach_user_id", user.id)
         .order("created_at", { ascending: false });
       if (ccError) throw new Error(ccError.message);
@@ -318,6 +321,8 @@ export default function CoachClients() {
 
         enriched.push({
           id: cc.id,
+          instrument_id: cc.instrument_id ?? null,
+          preferred_first_context: ((cc as { preferred_first_context?: string | null }).preferred_first_context ?? null) as ClientRow['preferred_first_context'],
           client_email: cc.client_email,
           client_user_id: cc.client_user_id,
           client_name: clientName,
@@ -551,6 +556,10 @@ export default function CoachClients() {
   };
 
   const handleOrderCoachPays = async () => {
+    if (ptpChoiceNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     if (!user || !email) {
       toast.error("Please fill in client email.");
       return;
@@ -614,6 +623,10 @@ export default function CoachClients() {
   };
 
   const handleOrderClientPays = async () => {
+    if (ptpChoiceNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     if (!user || !email) {
       toast.error("Please fill in client email.");
       return;
@@ -731,6 +744,10 @@ export default function CoachClients() {
   };
 
   const handleOrderActorDebrief = async () => {
+    if (ptpChoiceNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     if (!actorCert) return;
     if (!email) {
       toast.error("Please fill in client email.");
@@ -825,6 +842,10 @@ export default function CoachClients() {
   };
 
   const handleOrderFreeGrant = async () => {
+    if (ptpChoiceNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     if (!user || !email) {
       toast.error("Please fill in client email.");
       return;
@@ -1109,18 +1130,15 @@ export default function CoachClients() {
           instrument is always the PTP and isn't chosen via selectedInstruments. */}
       {((!isFreeGrant && (isActorDebrief || actorOnlyMode)) || selectedInstruments.includes(PTP_SHORT_ID)) && (
         <div className="space-y-2 pt-2">
-          <Label className="text-sm">Suggest a starting context (optional)</Label>
+          <Label className="text-sm">PTP variant your client will take (required)</Label>
           <p className="text-xs text-muted-foreground">
-            The PTP has a work half and a personal half. Your suggestion pre-selects
-            the client's choice and explains that it came from you. They can still
-            pick either, or both.
-          </p>
+The PTP has a work half and a personal half. Your client takes the variant you choose. If you assign one half, they can take the other half after finishing it.
+</p>
           <div className="flex flex-wrap gap-2">
             {([
-              { v: null, label: "No suggestion" },
               { v: 'professional', label: "Corporate / Professional" },
               { v: 'personal', label: "Personal / Social" },
-              { v: 'both', label: "Both" },
+              { v: 'both', label: "Combined (both halves)" },
             ] as const).map((opt) => (
               <Button
                 key={opt.label}
@@ -1133,6 +1151,7 @@ export default function CoachClients() {
               </Button>
             ))}
           </div>
+          {!preferredContext && <p className="text-xs text-muted-foreground">Choose a variant to continue.</p>}
         </div>
       )}
       <WalkthroughChoice
@@ -1271,22 +1290,22 @@ export default function CoachClients() {
             description="Set up an assessment for a new or existing client"
             footer={
               isFreeGrant ? (
-                <Button className="w-full gap-2" onClick={handleOrderFreeGrant} disabled={submitting || !email}>
+                <Button className="w-full gap-2" onClick={handleOrderFreeGrant} disabled={submitting || !email || (ptpChoiceNeeded && !preferredContext)}>
                   <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Free Assessment"}
                 </Button>
               ) : isActorDebrief ? (
-                <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email}>
+                <Button className="w-full gap-2" onClick={handleOrderActorDebrief} disabled={submitting || !email || (ptpChoiceNeeded && !preferredContext)}>
                   <Send className="h-4 w-4" aria-hidden="true" /> {submitting ? "Sending..." : "Send Actor Debrief Invitation"}
                 </Button>
               ) : orderTab === "coach-pays" ? (
                 <Button className="w-full gap-2" onClick={handleOrderCoachPays}
-                        disabled={submitting || !email || !perAssessmentPriceId}>
+                        disabled={submitting || !email || !perAssessmentPriceId || (ptpChoiceNeeded && !preferredContext)}>
                   <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
                   {submitting ? "Processing..." : "Proceed to Payment"}
                 </Button>
               ) : (
                 <Button className="w-full gap-2" onClick={handleOrderClientPays}
-                        disabled={submitting || !email}>
+                        disabled={submitting || !email || (ptpChoiceNeeded && !preferredContext)}>
                   <Send className="h-4 w-4" aria-hidden="true" />
                   {submitting ? "Sending..." : "Send Invitation"}
                 </Button>
@@ -1654,6 +1673,7 @@ export default function CoachClients() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Instrument</TableHead>
+                    <TableHead>PTP variant</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date Sent</TableHead>
                     <TableHead>Completed</TableHead>
@@ -1667,6 +1687,35 @@ export default function CoachClients() {
                     .map(c => (
                     <TableRow key={c.id}>
                       <TableCell className="text-sm">{c.instrument_name || "—"}</TableCell>
+                      <TableCell className="text-sm">
+                        {c.instrument_id === PTP_UUID ? (
+                          <Select
+                            value={c.preferred_first_context ?? undefined}
+                            disabled={c.assessment_status === "completed" || !!c.revoked_at}
+                            onValueChange={async (value) => {
+                              const { error } = await supabase.rpc(
+                                "coach_set_client_ptp_context" as never,
+                                { p_coach_client_id: c.id, p_context: value } as never,
+                              );
+                              if (error) {
+                                toast.error(error.message);
+                                return;
+                              }
+                              toast.success("Variant updated. If your client has already started, they finish the variant they started.");
+                              fetchClients();
+                            }}
+                          >
+                            <SelectTrigger className="h-8 w-[200px]" aria-label="PTP variant">
+                              <SelectValue placeholder="Not assigned" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="professional">Corporate / Professional</SelectItem>
+                              <SelectItem value="personal">Personal / Social</SelectItem>
+                              <SelectItem value="both">Combined (both halves)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : "—"}
+                      </TableCell>
                       <TableCell>{getStatusBadge(c.assessment_status, c.invitation_status)}</TableCell>
                       <TableCell className="text-sm">
                         {c.created_at ? format(new Date(c.created_at), "MMM d, yyyy") : "—"}

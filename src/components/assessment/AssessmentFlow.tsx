@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -51,9 +52,15 @@ interface Props {
   raterType?: 'self' | 'manager';
   targetUserName?: string;
   entitlementSource?: 'free_cert_pool' | 'paid_purchase' | 'coach_paid_client' | 'self_pay_coach_invite' | null;
+  onContextResolved?: (ctx: 'professional' | 'personal' | 'both') => void;
 }
 
-export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName, entitlementSource }: Props) {
+type PtpCtx = 'professional' | 'personal' | 'both';
+const asPtpCtx = (v: unknown): PtpCtx | null =>
+  v === 'professional' || v === 'personal' || v === 'both' ? v : null;
+type InputMode = 'slider' | 'typed';
+
+export default function AssessmentFlow({ instrument, onExit, contextType, preexistingAssessmentId, epnAssignmentId, raterType = 'self', targetUserName, entitlementSource, onContextResolved }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -63,7 +70,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewingUnanswered, setReviewingUnanswered] = useState(false);
   const [reviewing, setReviewing] = useState(false);
-  const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null }>>({});
+  const [responses, setResponses] = useState<Record<string, { numeric: number; text: string | null; readiness: string | null; mode?: InputMode | null }>>({});
   const [unsavedItems, setUnsavedItems] = useState<Set<string>>(new Set());
   const [retrying, setRetrying] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
@@ -98,15 +105,19 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
       }
 
       let candidateId: string | null = preexistingAssessmentId ?? null;
+      let candidateContext: string | null = null;
       if (!candidateId && !epnAssignmentId) {
         const { data: existing } = await supabase
           .from("assessments")
-          .select("id")
+          .select("id, context_type")
           .eq("user_id", user.id)
           .eq("instrument_id", instrument.instrument_id)
           .eq("status", "in_progress")
           .limit(1);
-        if (existing && existing.length > 0) candidateId = existing[0].id;
+        if (existing && existing.length > 0) {
+          candidateId = existing[0].id;
+          candidateContext = (existing[0] as { context_type?: string | null }).context_type ?? null;
+        }
       }
 
       if (candidateId) {
@@ -125,6 +136,10 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
               .from('assessments')
               .update({ context_type: contextType })
               .eq('id', candidateId);
+          }
+          const resumedCtx = asPtpCtx(candidateContext);
+          if (instrument.instrument_id === "INST-001" && resumedCtx && resumedCtx !== contextType) {
+            onContextResolved?.(resumedCtx);
           }
           setAssessmentId(candidateId);
           if (entitlementSource && !epnAssignmentId && raterType !== 'manager') {
@@ -162,17 +177,40 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         if (error || !data) throw error || new Error('Failed to start assessment');
         newId = data as unknown as string;
       } else {
-        const { data, error } = await supabase.rpc('start_assessment', {
-          p_instrument_id: instrument.instrument_id,
-          p_rater_type: raterType,
-          p_preexisting_assessment_id: preexistingAssessmentId ?? undefined,
-          p_acknowledgment_version_hash: versionHash,
-          p_context_type: contextType ?? undefined,
-        });
-        if (error) throw error;
-        const result = (data ?? {}) as { assessment_id?: string; error?: string };
+        type StartResult = { assessment_id?: string; error?: string; context_type?: string | null; allowed?: string[] };
+        const callStart = async (ctx: PtpCtx | null | undefined) => {
+          const { data, error } = await supabase.rpc('start_assessment', {
+            p_instrument_id: instrument.instrument_id,
+            p_rater_type: raterType,
+            p_preexisting_assessment_id: preexistingAssessmentId ?? undefined,
+            p_acknowledgment_version_hash: versionHash,
+            p_context_type: ctx ?? undefined,
+          });
+          if (error) throw error;
+          return (data ?? {}) as StartResult;
+        };
+        let result = await callStart(contextType);
+        if (result.error === 'context_not_allowed') {
+          const only = (result.allowed ?? []).length === 1 ? asPtpCtx(result.allowed![0]) : null;
+          let retried: StartResult | null = null;
+          if (only) {
+            onContextResolved?.(only);
+            try { retried = await callStart(only); } catch { retried = null; }
+          }
+          if (!retried || retried.error || !retried.assessment_id) {
+            toast({ title: 'Error', description: "This assessment variant isn't available to you right now.", variant: 'destructive' });
+            setConfirmingAck(false);
+            onExit();
+            return;
+          }
+          result = retried;
+        }
         if (result.error || !result.assessment_id) {
           throw new Error(result.error || 'Failed to start assessment');
+        }
+        const startedCtx = asPtpCtx(result.context_type);
+        if (instrument.instrument_id === "INST-001" && startedCtx && startedCtx !== contextType) {
+          onContextResolved?.(startedCtx);
         }
         newId = result.assessment_id;
       }
@@ -279,7 +317,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             response_value_numeric: resp.numeric,
             response_value_text: resp.text,
             readiness_level: resp.readiness,
-          },
+            input_mode: resp.mode ?? null,
+          } as never,
           { onConflict: "assessment_id,item_id" }
         );
       if (!error) {
@@ -372,12 +411,12 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
 
 
   const saveResponse = useCallback(
-    async (itemId: string, numeric: number, text: string | null, readinessLevel: string | null) => {
+    async (itemId: string, numeric: number, text: string | null, readinessLevel: string | null, mode: InputMode | null = null) => {
       if (!assessmentId) return;
       const item = items.find((i) => i.item_id === itemId);
       if (!item) return;
 
-      setResponses((prev) => ({ ...prev, [itemId]: { numeric, text, readiness: readinessLevel } }));
+      setResponses((prev) => ({ ...prev, [itemId]: { numeric, text, readiness: readinessLevel, mode } }));
 
       const { error } = await supabase
         .from("assessment_responses")
@@ -388,7 +427,8 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
             response_value_numeric: numeric,
             response_value_text: text,
             readiness_level: readinessLevel,
-          },
+            input_mode: mode,
+          } as never,
           { onConflict: "assessment_id,item_id" }
         );
 
@@ -564,7 +604,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
         value={resp?.numeric ?? null}
         raterType={raterType}
         targetUserName={targetUserName}
-        onSelect={(val) => saveResponse(item.item_id, val, null, null)}
+        onSelect={(val, mode) => saveResponse(item.item_id, val, null, null, mode)}
       />
     );
   };
@@ -758,7 +798,7 @@ export default function AssessmentFlow({ instrument, onExit, contextType, preexi
               value={currentResponse?.numeric ?? null}
               raterType={raterType}
               targetUserName={targetUserName}
-              onSelect={(val) => saveResponse(currentItem.item_id, val, null, null)}
+              onSelect={(val, mode) => saveResponse(currentItem.item_id, val, null, null, mode)}
             />
           )}
         </div>
@@ -867,10 +907,12 @@ function SliderControl({
   value: number | null;
   raterType?: 'self' | 'manager';
   targetUserName?: string;
-  onSelect: (val: number) => void;
+  onSelect: (val: number, mode: InputMode) => void;
 }) {
   const [localVal, setLocalVal] = useState(value ?? 50);
   const [touched, setTouched] = useState(value !== null);
+  const [draft, setDraft] = useState<string>(value !== null ? String(value) : "");
+  const [typedInvalid, setTypedInvalid] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSave = useRef<(() => void) | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -891,8 +933,8 @@ function SliderControl({
     }
   };
 
-  const scheduleSave = (v: number) => {
-    const persist = () => onSelect(v);
+  const scheduleSave = (v: number, mode: InputMode) => {
+    const persist = () => onSelect(v, mode);
     pendingSave.current = persist;
     clearTimer();
     debounceRef.current = setTimeout(() => {
@@ -902,10 +944,30 @@ function SliderControl({
     }, 250);
   };
 
-  const commitNow = (v: number) => {
+  const commitNow = (v: number, mode: InputMode) => {
     clearTimer();
     pendingSave.current = null;
-    onSelect(v);
+    onSelect(v, mode);
+  };
+
+  // Keep the typed box in sync with slider moves and item changes.
+  useEffect(() => {
+    setDraft(touched ? String(localVal) : "");
+  }, [localVal, touched, item.item_id]);
+
+  const commitTyped = () => {
+    const trimmed = draft.trim();
+    const v = /^\d+$/.test(trimmed) ? parseInt(trimmed, 10) : NaN;
+    if (Number.isInteger(v) && v >= 0 && v <= 100) {
+      setTypedInvalid(false);
+      setLocalVal(v);
+      setTouched(true);
+      setDraft(String(v));
+      commitNow(v, 'typed');
+    } else {
+      if (trimmed !== "" || touched) setTypedInvalid(trimmed !== "");
+      setDraft(touched ? String(localVal) : "");
+    }
   };
 
   useEffect(() => {
@@ -970,9 +1032,29 @@ function SliderControl({
         <div className="flex items-center gap-4">
           <span className="w-6 flex-shrink-0" />
           <div className="flex-1 flex justify-center">
-            <span className="text-3xl font-bold text-primary min-w-16">
-              {touched ? localVal : '—'}
-            </span>
+            <div className="flex flex-col items-center">
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                aria-label="Type your answer, a whole number from 0 to 100"
+                placeholder="—"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={commitTyped}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    commitTyped();
+                  }
+                }}
+                className="w-24 h-auto py-1 text-3xl md:text-3xl font-bold text-primary text-center"
+              />
+              {typedInvalid && (
+                <span className="mt-1 text-xs text-destructive">Enter a whole number from 0 to 100</span>
+              )}
+            </div>
           </div>
           <span className="w-8 flex-shrink-0" />
         </div>
@@ -987,9 +1069,10 @@ function SliderControl({
               onValueChange={([v]) => {
                 setLocalVal(v);
                 setTouched(true);
-                scheduleSave(v);
+                setTypedInvalid(false);
+                scheduleSave(v, 'slider');
               }}
-              onValueCommit={([v]) => commitNow(v)}
+              onValueCommit={([v]) => commitNow(v, 'slider')}
             />
           </div>
           <span className="text-sm font-medium text-muted-foreground w-8 text-center flex-shrink-0">100</span>
@@ -1002,6 +1085,7 @@ function SliderControl({
           </div>
           <div className="w-8 flex-shrink-0" />
         </div>
+        <p className="text-xs text-muted-foreground text-center">Drag the slider or type a number.</p>
       </div>
     </div>
   );

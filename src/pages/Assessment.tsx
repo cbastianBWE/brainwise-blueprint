@@ -37,7 +37,8 @@ export default function Assessment() {
 
   const [selectedInstrument, setSelectedInstrument] = useState<SelectedInstrument | null>(null);
   const [contextType, setContextType] = useState<'professional' | 'personal' | 'both' | null>(null);
-  const [ptpRecommended, setPtpRecommended] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [ptpAllowed, setPtpAllowed] = useState<Array<'professional' | 'personal' | 'both'>>(['professional', 'personal', 'both']);
+  const [ptpAssignedSource, setPtpAssignedSource] = useState<'coach' | 'org' | null>(null);
   const [ptpContextLoading, setPtpContextLoading] = useState(false);
   const [entitlementSource, setEntitlementSource] = useState<EntitlementSource | null>(null);
   const [epnStarting, setEpnStarting] = useState(false);
@@ -251,65 +252,24 @@ export default function Assessment() {
     setPtpContextLoading(true);
 
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { if (!cancelled) setPtpContextLoading(false); return; }
-
-      // coach_clients stores the instrument UUID, not the "INST-001" short code.
-      const ptpUuid = getInstrumentByInstrumentId(selectedInstrument.instrument_id)?.uuid;
-
-      const [ccRes, purchaseRes] = await Promise.all([
-        supabase
-          .from("coach_clients_client_view")
-          .select("context_progress, preferred_first_context, created_at")
-          .eq("client_user_id", user.id)
-          .eq("instrument_id", ptpUuid ?? selectedInstrument.instrument_id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("assessment_purchases")
-          .select("context_progress")
-          .eq("user_id", user.id)
-          .is("consumed_at", null),
-      ]);
-
+      const { data, error } = await supabase.rpc("ptp_assignment_state" as never);
       if (cancelled) return;
-
-      if (ccRes.error) {
-        console.error(
-          "[ptp-context] coach_clients_client_view lookup failed",
-          {
-            client_user_id: user.id,
-            instrument_id: ptpUuid ?? selectedInstrument.instrument_id,
-            error: ccRes.error,
-          },
-        );
-      }
-      if (purchaseRes.error) {
-        console.error(
-          "[ptp-context] assessment_purchases lookup failed",
-          { user_id: user.id, error: purchaseRes.error },
-        );
-      }
-
-      const rows = (ccRes.error ? [] : ccRes.data ?? []) as Array<{ context_progress: string | null; preferred_first_context: string | null }>;
-      const progresses = [
-        ...rows.map((r) => r.context_progress),
-        ...((purchaseRes.error ? [] : purchaseRes.data ?? []) as Array<{ context_progress: string | null }>).map((r) => r.context_progress),
-      ].filter(Boolean);
-
-      if (progresses.includes("professional_done") && !progresses.includes("both_done")) {
-        setContextType("personal");
+      if (error) {
+        console.error("[ptp-context] ptp_assignment_state failed", error);
+        setPtpAllowed(['professional', 'personal', 'both']);
+        setPtpAssignedSource(null);
         setPtpContextLoading(false);
         return;
       }
-      if (progresses.includes("personal_done") && !progresses.includes("both_done")) {
-        setContextType("professional");
-        setPtpContextLoading(false);
-        return;
-      }
-
-      const rec = rows.find((r) => r.preferred_first_context)?.preferred_first_context ?? null;
-      if (rec === "professional" || rec === "personal" || rec === "both") {
-        setPtpRecommended(rec);
+      const state = (data ?? {}) as { allowed?: string[]; assigned_source?: 'coach' | 'org' | null };
+      const allowed = (state.allowed ?? ['professional', 'personal', 'both']).filter(
+        (v): v is 'professional' | 'personal' | 'both' => v === 'professional' || v === 'personal' || v === 'both',
+      );
+      if (allowed.length === 1) {
+        setContextType(allowed[0]);
+      } else {
+        setPtpAllowed(allowed);
+        setPtpAssignedSource(state.assigned_source ?? null);
       }
       setPtpContextLoading(false);
     })();
@@ -368,12 +328,13 @@ export default function Assessment() {
           </div>
         );
       }
-      return <PTPContextSelection onSelect={setContextType} recommended={ptpRecommended} />;
+      return <PTPContextSelection onSelect={setContextType} allowed={ptpAllowed} />;
     }
     return (
       <AssessmentFlow
         instrument={selectedInstrument}
         contextType={contextType}
+        onContextResolved={setContextType}
         entitlementSource={entitlementSource}
         preexistingAssessmentId={selectedInstrument.preexistingAssessmentId}
         epnAssignmentId={selectedInstrument.epnAssignmentId}
@@ -498,25 +459,21 @@ export default function Assessment() {
   );
 }
 
+type PtpCtx = 'professional' | 'personal' | 'both';
+
 function PTPContextSelection({
   onSelect,
-  recommended,
+  allowed,
 }: {
-  onSelect: (ctx: 'professional' | 'personal' | 'both') => void;
-  recommended?: 'professional' | 'personal' | 'both' | null;
+  onSelect: (ctx: PtpCtx) => void;
+  allowed: PtpCtx[];
 }) {
-  const cardClass = (ctx: 'professional' | 'personal' | 'both') =>
-    `cursor-pointer transition-all hover:shadow-md ${
-      recommended === ctx
-        ? "border-accent border-2 ring-2 ring-accent/40 bg-accent/5 shadow-md"
-        : "hover:border-accent/50"
-    }`;
-
-  const SuggestedBadge = () => (
-    <span className="inline-block mb-1 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-      Suggested by your practitioner
-    </span>
-  );
+  const cardClass = "cursor-pointer transition-all hover:shadow-md hover:border-accent/50";
+  const cards: Array<{ v: PtpCtx; title: string; body: string }> = [
+    { v: 'professional', title: 'Corporate / Professional', body: 'Assess your threat responses in work and professional contexts.' },
+    { v: 'personal', title: 'Personal / Social', body: 'Assess your threat and reward responses in personal and social contexts.' },
+    { v: 'both', title: 'Both', body: 'Complete the full 89-question assessment covering all contexts.' },
+  ];
 
   return (
     <div className="min-h-screen bg-background py-12 px-4">
@@ -527,50 +484,17 @@ function PTPContextSelection({
             Before we begin, tell us which context you are completing this assessment for. You can complete the other half later.
           </p>
         </div>
-        {recommended && (
-          <div className="mb-6 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-foreground">
-            Your practitioner suggested starting with{" "}
-            <strong>
-              {recommended === "professional"
-                ? "Corporate / Professional"
-                : recommended === "personal"
-                ? "Personal / Social"
-                : "Both"}
-            </strong>
-            . You can still choose whichever you prefer.
-          </div>
-        )}
         <div className="grid gap-4">
-          <Card className={cardClass('professional')} onClick={() => onSelect('professional')}>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-1">Corporate / Professional</h3>
-              {recommended === 'professional' && <SuggestedBadge />}
-              <p className="text-sm text-muted-foreground">
-                Assess your threat responses in work and professional contexts.
-              </p>
-            </CardContent>
-          </Card>
-          <Card className={cardClass('personal')} onClick={() => onSelect('personal')}>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-1">Personal / Social</h3>
-              {recommended === 'personal' && <SuggestedBadge />}
-              <p className="text-sm text-muted-foreground">
-                Assess your threat and reward responses in personal and social contexts.
-              </p>
-            </CardContent>
-          </Card>
-          <Card className={cardClass('both')} onClick={() => onSelect('both')}>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-1">Both</h3>
-              {recommended === 'both' && <SuggestedBadge />}
-              <p className="text-sm text-muted-foreground">
-                Complete the full 89-question assessment covering all contexts.
-              </p>
-            </CardContent>
-          </Card>
+          {cards.filter((c) => allowed.includes(c.v)).map((c) => (
+            <Card key={c.v} className={cardClass} onClick={() => onSelect(c.v)}>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-1">{c.title}</h3>
+                <p className="text-sm text-muted-foreground">{c.body}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </div>
   );
 }
-

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Search, ShieldCheck, Users2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 /* ---------- Types ---------- */
 
@@ -33,6 +34,7 @@ interface EffectiveFeatures {
   dashboard_access_level: string;
   supervisor_dashboard_enabled: boolean;
   mfa_required: boolean;
+  ptp_assigned_context: 'professional' | 'personal' | 'both' | null;
 }
 
 interface Instrument {
@@ -87,6 +89,7 @@ export default function Features() {
 
   const [loading, setLoading] = useState(true);
   const [features, setFeatures] = useState<EffectiveFeatures | null>(null);
+  const [ptpInFlight, setPtpInFlight] = useState(false);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
   const [members, setMembers] = useState<OrgMember[]>([]);
   const [overrides, setOverrides] = useState<Override[]>([]);
@@ -122,16 +125,22 @@ export default function Features() {
         if (membersRes.error) throw membersRes.error;
         if (overridesRes.error) throw overridesRes.error;
 
-        const baseFeatures = featuresRes.data as Omit<EffectiveFeatures, "mfa_required"> | null;
+        const baseFeatures = featuresRes.data as Omit<EffectiveFeatures, "mfa_required" | "ptp_assigned_context"> | null;
         let merged: EffectiveFeatures | null = null;
         if (baseFeatures) {
           const orgRes = await supabase
             .from("organizations")
-            .select("mfa_required")
+            .select("mfa_required, ptp_assigned_context" as "mfa_required")
             .eq("id", baseFeatures.organization_id)
             .single();
           if (orgRes.error) throw orgRes.error;
-          merged = { ...baseFeatures, mfa_required: !!orgRes.data?.mfa_required };
+          const orgRow = (orgRes.data ?? {}) as { mfa_required?: boolean; ptp_assigned_context?: string | null };
+          const ptpCtx = orgRow.ptp_assigned_context;
+          merged = {
+            ...baseFeatures,
+            mfa_required: !!orgRow.mfa_required,
+            ptp_assigned_context: ptpCtx === "professional" || ptpCtx === "personal" || ptpCtx === "both" ? ptpCtx : null,
+          };
         }
 
         setFeatures(merged);
@@ -249,6 +258,24 @@ export default function Features() {
       setFeatures({ ...features, supervisor_dashboard_enabled: prev });
       toast.error(error.message || "Failed to update supervisor dashboard setting.");
     }
+  }
+
+  async function applyPtpContext(value: 'professional' | 'personal' | 'both' | null) {
+    if (ptpInFlight || !features) return;
+    setPtpInFlight(true);
+    const prev = features.ptp_assigned_context;
+    setFeatures({ ...features, ptp_assigned_context: value });
+    const { error } = await supabase.rpc(
+      "org_set_ptp_assigned_context" as never,
+      { p_organization_id: features.organization_id, p_context: value } as never,
+    );
+    setPtpInFlight(false);
+    if (error) {
+      setFeatures({ ...features, ptp_assigned_context: prev });
+      toast.error(error.message);
+      return;
+    }
+    toast.success("PTP variant updated");
   }
 
   async function applyMfaToggle(newEnabled: boolean) {
@@ -470,6 +497,36 @@ export default function Features() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {features && (
+          <Card>
+            <CardHeader>
+              <CardTitle>PTP variant for employees</CardTitle>
+              <CardDescription>
+                Choose which PTP variant employees take. A practitioner coaching an employee can override this for that person. Anyone who has already started keeps the variant they started.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={features.ptp_assigned_context ?? "choose"}
+                disabled={ptpInFlight}
+                onValueChange={(v) =>
+                  void applyPtpContext(v === "professional" || v === "personal" || v === "both" ? v : null)
+                }
+              >
+                <SelectTrigger className="w-full sm:w-[320px]" aria-label="PTP variant for employees">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="choose">Let each employee choose</SelectItem>
+                  <SelectItem value="professional">Corporate / Professional</SelectItem>
+                  <SelectItem value="personal">Personal / Social</SelectItem>
+                  <SelectItem value="both">Both (full assessment)</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ---------- Card 3: Member Feature Overrides ---------- */}
         <Card>

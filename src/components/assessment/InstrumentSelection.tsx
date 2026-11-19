@@ -97,7 +97,8 @@ export default function InstrumentSelection({ onSelect }: Props) {
   const [actorDebriefInstrumentIds, setActorDebriefInstrumentIds] = useState<Set<string>>(new Set());
   const [freeGrantInstrumentIds, setFreeGrantInstrumentIds] = useState<Set<string>>(new Set());
   const [ptpContextProgress, setPtpContextProgress] = useState<Map<string, string>>(new Map());
-  const [ptpPreferredContext, setPtpPreferredContext] = useState<Map<string, string>>(new Map());
+  const [ptpAssignedContext, setPtpAssignedContext] = useState<'professional' | 'personal' | 'both' | null>(null);
+  const [ptpAssignedReason, setPtpAssignedReason] = useState<string | null>(null);
   const [airsaAwaiting, setAirsaAwaiting] = useState<{ completed_at: string } | null>(null);
 
   const [freeCertPoolInstrumentIds, setFreeCertPoolInstrumentIds] = useState<Set<string>>(new Set());
@@ -256,31 +257,30 @@ export default function InstrumentSelection({ onSelect }: Props) {
       // is first-wins, so the most recent coach relationship wins.
       {
         const ctxMap = new Map<string, string>();
-        const prefMap = new Map<string, string>();
         const consider = (instrumentId: string | null | undefined, ctx: string | null | undefined) => {
           if (!instrumentId || !ctx) return;
           const existing = ctxMap.get(instrumentId);
           if (!existing) ctxMap.set(instrumentId, ctx);
         };
-        const considerPref = (instrumentId: string | null | undefined, pref: string | null | undefined) => {
-          if (!instrumentId || !pref) return;
-          if (!prefMap.has(instrumentId)) prefMap.set(instrumentId, pref);
-        };
         type CoachRow = { instrument_id?: string | null; context_progress?: string | null; preferred_first_context?: string | null };
         (coachClientsRes.data ?? []).forEach((r: CoachRow) => {
           consider(r.instrument_id, r.context_progress);
-          considerPref(r.instrument_id, r.preferred_first_context);
         });
         (selfPayCoachClientsRes.data ?? []).forEach((r: CoachRow) => {
           consider(r.instrument_id, r.context_progress);
-          considerPref(r.instrument_id, r.preferred_first_context);
         });
         (purchasesRes.data ?? []).forEach((r: { instrument_id?: string | null; context_progress?: string | null }) => {
           if (!r.instrument_id) return;
           r.instrument_id.split(",").forEach((id: string) => consider(id.trim(), r.context_progress));
         });
         setPtpContextProgress(ctxMap);
-        setPtpPreferredContext(prefMap);
+      }
+
+      {
+        const { data: ptpState } = await supabase.rpc("ptp_assignment_state" as never);
+        const allowed = ((ptpState as { allowed?: string[] } | null)?.allowed ?? []);
+        setPtpAssignedContext(allowed.length === 1 ? (allowed[0] as 'professional' | 'personal' | 'both') : null);
+        setPtpAssignedReason((ptpState as { reason?: string } | null)?.reason ?? null);
       }
 
       if (user) {
@@ -536,15 +536,11 @@ export default function InstrumentSelection({ onSelect }: Props) {
               const isInProgress = inProgressInstrumentIds.has(inst.instrument_id);
               const startLabel = isInProgress ? "Continue Assessment" : "Start Assessment";
 
-              // Practitioner's suggested starting half (PTP only). Only a concrete
-              // half is actionable; "both"/null/anything else falls through to the
-              // unchanged default button.
-              const rawPreferred = inst.instrument_id === "INST-001" ? ptpPreferredContext.get(instrumentUuid) : undefined;
-              const preferredCtx: 'professional' | 'personal' | undefined =
-                rawPreferred === "professional" || rawPreferred === "personal" ? rawPreferred : undefined;
-              const preferredLabel = preferredCtx === "professional" ? "Professional" : "Personal";
-              // A "both" suggestion doesn't change the button, but should still be surfaced.
-              const suggestedBoth = rawPreferred === "both" && !isInProgress;
+              // Server-assigned PTP variant (PTP only). Set when exactly one variant is allowed.
+              const preferredCtx: 'professional' | 'personal' | 'both' | null =
+                inst.instrument_id === "INST-001" ? ptpAssignedContext : null;
+              const preferredLabel =
+                preferredCtx === "professional" ? "Professional" : preferredCtx === "personal" ? "Personal" : "full";
 
               // Set only when the suggestion actually drives the rendered button.
               let usedPreferred = false;
@@ -565,19 +561,9 @@ export default function InstrumentSelection({ onSelect }: Props) {
                 }
                 usedPreferred = true;
                 return (
-                  <div className="space-y-1">
-                    <Button className={className} onClick={() => handleSelect(inst, preferredCtx, source)}>
-                      Start with your {preferredLabel} half
-                    </Button>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="w-full text-muted-foreground"
-                      onClick={() => handleSelect(inst, undefined, source)}
-                    >
-                      Choose a different starting point
-                    </Button>
-                  </div>
+                  <Button className={className} onClick={() => handleSelect(inst, preferredCtx, source)}>
+                    Start your {preferredLabel} PTP
+                  </Button>
                 );
               };
 
@@ -711,7 +697,13 @@ export default function InstrumentSelection({ onSelect }: Props) {
 
               // The results-based badge wins if both apply; the practitioner
               // suggestion is then carried by the button label alone.
-              const showPractitionerBadge = (usedPreferred || suggestedBoth) && !isRecommended;
+              const practitionerBadgeText =
+                ptpAssignedReason === "assigned"
+                  ? "Assigned by your practitioner"
+                  : ptpAssignedReason === "other_half"
+                  ? "Next: your other half"
+                  : null;
+              const showPractitionerBadge = usedPreferred && !isRecommended && !!practitionerBadgeText;
 
               return (
                 <Card
@@ -728,7 +720,7 @@ export default function InstrumentSelection({ onSelect }: Props) {
                   {showPractitionerBadge && (
                     <div className="absolute -top-3 left-4">
                       <Badge className="bg-primary text-primary-foreground">
-                        Your practitioner suggests starting here
+                        {practitionerBadgeText}
                       </Badge>
                     </div>
                   )}

@@ -207,9 +207,15 @@ export default function BulkInviteModal({
 
   const continueDisabled =
     rows.length === 0 ||
-    (perAssessmentPrice === null && rows.some(r => r.payment_mode === "coach_paid"));
+    (perAssessmentPrice === null && rows.some(r => r.payment_mode === "coach_paid")) ||
+    (rows.some(r => r.instrument_short_id === "PTP") && !preferredContext);
 
   const handleContinue = () => {
+    const ptpNeeded = rows.some(r => r.instrument_short_id === "PTP");
+    if (ptpNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     validateAll();
     setStage("preview");
   };
@@ -230,6 +236,11 @@ export default function BulkInviteModal({
   };
 
   const handleSend = async () => {
+    const ptpNeeded = rows.some(r => r.instrument_short_id === "PTP");
+    if (ptpNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     setStage("dispatching");
     setSubmitting(true);
     const payload = {
@@ -335,6 +346,7 @@ export default function BulkInviteModal({
                   disabled={
                     totalValid === 0 ||
                     submitting ||
+                    (rows.some(r => r.instrument_short_id === "PTP") && !preferredContext) ||
                     (totalValid > PREVIEW_CONFIRMATION_THRESHOLD && !confirmReviewed)
                   }
                 >
@@ -485,18 +497,15 @@ export default function BulkInviteModal({
 
               {rows.some(r => r.instrument_short_id === "PTP") && (
                 <div className="space-y-2 pt-2">
-                  <Label className="text-sm">Suggest a starting context for everyone in this batch (optional)</Label>
+                  <Label className="text-sm">PTP variant for everyone in this batch (required)</Label>
                   <p className="text-xs text-muted-foreground">
-                    The PTP has a work half and a personal half. Your suggestion pre-selects
-                    the client's choice and explains that it came from you. They can still
-                    pick either, or both.
-                  </p>
+The PTP has a work half and a personal half. Your client takes the variant you choose. If you assign one half, they can take the other half after finishing it.
+</p>
                   <div className="flex flex-wrap gap-2">
                     {([
-                      { v: null, label: "No suggestion" },
                       { v: 'professional', label: "Corporate / Professional" },
                       { v: 'personal', label: "Personal / Social" },
-                      { v: 'both', label: "Both" },
+                      { v: 'both', label: "Combined (both halves)" },
                     ] as const).map((opt) => (
                       <Button
                         key={opt.label}
@@ -509,6 +518,7 @@ export default function BulkInviteModal({
                       </Button>
                     ))}
                   </div>
+                  {!preferredContext && <p className="text-xs text-muted-foreground">Choose a variant to continue.</p>}
                 </div>
               )}
 

@@ -80,13 +80,18 @@ export default function BulkSeatLinkModal({
   const validSeats = Number.isFinite(seatsNum) && seatsNum >= 1 && seatsNum <= 500;
   const validInstrument = !!instrumentShortId && allowedInstrumentIds.has(instrumentShortId);
   const priceMissing = perAssessmentPrice === null;
-  const submitDisabled = !validInstrument || !validSeats || priceMissing || stage === "submitting";
+  const submitDisabled = !validInstrument || !validSeats || priceMissing || stage === "submitting" || (instrumentShortId === "PTP" && !preferredContext);
 
   const total = perAssessmentPrice !== null && validSeats
     ? (seatsNum * perAssessmentPrice).toFixed(2)
     : null;
 
   const handleSubmit = async () => {
+    const ptpNeeded = instrumentShortId === "PTP";
+    if (ptpNeeded && !preferredContext) {
+      toast.error("Choose a PTP variant before sending.");
+      return;
+    }
     const uuid = INSTRUMENTS.find(i => i.id === instrumentShortId)?.uuid;
     if (!uuid) return;
     setStage("submitting");
@@ -251,18 +256,15 @@ export default function BulkSeatLinkModal({
 
           {instrumentShortId === "PTP" && (
             <div className="space-y-2 pt-2">
-              <Label className="text-sm">Suggest a starting context (optional)</Label>
+              <Label className="text-sm">PTP variant your client will take (required)</Label>
               <p className="text-xs text-muted-foreground">
-                The PTP has a work half and a personal half. Your suggestion pre-selects
-                the client's choice and explains that it came from you. They can still
-                pick either, or both.
-              </p>
+The PTP has a work half and a personal half. Your client takes the variant you choose. If you assign one half, they can take the other half after finishing it.
+</p>
               <div className="flex flex-wrap gap-2">
                 {([
-                  { v: null, label: "No suggestion" },
                   { v: 'professional', label: "Corporate / Professional" },
                   { v: 'personal', label: "Personal / Social" },
-                  { v: 'both', label: "Both" },
+                  { v: 'both', label: "Combined (both halves)" },
                 ] as const).map((opt) => (
                   <Button
                     key={opt.label}
@@ -275,6 +277,7 @@ export default function BulkSeatLinkModal({
                   </Button>
                 ))}
               </div>
+              {!preferredContext && <p className="text-xs text-muted-foreground">Choose a variant to continue.</p>}
             </div>
           )}
 
