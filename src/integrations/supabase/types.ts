@@ -1272,6 +1272,7 @@ export type Database = {
         Row: {
           assessment_id: string
           id: string
+          input_mode: string | null
           is_reverse_scored: boolean
           item_id: string
           readiness_level: string | null
@@ -1282,6 +1283,7 @@ export type Database = {
         Insert: {
           assessment_id: string
           id?: string
+          input_mode?: string | null
           is_reverse_scored?: boolean
           item_id: string
           readiness_level?: string | null
@@ -1292,6 +1294,7 @@ export type Database = {
         Update: {
           assessment_id?: string
           id?: string
+          input_mode?: string | null
           is_reverse_scored?: boolean
           item_id?: string
           readiness_level?: string | null
@@ -13147,6 +13150,7 @@ export type Database = {
           mfa_required: boolean
           name: string
           primary_contact_email: string | null
+          ptp_assigned_context: string | null
           seat_count: number
           status: string
         }
@@ -13162,6 +13166,7 @@ export type Database = {
           mfa_required?: boolean
           name: string
           primary_contact_email?: string | null
+          ptp_assigned_context?: string | null
           seat_count?: number
           status?: string
         }
@@ -13177,6 +13182,7 @@ export type Database = {
           mfa_required?: boolean
           name?: string
           primary_contact_email?: string | null
+          ptp_assigned_context?: string | null
           seat_count?: number
           status?: string
         }
@@ -22883,6 +22889,7 @@ export type Database = {
         }
         Returns: number
       }
+      _ptp_assignment_state: { Args: { p_user: string }; Returns: Json }
       _rebind_newsletter_article_asset_refs: {
         Args: { p_article_id: string; p_caller_id: string }
         Returns: Json
@@ -24675,6 +24682,10 @@ export type Database = {
           organization_id: string
           organization_name: string
         }[]
+      }
+      coach_set_client_ptp_context: {
+        Args: { p_coach_client_id: string; p_context: string }
+        Returns: Json
       }
       coach_shareable_link_coach_paid: {
         Args: {
@@ -27435,6 +27446,10 @@ export type Database = {
         Args: { p_enabled: boolean; p_organization_id: string }
         Returns: Json
       }
+      org_set_ptp_assigned_context: {
+        Args: { p_context: string; p_organization_id: string }
+        Returns: Json
+      }
       org_unassign_coach: {
         Args: { p_coach_user_id: string; p_organization_id: string }
         Returns: undefined
@@ -27610,6 +27625,7 @@ export type Database = {
         Args: { p_reason?: string; p_user_id: string }
         Returns: number
       }
+      ptp_assignment_state: { Args: never; Returns: Json }
       ptp_dimension_scores: {
         Args: {
           p_assessment_ids?: string[]
